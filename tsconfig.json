@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    // Only use tsc for type checking
+    "noEmit": true,
+
+    // Need to be set to true in the future
+    "noImplicitAny": false,
+
+    // Sensible defaults
+    "strict": true,
+    "esModuleInterop": true,
+
+    // Stops tsc from complaining about ESM
+    "target": "es2020",
+    
+    // We have to use this with ESM
+    "moduleResolution": "NodeNext",
+
+    // With moduleResolution set to NodeNext, we have to set this to true
+    "allowImportingTsExtensions": true,
+  },
+  "include": ["src/**/*"],
+}
