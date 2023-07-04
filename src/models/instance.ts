@@ -24,18 +24,34 @@ export class Instance {
     this.model = model
   }
 
-  rotateY(angle: number) {
-    this.rotate[1] += angle
-  }
-
+  /**
+   * Rotate this instance around the X axis
+   */
   rotateX(angle: number) {
     this.rotate[0] += angle
   }
 
+  /**
+   * Rotate this instance around the Y axis
+   */
+  rotateY(angle: number) {
+    this.rotate[1] += angle
+  }
+
+  /**
+   * Rotate this instance around the Z axis
+   */
   rotateZ(angle: number) {
     this.rotate[2] += angle
   }
 
+  /**
+   * Render this instance
+   * @param {WebGL2RenderingContext} gl - WebGL context to render into
+   * @param {UniformSet} uniforms - Map of uniforms to pass to shader
+   * @param {mat4} viewProjection - View projection matrix
+   * @param {ProgramInfo} programInfo - Shader program info
+   */
   render(gl: WebGL2RenderingContext, uniforms: UniformSet, viewProjection: mat4, programInfo: ProgramInfo) {
     if (!gl) return
 

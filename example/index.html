@@ -9,7 +9,7 @@
       canvas {
         background-color: #000;
         margin: 0 auto;
-        /* width: 100%; */
+        width: 100%;
       }
     </style>
   </head>
@@ -19,7 +19,7 @@
     </div>
 
     <script type="module">
-      import { Model, setLogLevel, Context } from 'https://cdn.jsdelivr.net/gh/benc-uk/gsots3d/browser/gsots3d.js'
+      import { Model, setLogLevel, Context } from '../browser/gsots3d.js'
       const ctx = await Context.init('canvas')
 
       const tableMdl = await Model.parse('objects', 'table.obj')

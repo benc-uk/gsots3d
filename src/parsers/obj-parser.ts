@@ -4,7 +4,7 @@
 // Ben Coleman, 2023
 // ===============================================================================
 
-import { Geometry } from '../core/geometry.ts'
+import { Geometry } from '../core/types.ts'
 
 const keywordRE = /(\w*)(?: )*(.*)/
 

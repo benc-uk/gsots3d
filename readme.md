@@ -8,5 +8,6 @@ Features
 - Models, with loading & parsing of OBJ with MTL
 - Instancing of models
 - Camera
+- Multiple lights (one actually)
 - Builtin shaders for standard rendering
 - Rendering options

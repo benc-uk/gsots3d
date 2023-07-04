@@ -1,9 +1,10 @@
-// ===== light.ts ======================================================
+// ===== light.ts =============================================================
 // Simple class to hold a light source
 // Ben Coleman, 2023
 // ============================================================================
 
 import { ProgramInfo, setUniforms } from 'twgl.js'
+import { UniformSet } from '../core/types.ts'
 
 const UNIFORM_PREFIX = 'u_light'
 
@@ -26,8 +27,8 @@ export class Light {
   /**
    * Return a map of uniforms for this light, with a prefix
    */
-  getUniforms(): { [key: string]: [number, number, number] } {
-    const uniforms = {}
+  getUniforms(): UniformSet {
+    const uniforms = {} as UniformSet
 
     for (const [propName, propValue] of Object.entries(this)) {
       if (propValue !== undefined) {
