@@ -3,6 +3,11 @@
 // Ben Coleman, 2023
 // ============================================================================
 
+type Shader = {
+  vertex: string
+  fragment: string
+}
+
 /**
  * Fetch a file from the server
  *
@@ -18,4 +23,25 @@ export async function fetchFile(filePath: string) {
 
   const text = await resp.text()
   return text
+}
+
+/**
+ * Fetch a pair of shaders from the server
+ *
+ * @param {string} vertPath - URL path to vertex shader
+ * @param {string} fragPath - URL path to fragment shader
+ * @returns {Promise<Shader>} Pair of shaders as strings
+ */
+export async function fetchShaders(vertPath, fragPath) {
+  const vsResp = await fetch(vertPath)
+  const fsResp = await fetch(fragPath)
+
+  if (!vsResp.ok || !fsResp.ok) {
+    throw new Error(`Fetch failed - vertex: ${vsResp.statusText}, fragment: ${fsResp.statusText}`)
+  }
+
+  const vsText = await vsResp.text()
+  const fsText = await fsResp.text()
+
+  return { vertex: vsText, fragment: fsText } as Shader
 }

@@ -7,8 +7,8 @@
 export type Geometry = {
   material: string
   data: {
-    positions: number[]
-    texcoords?: number[]
-    normals: number[]
+    position: number[]
+    texcoord?: number[]
+    normal: number[]
   }
 }

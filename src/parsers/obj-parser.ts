@@ -31,9 +31,9 @@ export function parseOBJ(objFile: string): ParseResult {
 
   // same order as `f` indices
   let webglVertexData = [
-    [], // positions
-    [], // texcoords
-    [], // normals
+    [], // position
+    [], // texcoord
+    [], // normal
   ] as number[][]
 
   const geometries = Array<Geometry>()
@@ -118,19 +118,19 @@ export function parseOBJ(objFile: string): ParseResult {
    */
   function setGeometry() {
     if (!geometry.material) {
-      const positions = [] as number[]
-      const texcoords = [] as number[]
-      const normals = [] as number[]
+      const position = [] as number[]
+      const texcoord = [] as number[]
+      const normal = [] as number[]
 
-      webglVertexData = [positions, texcoords, normals]
+      webglVertexData = [position, texcoord, normal]
 
       /** @type {Geometry} */
       geometry = {
         material,
         data: {
-          positions,
-          texcoords,
-          normals,
+          position,
+          texcoord,
+          normal,
         },
       }
 
@@ -163,8 +163,8 @@ export function parseOBJ(objFile: string): ParseResult {
 
   // FIX: For those OBJ files that don't have texcoord data
   for (const g of geometries) {
-    if (g.data.texcoords && g.data.texcoords.length <= 0) {
-      delete g.data.texcoords
+    if (g.data.texcoord && g.data.texcoord.length <= 0) {
+      delete g.data.texcoord
     }
   }
 

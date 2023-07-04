@@ -3,8 +3,10 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-export * from './core/material.ts'
+export * from './render/material.ts'
 export * from './core/geometry.ts'
 export * from './core/logging.ts'
+export * from './core/context.ts'
+export * from './render/light.ts'
 export * from './models/model.ts'
 export * from './models/cache.ts'

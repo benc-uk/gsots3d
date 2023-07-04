@@ -51,7 +51,6 @@ window.onload = async () => {
     return
   }
 
-  // @ts-ignore
   const ASPECT = gl.canvas.clientWidth / gl.canvas.clientHeight
 
   const player = new Player()
@@ -68,7 +67,10 @@ window.onload = async () => {
     const { vertex: modelVert, fragment: modelFrag } = await fetchShaders('shaders/vert.glsl', 'shaders/frag.glsl')
     modelProg = twgl.createProgramInfo(gl, [modelVert, modelFrag])
 
-    const { vertex: spriteVert, fragment: spriteFrag } = await fetchShaders('shaders/sprite-vert.glsl', 'shaders/sprite-frag.glsl')
+    const { vertex: spriteVert, fragment: spriteFrag } = await fetchShaders(
+      'shaders/sprite-vert.glsl',
+      'shaders/sprite-frag.glsl'
+    )
     spriteProg = twgl.createProgramInfo(gl, [spriteVert, spriteFrag])
 
     console.log('🎨 Loaded all shaders, GL is ready')

@@ -5,7 +5,7 @@
 // ============================================================================
 
 import { BufferInfo, createBufferInfoFromArrays } from 'twgl.js'
-import { Material } from '../core/material.ts'
+import { Material } from '../render/material.ts'
 import { parseMTL } from '../parsers/mtl-parser.ts'
 import { parseOBJ } from '../parsers/obj-parser.ts'
 import { fetchFile } from '../utils/files.ts'
@@ -17,9 +17,9 @@ import log from 'loglevel'
  * Plus map of named materials
  */
 export class Model {
-  public name = 'untitled model'
-  private parts = [] as ModelPart[]
-  private materials = {} as Record<string, Material>
+  public readonly name: string
+  public readonly parts = [] as ModelPart[]
+  public readonly materials = {} as Record<string, Material>
 
   /**
    * Constructor is private, use static `parse()` method instead
@@ -101,8 +101,8 @@ export class Model {
  * Plus the material name associated with this part
  */
 class ModelPart {
-  private bufferInfo: BufferInfo
-  private materialName: string
+  public readonly bufferInfo: BufferInfo
+  public readonly materialName: string
 
   /**
    * @param {twgl.BufferInfo} bufferInfo - WebGL buffer info for this model part
