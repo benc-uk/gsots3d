@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Game Test</title>
+    <style>
+      canvas {
+        background-color: #000;
+        margin: 0 auto;
+        /* width: 100%; */
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <canvas id="canvas" width="1920" height="1080"></canvas>
+    </div>
+
+    <script type="module">
+      import { Model, setLogLevel, Context } from '../browser/gsots3d.js'
+
+      const ctx = await Context.init('canvas')
+
+      const tableMdl = await Model.parse('objects', 'table.obj')
+      ctx.models.addModel(tableMdl)
+
+      const c1 = ctx.createInstance('table')
+      c1.position = [10, 0, 0]
+      c1.rotateX(1.5)
+      const c2 = ctx.createInstance('table')
+      c2.position = [-7, 0, 5]
+      c2.rotateX(1.5)
+
+      ctx.defaultLight.position = [0, 10, 0]
+      ctx.start()
+    </script>
+  </body>
+</html>
