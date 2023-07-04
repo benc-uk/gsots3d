@@ -9,7 +9,7 @@ import { Model } from './model.ts'
 export class ModelCache {
   private cache = new Map<string, Model>()
 
-  getModel(name: string) {
+  get(name: string) {
     if (!this.cache.has(name)) {
       throw new Error(`Model ${name} not found in cache`)
     }
@@ -17,7 +17,7 @@ export class ModelCache {
     return this.cache.get(name)
   }
 
-  addModel(model: Model) {
+  add(model: Model) {
     log.debug(`🧰 Adding model '${model.name}' to cache`)
 
     this.cache.set(model.name, model)

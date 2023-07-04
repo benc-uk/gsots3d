@@ -17,7 +17,10 @@ export class Light {
     // Empty
   }
 
-  // Apply this light to a shader program
+  /**
+   * Applies the material to the given program as a set of uniforms
+   * Each uniform is prefixed with `u_light`, e.g. `u_matPosition`
+   */
   apply(programInfo: ProgramInfo) {
     const uniforms = this.getUniforms()
 

@@ -35,7 +35,7 @@ export class Model {
    * @param {string} objFilename - The name of the OBJ file
    * @returns {Promise<Model>}
    */
-  public static async parse(path = '.', objFilename: string) {
+  static async parse(path = '.', objFilename: string) {
     // Create a new model with the name of the file
     const name = objFilename.split('.')[0]
     const model = new Model(name)

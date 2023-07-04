@@ -49,7 +49,7 @@ export class Camera {
   /**
    * Get the view matrix for this camera
    */
-  public get viewMatrix(): mat4 {
+  get matrix(): mat4 {
     const camView = mat4.targetTo(mat4.create(), this.position, this.lookAt, this.up)
     return camView
   }
@@ -57,7 +57,7 @@ export class Camera {
   /**
    * Get the projection matrix for this camera
    */
-  public projectionMatrix(aspectRatio: number): mat4 {
+  projectionMatrix(aspectRatio: number): mat4 {
     const camProj = mat4.perspective(mat4.create(), this.fov * (Math.PI / 180), aspectRatio, this.near, this.far)
     return camProj
   }

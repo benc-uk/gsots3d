@@ -23,8 +23,8 @@ void main() {
   vec4 normalWorld = u_worldInverseTranspose * vec4(normal, 1.0);
   float intensity = clamp(dot(normalWorld.xyz, lightVector), 0.0, 0.8);
 
-  v_lighting = u_lightAmbient + (u_lightColor * (intensity / (distance * distance)));
-  //v_lighting = u_lightAmbient + (u_lightColor * intensity);
+  //v_lighting = u_lightAmbient + (u_lightColor * (intensity / (distance * distance)));
+  v_lighting = u_lightAmbient + (u_lightColor * intensity);
   v_color = color;
   gl_Position = u_worldViewProjection * position;
 }

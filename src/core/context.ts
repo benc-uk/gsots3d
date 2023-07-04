@@ -1,19 +1,28 @@
+// ===== context.ts ===========================================================
+// Main rendering context, guts of the library
+// Ben Coleman, 2023
+// ============================================================================
+
 import log from 'loglevel'
-import { getGl } from './gl.ts'
 import { ProgramInfo, createProgramInfo, resizeCanvasToDisplaySize } from 'twgl.js'
+import { mat4 } from 'gl-matrix'
+
+import { getGl } from './gl.ts'
 import { Light } from '../render/light.ts'
 import { ModelCache } from '../models/cache.ts'
 import { Camera } from '../render/camera.ts'
 import { Instance } from '../models/instance.ts'
 import { UniformSet } from './types.ts'
-import { mat4 } from 'gl-matrix'
 
 // Import shaders as hefty big strings
 import fragShader from '../../shaders/frag.glsl'
 import vertShader from '../../shaders/vert.glsl'
 
+/**
+ * The main context of the game. This is the main entry point for the library.
+ */
 export class Context {
-  private gl: WebGL2RenderingContext | undefined
+  private gl: WebGL2RenderingContext
   private aspectRatio = 1
   private programs: { [key: string]: ProgramInfo } = {}
   private started = false
@@ -23,9 +32,9 @@ export class Context {
   private totalTime: number
 
   public resizeable = true
-  public camera: Camera
+  public readonly camera: Camera
   public readonly models: ModelCache
-  public update: (delta: number) => void | undefined
+  public update: (delta: number) => void
 
   private constructor(gl: WebGL2RenderingContext) {
     this.gl = gl
@@ -49,7 +58,7 @@ export class Context {
     log.info('👑 Context created')
   }
 
-  public static async init(canvasSelector: string): Promise<Context> {
+  static async init(canvasSelector: string): Promise<Context> {
     const gl = getGl(true, canvasSelector)
 
     if (!gl) {
@@ -59,9 +68,8 @@ export class Context {
 
     const ctx = new Context(gl)
 
-    const w = (<HTMLCanvasElement>gl.canvas).clientWidth
-    const h = (<HTMLCanvasElement>gl.canvas).clientHeight
-    ctx.aspectRatio = w / h
+    const canvas = <HTMLCanvasElement>gl.canvas
+    ctx.aspectRatio = canvas.clientWidth / canvas.clientHeight
 
     try {
       const modelProg = createProgramInfo(gl, [vertShader, fragShader])
@@ -77,7 +85,7 @@ export class Context {
     gl.enable(gl.CULL_FACE)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-    // bind this to the render function
+    // bind to the render function
     ctx.render = ctx.render.bind(ctx)
 
     return ctx
@@ -91,6 +99,7 @@ export class Context {
     this.prevTime = now
     this.totalTime += deltaTime
 
+    // Call the external update function
     this.update(deltaTime)
 
     const uniforms = {
@@ -98,35 +107,36 @@ export class Context {
       u_worldViewProjection: mat4.create(),
     } as UniformSet
 
-    const mainProg = this.programs['standard']
+    const stdGlProg = this.programs['standard']
 
     if (this.resizeable) {
       resizeCanvasToDisplaySize(<HTMLCanvasElement>this.gl.canvas)
       this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height)
     }
 
-    // Do this in every frame since the window and therefore the aspect ratio of projection matrix might change
-    const camView = this.camera.viewMatrix
-    const view = mat4.invert(mat4.create(), camView)
+    // Do this in every frame since camera can move
+    const camMatrix = this.camera.matrix
+    const viewMatrix = mat4.invert(mat4.create(), camMatrix)
 
-    // Add the view inverse to the uniforms, for specular lighting
-    uniforms.u_viewInverse = camView
+    // Forward view matrix, only for specular lighting
+    uniforms.u_camMatrix = camMatrix
 
+    // Calculate view projection matrix
     const projection = this.camera.projectionMatrix(this.aspectRatio)
-    const viewProjection = mat4.multiply(mat4.create(), projection, view)
+    const viewProjection = mat4.multiply(mat4.create(), projection, viewMatrix)
 
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT)
-
-    this.gl.useProgram(mainProg.program)
+    this.gl.useProgram(stdGlProg.program)
 
     // Since we only have one light, just apply it here
-    this.lights[0].apply(mainProg)
+    this.lights[0].apply(stdGlProg)
 
     // Draw all instances
     for (const instance of this.instances) {
-      instance.render(this.gl, uniforms, viewProjection, mainProg)
+      instance.render(this.gl, uniforms, viewProjection, stdGlProg)
     }
 
+    // Loop forever or not
     if (this.started) requestAnimationFrame(this.render)
   }
 
@@ -140,8 +150,13 @@ export class Context {
     this.started = false
   }
 
+  /**
+   * Add an instance of a model to the cache and return it
+   * @param modelName
+   * @returns {Instance} A new instance of the model
+   */
   createInstance(modelName: string) {
-    const model = this.models.getModel(modelName)
+    const model = this.models.get(modelName)
     if (!model) throw new Error(`Model ${modelName} not found`)
 
     const instance = new Instance(model, [0, 0, 0])
@@ -150,6 +165,10 @@ export class Context {
     return instance
   }
 
+  /**
+   * Get the default light
+   * @returns {Light} The default light
+   */
   get defaultLight() {
     return this.lights[0]
   }
