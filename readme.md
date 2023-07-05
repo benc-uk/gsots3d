@@ -12,6 +12,24 @@ Features
 - Builtin shaders for standard rendering
 - Rendering options
 
+## Simple Example
+
+Simple working example
+
+```ts
+import { Model, Context } from 'gsots3d'
+
+// Create context with default canvas
+const ctx = await Context.init()
+
+// Load a model and add it to the scene
+ctx.models.add(await Model.parse('./objects', 'table.obj'))
+ctx.createInstance('table')
+
+// Start rendering
+ctx.start()
+```
+
 ## Demos
 
 - [Simple scene test 1](https://code.benco.io/gsots3d/examples/test-1/)
