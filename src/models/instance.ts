@@ -10,17 +10,16 @@ import { UniformSet } from '../core/types.ts'
 
 export class Instance {
   public model: Model
-  public position: [number, number, number] = [0, 0, 0]
-  public scale: [number, number, number] = [1, 1, 1]
-  public rotate: [number, number, number] = [0, 0, 0]
+  public position: [number, number, number] | undefined
+  public scale: [number, number, number] | undefined
+  public rotate: [number, number, number] | undefined
   public transparent = false
 
   /**
    * @param {Model} model - Model to use for this instance
    * @param {[number, number, number]} position - Position of the instance
    */
-  constructor(model: Model, position: [number, number, number]) {
-    this.position = position
+  constructor(model: Model) {
     this.model = model
   }
 
@@ -28,6 +27,7 @@ export class Instance {
    * Rotate this instance around the X axis
    */
   rotateX(angle: number) {
+    if (!this.rotate) this.rotate = [0, 0, 0]
     this.rotate[0] += angle
   }
 
@@ -35,6 +35,7 @@ export class Instance {
    * Rotate this instance around the Y axis
    */
   rotateY(angle: number) {
+    if (!this.rotate) this.rotate = [0, 0, 0]
     this.rotate[1] += angle
   }
 
@@ -42,6 +43,7 @@ export class Instance {
    * Rotate this instance around the Z axis
    */
   rotateZ(angle: number) {
+    if (!this.rotate) this.rotate = [0, 0, 0]
     this.rotate[2] += angle
   }
 
@@ -55,8 +57,12 @@ export class Instance {
   render(gl: WebGL2RenderingContext, uniforms: UniformSet, viewProjection: mat4, programInfo: ProgramInfo) {
     if (!gl) return
 
-    // Move object into the world
+    // Local instance transforms are applied in this order to form the world matrix
     const world = mat4.create()
+    if (this.scale) {
+      mat4.scale(world, world, this.scale)
+    }
+
     if (this.position) {
       mat4.translate(world, world, this.position)
     }
@@ -65,10 +71,6 @@ export class Instance {
       mat4.rotateX(world, world, this.rotate[0])
       mat4.rotateY(world, world, this.rotate[1])
       mat4.rotateZ(world, world, this.rotate[2])
-    }
-
-    if (this.scale) {
-      mat4.scale(world, world, this.scale)
     }
 
     uniforms.u_world = world

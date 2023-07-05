@@ -3,8 +3,9 @@
 // Ben Coleman, 2023
 // ============================================================================
 
+export const VERSION = '0.0.1'
+
 export * from './render/material.ts'
-//export * from './core/geometry.ts'
 export * from './core/logging.ts'
 export * from './core/context.ts'
 export * from './render/light.ts'

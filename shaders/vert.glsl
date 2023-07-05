@@ -18,7 +18,7 @@ varying vec4 v_color;
 
 void main() {
   vec4 worldPos = u_world * position;
-  float distance = length(u_lightPosition - worldPos.xyz) * 0.06;
+  float distance = length(u_lightPosition - worldPos.xyz) * 0.016;
   vec3 lightVector = normalize(u_lightPosition - worldPos.xyz);
   vec4 normalWorld = u_worldInverseTranspose * vec4(normal, 1.0);
   float intensity = clamp(dot(normalWorld.xyz, lightVector), 0.0, 0.8);

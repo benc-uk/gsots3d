@@ -7,12 +7,13 @@ import log from 'loglevel'
 import { ProgramInfo, createProgramInfo, resizeCanvasToDisplaySize } from 'twgl.js'
 import { mat4 } from 'gl-matrix'
 
+import { VERSION } from '../index.ts'
 import { getGl } from './gl.ts'
+import { UniformSet } from './types.ts'
 import { Light } from '../render/light.ts'
 import { ModelCache } from '../models/cache.ts'
 import { Camera } from '../render/camera.ts'
 import { Instance } from '../models/instance.ts'
-import { UniformSet } from './types.ts'
 
 // Import shaders as hefty big strings
 import fragShader from '../../shaders/frag.glsl'
@@ -30,8 +31,10 @@ export class Context {
   private lights: Light[] = []
   private prevTime: number
   private totalTime: number
+  private ctx2D: CanvasRenderingContext2D | undefined
 
   public resizeable = true
+  public debug = false
   public readonly camera: Camera
   public readonly models: ModelCache
   public update: (delta: number) => void
@@ -55,7 +58,7 @@ export class Context {
       // Do nothing
     }
 
-    log.info('👑 Context created')
+    log.info('👑 GSOTS context created')
   }
 
   static async init(canvasSelector: string): Promise<Context> {
@@ -70,6 +73,19 @@ export class Context {
 
     const canvas = <HTMLCanvasElement>gl.canvas
     ctx.aspectRatio = canvas.clientWidth / canvas.clientHeight
+
+    // HACK: Ugly hack to get 2D canvas context
+    const textCanvas = document.createElement('canvas')
+    textCanvas.width = canvas.clientWidth
+    textCanvas.height = canvas.clientHeight
+    textCanvas.style.backgroundColor = 'transparent'
+    document.getElementById('game')?.appendChild(textCanvas)
+    const ctx2D = textCanvas.getContext('2d')
+    if (!ctx2D) {
+      log.error('💥 Failed to get 2D canvas context')
+      throw new Error('Failed to get 2D canvas context')
+    }
+    ctx.ctx2D = ctx2D
 
     try {
       const modelProg = createProgramInfo(gl, [vertShader, fragShader])
@@ -111,6 +127,7 @@ export class Context {
 
     if (this.resizeable) {
       resizeCanvasToDisplaySize(<HTMLCanvasElement>this.gl.canvas)
+      resizeCanvasToDisplaySize(<HTMLCanvasElement>this.ctx2D?.canvas)
       this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height)
     }
 
@@ -125,7 +142,7 @@ export class Context {
     const projection = this.camera.projectionMatrix(this.aspectRatio)
     const viewProjection = mat4.multiply(mat4.create(), projection, viewMatrix)
 
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT)
+    // this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT)
     this.gl.useProgram(stdGlProg.program)
 
     // Since we only have one light, just apply it here
@@ -134,6 +151,15 @@ export class Context {
     // Draw all instances
     for (const instance of this.instances) {
       instance.render(this.gl, uniforms, viewProjection, stdGlProg)
+    }
+
+    if (this.ctx2D && this.debug) {
+      this.ctx2D.clearRect(0, 0, this.ctx2D.canvas.width, this.ctx2D.canvas.height)
+      this.ctx2D.fillStyle = 'white'
+      this.ctx2D.font = '19px monospace'
+      this.ctx2D.fillText(`GSOTS-3D v${VERSION}`, 10, 20)
+      this.ctx2D.fillText(`FPS: ${Math.round(1 / deltaTime)}`, 10, 40)
+      this.ctx2D.fillText(`Time: ${Math.round(this.totalTime * 100) / 100}`, 10, 60)
     }
 
     // Loop forever or not
@@ -159,7 +185,7 @@ export class Context {
     const model = this.models.get(modelName)
     if (!model) throw new Error(`Model ${modelName} not found`)
 
-    const instance = new Instance(model, [0, 0, 0])
+    const instance = new Instance(model)
     this.instances.push(instance)
 
     return instance

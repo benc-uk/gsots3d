@@ -12,7 +12,8 @@
     "lint-fix": "eslint --ext .ts src --fix && prettier --write src",
     "check": "tsc",
     "build": "tsup",
-    "watch": "tsup && run-when-changed --watch 'src/**/*.ts' --watch '**/*.glsl'  --exec 'npm run build'",
+    "watch": "npm run build && run-when-changed --watch 'src/**/*.ts' --watch '**/*.glsl' --exec 'npm run build'",
+    "watch-browser": "npm run build-browser && run-when-changed --watch 'src/**/*.ts' --watch '**/*.glsl' --exec 'npm run build-browser'",
     "clean": "rm -rf dist",
     "build-browser": "tsup --config tsup.config-browser.js && mv browser/index.js browser/gsots3d.js"
   },
