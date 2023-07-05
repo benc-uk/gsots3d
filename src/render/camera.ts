@@ -4,46 +4,54 @@
 // ============================================================================
 
 import { mat4 } from 'gl-matrix'
+import { XYZ } from '../core/types.ts'
 
 export class Camera {
   /**
    * Camera position
    * @default [0, 0, 30]
    */
-  public position: [number, number, number] = [0, 0, 30]
+  public position: XYZ
 
   /**
    * Camera look at point
    * @default [0, 0, 0]
    */
-  public lookAt: [number, number, number] = [0, 0, 0]
+  public lookAt: XYZ
 
   /**
    * Field of view in degrees, default 45
    * @default 45
    */
-  public fov = 45
+  public fov: number
 
   /**
    * Near clipping plane, default 0.1
    * @default 0.1
    */
-  public near = 0.1
+  public near: number
 
   /**
    * Far clipping plane, default 100
    * @default 100
    */
-  public far = 100
+  public far: number
 
   /**
    * Camera up vector
    * @default [0, 1, 0]
    */
-  public readonly up: [number, number, number] = [0, 1, 0]
+  public readonly up: XYZ
 
   constructor() {
-    // Empty
+    this.position = [0, 0, 30]
+    this.lookAt = [0, 0, 0]
+    this.up = [0, 1, 0]
+
+    this.near = 0.1
+    this.far = 100
+
+    this.fov = 45
   }
 
   /**

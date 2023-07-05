@@ -20,7 +20,7 @@ import fragShader from '../../shaders/frag.glsl'
 import vertShader from '../../shaders/vert.glsl'
 
 /**
- * The main context of the game. This is the main entry point for the library.
+ * The main rendering context. This is the main entry point for the library.
  */
 export class Context {
   private gl: WebGL2RenderingContext
@@ -33,10 +33,11 @@ export class Context {
   private totalTime: number
   private ctx2D: CanvasRenderingContext2D | undefined
 
-  public resizeable = true
-  public debug = false
   public readonly camera: Camera
   public readonly models: ModelCache
+
+  public resizeable = true
+  public debug = false
   public update: (delta: number) => void
 
   private constructor(gl: WebGL2RenderingContext) {
@@ -47,7 +48,7 @@ export class Context {
 
     // Default light
     const light = new Light()
-    light.position = [10, 120, -20]
+    light.position = [0, 100, 0]
     light.color = [1, 1, 1]
     light.ambient = [0.2, 0.2, 0.2]
     this.lights[0] = light
@@ -129,6 +130,7 @@ export class Context {
       resizeCanvasToDisplaySize(<HTMLCanvasElement>this.gl.canvas)
       resizeCanvasToDisplaySize(<HTMLCanvasElement>this.ctx2D?.canvas)
       this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height)
+      this.aspectRatio = this.gl.canvas.width / this.gl.canvas.height
     }
 
     // Do this in every frame since camera can move

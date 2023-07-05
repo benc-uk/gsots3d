@@ -5,16 +5,16 @@
 
 import { ProgramInfo, setUniforms } from 'twgl.js'
 import { MtlMaterial } from '../parsers/mtl-parser.ts'
-import { UniformSet } from '../core/types.ts'
+import { RGB, UniformSet } from '../core/types.ts'
 
 const UNIFORM_PREFIX = 'u_mat'
 
 export class Material {
-  private diffuse?: number[]
-  private specular?: number[]
+  private diffuse?: RGB
+  private specular?: RGB
   private shininess?: number
-  private ambient?: number[]
-  private emissive?: number[]
+  private ambient?: RGB
+  private emissive?: RGB
 
   constructor(matRaw: MtlMaterial) {
     this.diffuse = matRaw.kd

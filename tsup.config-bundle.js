@@ -8,7 +8,7 @@ export default defineConfig({
   minify: true,
   clean: true,
   format: 'esm',
-  outDir: 'browser',
+  outDir: 'dist-bundle',
   bundle: true,
   loader: {
     '.glsl': 'text',

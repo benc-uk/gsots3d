@@ -4,17 +4,19 @@
 // ============================================================================
 
 import { ProgramInfo, setUniforms } from 'twgl.js'
-import { UniformSet } from '../core/types.ts'
+import { RGB, UniformSet, XYZ } from '../core/types.ts'
 
 const UNIFORM_PREFIX = 'u_light'
 
 export class Light {
-  public position: [number, number, number] = [0, 0, 0]
-  public color: [number, number, number] = [1, 1, 1]
-  public ambient: [number, number, number] = [0.1, 0.1, 0.1]
+  public position: XYZ
+  public color: RGB
+  public ambient: RGB
 
   constructor() {
-    // Empty
+    this.position = [0, 0, 0]
+    this.color = [1, 1, 1]
+    this.ambient = [0.1, 0.1, 0.1]
   }
 
   /**

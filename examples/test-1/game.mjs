@@ -1,4 +1,4 @@
-import { Model, Context, setLogLevel } from '../../browser/gsots3d.js'
+import { Model, Context, setLogLevel } from '../../dist-bundle/gsots3d.js'
 
 setLogLevel('debug')
 
@@ -34,7 +34,7 @@ ctx.camera.lookAt = [0, 0, 0]
 ctx.camera.far = 300
 
 // Static light
-ctx.defaultLight.position = [40, 22, 14]
+ctx.defaultLight.position = [-60, 32, -14]
 
 let time = 0
 const radius = 40
@@ -46,10 +46,6 @@ ctx.update = (delta) => {
   const x = Math.cos(time / speed) * radius
   const z = Math.sin(time / speed) * radius
   ctx.camera.position = [x, camHeight, z]
-
-  const xLook = Math.cos(time / speed + Math.PI) * radius
-  ctx.camera.lookAt = [xLook, -5, 0]
-  //ctx.defaultLight.position = [x, camHeight, z]
 }
 
 ctx.debug = true

@@ -7,6 +7,10 @@ import { mat4 } from 'gl-matrix'
 
 export type UniformSet = { [key: string]: number | number[] | mat4 }
 
+export type XYZ = [number, number, number]
+export type RGB = [number, number, number]
+export type RGBA = [number, number, number, number]
+
 export type Geometry = {
   material: string
   data: {

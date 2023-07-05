@@ -17,7 +17,6 @@ export class Instance {
 
   /**
    * @param {Model} model - Model to use for this instance
-   * @param {[number, number, number]} position - Position of the instance
    */
   constructor(model: Model) {
     this.model = model

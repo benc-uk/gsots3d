@@ -1,4 +1,4 @@
-import { Model, Context } from '../../browser/gsots3d.js'
+import { Model, Context } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init()
 
