@@ -1,0 +1,28 @@
+canvas {
+  background-color: #000;
+  border-radius: 8px;
+  width: 90%;
+  position: absolute;
+  left: 5%;
+  top: 80px;
+}
+
+body {
+  margin: 0;
+  background-color: rgb(41, 41, 41);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #e9920f;
+}
+
+#game {
+  text-align: center;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 10px 0px;
+}
