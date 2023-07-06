@@ -6,6 +6,9 @@
 import log from 'loglevel'
 import { Model } from './model.ts'
 
+/**
+ * A simple cache for models, indexed by name
+ */
 export class ModelCache {
   private cache = new Map<string, Model>()
 

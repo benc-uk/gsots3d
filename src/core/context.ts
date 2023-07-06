@@ -33,7 +33,10 @@ export class Context {
   private totalTime: number
   private ctx2D: CanvasRenderingContext2D | undefined
 
+  /** Main camera for the */
   public readonly camera: Camera
+
+  /** Cache of models, used to create instances */
   public readonly models: ModelCache
 
   public resizeable = true

@@ -4,20 +4,11 @@
 // Ben Coleman, 2023
 // ===============================================================================
 
-export type MtlMaterial = {
-  ns?: number
-  ka?: [number, number, number]
-  kd?: [number, number, number]
-  ks?: [number, number, number]
-  ke?: [number, number, number]
-  ni?: number
-  d?: number
-  illum?: number
-}
+import { MtlMaterial } from '../core/types.ts'
 
 /**
- * Parse an MTL file returning a map of materials
- * Results should be passed to new Material() to create a material
+ * Parse an MTL file returning a map of materials.
+ * The returned {@link typescript!MtlMaterial} should be passed to new Material() to create a material
  *
  * @param {string} mtlFile - The MTL file as a string
  * @returns {Map<string, MtlMaterial>} - A map of materials

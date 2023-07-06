@@ -12,9 +12,13 @@ Features
 - Builtin shaders for standard rendering
 - Rendering options
 
-## Simple Example
+## Documentation
 
-Simple working example
+[Reference documents are here](https://code.benco.io/gsots3d/docs/)
+
+## Hello World - Example
+
+Simple working example of creating a Context to render a simple OBJ model
 
 ```ts
 import { Model, Context } from 'gsots3d'

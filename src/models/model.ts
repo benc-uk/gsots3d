@@ -100,7 +100,7 @@ export class Model {
  * Holds part of a model, as the WebGL buffers needed to render it
  * Plus the material name associated with this part
  */
-class ModelPart {
+export class ModelPart {
   public readonly bufferInfo: BufferInfo
   public readonly materialName: string
 

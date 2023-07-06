@@ -19,3 +19,14 @@ export type Geometry = {
     normal: number[]
   }
 }
+
+export type MtlMaterial = {
+  ns?: number
+  ka?: [number, number, number]
+  kd?: [number, number, number]
+  ks?: [number, number, number]
+  ke?: [number, number, number]
+  ni?: number
+  d?: number
+  illum?: number
+}

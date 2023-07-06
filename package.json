@@ -11,11 +11,12 @@
     "lint": "eslint --ext .ts src && prettier --check src",
     "lint-fix": "eslint --ext .ts src --fix && prettier --write src",
     "check": "tsc",
-    "build": "tsup",
-    "watch": "npm run build && run-when-changed --watch 'src/**/*.ts' --watch '**/*.glsl' --exec 'npm run build'",
-    "build-bundle": "tsup --config tsup.config-bundle.js && mv dist-bundle/index.js dist-bundle/gsots3d.js",
-    "watch-bundle": "npm run build-bundle && run-when-changed --watch 'src/**/*.ts' --watch '**/*.glsl' --exec 'npm run build-bundle'",
-    "clean": "rm -rf dist"
+    "build": "tsc && tsup",
+    "watch": "tsc && npm run build && run-when-changed --watch 'src/**/*.ts' --watch '**/*.glsl' --exec 'npm run build'",
+    "build-bundle": "tsc && tsup --config tsup.config-bundle.js && mv dist-bundle/index.js dist-bundle/gsots3d.js",
+    "watch-bundle": "tsc && npm run build-bundle && run-when-changed --watch 'src/**/*.ts' --watch '**/*.glsl' --exec 'npm run build-bundle'",
+    "clean": "rm -rf dist",
+    "docs": "typedoc --out docs src"
   },
   "keywords": [
     "webgl",
@@ -31,13 +32,13 @@
   "author": "Ben Coleman",
   "license": "MIT",
   "devDependencies": {
-    "@microsoft/tsdoc": "^0.14.2",
     "@typescript-eslint/eslint-plugin": "^5.60.1",
     "@typescript-eslint/parser": "^5.60.1",
     "eslint": "^8.44.0",
     "prettier": "^2.8.8",
     "run-when-changed": "^2.1.0",
     "tsup": "^7.1.0",
+    "typedoc": "^0.24.8",
     "typescript": "^5.1.6"
   },
   "dependencies": {

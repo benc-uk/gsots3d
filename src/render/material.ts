@@ -4,8 +4,7 @@
 // ============================================================================
 
 import { ProgramInfo, setUniforms } from 'twgl.js'
-import { MtlMaterial } from '../parsers/mtl-parser.ts'
-import { RGB, UniformSet } from '../core/types.ts'
+import { RGB, UniformSet, MtlMaterial } from '../core/types.ts'
 
 const UNIFORM_PREFIX = 'u_mat'
 
