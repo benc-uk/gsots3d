@@ -43,7 +43,7 @@ var require_loglevel = __commonJS({
       }
     })(exports, function() {
       "use strict";
-      var noop = function() {
+      var noop2 = function() {
       };
       var undefinedType = "undefined";
       var isIE = typeof window !== undefinedType && typeof window.navigator !== undefinedType && /Trident\/|MSIE /.test(window.navigator.userAgent);
@@ -92,13 +92,13 @@ var require_loglevel = __commonJS({
         } else if (console.log !== void 0) {
           return bindMethod(console, "log");
         } else {
-          return noop;
+          return noop2;
         }
       }
       function replaceLoggingMethods(level, loggerName) {
         for (var i = 0; i < logMethods.length; i++) {
           var methodName = logMethods[i];
-          this[methodName] = i < level ? noop : this.methodFactory(methodName, level, loggerName);
+          this[methodName] = i < level ? noop2 : this.methodFactory(methodName, level, loggerName);
         }
         this.log = this.debug;
       }
@@ -258,6 +258,23 @@ var require_loglevel = __commonJS({
     });
   }
 });
+
+// src/core/types.ts
+var TEX_NEAREST = 9728;
+var TEX_LINEAR = 9729;
+var TEX_NEAREST_MIPMAP_NEAREST = 9984;
+var TEX_LINEAR_MIPMAP_NEAREST = 9985;
+var TEX_NEAREST_MIPMAP_LINEAR = 9986;
+var TEX_LINEAR_MIPMAP_LINEAR = 9987;
+
+// src/core/logging.ts
+var log = __toESM(require_loglevel(), 1);
+function setLogLevel(level) {
+  log.setLevel(level);
+}
+
+// src/core/context.ts
+var import_loglevel3 = __toESM(require_loglevel(), 1);
 
 // node_modules/twgl.js/dist/5.x/twgl-full.module.js
 var VecType = Float32Array;
@@ -531,6 +548,9 @@ function isBuffer(gl, t) {
 }
 function isTexture(gl, t) {
   return typeof WebGLTexture !== "undefined" && isType(t, "WebGLTexture");
+}
+function isSampler(gl, t) {
+  return typeof WebGLSampler !== "undefined" && isType(t, "WebGLSampler");
 }
 var STATIC_DRAW = 35044;
 var ARRAY_BUFFER$1 = 34962;
@@ -2337,6 +2357,7 @@ var defaults$1 = {
   textureOptions: {},
   crossOrigin: void 0
 };
+var isArrayBuffer2 = isArrayBuffer$1;
 var getShared2DContext = function() {
   let s_ctx;
   return function getShared2DContext2() {
@@ -2351,6 +2372,108 @@ var LUMINANCE = 6409;
 var LUMINANCE_ALPHA = 6410;
 var DEPTH_COMPONENT$1 = 6402;
 var DEPTH_STENCIL$1 = 34041;
+var CLAMP_TO_EDGE$1 = 33071;
+var NEAREST = 9728;
+var LINEAR$1 = 9729;
+var TEXTURE_2D$2 = 3553;
+var TEXTURE_CUBE_MAP$1 = 34067;
+var TEXTURE_3D$1 = 32879;
+var TEXTURE_2D_ARRAY$1 = 35866;
+var TEXTURE_CUBE_MAP_POSITIVE_X = 34069;
+var TEXTURE_CUBE_MAP_NEGATIVE_X = 34070;
+var TEXTURE_CUBE_MAP_POSITIVE_Y = 34071;
+var TEXTURE_CUBE_MAP_NEGATIVE_Y = 34072;
+var TEXTURE_CUBE_MAP_POSITIVE_Z = 34073;
+var TEXTURE_CUBE_MAP_NEGATIVE_Z = 34074;
+var TEXTURE_MIN_FILTER = 10241;
+var TEXTURE_MAG_FILTER = 10240;
+var TEXTURE_WRAP_S = 10242;
+var TEXTURE_WRAP_T = 10243;
+var TEXTURE_WRAP_R = 32882;
+var TEXTURE_MIN_LOD = 33082;
+var TEXTURE_MAX_LOD = 33083;
+var TEXTURE_BASE_LEVEL = 33084;
+var TEXTURE_MAX_LEVEL = 33085;
+var UNPACK_ALIGNMENT = 3317;
+var UNPACK_ROW_LENGTH = 3314;
+var UNPACK_IMAGE_HEIGHT = 32878;
+var UNPACK_SKIP_PIXELS = 3316;
+var UNPACK_SKIP_ROWS = 3315;
+var UNPACK_SKIP_IMAGES = 32877;
+var UNPACK_COLORSPACE_CONVERSION_WEBGL = 37443;
+var UNPACK_PREMULTIPLY_ALPHA_WEBGL = 37441;
+var UNPACK_FLIP_Y_WEBGL = 37440;
+var R8 = 33321;
+var R8_SNORM = 36756;
+var R16F = 33325;
+var R32F = 33326;
+var R8UI = 33330;
+var R8I = 33329;
+var RG16UI = 33338;
+var RG16I = 33337;
+var RG32UI = 33340;
+var RG32I = 33339;
+var RG8 = 33323;
+var RG8_SNORM = 36757;
+var RG16F = 33327;
+var RG32F = 33328;
+var RG8UI = 33336;
+var RG8I = 33335;
+var R16UI = 33332;
+var R16I = 33331;
+var R32UI = 33334;
+var R32I = 33333;
+var RGB8 = 32849;
+var SRGB8 = 35905;
+var RGB565$1 = 36194;
+var RGB8_SNORM = 36758;
+var R11F_G11F_B10F = 35898;
+var RGB9_E5 = 35901;
+var RGB16F = 34843;
+var RGB32F = 34837;
+var RGB8UI = 36221;
+var RGB8I = 36239;
+var RGB16UI = 36215;
+var RGB16I = 36233;
+var RGB32UI = 36209;
+var RGB32I = 36227;
+var RGBA8 = 32856;
+var SRGB8_ALPHA8 = 35907;
+var RGBA8_SNORM = 36759;
+var RGB5_A1$1 = 32855;
+var RGBA4$1 = 32854;
+var RGB10_A2 = 32857;
+var RGBA16F = 34842;
+var RGBA32F = 34836;
+var RGBA8UI = 36220;
+var RGBA8I = 36238;
+var RGB10_A2UI = 36975;
+var RGBA16UI = 36214;
+var RGBA16I = 36232;
+var RGBA32I = 36226;
+var RGBA32UI = 36208;
+var DEPTH_COMPONENT16$1 = 33189;
+var DEPTH_COMPONENT24$1 = 33190;
+var DEPTH_COMPONENT32F$1 = 36012;
+var DEPTH32F_STENCIL8$1 = 36013;
+var DEPTH24_STENCIL8$1 = 35056;
+var BYTE = 5120;
+var UNSIGNED_BYTE$1 = 5121;
+var SHORT = 5122;
+var UNSIGNED_SHORT$1 = 5123;
+var INT$1 = 5124;
+var UNSIGNED_INT$1 = 5125;
+var FLOAT$1 = 5126;
+var UNSIGNED_SHORT_4_4_4_4 = 32819;
+var UNSIGNED_SHORT_5_5_5_1 = 32820;
+var UNSIGNED_SHORT_5_6_5 = 33635;
+var HALF_FLOAT = 5131;
+var HALF_FLOAT_OES = 36193;
+var UNSIGNED_INT_2_10_10_10_REV = 33640;
+var UNSIGNED_INT_10F_11F_11F_REV = 35899;
+var UNSIGNED_INT_5_9_9_9_REV = 35902;
+var FLOAT_32_UNSIGNED_INT_24_8_REV = 36269;
+var UNSIGNED_INT_24_8 = 34042;
 var RG = 33319;
 var RG_INTEGER = 33320;
 var RED = 6403;
@@ -2375,6 +2498,745 @@ var formatInfo = {};
   f[RGBA_INTEGER] = { numColorComponents: 4 };
   f[DEPTH_COMPONENT$1] = { numColorComponents: 1 };
   f[DEPTH_STENCIL$1] = { numColorComponents: 2 };
+}
+var s_textureInternalFormatInfo;
+function getTextureInternalFormatInfo(internalFormat) {
+  if (!s_textureInternalFormatInfo) {
+    const t = {};
+    t[ALPHA] = { textureFormat: ALPHA, colorRenderable: true, textureFilterable: true, bytesPerElement: [1, 2, 2, 4], type: [UNSIGNED_BYTE$1, HALF_FLOAT, HALF_FLOAT_OES, FLOAT$1] };
+    t[LUMINANCE] = { textureFormat: LUMINANCE, colorRenderable: true, textureFilterable: true, bytesPerElement: [1, 2, 2, 4], type: [UNSIGNED_BYTE$1, HALF_FLOAT, HALF_FLOAT_OES, FLOAT$1] };
+    t[LUMINANCE_ALPHA] = { textureFormat: LUMINANCE_ALPHA, colorRenderable: true, textureFilterable: true, bytesPerElement: [2, 4, 4, 8], type: [UNSIGNED_BYTE$1, HALF_FLOAT, HALF_FLOAT_OES, FLOAT$1] };
+    t[RGB] = { textureFormat: RGB, colorRenderable: true, textureFilterable: true, bytesPerElement: [3, 6, 6, 12, 2], type: [UNSIGNED_BYTE$1, HALF_FLOAT, HALF_FLOAT_OES, FLOAT$1, UNSIGNED_SHORT_5_6_5] };
+    t[RGBA$1] = { textureFormat: RGBA$1, colorRenderable: true, textureFilterable: true, bytesPerElement: [4, 8, 8, 16, 2, 2], type: [UNSIGNED_BYTE$1, HALF_FLOAT, HALF_FLOAT_OES, FLOAT$1, UNSIGNED_SHORT_4_4_4_4, UNSIGNED_SHORT_5_5_5_1] };
+    t[DEPTH_COMPONENT$1] = { textureFormat: DEPTH_COMPONENT$1, colorRenderable: true, textureFilterable: false, bytesPerElement: [2, 4], type: [UNSIGNED_INT$1, UNSIGNED_SHORT$1] };
+    t[R8] = { textureFormat: RED, colorRenderable: true, textureFilterable: true, bytesPerElement: [1], type: [UNSIGNED_BYTE$1] };
+    t[R8_SNORM] = { textureFormat: RED, colorRenderable: false, textureFilterable: true, bytesPerElement: [1], type: [BYTE] };
+    t[R16F] = { textureFormat: RED, colorRenderable: false, textureFilterable: true, bytesPerElement: [4, 2], type: [FLOAT$1, HALF_FLOAT] };
+    t[R32F] = { textureFormat: RED, colorRenderable: false, textureFilterable: false, bytesPerElement: [4], type: [FLOAT$1] };
+    t[R8UI] = { textureFormat: RED_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [1], type: [UNSIGNED_BYTE$1] };
+    t[R8I] = { textureFormat: RED_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [1], type: [BYTE] };
+    t[R16UI] = { textureFormat: RED_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [2], type: [UNSIGNED_SHORT$1] };
+    t[R16I] = { textureFormat: RED_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [2], type: [SHORT] };
+    t[R32UI] = { textureFormat: RED_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [4], type: [UNSIGNED_INT$1] };
+    t[R32I] = { textureFormat: RED_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [4], type: [INT$1] };
+    t[RG8] = { textureFormat: RG, colorRenderable: true, textureFilterable: true, bytesPerElement: [2], type: [UNSIGNED_BYTE$1] };
+    t[RG8_SNORM] = { textureFormat: RG, colorRenderable: false, textureFilterable: true, bytesPerElement: [2], type: [BYTE] };
+    t[RG16F] = { textureFormat: RG, colorRenderable: false, textureFilterable: true, bytesPerElement: [8, 4], type: [FLOAT$1, HALF_FLOAT] };
+    t[RG32F] = { textureFormat: RG, colorRenderable: false, textureFilterable: false, bytesPerElement: [8], type: [FLOAT$1] };
+    t[RG8UI] = { textureFormat: RG_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [2], type: [UNSIGNED_BYTE$1] };
+    t[RG8I] = { textureFormat: RG_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [2], type: [BYTE] };
+    t[RG16UI] = { textureFormat: RG_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [4], type: [UNSIGNED_SHORT$1] };
+    t[RG16I] = { textureFormat: RG_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [4], type: [SHORT] };
+    t[RG32UI] = { textureFormat: RG_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [8], type: [UNSIGNED_INT$1] };
+    t[RG32I] = { textureFormat: RG_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [8], type: [INT$1] };
+    t[RGB8] = { textureFormat: RGB, colorRenderable: true, textureFilterable: true, bytesPerElement: [3], type: [UNSIGNED_BYTE$1] };
+    t[SRGB8] = { textureFormat: RGB, colorRenderable: false, textureFilterable: true, bytesPerElement: [3], type: [UNSIGNED_BYTE$1] };
+    t[RGB565$1] = { textureFormat: RGB, colorRenderable: true, textureFilterable: true, bytesPerElement: [3, 2], type: [UNSIGNED_BYTE$1, UNSIGNED_SHORT_5_6_5] };
+    t[RGB8_SNORM] = { textureFormat: RGB, colorRenderable: false, textureFilterable: true, bytesPerElement: [3], type: [BYTE] };
+    t[R11F_G11F_B10F] = { textureFormat: RGB, colorRenderable: false, textureFilterable: true, bytesPerElement: [12, 6, 4], type: [FLOAT$1, HALF_FLOAT, UNSIGNED_INT_10F_11F_11F_REV] };
+    t[RGB9_E5] = { textureFormat: RGB, colorRenderable: false, textureFilterable: true, bytesPerElement: [12, 6, 4], type: [FLOAT$1, HALF_FLOAT, UNSIGNED_INT_5_9_9_9_REV] };
+    t[RGB16F] = { textureFormat: RGB, colorRenderable: false, textureFilterable: true, bytesPerElement: [12, 6], type: [FLOAT$1, HALF_FLOAT] };
+    t[RGB32F] = { textureFormat: RGB, colorRenderable: false, textureFilterable: false, bytesPerElement: [12], type: [FLOAT$1] };
+    t[RGB8UI] = { textureFormat: RGB_INTEGER, colorRenderable: false, textureFilterable: false, bytesPerElement: [3], type: [UNSIGNED_BYTE$1] };
+    t[RGB8I] = { textureFormat: RGB_INTEGER, colorRenderable: false, textureFilterable: false, bytesPerElement: [3], type: [BYTE] };
+    t[RGB16UI] = { textureFormat: RGB_INTEGER, colorRenderable: false, textureFilterable: false, bytesPerElement: [6], type: [UNSIGNED_SHORT$1] };
+    t[RGB16I] = { textureFormat: RGB_INTEGER, colorRenderable: false, textureFilterable: false, bytesPerElement: [6], type: [SHORT] };
+    t[RGB32UI] = { textureFormat: RGB_INTEGER, colorRenderable: false, textureFilterable: false, bytesPerElement: [12], type: [UNSIGNED_INT$1] };
+    t[RGB32I] = { textureFormat: RGB_INTEGER, colorRenderable: false, textureFilterable: false, bytesPerElement: [12], type: [INT$1] };
+    t[RGBA8] = { textureFormat: RGBA$1, colorRenderable: true, textureFilterable: true, bytesPerElement: [4], type: [UNSIGNED_BYTE$1] };
+    t[SRGB8_ALPHA8] = { textureFormat: RGBA$1, colorRenderable: true, textureFilterable: true, bytesPerElement: [4], type: [UNSIGNED_BYTE$1] };
+    t[RGBA8_SNORM] = { textureFormat: RGBA$1, colorRenderable: false, textureFilterable: true, bytesPerElement: [4], type: [BYTE] };
+    t[RGB5_A1$1] = { textureFormat: RGBA$1, colorRenderable: true, textureFilterable: true, bytesPerElement: [4, 2, 4], type: [UNSIGNED_BYTE$1, UNSIGNED_SHORT_5_5_5_1, UNSIGNED_INT_2_10_10_10_REV] };
+    t[RGBA4$1] = { textureFormat: RGBA$1, colorRenderable: true, textureFilterable: true, bytesPerElement: [4, 2], type: [UNSIGNED_BYTE$1, UNSIGNED_SHORT_4_4_4_4] };
+    t[RGB10_A2] = { textureFormat: RGBA$1, colorRenderable: true, textureFilterable: true, bytesPerElement: [4], type: [UNSIGNED_INT_2_10_10_10_REV] };
+    t[RGBA16F] = { textureFormat: RGBA$1, colorRenderable: false, textureFilterable: true, bytesPerElement: [16, 8], type: [FLOAT$1, HALF_FLOAT] };
+    t[RGBA32F] = { textureFormat: RGBA$1, colorRenderable: false, textureFilterable: false, bytesPerElement: [16], type: [FLOAT$1] };
+    t[RGBA8UI] = { textureFormat: RGBA_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [4], type: [UNSIGNED_BYTE$1] };
+    t[RGBA8I] = { textureFormat: RGBA_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [4], type: [BYTE] };
+    t[RGB10_A2UI] = { textureFormat: RGBA_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [4], type: [UNSIGNED_INT_2_10_10_10_REV] };
+    t[RGBA16UI] = { textureFormat: RGBA_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [8], type: [UNSIGNED_SHORT$1] };
+    t[RGBA16I] = { textureFormat: RGBA_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [8], type: [SHORT] };
+    t[RGBA32I] = { textureFormat: RGBA_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [16], type: [INT$1] };
+    t[RGBA32UI] = { textureFormat: RGBA_INTEGER, colorRenderable: true, textureFilterable: false, bytesPerElement: [16], type: [UNSIGNED_INT$1] };
+    t[DEPTH_COMPONENT16$1] = { textureFormat: DEPTH_COMPONENT$1, colorRenderable: true, textureFilterable: false, bytesPerElement: [2, 4], type: [UNSIGNED_SHORT$1, UNSIGNED_INT$1] };
+    t[DEPTH_COMPONENT24$1] = { textureFormat: DEPTH_COMPONENT$1, colorRenderable: true, textureFilterable: false, bytesPerElement: [4], type: [UNSIGNED_INT$1] };
+    t[DEPTH_COMPONENT32F$1] = { textureFormat: DEPTH_COMPONENT$1, colorRenderable: true, textureFilterable: false, bytesPerElement: [4], type: [FLOAT$1] };
+    t[DEPTH24_STENCIL8$1] = { textureFormat: DEPTH_STENCIL$1, colorRenderable: true, textureFilterable: false, bytesPerElement: [4], type: [UNSIGNED_INT_24_8] };
+    t[DEPTH32F_STENCIL8$1] = { textureFormat: DEPTH_STENCIL$1, colorRenderable: true, textureFilterable: false, bytesPerElement: [4], type: [FLOAT_32_UNSIGNED_INT_24_8_REV] };
+    Object.keys(t).forEach(function(internalFormat2) {
+      const info = t[internalFormat2];
+      info.bytesPerElementMap = {};
+      info.bytesPerElement.forEach(function(bytesPerElement, ndx) {
+        const type = info.type[ndx];
+        info.bytesPerElementMap[type] = bytesPerElement;
+      });
+    });
+    s_textureInternalFormatInfo = t;
+  }
+  return s_textureInternalFormatInfo[internalFormat];
+}
+function getBytesPerElementForInternalFormat(internalFormat, type) {
+  const info = getTextureInternalFormatInfo(internalFormat);
+  if (!info) {
+    throw "unknown internal format";
+  }
+  const bytesPerElement = info.bytesPerElementMap[type];
+  if (bytesPerElement === void 0) {
+    throw "unknown internal format";
+  }
+  return bytesPerElement;
+}
+function getFormatAndTypeForInternalFormat(internalFormat) {
+  const info = getTextureInternalFormatInfo(internalFormat);
+  if (!info) {
+    throw "unknown internal format";
+  }
+  return {
+    format: info.textureFormat,
+    type: info.type[0]
+  };
+}
+function isPowerOf2(value) {
+  return (value & value - 1) === 0;
+}
+function canGenerateMipmap(gl, width, height, internalFormat) {
+  if (!isWebGL2(gl)) {
+    return isPowerOf2(width) && isPowerOf2(height);
+  }
+  const info = getTextureInternalFormatInfo(internalFormat);
+  if (!info) {
+    throw "unknown internal format";
+  }
+  return info.colorRenderable && info.textureFilterable;
+}
+function canFilter(internalFormat) {
+  const info = getTextureInternalFormatInfo(internalFormat);
+  if (!info) {
+    throw "unknown internal format";
+  }
+  return info.textureFilterable;
+}
+function getTextureTypeForArrayType(gl, src, defaultType) {
+  if (isArrayBuffer2(src)) {
+    return getGLTypeForTypedArray(src);
+  }
+  return defaultType || UNSIGNED_BYTE$1;
+}
+function guessDimensions(gl, target, width, height, numElements) {
+  if (numElements % 1 !== 0) {
+    throw "can't guess dimensions";
+  }
+  if (!width && !height) {
+    const size = Math.sqrt(numElements / (target === TEXTURE_CUBE_MAP$1 ? 6 : 1));
+    if (size % 1 === 0) {
+      width = size;
+      height = size;
+    } else {
+      width = numElements;
+      height = 1;
+    }
+  } else if (!height) {
+    height = numElements / width;
+    if (height % 1) {
+      throw "can't guess dimensions";
+    }
+  } else if (!width) {
+    width = numElements / height;
+    if (width % 1) {
+      throw "can't guess dimensions";
+    }
+  }
+  return {
+    width,
+    height
+  };
+}
+function setPackState(gl, options) {
+  if (options.colorspaceConversion !== void 0) {
+    gl.pixelStorei(UNPACK_COLORSPACE_CONVERSION_WEBGL, options.colorspaceConversion);
+  }
+  if (options.premultiplyAlpha !== void 0) {
+    gl.pixelStorei(UNPACK_PREMULTIPLY_ALPHA_WEBGL, options.premultiplyAlpha);
+  }
+  if (options.flipY !== void 0) {
+    gl.pixelStorei(UNPACK_FLIP_Y_WEBGL, options.flipY);
+  }
+}
+function setSkipStateToDefault(gl) {
+  gl.pixelStorei(UNPACK_ALIGNMENT, 4);
+  if (isWebGL2(gl)) {
+    gl.pixelStorei(UNPACK_ROW_LENGTH, 0);
+    gl.pixelStorei(UNPACK_IMAGE_HEIGHT, 0);
+    gl.pixelStorei(UNPACK_SKIP_PIXELS, 0);
+    gl.pixelStorei(UNPACK_SKIP_ROWS, 0);
+    gl.pixelStorei(UNPACK_SKIP_IMAGES, 0);
+  }
+}
+function setTextureSamplerParameters(gl, target, parameteriFn, options) {
+  if (options.minMag) {
+    parameteriFn.call(gl, target, TEXTURE_MIN_FILTER, options.minMag);
+    parameteriFn.call(gl, target, TEXTURE_MAG_FILTER, options.minMag);
+  }
+  if (options.min) {
+    parameteriFn.call(gl, target, TEXTURE_MIN_FILTER, options.min);
+  }
+  if (options.mag) {
+    parameteriFn.call(gl, target, TEXTURE_MAG_FILTER, options.mag);
+  }
+  if (options.wrap) {
+    parameteriFn.call(gl, target, TEXTURE_WRAP_S, options.wrap);
+    parameteriFn.call(gl, target, TEXTURE_WRAP_T, options.wrap);
+    if (target === TEXTURE_3D$1 || isSampler(gl, target)) {
+      parameteriFn.call(gl, target, TEXTURE_WRAP_R, options.wrap);
+    }
+  }
+  if (options.wrapR) {
+    parameteriFn.call(gl, target, TEXTURE_WRAP_R, options.wrapR);
+  }
+  if (options.wrapS) {
+    parameteriFn.call(gl, target, TEXTURE_WRAP_S, options.wrapS);
+  }
+  if (options.wrapT) {
+    parameteriFn.call(gl, target, TEXTURE_WRAP_T, options.wrapT);
+  }
+  if (options.minLod) {
+    parameteriFn.call(gl, target, TEXTURE_MIN_LOD, options.minLod);
+  }
+  if (options.maxLod) {
+    parameteriFn.call(gl, target, TEXTURE_MAX_LOD, options.maxLod);
+  }
+  if (options.baseLevel) {
+    parameteriFn.call(gl, target, TEXTURE_BASE_LEVEL, options.baseLevel);
+  }
+  if (options.maxLevel) {
+    parameteriFn.call(gl, target, TEXTURE_MAX_LEVEL, options.maxLevel);
+  }
+}
+function setTextureParameters(gl, tex, options) {
+  const target = options.target || TEXTURE_2D$2;
+  gl.bindTexture(target, tex);
+  setTextureSamplerParameters(gl, target, gl.texParameteri, options);
+}
+function make1Pixel(color) {
+  color = color || defaults$1.textureColor;
+  if (isArrayBuffer2(color)) {
+    return color;
+  }
+  return new Uint8Array([color[0] * 255, color[1] * 255, color[2] * 255, color[3] * 255]);
+}
+function setTextureFilteringForSize(gl, tex, options, width, height, internalFormat) {
+  options = options || defaults$1.textureOptions;
+  internalFormat = internalFormat || RGBA$1;
+  const target = options.target || TEXTURE_2D$2;
+  width = width || options.width;
+  height = height || options.height;
+  gl.bindTexture(target, tex);
+  if (canGenerateMipmap(gl, width, height, internalFormat)) {
+    gl.generateMipmap(target);
+  } else {
+    const filtering = canFilter(internalFormat) ? LINEAR$1 : NEAREST;
+    gl.texParameteri(target, TEXTURE_MIN_FILTER, filtering);
+    gl.texParameteri(target, TEXTURE_MAG_FILTER, filtering);
+    gl.texParameteri(target, TEXTURE_WRAP_S, CLAMP_TO_EDGE$1);
+    gl.texParameteri(target, TEXTURE_WRAP_T, CLAMP_TO_EDGE$1);
+  }
+}
+function shouldAutomaticallySetTextureFilteringForSize(options) {
+  return options.auto === true || options.auto === void 0 && options.level === void 0;
+}
+function getCubeFaceOrder(gl, options) {
+  options = options || {};
+  return options.cubeFaceOrder || [
+    TEXTURE_CUBE_MAP_POSITIVE_X,
+    TEXTURE_CUBE_MAP_NEGATIVE_X,
+    TEXTURE_CUBE_MAP_POSITIVE_Y,
+    TEXTURE_CUBE_MAP_NEGATIVE_Y,
+    TEXTURE_CUBE_MAP_POSITIVE_Z,
+    TEXTURE_CUBE_MAP_NEGATIVE_Z
+  ];
+}
+function getCubeFacesWithNdx(gl, options) {
+  const faces = getCubeFaceOrder(gl, options);
+  const facesWithNdx = faces.map(function(face, ndx) {
+    return { face, ndx };
+  });
+  facesWithNdx.sort(function(a, b) {
+    return a.face - b.face;
+  });
+  return facesWithNdx;
+}
+function setTextureFromElement(gl, tex, element, options) {
+  options = options || defaults$1.textureOptions;
+  const target = options.target || TEXTURE_2D$2;
+  const level = options.level || 0;
+  let width = element.width;
+  let height = element.height;
+  const internalFormat = options.internalFormat || options.format || RGBA$1;
+  const formatType = getFormatAndTypeForInternalFormat(internalFormat);
+  const format = options.format || formatType.format;
+  const type = options.type || formatType.type;
+  setPackState(gl, options);
+  gl.bindTexture(target, tex);
+  if (target === TEXTURE_CUBE_MAP$1) {
+    const imgWidth = element.width;
+    const imgHeight = element.height;
+    let size;
+    let slices;
+    if (imgWidth / 6 === imgHeight) {
+      size = imgHeight;
+      slices = [0, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0];
+    } else if (imgHeight / 6 === imgWidth) {
+      size = imgWidth;
+      slices = [0, 0, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5];
+    } else if (imgWidth / 3 === imgHeight / 2) {
+      size = imgWidth / 3;
+      slices = [0, 0, 1, 0, 2, 0, 0, 1, 1, 1, 2, 1];
+    } else if (imgWidth / 2 === imgHeight / 3) {
+      size = imgWidth / 2;
+      slices = [0, 0, 1, 0, 0, 1, 1, 1, 0, 2, 1, 2];
+    } else {
+      throw "can't figure out cube map from element: " + (element.src ? element.src : element.nodeName);
+    }
+    const ctx = getShared2DContext();
+    if (ctx) {
+      ctx.canvas.width = size;
+      ctx.canvas.height = size;
+      width = size;
+      height = size;
+      getCubeFacesWithNdx(gl, options).forEach(function(f) {
+        const xOffset = slices[f.ndx * 2 + 0] * size;
+        const yOffset = slices[f.ndx * 2 + 1] * size;
+        ctx.drawImage(element, xOffset, yOffset, size, size, 0, 0, size, size);
+        gl.texImage2D(f.face, level, internalFormat, format, type, ctx.canvas);
+      });
+      ctx.canvas.width = 1;
+      ctx.canvas.height = 1;
+    } else if (typeof createImageBitmap !== "undefined") {
+      width = size;
+      height = size;
+      getCubeFacesWithNdx(gl, options).forEach(function(f) {
+        const xOffset = slices[f.ndx * 2 + 0] * size;
+        const yOffset = slices[f.ndx * 2 + 1] * size;
+        gl.texImage2D(f.face, level, internalFormat, size, size, 0, format, type, null);
+        createImageBitmap(element, xOffset, yOffset, size, size, {
+          premultiplyAlpha: "none",
+          colorSpaceConversion: "none"
+        }).then(function(imageBitmap) {
+          setPackState(gl, options);
+          gl.bindTexture(target, tex);
+          gl.texImage2D(f.face, level, internalFormat, format, type, imageBitmap);
+          if (shouldAutomaticallySetTextureFilteringForSize(options)) {
+            setTextureFilteringForSize(gl, tex, options, width, height, internalFormat);
+          }
+        });
+      });
+    }
+  } else if (target === TEXTURE_3D$1 || target === TEXTURE_2D_ARRAY$1) {
+    const smallest = Math.min(element.width, element.height);
+    const largest = Math.max(element.width, element.height);
+    const depth = largest / smallest;
+    if (depth % 1 !== 0) {
+      throw "can not compute 3D dimensions of element";
+    }
+    const xMult = element.width === largest ? 1 : 0;
+    const yMult = element.height === largest ? 1 : 0;
+    gl.pixelStorei(UNPACK_ALIGNMENT, 1);
+    gl.pixelStorei(UNPACK_ROW_LENGTH, element.width);
+    gl.pixelStorei(UNPACK_IMAGE_HEIGHT, 0);
+    gl.pixelStorei(UNPACK_SKIP_IMAGES, 0);
+    gl.texImage3D(target, level, internalFormat, smallest, smallest, smallest, 0, format, type, null);
+    for (let d = 0; d < depth; ++d) {
+      const srcX = d * smallest * xMult;
+      const srcY = d * smallest * yMult;
+      gl.pixelStorei(UNPACK_SKIP_PIXELS, srcX);
+      gl.pixelStorei(UNPACK_SKIP_ROWS, srcY);
+      gl.texSubImage3D(target, level, 0, 0, d, smallest, smallest, 1, format, type, element);
+    }
+    setSkipStateToDefault(gl);
+  } else {
+    gl.texImage2D(target, level, internalFormat, format, type, element);
+  }
+  if (shouldAutomaticallySetTextureFilteringForSize(options)) {
+    setTextureFilteringForSize(gl, tex, options, width, height, internalFormat);
+  }
+  setTextureParameters(gl, tex, options);
+}
+function noop() {
+}
+function urlIsSameOrigin(url) {
+  if (typeof document !== "undefined") {
+    const a = document.createElement("a");
+    a.href = url;
+    return a.hostname === location.hostname && a.port === location.port && a.protocol === location.protocol;
+  } else {
+    const localOrigin = new URL(location.href).origin;
+    const urlOrigin = new URL(url, location.href).origin;
+    return urlOrigin === localOrigin;
+  }
+}
+function setToAnonymousIfUndefinedAndURLIsNotSameOrigin(url, crossOrigin) {
+  return crossOrigin === void 0 && !urlIsSameOrigin(url) ? "anonymous" : crossOrigin;
+}
+function loadImage(url, crossOrigin, callback) {
+  callback = callback || noop;
+  let img;
+  crossOrigin = crossOrigin !== void 0 ? crossOrigin : defaults$1.crossOrigin;
+  crossOrigin = setToAnonymousIfUndefinedAndURLIsNotSameOrigin(url, crossOrigin);
+  if (typeof Image !== "undefined") {
+    img = new Image();
+    if (crossOrigin !== void 0) {
+      img.crossOrigin = crossOrigin;
+    }
+    const clearEventHandlers = function clearEventHandlers2() {
+      img.removeEventListener("error", onError);
+      img.removeEventListener("load", onLoad);
+      img = null;
+    };
+    const onError = function onError2() {
+      const msg = "couldn't load image: " + url;
+      error$1(msg);
+      callback(msg, img);
+      clearEventHandlers();
+    };
+    const onLoad = function onLoad2() {
+      callback(null, img);
+      clearEventHandlers();
+    };
+    img.addEventListener("error", onError);
+    img.addEventListener("load", onLoad);
+    img.src = url;
+    return img;
+  } else if (typeof ImageBitmap !== "undefined") {
+    let err;
+    let bm;
+    const cb = function cb2() {
+      callback(err, bm);
+    };
+    const options = {};
+    if (crossOrigin) {
+      options.mode = "cors";
+    }
+    fetch(url, options).then(function(response) {
+      if (!response.ok) {
+        throw response;
+      }
+      return response.blob();
+    }).then(function(blob) {
+      return createImageBitmap(blob, {
+        premultiplyAlpha: "none",
+        colorSpaceConversion: "none"
+      });
+    }).then(function(bitmap) {
+      bm = bitmap;
+      setTimeout(cb);
+    }).catch(function(e) {
+      err = e;
+      setTimeout(cb);
+    });
+    img = null;
+  }
+  return img;
+}
+function isTexImageSource(obj) {
+  return typeof ImageBitmap !== "undefined" && obj instanceof ImageBitmap || typeof ImageData !== "undefined" && obj instanceof ImageData || typeof HTMLElement !== "undefined" && obj instanceof HTMLElement;
+}
+function loadAndUseImage(obj, crossOrigin, callback) {
+  if (isTexImageSource(obj)) {
+    setTimeout(function() {
+      callback(null, obj);
+    });
+    return obj;
+  }
+  return loadImage(obj, crossOrigin, callback);
+}
+function setTextureTo1PixelColor(gl, tex, options) {
+  options = options || defaults$1.textureOptions;
+  const target = options.target || TEXTURE_2D$2;
+  gl.bindTexture(target, tex);
+  if (options.color === false) {
+    return;
+  }
+  const color = make1Pixel(options.color);
+  if (target === TEXTURE_CUBE_MAP$1) {
+    for (let ii = 0; ii < 6; ++ii) {
+      gl.texImage2D(TEXTURE_CUBE_MAP_POSITIVE_X + ii, 0, RGBA$1, 1, 1, 0, RGBA$1, UNSIGNED_BYTE$1, color);
+    }
+  } else if (target === TEXTURE_3D$1 || target === TEXTURE_2D_ARRAY$1) {
+    gl.texImage3D(target, 0, RGBA$1, 1, 1, 1, 0, RGBA$1, UNSIGNED_BYTE$1, color);
+  } else {
+    gl.texImage2D(target, 0, RGBA$1, 1, 1, 0, RGBA$1, UNSIGNED_BYTE$1, color);
+  }
+}
+function loadTextureFromUrl(gl, tex, options, callback) {
+  callback = callback || noop;
+  options = options || defaults$1.textureOptions;
+  setTextureTo1PixelColor(gl, tex, options);
+  options = Object.assign({}, options);
+  const img = loadAndUseImage(options.src, options.crossOrigin, function(err, img2) {
+    if (err) {
+      callback(err, tex, img2);
+    } else {
+      setTextureFromElement(gl, tex, img2, options);
+      callback(null, tex, img2);
+    }
+  });
+  return img;
+}
+function loadCubemapFromUrls(gl, tex, options, callback) {
+  callback = callback || noop;
+  const urls = options.src;
+  if (urls.length !== 6) {
+    throw "there must be 6 urls for a cubemap";
+  }
+  const level = options.level || 0;
+  const internalFormat = options.internalFormat || options.format || RGBA$1;
+  const formatType = getFormatAndTypeForInternalFormat(internalFormat);
+  const format = options.format || formatType.format;
+  const type = options.type || UNSIGNED_BYTE$1;
+  const target = options.target || TEXTURE_2D$2;
+  if (target !== TEXTURE_CUBE_MAP$1) {
+    throw "target must be TEXTURE_CUBE_MAP";
+  }
+  setTextureTo1PixelColor(gl, tex, options);
+  options = Object.assign({}, options);
+  let numToLoad = 6;
+  const errors = [];
+  const faces = getCubeFaceOrder(gl, options);
+  let imgs;
+  function uploadImg(faceTarget) {
+    return function(err, img) {
+      --numToLoad;
+      if (err) {
+        errors.push(err);
+      } else {
+        if (img.width !== img.height) {
+          errors.push("cubemap face img is not a square: " + img.src);
+        } else {
+          setPackState(gl, options);
+          gl.bindTexture(target, tex);
+          if (numToLoad === 5) {
+            getCubeFaceOrder().forEach(function(otherTarget) {
+              gl.texImage2D(otherTarget, level, internalFormat, format, type, img);
+            });
+          } else {
+            gl.texImage2D(faceTarget, level, internalFormat, format, type, img);
+          }
+          if (shouldAutomaticallySetTextureFilteringForSize(options)) {
+            gl.generateMipmap(target);
+          }
+        }
+      }
+      if (numToLoad === 0) {
+        callback(errors.length ? errors : void 0, tex, imgs);
+      }
+    };
+  }
+  imgs = urls.map(function(url, ndx) {
+    return loadAndUseImage(url, options.crossOrigin, uploadImg(faces[ndx]));
+  });
+}
+function loadSlicesFromUrls(gl, tex, options, callback) {
+  callback = callback || noop;
+  const urls = options.src;
+  const internalFormat = options.internalFormat || options.format || RGBA$1;
+  const formatType = getFormatAndTypeForInternalFormat(internalFormat);
+  const format = options.format || formatType.format;
+  const type = options.type || UNSIGNED_BYTE$1;
+  const target = options.target || TEXTURE_2D_ARRAY$1;
+  if (target !== TEXTURE_3D$1 && target !== TEXTURE_2D_ARRAY$1) {
+    throw "target must be TEXTURE_3D or TEXTURE_2D_ARRAY";
+  }
+  setTextureTo1PixelColor(gl, tex, options);
+  options = Object.assign({}, options);
+  let numToLoad = urls.length;
+  const errors = [];
+  let imgs;
+  const level = options.level || 0;
+  let width = options.width;
+  let height = options.height;
+  const depth = urls.length;
+  let firstImage = true;
+  function uploadImg(slice) {
+    return function(err, img) {
+      --numToLoad;
+      if (err) {
+        errors.push(err);
+      } else {
+        setPackState(gl, options);
+        gl.bindTexture(target, tex);
+        if (firstImage) {
+          firstImage = false;
+          width = options.width || img.width;
+          height = options.height || img.height;
+          gl.texImage3D(target, level, internalFormat, width, height, depth, 0, format, type, null);
+          for (let s = 0; s < depth; ++s) {
+            gl.texSubImage3D(target, level, 0, 0, s, width, height, 1, format, type, img);
+          }
+        } else {
+          let src = img;
+          let ctx;
+          if (img.width !== width || img.height !== height) {
+            ctx = getShared2DContext();
+            src = ctx.canvas;
+            ctx.canvas.width = width;
+            ctx.canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+          }
+          gl.texSubImage3D(target, level, 0, 0, slice, width, height, 1, format, type, src);
+          if (ctx && src === ctx.canvas) {
+            ctx.canvas.width = 0;
+            ctx.canvas.height = 0;
+          }
+        }
+        if (shouldAutomaticallySetTextureFilteringForSize(options)) {
+          gl.generateMipmap(target);
+        }
+      }
+      if (numToLoad === 0) {
+        callback(errors.length ? errors : void 0, tex, imgs);
+      }
+    };
+  }
+  imgs = urls.map(function(url, ndx) {
+    return loadAndUseImage(url, options.crossOrigin, uploadImg(ndx));
+  });
+}
+function setTextureFromArray(gl, tex, src, options) {
+  options = options || defaults$1.textureOptions;
+  const target = options.target || TEXTURE_2D$2;
+  gl.bindTexture(target, tex);
+  let width = options.width;
+  let height = options.height;
+  let depth = options.depth;
+  const level = options.level || 0;
+  const internalFormat = options.internalFormat || options.format || RGBA$1;
+  const formatType = getFormatAndTypeForInternalFormat(internalFormat);
+  const format = options.format || formatType.format;
+  const type = options.type || getTextureTypeForArrayType(gl, src, formatType.type);
+  if (!isArrayBuffer2(src)) {
+    const Type = getTypedArrayTypeForGLType(type);
+    src = new Type(src);
+  } else if (src instanceof Uint8ClampedArray) {
+    src = new Uint8Array(src.buffer);
+  }
+  const bytesPerElement = getBytesPerElementForInternalFormat(internalFormat, type);
+  const numElements = src.byteLength / bytesPerElement;
+  if (numElements % 1) {
+    throw "length wrong size for format: " + glEnumToString(gl, format);
+  }
+  let dimensions;
+  if (target === TEXTURE_3D$1 || target === TEXTURE_2D_ARRAY$1) {
+    if (!width && !height && !depth) {
+      const size = Math.cbrt(numElements);
+      if (size % 1 !== 0) {
+        throw "can't guess cube size of array of numElements: " + numElements;
+      }
+      width = size;
+      height = size;
+      depth = size;
+    } else if (width && (!height || !depth)) {
+      dimensions = guessDimensions(gl, target, height, depth, numElements / width);
+      height = dimensions.width;
+      depth = dimensions.height;
+    } else if (height && (!width || !depth)) {
+      dimensions = guessDimensions(gl, target, width, depth, numElements / height);
+      width = dimensions.width;
+      depth = dimensions.height;
+    } else {
+      dimensions = guessDimensions(gl, target, width, height, numElements / depth);
+      width = dimensions.width;
+      height = dimensions.height;
+    }
+  } else {
+    dimensions = guessDimensions(gl, target, width, height, numElements);
+    width = dimensions.width;
+    height = dimensions.height;
+  }
+  setSkipStateToDefault(gl);
+  gl.pixelStorei(UNPACK_ALIGNMENT, options.unpackAlignment || 1);
+  setPackState(gl, options);
+  if (target === TEXTURE_CUBE_MAP$1) {
+    const elementsPerElement = bytesPerElement / src.BYTES_PER_ELEMENT;
+    const faceSize = numElements / 6 * elementsPerElement;
+    getCubeFacesWithNdx(gl, options).forEach((f) => {
+      const offset = faceSize * f.ndx;
+      const data = src.subarray(offset, offset + faceSize);
+      gl.texImage2D(f.face, level, internalFormat, width, height, 0, format, type, data);
+    });
+  } else if (target === TEXTURE_3D$1 || target === TEXTURE_2D_ARRAY$1) {
+    gl.texImage3D(target, level, internalFormat, width, height, depth, 0, format, type, src);
+  } else {
+    gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, src);
+  }
+  return {
+    width,
+    height,
+    depth,
+    type
+  };
+}
+function setEmptyTexture(gl, tex, options) {
+  const target = options.target || TEXTURE_2D$2;
+  gl.bindTexture(target, tex);
+  const level = options.level || 0;
+  const internalFormat = options.internalFormat || options.format || RGBA$1;
+  const formatType = getFormatAndTypeForInternalFormat(internalFormat);
+  const format = options.format || formatType.format;
+  const type = options.type || formatType.type;
+  setPackState(gl, options);
+  if (target === TEXTURE_CUBE_MAP$1) {
+    for (let ii = 0; ii < 6; ++ii) {
+      gl.texImage2D(TEXTURE_CUBE_MAP_POSITIVE_X + ii, level, internalFormat, options.width, options.height, 0, format, type, null);
+    }
+  } else if (target === TEXTURE_3D$1 || target === TEXTURE_2D_ARRAY$1) {
+    gl.texImage3D(target, level, internalFormat, options.width, options.height, options.depth, 0, format, type, null);
+  } else {
+    gl.texImage2D(target, level, internalFormat, options.width, options.height, 0, format, type, null);
+  }
+}
+function createTexture(gl, options, callback) {
+  callback = callback || noop;
+  options = options || defaults$1.textureOptions;
+  const tex = gl.createTexture();
+  const target = options.target || TEXTURE_2D$2;
+  let width = options.width || 1;
+  let height = options.height || 1;
+  const internalFormat = options.internalFormat || RGBA$1;
+  gl.bindTexture(target, tex);
+  if (target === TEXTURE_CUBE_MAP$1) {
+    gl.texParameteri(target, TEXTURE_WRAP_S, CLAMP_TO_EDGE$1);
+    gl.texParameteri(target, TEXTURE_WRAP_T, CLAMP_TO_EDGE$1);
+  }
+  let src = options.src;
+  if (src) {
+    if (typeof src === "function") {
+      src = src(gl, options);
+    }
+    if (typeof src === "string") {
+      loadTextureFromUrl(gl, tex, options, callback);
+    } else if (isArrayBuffer2(src) || Array.isArray(src) && (typeof src[0] === "number" || Array.isArray(src[0]) || isArrayBuffer2(src[0]))) {
+      const dimensions = setTextureFromArray(gl, tex, src, options);
+      width = dimensions.width;
+      height = dimensions.height;
+    } else if (Array.isArray(src) && (typeof src[0] === "string" || isTexImageSource(src[0]))) {
+      if (target === TEXTURE_CUBE_MAP$1) {
+        loadCubemapFromUrls(gl, tex, options, callback);
+      } else {
+        loadSlicesFromUrls(gl, tex, options, callback);
+      }
+    } else {
+      setTextureFromElement(gl, tex, src, options);
+      width = src.width;
+      height = src.height;
+    }
+  } else {
+    setEmptyTexture(gl, tex, options);
+  }
+  if (shouldAutomaticallySetTextureFilteringForSize(options)) {
+    setTextureFilteringForSize(gl, tex, options, width, height, internalFormat);
+  }
+  setTextureParameters(gl, tex, options);
+  return tex;
 }
 var error = error$1;
 function getElementById(id) {
@@ -3395,62 +4257,6 @@ function resizeCanvasToDisplaySize(canvas, multiplier) {
   }
   return false;
 }
-
-// src/render/material.ts
-var UNIFORM_PREFIX = "u_mat";
-var Material = class _Material {
-  /**
-   * Create a new material with default diffuse colour
-   */
-  constructor() {
-    this.diffuse = [0.2, 0.5, 0.97];
-    this.specular = void 0;
-    this.shininess = void 0;
-    this.ambient = void 0;
-    this.emissive = void 0;
-  }
-  /**
-   * Create a new material from a raw MTL material
-   */
-  static fromMtl(rawMtl) {
-    const m = new _Material();
-    m.diffuse = rawMtl.kd;
-    m.specular = rawMtl.ks;
-    m.shininess = rawMtl.ns;
-    m.ambient = rawMtl.ka;
-    m.emissive = rawMtl.ke;
-    return m;
-  }
-  /**
-   * Applies the material to the given program as a set of uniforms
-   * Each uniform is prefixed with `u_mat`, e.g. `u_matDiffuse`
-   */
-  apply(programInfo) {
-    const uniforms = this.getUniforms();
-    setUniforms(programInfo, uniforms);
-  }
-  /**
-   * Return a map of uniforms for this light, with a prefix
-   */
-  getUniforms() {
-    const uniforms = {};
-    for (const [propName, propValue] of Object.entries(this)) {
-      if (propValue !== void 0) {
-        uniforms[`${UNIFORM_PREFIX}${propName[0].toUpperCase()}${propName.slice(1)}`] = propValue;
-      }
-    }
-    return uniforms;
-  }
-};
-
-// src/core/logging.ts
-var log = __toESM(require_loglevel(), 1);
-function setLogLevel(level) {
-  log.setLevel(level);
-}
-
-// src/core/context.ts
-var import_loglevel3 = __toESM(require_loglevel(), 1);
 
 // node_modules/gl-matrix/esm/common.js
 var EPSILON = 1e-6;
@@ -4719,14 +5525,14 @@ var sub = subtract;
 
 // src/core/gl.ts
 var import_loglevel = __toESM(require_loglevel(), 1);
-var glContext = null;
+var glContext = void 0;
 function getGl(aa = true, selector = "canvas") {
   if (glContext) {
     return glContext;
   }
   import_loglevel.default.info("\u{1F58C}\uFE0F Creating WebGL2 context");
   const canvas = document.querySelector(selector);
-  glContext = canvas.getContext("webgl2", { antialias: aa });
+  glContext = canvas.getContext("webgl2", { antialias: aa }) ?? void 0;
   if (!glContext) {
     import_loglevel.default.error("\u{1F4A5} Unable to create WebGL2 context!");
   }
@@ -4734,7 +5540,7 @@ function getGl(aa = true, selector = "canvas") {
 }
 
 // src/render/light.ts
-var UNIFORM_PREFIX2 = "u_light";
+var UNIFORM_PREFIX = "u_light";
 var Light = class {
   constructor() {
     this.position = [0, 0, 0];
@@ -4756,7 +5562,7 @@ var Light = class {
     const uniforms = {};
     for (const [propName, propValue] of Object.entries(this)) {
       if (propValue !== void 0) {
-        uniforms[`${UNIFORM_PREFIX2}${propName[0].toUpperCase()}${propName.slice(1)}`] = propValue;
+        uniforms[`${UNIFORM_PREFIX}${propName[0].toUpperCase()}${propName.slice(1)}`] = propValue;
       }
     }
     return uniforms;
@@ -4841,7 +5647,7 @@ var Instance = class {
     this.rotate[2] += angle;
   }
   /**
-   * Render this instance
+   * Render this instance in the world
    * @param {WebGL2RenderingContext} gl - WebGL context to render into
    * @param {UniformSet} uniforms - Map of uniforms to pass to shader
    * @param {mat4} viewProjection - View projection matrix
@@ -4864,7 +5670,8 @@ var Instance = class {
       mat4_exports.rotateY(world, world, this.rotate[1]);
       mat4_exports.rotateZ(world, world, this.rotate[2]);
     }
-    uniforms.u_world = world;
+    if (uniforms.u)
+      uniforms.u_world = world;
     mat4_exports.invert(uniforms.u_worldInverseTranspose, world);
     mat4_exports.transpose(uniforms.u_worldInverseTranspose, uniforms.u_worldInverseTranspose);
     mat4_exports.multiply(uniforms.u_worldViewProjection, viewProjection, world);
@@ -4873,10 +5680,10 @@ var Instance = class {
 };
 
 // shaders/frag.glsl
-var frag_default = "precision highp float;\n\nvarying vec3 v_lighting;\nvarying vec2 v_texCoord;\n\nuniform vec3 u_matDiffuse;\nuniform float u_transparency;\n\n// temp\nvarying vec4 v_color;\n\nvoid main(void) {\n  gl_FragColor = vec4(u_matDiffuse, 1.0) * vec4(v_lighting, 1.0);\n  //gl_FragColor.a = u_transparency;\n  \n  // return red pixels for testing\n  //gl_FragColor = vec4(1.0, 0.0, 0.0, 0.5);\n}\n";
+var frag_default = "precision highp float;\n\nvarying vec3 v_lighting;\nvarying vec2 v_texCoord;\n\nuniform vec4 u_matDiffuse;\nuniform sampler2D u_matTexture;\n\nvoid main(void) {\n  vec4 diffuseColor = texture2D(u_matTexture, v_texCoord);\n  gl_FragColor = vec4(diffuseColor * u_matDiffuse) * vec4(v_lighting, 1.0);\n}\n";
 
 // shaders/vert.glsl
-var vert_default = "precision highp float;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\n\nuniform vec3 u_lightPosition;\nuniform vec3 u_lightColor;\nuniform vec3 u_lightAmbient;\n\nattribute vec4 position;\nattribute vec3 normal;\nattribute vec4 color;\n\n// varying to pass to fragment shader\nvarying vec3 v_lighting;\nvarying vec4 v_color;\n\nvoid main() {\n  vec4 worldPos = u_world * position;\n  float distance = length(u_lightPosition - worldPos.xyz) * 0.016;\n  vec3 lightVector = normalize(u_lightPosition - worldPos.xyz);\n  vec4 normalWorld = u_worldInverseTranspose * vec4(normal, 1.0);\n  float intensity = clamp(dot(normalWorld.xyz, lightVector), 0.0, 0.8);\n\n  //v_lighting = u_lightAmbient + (u_lightColor * (intensity / (distance * distance)));\n  v_lighting = u_lightAmbient + (u_lightColor * intensity);\n  v_color = color;\n  gl_Position = u_worldViewProjection * position;\n}";
+var vert_default = "precision highp float;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\n\nuniform vec3 u_lightPosition;\nuniform vec3 u_lightColor;\nuniform vec3 u_lightAmbient;\n\nattribute vec4 position;\nattribute vec3 normal;\nattribute vec2 texcoord;\n\n// varying to pass to fragment shader\nvarying vec3 v_lighting;\nvarying vec4 v_color;\nvarying vec2 v_texCoord;\n\nvoid main() {\n  v_texCoord = texcoord;\n\n  vec4 worldPos = u_world * position;\n  float distance = length(u_lightPosition - worldPos.xyz) * 0.06;\n  vec3 lightVector = normalize(u_lightPosition - worldPos.xyz);\n  vec4 normalWorld = u_worldInverseTranspose * vec4(normal, 1.0);\n  float intensity = clamp(dot(normalWorld.xyz, lightVector), 0.0, 0.8);\n\n  //v_lighting = u_lightAmbient + (u_lightColor * (intensity / (distance * distance)));\n  v_lighting = u_lightAmbient + (u_lightColor * intensity);\n  \n  gl_Position = u_worldViewProjection * position;\n}";
 
 // src/models/primitive.ts
 var Primitive = class {
@@ -4921,7 +5728,7 @@ var Context = class _Context {
     this.camera = new Camera();
     this.update = () => {
     };
-    import_loglevel3.default.info("\u{1F451} GSOTS context created");
+    import_loglevel3.default.info("\u{1F451} GSOTS-3D context created");
   }
   static async init(canvasSelector) {
     const gl = getGl(true, canvasSelector);
@@ -5024,10 +5831,12 @@ var Context = class _Context {
    * @param subdivisionsV
    * @returns
    */
-  createSphereInstance(radius = 5, subdivisionsH = 16, subdivisionsV = 8) {
+  createSphereInstance(material, radius = 5, subdivisionsH = 16, subdivisionsV = 8) {
     const sphere = new PrimitiveSphere(this.gl, radius, subdivisionsH, subdivisionsV);
+    sphere.material = material;
     const instance = new Instance(sphere);
     this.instances.push(instance);
+    import_loglevel3.default.debug(`\u{1F7E2} Created sphere instance, r:${radius} with ${subdivisionsH}x${subdivisionsV} subdivisions`);
     return instance;
   }
   /**
@@ -5036,6 +5845,89 @@ var Context = class _Context {
    */
   get defaultLight() {
     return this.lights[0];
+  }
+};
+
+// src/render/material.ts
+var UNIFORM_PREFIX2 = "u_mat";
+var Material = class _Material {
+  /**
+   * Create a new material with default diffuse colour
+   */
+  constructor() {
+    this.diffuse = [1, 1, 1];
+    this.specular = void 0;
+    this.shininess = void 0;
+    this.ambient = void 0;
+    this.emissive = void 0;
+    const gl = getGl();
+    if (!gl)
+      return;
+    this.texture = createTexture(gl, {
+      min: gl.NEAREST,
+      mag: gl.NEAREST,
+      src: [255, 255, 255, 255]
+    });
+  }
+  /**
+   * Create a new material from a raw MTL material
+   */
+  static fromMtl(rawMtl) {
+    const m = new _Material();
+    m.diffuse = rawMtl.kd;
+    m.specular = rawMtl.ks;
+    m.shininess = rawMtl.ns;
+    m.ambient = rawMtl.ka;
+    m.emissive = rawMtl.ke;
+    return m;
+  }
+  /**
+   * Helper to create a new material with a solid diffuse colour
+   */
+  static createDiffuse(r, g, b) {
+    const m = new _Material();
+    m.diffuse = [r, g, b];
+    return m;
+  }
+  /**
+   * Helper to create a new material with an image texture
+   */
+  static createTexture(url, minMagMode = TEX_LINEAR_MIPMAP_LINEAR) {
+    const m = new _Material();
+    const gl = getGl();
+    if (!gl)
+      return m;
+    gl.LINEAR_MIPMAP_LINEAR;
+    m.texture = createTexture(gl, {
+      min: minMagMode,
+      mag: minMagMode,
+      src: url
+    });
+    return m;
+  }
+  /**
+   * Applies the material to the given program as a set of uniforms
+   * Each uniform is prefixed with `u_mat`, e.g. `u_matDiffuse`
+   */
+  apply(programInfo) {
+    const uniforms = this.getUniforms();
+    setUniforms(programInfo, uniforms);
+  }
+  /**
+   * Return a map of uniforms for this light, with a prefix
+   */
+  getUniforms() {
+    const uniforms = {};
+    for (const [propName, propValue] of Object.entries(this)) {
+      if (propValue !== void 0) {
+        if (propName === "texture" || propName === "shininess") {
+          uniforms[`${UNIFORM_PREFIX2}Texture`] = propValue;
+          continue;
+        }
+        uniforms[`${UNIFORM_PREFIX2}${propName[0].toUpperCase()}${propName.slice(1)}`] = [...propValue, 1];
+      }
+    }
+    return uniforms;
   }
 };
 
@@ -5313,6 +6205,14 @@ export {
   Model,
   ModelCache,
   ModelPart,
+  Primitive,
+  PrimitiveSphere,
+  TEX_LINEAR,
+  TEX_LINEAR_MIPMAP_LINEAR,
+  TEX_LINEAR_MIPMAP_NEAREST,
+  TEX_NEAREST,
+  TEX_NEAREST_MIPMAP_LINEAR,
+  TEX_NEAREST_MIPMAP_NEAREST,
   VERSION,
   setLogLevel
 };

@@ -46,7 +46,7 @@ export class Instance {
   }
 
   /**
-   * Render this instance
+   * Render this instance in the world
    * @param {WebGL2RenderingContext} gl - WebGL context to render into
    * @param {UniformSet} uniforms - Map of uniforms to pass to shader
    * @param {mat4} viewProjection - View projection matrix
@@ -72,7 +72,7 @@ export class Instance {
       mat4.rotateZ(world, world, this.rotate[2])
     }
 
-    uniforms.u_world = world
+    if (uniforms.u) uniforms.u_world = world
 
     // Populate u_worldInverseTranspose - used for normals & shading
     mat4.invert(<mat4>uniforms.u_worldInverseTranspose, world)
@@ -81,7 +81,7 @@ export class Instance {
     // Populate u_worldViewProjection which is pretty fundamental
     mat4.multiply(<mat4>uniforms.u_worldViewProjection, viewProjection, world)
 
-    // Render the renderable thing
+    // Render the renderable thing wrapped by this instance
     this.renderable.render(gl, uniforms, programInfo)
   }
 }

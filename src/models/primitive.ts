@@ -14,6 +14,7 @@ import { Material } from '../index.ts'
 export abstract class Primitive implements Renderable {
   protected bufferInfo: BufferInfo | undefined
   public material: Material
+  public tex: WebGLTexture | undefined
 
   constructor() {
     this.material = new Material()
@@ -34,6 +35,7 @@ export abstract class Primitive implements Renderable {
 export class PrimitiveSphere extends Primitive {
   constructor(gl: WebGL2RenderingContext, radius: number, subdivisionsH: number, subdivisionsV: number) {
     super()
+
     this.bufferInfo = primitives.createSphereBufferInfo(gl, radius, subdivisionsH, subdivisionsV)
   }
 }

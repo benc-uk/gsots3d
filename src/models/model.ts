@@ -120,7 +120,7 @@ export class Model implements Renderable {
  * Holds part of a model, as the WebGL buffers needed to render it
  * Plus the material name associated with this part
  */
-export class ModelPart {
+class ModelPart {
   public readonly bufferInfo: BufferInfo
   public readonly materialName: string
 

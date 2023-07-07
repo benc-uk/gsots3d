@@ -1,4 +1,4 @@
-import { Model, Context, setLogLevel } from '../../dist-bundle/gsots3d.js'
+import { Model, Context, setLogLevel, Material } from '../../dist-bundle/gsots3d.js'
 
 setLogLevel('debug')
 
@@ -28,30 +28,31 @@ floor.scale = [8, 1, 8]
 floor.rotateX(Math.PI / 2)
 floor.position = [0, -10, 0]
 
-const sphereRed = ctx.createSphereInstance(2)
+const sphereRed = ctx.createSphereInstance(Material.createDiffuse(0.8, 0.1, 0.1), 2, 32, 16)
 sphereRed.position = [8, 7, -6]
-sphereRed.renderable.material.diffuse = [1, 0, 0]
 
-const sphereBlue = ctx.createSphereInstance(2)
-sphereBlue.position = [14, 7, -8]
-sphereBlue.renderable.material.diffuse = [0.2, 0.4, 1]
+const sphereGreen = ctx.createSphereInstance(Material.createDiffuse(0.1, 0.2, 0.9), 2, 32, 16)
+sphereGreen.position = [14, 7, -8]
 
-const sphereGreen = ctx.createSphereInstance(2)
-sphereGreen.position = [11, 7, -12]
-sphereGreen.renderable.material.diffuse = [0.2, 0.9, 0.2]
+const texture = Material.createTexture('../textures/mellon.jpg')
+const mellon = ctx.createSphereInstance(texture, 3, 32, 16)
+texture.diffuse = [0.7, 1.4, 0.7]
+mellon.position = [11, 8, -14]
 
+// Camera
 const camHeight = 30
 ctx.camera.position = [11, camHeight, 30]
 ctx.camera.lookAt = [0, 0, 0]
 ctx.camera.far = 300
 
 // Static light
-ctx.defaultLight.position = [-60, 82, -14]
+ctx.defaultLight.position = [-60, 42, -14]
 
 let time = 0
 const radius = 40
 const speed = 1.9
 
+// Update loop
 ctx.update = (delta) => {
   time += delta
 
@@ -62,3 +63,13 @@ ctx.update = (delta) => {
 
 ctx.debug = true
 ctx.start()
+
+// on lose focus
+window.onblur = () => {
+  ctx.stop()
+}
+
+// on focus
+window.onfocus = () => {
+  ctx.start()
+}

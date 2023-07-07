@@ -6,32 +6,30 @@
 import { mat4 } from 'gl-matrix'
 import { ProgramInfo } from 'twgl.js'
 
-export type UniformSet = { [key: string]: number | number[] | mat4 }
+export type UniformSet = { [key: string]: number | number[] | mat4 | WebGLTexture }
 
 export type XYZ = [number, number, number]
 export type RGB = [number, number, number]
 export type RGBA = [number, number, number, number]
 
-export type Geometry = {
-  material: string
-  data: {
-    position: number[]
-    texcoord?: number[]
-    normal: number[]
-  }
-}
-
-export type MtlMaterial = {
-  ns?: number
-  ka?: [number, number, number]
-  kd?: [number, number, number]
-  ks?: [number, number, number]
-  ke?: [number, number, number]
-  ni?: number
-  d?: number
-  illum?: number
-}
-
+/**
+ * Models and primitives implement this interface to be rendered
+ */
 export interface Renderable {
-  render(gl: WebGL2RenderingContext, uniforms: UniformSet, programInfo: ProgramInfo): void
+  render(gl: WebGL2RenderingContext, uniforms: UniformSet, programInfo: ProgramInfo)
 }
+
+// Stolen from lib.dom.d.ts
+
+/** @ignore */
+export const TEX_NEAREST = 0x2600
+/** @ignore */
+export const TEX_LINEAR = 0x2601
+/** @ignore */
+export const TEX_NEAREST_MIPMAP_NEAREST = 0x2700
+/** @ignore */
+export const TEX_LINEAR_MIPMAP_NEAREST = 0x2701
+/** @ignore */
+export const TEX_NEAREST_MIPMAP_LINEAR = 0x2702
+/** @ignore */
+export const TEX_LINEAR_MIPMAP_LINEAR = 0x2703

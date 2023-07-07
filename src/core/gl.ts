@@ -6,7 +6,7 @@
 import log from 'loglevel'
 
 // Memoized global WebGL2 context
-let glContext: WebGL2RenderingContext | null = null
+let glContext: WebGL2RenderingContext | undefined = undefined
 
 /**
  * Get the WebGL2 context, if it doesn't exist create it
@@ -23,7 +23,7 @@ export function getGl(aa = true, selector = 'canvas') {
   log.info('🖌️ Creating WebGL2 context')
 
   const canvas = document.querySelector(selector) as HTMLCanvasElement
-  glContext = canvas.getContext('webgl2', { antialias: aa })
+  glContext = canvas.getContext('webgl2', { antialias: aa }) ?? undefined
 
   if (!glContext) {
     log.error('💥 Unable to create WebGL2 context!')

@@ -4,13 +4,23 @@
 // Ben Coleman, 2023
 // ===============================================================================
 
-import { Geometry } from '../core/types.ts'
-
 const keywordRE = /(\w*)(?: )*(.*)/
 
 export type ParseResult = {
   matLibNames: string[]
   geometries: Geometry[]
+}
+
+/**
+ * Used internally by OBJ parser
+ */
+export type Geometry = {
+  material: string
+  data: {
+    position: number[]
+    texcoord?: number[]
+    normal: number[]
+  }
 }
 
 /**

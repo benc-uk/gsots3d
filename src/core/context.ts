@@ -7,7 +7,7 @@ import log from 'loglevel'
 import { ProgramInfo, createProgramInfo, resizeCanvasToDisplaySize } from 'twgl.js'
 import { mat4 } from 'gl-matrix'
 
-import { VERSION } from '../index.ts'
+import { Material, VERSION } from '../index.ts'
 import { getGl } from './gl.ts'
 import { UniformSet } from './types.ts'
 import { Light } from '../render/light.ts'
@@ -63,7 +63,7 @@ export class Context {
       // Do nothing
     }
 
-    log.info('👑 GSOTS context created')
+    log.info('👑 GSOTS-3D context created')
   }
 
   static async init(canvasSelector: string): Promise<Context> {
@@ -204,10 +204,14 @@ export class Context {
    * @param subdivisionsV
    * @returns
    */
-  createSphereInstance(radius = 5, subdivisionsH = 16, subdivisionsV = 8) {
+  createSphereInstance(material: Material, radius = 5, subdivisionsH = 16, subdivisionsV = 8) {
     const sphere = new PrimitiveSphere(this.gl, radius, subdivisionsH, subdivisionsV)
+    sphere.material = material
+
     const instance = new Instance(sphere)
     this.instances.push(instance)
+
+    log.debug(`🟢 Created sphere instance, r:${radius} with ${subdivisionsH}x${subdivisionsV} subdivisions`)
 
     return instance
   }

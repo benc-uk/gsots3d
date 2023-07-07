@@ -4,7 +4,19 @@
 // Ben Coleman, 2023
 // ===============================================================================
 
-import { MtlMaterial } from '../core/types.ts'
+/**
+ * A "raw" material fetched from the MTL parser, don't use this directly
+ */
+export type MtlMaterial = {
+  ns?: number
+  ka?: [number, number, number]
+  kd?: [number, number, number]
+  ks?: [number, number, number]
+  ke?: [number, number, number]
+  ni?: number
+  d?: number
+  illum?: number
+}
 
 /**
  * Parse an MTL file returning a map of materials.

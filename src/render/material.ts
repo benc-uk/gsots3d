@@ -3,8 +3,10 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-import { ProgramInfo, setUniforms } from 'twgl.js'
-import { RGB, UniformSet, MtlMaterial } from '../core/types.ts'
+import { ProgramInfo, createTexture, setUniforms } from 'twgl.js'
+import { RGB, TEX_LINEAR_MIPMAP_LINEAR, UniformSet } from '../core/types.ts'
+import { MtlMaterial } from '../parsers/mtl-parser.ts'
+import { getGl } from '../core/gl.ts'
 
 const UNIFORM_PREFIX = 'u_mat'
 
@@ -15,15 +17,27 @@ export class Material {
   public ambient?: RGB
   public emissive?: RGB
 
+  public texture?: WebGLTexture
+
   /**
    * Create a new material with default diffuse colour
    */
   constructor() {
-    this.diffuse = [0.2, 0.5, 0.97]
+    this.diffuse = [1, 1, 1]
     this.specular = undefined
     this.shininess = undefined
     this.ambient = undefined
     this.emissive = undefined
+
+    const gl = getGl()
+    if (!gl) return
+
+    // Solid white texture for plain colours
+    this.texture = createTexture(gl, {
+      min: gl.NEAREST,
+      mag: gl.NEAREST,
+      src: [255, 255, 255, 255],
+    })
   }
 
   /**
@@ -37,6 +51,34 @@ export class Material {
     m.shininess = rawMtl.ns
     m.ambient = rawMtl.ka
     m.emissive = rawMtl.ke
+
+    return m
+  }
+
+  /**
+   * Helper to create a new material with a solid diffuse colour
+   */
+  public static createDiffuse(r: number, g: number, b: number) {
+    const m = new Material()
+    m.diffuse = [r, g, b]
+
+    return m
+  }
+
+  /**
+   * Helper to create a new material with an image texture
+   */
+  public static createTexture(url: string, minMagMode = TEX_LINEAR_MIPMAP_LINEAR) {
+    const m = new Material()
+    const gl = getGl()
+    if (!gl) return m
+
+    gl.LINEAR_MIPMAP_LINEAR
+    m.texture = createTexture(gl, {
+      min: minMagMode,
+      mag: minMagMode,
+      src: url,
+    })
 
     return m
   }
@@ -59,9 +101,18 @@ export class Material {
 
     for (const [propName, propValue] of Object.entries(this)) {
       if (propValue !== undefined) {
-        uniforms[`${UNIFORM_PREFIX}${propName[0].toUpperCase()}${propName.slice(1)}`] = propValue
+        // Textures & scalar values are passed in as-is
+        if (propName === 'texture' || propName === 'shininess') {
+          uniforms[`${UNIFORM_PREFIX}Texture`] = propValue
+          continue
+        }
+
+        // Tuples are passed as a vec4 with alpha set to 1
+        uniforms[`${UNIFORM_PREFIX}${propName[0].toUpperCase()}${propName.slice(1)}`] = [...propValue, 1.0]
       }
     }
+
+    //console.log('Uniforms', uniforms)
 
     return uniforms
   }
