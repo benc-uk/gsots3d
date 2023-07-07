@@ -57,7 +57,9 @@
 </div></section>
 <section class="tsd-index-section">
 <h3 class="tsd-index-heading">Methods</h3>
-<div class="tsd-index-list"><a href="Context.html#createModelInstance" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-2048"><rect fill="var(--color-icon-background)" stroke="#FF4DB8" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="12"></rect><path d="M9.162 16V7.24H10.578L11.514 10.072C11.602 10.328 11.674 10.584 11.73 10.84C11.794 11.088 11.842 11.28 11.874 11.416C11.906 11.28 11.954 11.088 12.018 10.84C12.082 10.584 12.154 10.324 12.234 10.06L13.122 7.24H14.538V16H13.482V12.82C13.482 12.468 13.49 12.068 13.506 11.62C13.53 11.172 13.558 10.716 13.59 10.252C13.622 9.78 13.654 9.332 13.686 8.908C13.726 8.476 13.762 8.1 13.794 7.78L12.366 12.16H11.334L9.894 7.78C9.934 8.092 9.97 8.456 10.002 8.872C10.042 9.28 10.078 9.716 10.11 10.18C10.142 10.636 10.166 11.092 10.182 11.548C10.206 12.004 10.218 12.428 10.218 12.82V16H9.162Z" fill="var(--color-text)"></path></g></svg><span>create<wbr/>Model<wbr/>Instance</span></a>
+<div class="tsd-index-list"><a href="Context.html#createCubeInstance" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-2048"><rect fill="var(--color-icon-background)" stroke="#FF4DB8" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="12"></rect><path d="M9.162 16V7.24H10.578L11.514 10.072C11.602 10.328 11.674 10.584 11.73 10.84C11.794 11.088 11.842 11.28 11.874 11.416C11.906 11.28 11.954 11.088 12.018 10.84C12.082 10.584 12.154 10.324 12.234 10.06L13.122 7.24H14.538V16H13.482V12.82C13.482 12.468 13.49 12.068 13.506 11.62C13.53 11.172 13.558 10.716 13.59 10.252C13.622 9.78 13.654 9.332 13.686 8.908C13.726 8.476 13.762 8.1 13.794 7.78L12.366 12.16H11.334L9.894 7.78C9.934 8.092 9.97 8.456 10.002 8.872C10.042 9.28 10.078 9.716 10.11 10.18C10.142 10.636 10.166 11.092 10.182 11.548C10.206 12.004 10.218 12.428 10.218 12.82V16H9.162Z" fill="var(--color-text)"></path></g></svg><span>create<wbr/>Cube<wbr/>Instance</span></a>
+<a href="Context.html#createModelInstance" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>create<wbr/>Model<wbr/>Instance</span></a>
+<a href="Context.html#createPlaneInstance" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>create<wbr/>Plane<wbr/>Instance</span></a>
 <a href="Context.html#createSphereInstance" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>create<wbr/>Sphere<wbr/>Instance</span></a>
 <a href="Context.html#render" class="tsd-index-link tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>render</span></a>
 <a href="Context.html#start" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>start</span></a>
@@ -184,13 +186,30 @@
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>Get the default light</p>
 </div>
-<h4 class="tsd-returns-title">Returns <a href="Light.html" class="tsd-signature-type tsd-kind-class">Light</a></h4><p>The default light</p>
-
+<h4 class="tsd-returns-title">Returns <a href="Light.html" class="tsd-signature-type tsd-kind-class">Light</a></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L223">core/context.ts:223</a></li></ul></aside></li></ul></section></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L248">core/context.ts:248</a></li></ul></aside></li></ul></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Methods</h2>
+<section class="tsd-panel tsd-member"><a id="createCubeInstance" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><span>create<wbr/>Cube<wbr/>Instance</span><a href="#createCubeInstance" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
+<ul class="tsd-signatures">
+<li class="tsd-signature tsd-anchor-link" id="createCubeInstance.createCubeInstance-1"><span class="tsd-kind-call-signature">create<wbr/>Cube<wbr/>Instance</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">material</span>, <span class="tsd-kind-parameter">size</span><span class="tsd-signature-symbol">?</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a><a href="#createCubeInstance.createCubeInstance-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
+<li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Add an instance of a primitive cube</p>
+</div>
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li>
+<h5><span class="tsd-kind-parameter">material</span>: <a href="Material.html" class="tsd-signature-type tsd-kind-class">Material</a></h5></li>
+<li>
+<h5><span class="tsd-kind-parameter">size</span>: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 5</span></h5></li></ul></div>
+<h4 class="tsd-returns-title">Returns <a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a></h4>
+<div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L233">core/context.ts:233</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="createModelInstance" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>create<wbr/>Model<wbr/>Instance</span><a href="#createModelInstance" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -209,6 +228,30 @@
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
 <li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L190">core/context.ts:190</a></li></ul></aside></li></ul></section>
+<section class="tsd-panel tsd-member"><a id="createPlaneInstance" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><span>create<wbr/>Plane<wbr/>Instance</span><a href="#createPlaneInstance" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
+<ul class="tsd-signatures">
+<li class="tsd-signature tsd-anchor-link" id="createPlaneInstance.createPlaneInstance-1"><span class="tsd-kind-call-signature">create<wbr/>Plane<wbr/>Instance</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">material</span>, <span class="tsd-kind-parameter">width</span><span class="tsd-signature-symbol">?</span>, <span class="tsd-kind-parameter">height</span><span class="tsd-signature-symbol">?</span>, <span class="tsd-kind-parameter">subdivisionsW</span><span class="tsd-signature-symbol">?</span>, <span class="tsd-kind-parameter">subdivisionsH</span><span class="tsd-signature-symbol">?</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a><a href="#createPlaneInstance.createPlaneInstance-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
+<li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Add an instance of a primitive plane</p>
+</div>
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li>
+<h5><span class="tsd-kind-parameter">material</span>: <a href="Material.html" class="tsd-signature-type tsd-kind-class">Material</a></h5></li>
+<li>
+<h5><span class="tsd-kind-parameter">width</span>: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 5</span></h5></li>
+<li>
+<h5><span class="tsd-kind-parameter">height</span>: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 5</span></h5></li>
+<li>
+<h5><span class="tsd-kind-parameter">subdivisionsW</span>: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 1</span></h5></li>
+<li>
+<h5><span class="tsd-kind-parameter">subdivisionsH</span>: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 1</span></h5></li></ul></div>
+<h4 class="tsd-returns-title">Returns <a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a></h4>
+<div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L218">core/context.ts:218</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="createSphereInstance" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>create<wbr/>Sphere<wbr/>Instance</span><a href="#createSphereInstance" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -222,22 +265,15 @@
 <li>
 <h5><span class="tsd-kind-parameter">material</span>: <a href="Material.html" class="tsd-signature-type tsd-kind-class">Material</a></h5></li>
 <li>
-<h5><span class="tsd-kind-parameter">radius</span>: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 5</span></h5>
-<div class="tsd-comment tsd-typography"><p>Radius of sphere</p>
-</div>
-<div class="tsd-comment tsd-typography"></div></li>
+<h5><span class="tsd-kind-parameter">radius</span>: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 5</span></h5></li>
 <li>
-<h5><span class="tsd-kind-parameter">subdivisionsH</span>: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 16</span></h5>
-<div class="tsd-comment tsd-typography"><p>sub divisions around the horizontal axis</p>
-</div>
-<div class="tsd-comment tsd-typography"></div></li>
+<h5><span class="tsd-kind-parameter">subdivisionsH</span>: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 16</span></h5></li>
 <li>
-<h5><span class="tsd-kind-parameter">subdivisionsV</span>: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 8</span></h5>
-<div class="tsd-comment tsd-typography"></div></li></ul></div>
+<h5><span class="tsd-kind-parameter">subdivisionsV</span>: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 8</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L207">core/context.ts:207</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L203">core/context.ts:203</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="render" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>render</span><a href="#render" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-private">
@@ -315,7 +351,9 @@
 <li><a href="#totalTime" class="tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>total<wbr/>Time</span></a></li>
 <li><a href="#update" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>update</span></a></li>
 <li><a href="#defaultLight" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-262144"></use></svg><span>default<wbr/>Light</span></a></li>
+<li><a href="#createCubeInstance" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>create<wbr/>Cube<wbr/>Instance</span></a></li>
 <li><a href="#createModelInstance" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>create<wbr/>Model<wbr/>Instance</span></a></li>
+<li><a href="#createPlaneInstance" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>create<wbr/>Plane<wbr/>Instance</span></a></li>
 <li><a href="#createSphereInstance" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>create<wbr/>Sphere<wbr/>Instance</span></a></li>
 <li><a href="#render" class="tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>render</span></a></li>
 <li><a href="#start" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>start</span></a></li>
@@ -332,6 +370,8 @@
 <li><a href="Model.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-128"></use></svg><span>Model</span></a></li>
 <li><a href="ModelCache.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-128"></use></svg><span>Model<wbr/>Cache</span></a></li>
 <li><a href="Primitive.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-128"></use></svg><span>Primitive</span></a></li>
+<li><a href="PrimitiveCube.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-128"></use></svg><span>Primitive<wbr/>Cube</span></a></li>
+<li><a href="PrimitivePlane.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-128"></use></svg><span>Primitive<wbr/>Plane</span></a></li>
 <li><a href="PrimitiveSphere.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-128"></use></svg><span>Primitive<wbr/>Sphere</span></a></li>
 <li><a href="../interfaces/Renderable.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-256"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-interface)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M9.51 16V15.016H11.298V8.224H9.51V7.24H14.19V8.224H12.402V15.016H14.19V16H9.51Z" fill="var(--color-text)"></path></g></svg><span>Renderable</span></a></li>
 <li><a href="../types/RGB.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-4194304"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-type-alias)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M11.31 16V8.224H8.91V7.24H14.79V8.224H12.39V16H11.31Z" fill="var(--color-text)"></path></g></svg><span>RGB</span></a></li>

@@ -5705,6 +5705,18 @@ var PrimitiveSphere = class extends Primitive {
     this.bufferInfo = primitives.createSphereBufferInfo(gl, radius, subdivisionsH, subdivisionsV);
   }
 };
+var PrimitiveCube = class extends Primitive {
+  constructor(gl, size) {
+    super();
+    this.bufferInfo = primitives.createCubeBufferInfo(gl, size);
+  }
+};
+var PrimitivePlane = class extends Primitive {
+  constructor(gl, width, height, subdivisionsW, subdivisionsH) {
+    super();
+    this.bufferInfo = primitives.createPlaneBufferInfo(gl, width, height, subdivisionsW, subdivisionsH);
+  }
+};
 
 // src/core/context.ts
 var Context = class _Context {
@@ -5826,22 +5838,39 @@ var Context = class _Context {
   }
   /**
    * Add an instance of a primitive sphere
-   * @param radius - Radius of sphere
-   * @param subdivisionsH - sub divisions around the horizontal axis
-   * @param subdivisionsV
-   * @returns
    */
   createSphereInstance(material, radius = 5, subdivisionsH = 16, subdivisionsV = 8) {
     const sphere = new PrimitiveSphere(this.gl, radius, subdivisionsH, subdivisionsV);
     sphere.material = material;
     const instance = new Instance(sphere);
     this.instances.push(instance);
-    import_loglevel3.default.debug(`\u{1F7E2} Created sphere instance, r:${radius} with ${subdivisionsH}x${subdivisionsV} subdivisions`);
+    import_loglevel3.default.debug(`\u{1F7E2} Created sphere instance, r:${radius}`);
+    return instance;
+  }
+  /**
+   * Add an instance of a primitive plane
+   */
+  createPlaneInstance(material, width = 5, height = 5, subdivisionsW = 1, subdivisionsH = 1) {
+    const plane = new PrimitivePlane(this.gl, width, height, subdivisionsW, subdivisionsH);
+    plane.material = material;
+    const instance = new Instance(plane);
+    this.instances.push(instance);
+    import_loglevel3.default.debug(`\u{1F7E8} Created plane instance, w:${width} h:${height}`);
+    return instance;
+  }
+  /**
+   * Add an instance of a primitive cube
+   */
+  createCubeInstance(material, size = 5) {
+    const cube = new PrimitiveCube(this.gl, size);
+    cube.material = material;
+    const instance = new Instance(cube);
+    this.instances.push(instance);
+    import_loglevel3.default.debug(`\u{1F4E6} Created cube instance, size:${size}`);
     return instance;
   }
   /**
    * Get the default light
-   * @returns {Light} The default light
    */
   get defaultLight() {
     return this.lights[0];
@@ -5892,15 +5921,15 @@ var Material = class _Material {
   /**
    * Helper to create a new material with an image texture
    */
-  static createTexture(url, minMagMode = TEX_LINEAR_MIPMAP_LINEAR) {
+  static createTexture(url, filter = true) {
     const m = new _Material();
     const gl = getGl();
     if (!gl)
       return m;
     gl.LINEAR_MIPMAP_LINEAR;
     m.texture = createTexture(gl, {
-      min: minMagMode,
-      mag: minMagMode,
+      min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
+      mag: filter ? gl.LINEAR : gl.NEAREST,
       src: url
     });
     return m;
@@ -6195,7 +6224,7 @@ var ModelPart = class {
 };
 
 // src/index.ts
-var VERSION = "0.0.2";
+var VERSION = "0.0.3";
 export {
   Camera,
   Context,
@@ -6204,8 +6233,9 @@ export {
   Material,
   Model,
   ModelCache,
-  ModelPart,
   Primitive,
+  PrimitiveCube,
+  PrimitivePlane,
   PrimitiveSphere,
   TEX_LINEAR,
   TEX_LINEAR_MIPMAP_LINEAR,

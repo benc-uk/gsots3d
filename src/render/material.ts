@@ -68,15 +68,15 @@ export class Material {
   /**
    * Helper to create a new material with an image texture
    */
-  public static createTexture(url: string, minMagMode = TEX_LINEAR_MIPMAP_LINEAR) {
+  public static createTexture(url: string, filter = true) {
     const m = new Material()
     const gl = getGl()
     if (!gl) return m
 
     gl.LINEAR_MIPMAP_LINEAR
     m.texture = createTexture(gl, {
-      min: minMagMode,
-      mag: minMagMode,
+      min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
+      mag: filter ? gl.LINEAR : gl.NEAREST,
       src: url,
     })
 

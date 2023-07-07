@@ -18,7 +18,7 @@ import { Instance } from '../models/instance.ts'
 // Import shaders as hefty big strings
 import fragShader from '../../shaders/frag.glsl'
 import vertShader from '../../shaders/vert.glsl'
-import { PrimitiveSphere } from '../models/primitive.ts'
+import { PrimitiveCube, PrimitivePlane, PrimitiveSphere } from '../models/primitive.ts'
 
 /**
  * The main rendering context. This is the main entry point for the library.
@@ -199,10 +199,6 @@ export class Context {
 
   /**
    * Add an instance of a primitive sphere
-   * @param radius - Radius of sphere
-   * @param subdivisionsH - sub divisions around the horizontal axis
-   * @param subdivisionsV
-   * @returns
    */
   createSphereInstance(material: Material, radius = 5, subdivisionsH = 16, subdivisionsV = 8) {
     const sphere = new PrimitiveSphere(this.gl, radius, subdivisionsH, subdivisionsV)
@@ -211,14 +207,43 @@ export class Context {
     const instance = new Instance(sphere)
     this.instances.push(instance)
 
-    log.debug(`🟢 Created sphere instance, r:${radius} with ${subdivisionsH}x${subdivisionsV} subdivisions`)
+    log.debug(`🟢 Created sphere instance, r:${radius}`)
+
+    return instance
+  }
+
+  /**
+   * Add an instance of a primitive plane
+   */
+  createPlaneInstance(material: Material, width = 5, height = 5, subdivisionsW = 1, subdivisionsH = 1) {
+    const plane = new PrimitivePlane(this.gl, width, height, subdivisionsW, subdivisionsH)
+    plane.material = material
+
+    const instance = new Instance(plane)
+    this.instances.push(instance)
+
+    log.debug(`🟨 Created plane instance, w:${width} h:${height}`)
+
+    return instance
+  }
+
+  /**
+   * Add an instance of a primitive cube
+   */
+  createCubeInstance(material: Material, size = 5) {
+    const cube = new PrimitiveCube(this.gl, size)
+    cube.material = material
+
+    const instance = new Instance(cube)
+    this.instances.push(instance)
+
+    log.debug(`📦 Created cube instance, size:${size}`)
 
     return instance
   }
 
   /**
    * Get the default light
-   * @returns {Light} The default light
    */
   get defaultLight() {
     return this.lights[0]

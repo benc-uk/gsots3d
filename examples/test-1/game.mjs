@@ -6,14 +6,14 @@ const ctx = await Context.init('canvas')
 
 const tableMdl = await Model.parse('../objects', 'table.obj')
 const chestMdl = await Model.parse('../objects', 'chest.obj')
-const blockMdl = await Model.parse('../objects', 'floor.obj')
+const blockMdl = await Model.parse('../objects', 'block.obj')
 ctx.models.add(tableMdl)
 ctx.models.add(chestMdl)
 ctx.models.add(blockMdl)
 
 const table = ctx.createModelInstance('table')
-table.position = [5, 3, -4]
-table.scale = [2.1, 1.3, 2.7]
+table.position = [5, 2.5, -4]
+table.scale = [2.1, 1.5, 2.7]
 table.rotateX(Math.PI / 2)
 
 const chest1 = ctx.createModelInstance('chest')
@@ -23,10 +23,13 @@ const chest2 = ctx.createModelInstance('chest')
 chest2.position = [13, 0, 11]
 chest2.rotateY(Math.PI / 1.5)
 
-const floor = ctx.createModelInstance('floor')
-floor.scale = [8, 1, 8]
-floor.rotateX(Math.PI / 2)
-floor.position = [0, -10, 0]
+const block = ctx.createModelInstance('block')
+block.position = [-12, -6, 28]
+block.scale = [0.5, 0.5, 0.5]
+block.rotateY(1.2)
+
+const floor = ctx.createPlaneInstance(Material.createTexture('../textures/stone-wall.png', false), 260, 260, 5, 5)
+floor.position = [0, -8, 0]
 
 const sphereRed = ctx.createSphereInstance(Material.createDiffuse(0.8, 0.1, 0.1), 2, 32, 16)
 sphereRed.position = [8, 7, -6]
@@ -37,7 +40,11 @@ sphereGreen.position = [14, 7, -8]
 const texture = Material.createTexture('../textures/mellon.jpg')
 const mellon = ctx.createSphereInstance(texture, 3, 32, 16)
 texture.diffuse = [0.7, 1.4, 0.7]
-mellon.position = [11, 8, -14]
+mellon.position = [11, 8, -13]
+
+const cube = ctx.createCubeInstance(Material.createTexture('../textures/STARG2.png'), 10)
+cube.rotateY(Math.PI / 4)
+cube.position = [-13, -2.5, -18]
 
 // Camera
 const camHeight = 30

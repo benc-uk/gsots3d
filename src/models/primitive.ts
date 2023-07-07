@@ -39,3 +39,19 @@ export class PrimitiveSphere extends Primitive {
     this.bufferInfo = primitives.createSphereBufferInfo(gl, radius, subdivisionsH, subdivisionsV)
   }
 }
+
+export class PrimitiveCube extends Primitive {
+  constructor(gl: WebGL2RenderingContext, size: number) {
+    super()
+
+    this.bufferInfo = primitives.createCubeBufferInfo(gl, size)
+  }
+}
+
+export class PrimitivePlane extends Primitive {
+  constructor(gl: WebGL2RenderingContext, width: number, height: number, subdivisionsW: number, subdivisionsH: number) {
+    super()
+
+    this.bufferInfo = primitives.createPlaneBufferInfo(gl, width, height, subdivisionsW, subdivisionsH)
+  }
+}
