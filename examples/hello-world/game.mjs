@@ -1,8 +1,5 @@
-import { Model, Context } from '../../dist-bundle/gsots3d.js'
+import { Context } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init()
-
-ctx.models.add(await Model.parse('../objects', 'table.obj'))
-ctx.createInstance('table')
-
+ctx.createSphereInstance(4, 12, 12)
 ctx.start()

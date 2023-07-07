@@ -4,6 +4,7 @@
 // ======================================================================
 
 import { mat4 } from 'gl-matrix'
+import { ProgramInfo } from 'twgl.js'
 
 export type UniformSet = { [key: string]: number | number[] | mat4 }
 
@@ -29,4 +30,8 @@ export type MtlMaterial = {
   ni?: number
   d?: number
   illum?: number
+}
+
+export interface Renderable {
+  render(gl: WebGL2RenderingContext, uniforms: UniformSet, programInfo: ProgramInfo): void
 }

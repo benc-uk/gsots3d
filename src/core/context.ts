@@ -18,6 +18,7 @@ import { Instance } from '../models/instance.ts'
 // Import shaders as hefty big strings
 import fragShader from '../../shaders/frag.glsl'
 import vertShader from '../../shaders/vert.glsl'
+import { PrimitiveSphere } from '../models/primitive.ts'
 
 /**
  * The main rendering context. This is the main entry point for the library.
@@ -51,7 +52,7 @@ export class Context {
 
     // Default light
     const light = new Light()
-    light.position = [0, 100, 0]
+    light.position = [0, 40, 50]
     light.color = [1, 1, 1]
     light.ambient = [0.2, 0.2, 0.2]
     this.lights[0] = light
@@ -186,11 +187,26 @@ export class Context {
    * @param modelName
    * @returns {Instance} A new instance of the model
    */
-  createInstance(modelName: string) {
+  createModelInstance(modelName: string) {
     const model = this.models.get(modelName)
     if (!model) throw new Error(`Model ${modelName} not found`)
 
     const instance = new Instance(model)
+    this.instances.push(instance)
+
+    return instance
+  }
+
+  /**
+   * Add an instance of a primitive sphere
+   * @param radius - Radius of sphere
+   * @param subdivisionsH - sub divisions around the horizontal axis
+   * @param subdivisionsV
+   * @returns
+   */
+  createSphereInstance(radius = 5, subdivisionsH = 16, subdivisionsV = 8) {
+    const sphere = new PrimitiveSphere(this.gl, radius, subdivisionsH, subdivisionsV)
+    const instance = new Instance(sphere)
     this.instances.push(instance)
 
     return instance

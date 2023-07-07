@@ -11,7 +11,21 @@ body {
   margin: 0;
   background-color: rgb(41, 41, 41);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #e9920f;
+  color: #e6e6e6;
+}
+
+a {
+  color: #e9ad2d;
+  text-decoration: none;
+}
+
+main {
+  padding: 20px;
+}
+
+li a {
+  list-style-type: none;
+  font-size: 22px;
 }
 
 #game {

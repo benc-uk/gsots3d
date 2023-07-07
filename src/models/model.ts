@@ -4,19 +4,28 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-import { BufferInfo, createBufferInfoFromArrays } from 'twgl.js'
+import {
+  BufferInfo,
+  ProgramInfo,
+  createBufferInfoFromArrays,
+  drawBufferInfo,
+  setBuffersAndAttributes,
+  setUniforms,
+} from 'twgl.js'
+import log from 'loglevel'
+
 import { Material } from '../render/material.ts'
 import { parseMTL } from '../parsers/mtl-parser.ts'
 import { parseOBJ } from '../parsers/obj-parser.ts'
 import { fetchFile } from '../utils/files.ts'
 import { getGl } from '../core/gl.ts'
-import log from 'loglevel'
+import { Renderable, UniformSet } from '../core/types.ts'
 
 /**
  * Holds a 3D model, as a list of parts, each with a material
  * Plus map of named materials
  */
-export class Model {
+export class Model implements Renderable {
   public readonly name: string
   public readonly parts = [] as ModelPart[]
   public readonly materials = {} as Record<string, Material>
@@ -26,6 +35,20 @@ export class Model {
    */
   private constructor(name: string) {
     this.name = name
+  }
+
+  render(gl: WebGL2RenderingContext, uniforms: UniformSet, programInfo: ProgramInfo): void {
+    for (const part of this.parts) {
+      const bufferInfo = part.bufferInfo
+
+      const material = this.materials[part.materialName]
+      material.apply(programInfo)
+
+      setBuffersAndAttributes(gl, programInfo, bufferInfo)
+      setUniforms(programInfo, uniforms)
+
+      drawBufferInfo(gl, bufferInfo)
+    }
   }
 
   /**
@@ -62,7 +85,7 @@ export class Model {
         const materialsRawList = parseMTL(mtlFile)
 
         for (const [matName, matRaw] of materialsRawList) {
-          model.materials[matName] = new Material(matRaw)
+          model.materials[matName] = Material.fromMtl(matRaw)
         }
       } catch (err) {
         console.warn(`Unable to load material library ${objData.matLibNames[0]}`)
@@ -70,10 +93,7 @@ export class Model {
     }
 
     // Fall back default material, some blueish color
-    const defMat = new Material({
-      kd: [0.2, 0.5, 0.97],
-    })
-    model.materials['__default'] = defMat
+    model.materials['__default'] = new Material()
 
     const gl = getGl()
 

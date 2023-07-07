@@ -16,7 +16,8 @@
     "build-bundle": "tsc && tsup --config tsup.config-bundle.js && mv dist-bundle/index.js dist-bundle/gsots3d.js",
     "watch-bundle": "tsc && npm run build-bundle && run-when-changed --watch 'src/**/*.ts' --watch '**/*.glsl' --exec 'npm run build-bundle'",
     "clean": "rm -rf dist",
-    "docs": "typedoc --out docs src"
+    "docs": "typedoc --out docs --gitRevision main ./src/",
+    "examples": "vite --port 3000 --open /examples ./examples/"
   },
   "keywords": [
     "webgl",
@@ -39,7 +40,8 @@
     "run-when-changed": "^2.1.0",
     "tsup": "^7.1.0",
     "typedoc": "^0.24.8",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "vite": "^4.4.1"
   },
   "dependencies": {
     "gl-matrix": "^3.4.3",

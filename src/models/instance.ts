@@ -4,12 +4,11 @@
 // ============================================================================
 
 import { mat4 } from 'gl-matrix'
-import { Model } from './model.ts'
-import { ProgramInfo, drawBufferInfo, setBuffersAndAttributes, setUniforms } from 'twgl.js'
-import { UniformSet } from '../core/types.ts'
+import { ProgramInfo } from 'twgl.js'
+import { Renderable, UniformSet } from '../core/types.ts'
 
 export class Instance {
-  public model: Model
+  public readonly renderable: Renderable | undefined
   public position: [number, number, number] | undefined
   public scale: [number, number, number] | undefined
   public rotate: [number, number, number] | undefined
@@ -18,8 +17,8 @@ export class Instance {
   /**
    * @param {Model} model - Model to use for this instance
    */
-  constructor(model: Model) {
-    this.model = model
+  constructor(renderable: Renderable) {
+    this.renderable = renderable
   }
 
   /**
@@ -54,6 +53,7 @@ export class Instance {
    * @param {ProgramInfo} programInfo - Shader program info
    */
   render(gl: WebGL2RenderingContext, uniforms: UniformSet, viewProjection: mat4, programInfo: ProgramInfo) {
+    if (!this.renderable) return
     if (!gl) return
 
     // Local instance transforms are applied in this order to form the world matrix
@@ -81,16 +81,7 @@ export class Instance {
     // Populate u_worldViewProjection which is pretty fundamental
     mat4.multiply(<mat4>uniforms.u_worldViewProjection, viewProjection, world)
 
-    for (const part of this.model.parts) {
-      const bufferInfo = part.bufferInfo
-
-      const material = this.model.materials[part.materialName]
-      material.apply(programInfo)
-
-      setBuffersAndAttributes(gl, programInfo, bufferInfo)
-      setUniforms(programInfo, uniforms)
-
-      drawBufferInfo(gl, bufferInfo)
-    }
+    // Render the renderable thing
+    this.renderable.render(gl, uniforms, programInfo)
   }
 }

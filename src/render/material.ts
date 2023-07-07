@@ -9,25 +9,43 @@ import { RGB, UniformSet, MtlMaterial } from '../core/types.ts'
 const UNIFORM_PREFIX = 'u_mat'
 
 export class Material {
-  private diffuse?: RGB
-  private specular?: RGB
-  private shininess?: number
-  private ambient?: RGB
-  private emissive?: RGB
+  public diffuse?: RGB
+  public specular?: RGB
+  public shininess?: number
+  public ambient?: RGB
+  public emissive?: RGB
 
-  constructor(matRaw: MtlMaterial) {
-    this.diffuse = matRaw.kd
-    this.specular = matRaw.ks
-    this.shininess = matRaw.ns
-    this.ambient = matRaw.ka
-    this.emissive = matRaw.ke
+  /**
+   * Create a new material with default diffuse colour
+   */
+  constructor() {
+    this.diffuse = [0.2, 0.5, 0.97]
+    this.specular = undefined
+    this.shininess = undefined
+    this.ambient = undefined
+    this.emissive = undefined
+  }
+
+  /**
+   * Create a new material from a raw MTL material
+   */
+  public static fromMtl(rawMtl: MtlMaterial) {
+    const m = new Material()
+
+    m.diffuse = rawMtl.kd
+    m.specular = rawMtl.ks
+    m.shininess = rawMtl.ns
+    m.ambient = rawMtl.ka
+    m.emissive = rawMtl.ke
+
+    return m
   }
 
   /**
    * Applies the material to the given program as a set of uniforms
    * Each uniform is prefixed with `u_mat`, e.g. `u_matDiffuse`
    */
-  apply(programInfo: ProgramInfo) {
+  public apply(programInfo: ProgramInfo) {
     const uniforms = this.getUniforms()
 
     setUniforms(programInfo, uniforms)
@@ -36,7 +54,7 @@ export class Material {
   /**
    * Return a map of uniforms for this light, with a prefix
    */
-  getUniforms(): UniformSet {
+  public getUniforms(): UniformSet {
     const uniforms = {} as UniformSet
 
     for (const [propName, propValue] of Object.entries(this)) {
