@@ -7,21 +7,22 @@ An opinionated set of abstractions and wrappers around twgl and WebGL to make it
 Features
 - Models, with loading & parsing of OBJ with MTL
 - Instancing of models
-- Camera
+- Primitives; sphere, cube, plane
+- Phong and Gouraud shaders
+- Texture mapping
+- Camera!
 - Multiple lights (one actually)
-- Builtin shaders for standard rendering
-- Rendering options
 
-## Documentation
+## 📝 Documentation
 
 [Reference documents are here](https://code.benco.io/gsots3d/docs/)
 
-## Hello World - Example
+## 💬 Hello World - Example
 
 The hello world equivalent in GSOTS is putting a simple object on the screen, This example creates a GSOTS `Context` to render a simple red sphere
 
 ```ts
-import { Context, Material} from 'gsots3d'
+import { Context, Material } from 'gsots3d'
 
 // Create rendering context with canvas HTML element
 const gsots = await Context.init()
@@ -33,10 +34,10 @@ gsots.createSphereInstance(Material.RED, 5.0)
 gsots.start()
 ```
 
-## Demos
+## 🕹️ Demos
 
-- [Simple scene test 1](https://code.benco.io/gsots3d/examples/test-1/)
+### [Set of Examples & Samples](https://code.benco.io/gsots3d/examples/)
 
-## Example Screens
+## 🖼️ Example Screens
 
-![screenshot of example scene](https://user-images.githubusercontent.com/14982936/251233104-d035beaf-c64e-4bb2-bc12-d0ff32084551.png)
+![screenshot of example scene](https://user-images.githubusercontent.com/14982936/252045019-ae3555c8-4ac1-4b1a-9ff8-b8fb7efa30ff.png)
