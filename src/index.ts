@@ -4,7 +4,7 @@
 // ============================================================================
 
 /** @ignore */
-export const VERSION = '0.0.1-alpha.5'
+export const VERSION = '0.0.1-alpha.6'
 
 export * from './core/types.ts'
 export * from './core/logging.ts'

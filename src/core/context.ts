@@ -11,7 +11,7 @@ import { getGl } from './gl.ts'
 import { ShaderProgram, UniformSet } from './types.ts'
 import { ModelCache } from '../models/cache.ts'
 import { Light } from '../render/light.ts'
-import { Camera } from '../render/camera.ts'
+import { Camera, CameraType } from '../render/camera.ts'
 import { Material } from '../render/material.ts'
 import { Instance } from '../models/instance.ts'
 import { PrimitiveCube, PrimitivePlane, PrimitiveSphere } from '../models/primitive.ts'
@@ -21,6 +21,8 @@ import fragShaderPhong from '../../shaders/phong/frag.glsl'
 import vertShaderPhong from '../../shaders/phong/vert.glsl'
 import fragShaderGouraud from '../../shaders/gouraud/frag.glsl'
 import vertShaderGouraud from '../../shaders/gouraud/vert.glsl'
+import fragShaderFlat from '../../shaders/gouraud-flat/frag.glsl'
+import vertShaderFlat from '../../shaders/gouraud-flat/vert.glsl'
 
 /**
  * The main rendering context. This is the effectively main entry point for the library.
@@ -69,7 +71,7 @@ export class Context {
     light.colour = [1, 1, 1]
     this.lights[0] = light
 
-    this.camera = new Camera()
+    this.camera = new Camera(CameraType.PERSPECTIVE)
 
     this.update = () => {
       // Do nothing
@@ -88,7 +90,7 @@ export class Context {
   /**
    * Initialize and create a new Context which will render into provided canvas selector
    * */
-  static async init(canvasSelector: string): Promise<Context> {
+  static async init(canvasSelector: string, backgroundColour = '#000'): Promise<Context> {
     const gl = getGl(true, canvasSelector)
 
     if (!gl) {
@@ -100,6 +102,7 @@ export class Context {
 
     const canvas = <HTMLCanvasElement>gl.canvas
     ctx.aspectRatio = canvas.clientWidth / canvas.clientHeight
+    canvas.style.backgroundColor = backgroundColour
 
     try {
       const phongProg = createProgramInfo(gl, [vertShaderPhong, fragShaderPhong])
@@ -107,6 +110,9 @@ export class Context {
 
       const gouraudProg = createProgramInfo(gl, [vertShaderGouraud, fragShaderGouraud])
       ctx.programs[ShaderProgram.GOURAUD] = gouraudProg
+
+      const flatProg = createProgramInfo(gl, [vertShaderFlat, fragShaderFlat])
+      ctx.programs[ShaderProgram.GOURAUD_FLAT] = flatProg
 
       log.info('🎨 Loaded all shaders, GL is ready')
     } catch (err) {

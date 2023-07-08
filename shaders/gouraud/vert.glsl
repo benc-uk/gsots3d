@@ -1,3 +1,5 @@
+#version 300 es
+
 // ============================================================================
 // Gouraud vertex shader
 // Ben Coleman, 2023
@@ -5,9 +7,10 @@
 
 precision highp float;
 
-varying vec4 v_lightingDiffuse;
-varying vec4 v_lightingSpecular;
-varying vec2 v_texCoord;
+// Input attributes from buffers
+in vec4 position;
+in vec3 normal;
+in vec2 texcoord;
 
 uniform mat4 u_world;
 uniform mat4 u_camMatrix;
@@ -24,10 +27,9 @@ uniform vec4 u_lightPosition;
 uniform vec4 u_lightColour;
 uniform vec4 u_ambientLight;
 
-// Attributes from buffers
-attribute vec4 position;
-attribute vec3 normal;
-attribute vec2 texcoord;
+out vec4 v_lightingDiffuse;
+out vec4 v_lightingSpecular;
+out vec2 v_texCoord;
 
 // lightCalc function returns two floats (packed into a vec2)
 // One for diffuse component of lighting, the second for specular

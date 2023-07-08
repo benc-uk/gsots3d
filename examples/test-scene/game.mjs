@@ -3,7 +3,7 @@ import { Model, Context, setLogLevel, Material } from '../../dist-bundle/gsots3d
 setLogLevel('debug')
 
 const ctx = await Context.init('canvas')
-// ctx.shaderProgram = ShaderProgram.GOURAUD
+ctx.shaderProgram = 'gouraud'
 
 const tableMdl = await Model.parse('../objects', 'table.obj')
 const chestMdl = await Model.parse('../objects', 'chest.obj')

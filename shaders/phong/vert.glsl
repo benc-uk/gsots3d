@@ -1,3 +1,5 @@
+#version 300 es
+
 // ============================================================================
 // Phong vertex shader
 // Ben Coleman, 2023
@@ -5,19 +7,19 @@
 
 precision highp float;
 
+// Input attributes from buffers
+in vec4 position;
+in vec3 normal;
+in vec2 texcoord;
+
 uniform mat4 u_worldViewProjection;
 uniform mat4 u_worldInverseTranspose;
 uniform mat4 u_world;
 
-// Attributes from buffers
-attribute vec4 position;
-attribute vec3 normal;
-attribute vec2 texcoord;
-
-// Varying's to pass to fragment shader
-varying vec2 v_texCoord;
-varying vec3 v_normal;
-varying vec4 v_position;
+// Output varying's to pass to fragment shader
+out vec2 v_texCoord;
+out vec3 v_normal;
+out vec4 v_position;
 
 void main() {
   v_texCoord = texcoord;

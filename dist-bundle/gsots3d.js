@@ -263,6 +263,7 @@ var require_loglevel = __commonJS({
 var ShaderProgram = /* @__PURE__ */ ((ShaderProgram2) => {
   ShaderProgram2["PHONG"] = "phong";
   ShaderProgram2["GOURAUD"] = "gouraud";
+  ShaderProgram2["GOURAUD_FLAT"] = "gouraud-flat";
   return ShaderProgram2;
 })(ShaderProgram || {});
 
@@ -5559,20 +5560,20 @@ var ModelCache = class {
 // src/render/light.ts
 var UNIFORM_PREFIX = "u_light";
 var Light = class {
+  /** Create a new default light */
   constructor() {
     this.position = [0, 0, 0];
     this.colour = [1, 1, 1];
+    this.intensity = 1;
   }
   /**
-   * Applies the material to the given program as a set of uniforms
-   * Each uniform is prefixed with `u_light`, e.g. `u_matPosition`
+   * Applies the light to the given program as a set of uniforms
+   * Each uniform is prefixed with `u_light`, e.g. `u_lightPosition`
    */
   apply(programInfo) {
     setUniforms(programInfo, this.Uniforms);
   }
-  /**
-   * Return a map of uniforms for this light, with a prefix
-   */
+  /** Return a map of uniforms for this light, with a prefix */
   get Uniforms() {
     return {
       [`${UNIFORM_PREFIX}Position`]: [...this.position, 1],
@@ -5582,28 +5583,45 @@ var Light = class {
 };
 
 // src/render/camera.ts
+var CameraType = /* @__PURE__ */ ((CameraType2) => {
+  CameraType2[CameraType2["PERSPECTIVE"] = 1] = "PERSPECTIVE";
+  CameraType2[CameraType2["ORTHOGRAPHIC"] = 2] = "ORTHOGRAPHIC";
+  return CameraType2;
+})(CameraType || {});
 var Camera = class {
-  constructor() {
+  /** Create a new default camera */
+  constructor(type = 1 /* PERSPECTIVE */) {
     this.position = [0, 0, 30];
     this.lookAt = [0, 0, 0];
     this.up = [0, 1, 0];
     this.near = 0.1;
     this.far = 100;
     this.fov = 45;
+    this.type = type;
+    this.orthoZoom = 20;
   }
-  /**
-   * Get the view matrix for this camera
-   */
+  /** Get the view matrix for this camera */
   get matrix() {
     const camView = mat4_exports.targetTo(mat4_exports.create(), this.position, this.lookAt, this.up);
     return camView;
   }
-  /**
-   * Get the projection matrix for this camera
-   */
+  /** Get the projection matrix for this camera */
   projectionMatrix(aspectRatio) {
-    const camProj = mat4_exports.perspective(mat4_exports.create(), this.fov * (Math.PI / 180), aspectRatio, this.near, this.far);
-    return camProj;
+    if (this.type === 2 /* ORTHOGRAPHIC */) {
+      const camProj = mat4_exports.ortho(
+        mat4_exports.create(),
+        -aspectRatio * this.orthoZoom,
+        aspectRatio * this.orthoZoom,
+        -this.orthoZoom,
+        this.orthoZoom,
+        this.near,
+        this.far
+      );
+      return camProj;
+    } else {
+      const camProj = mat4_exports.perspective(mat4_exports.create(), this.fov * (Math.PI / 180), aspectRatio, this.near, this.far);
+      return camProj;
+    }
   }
 };
 
@@ -5707,16 +5725,22 @@ var PrimitivePlane = class extends Primitive {
 };
 
 // shaders/phong/frag.glsl
-var frag_default = "// ============================================================================\n// Phong vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Outputs from vertex shader \nvarying vec3 v_normal;\nvarying vec2 v_texCoord;\nvarying vec4 v_position;\n\nuniform mat4 u_world;\nuniform mat4 u_camMatrix;\n\n// Material properties\nuniform vec4 u_matAmbient;\nuniform vec4 u_matDiffuse;\nuniform vec4 u_matSpecular;\nuniform float u_matShininess;\nuniform sampler2D u_matTexture;\n\n// Light properties\nuniform vec4 u_lightPosition;\nuniform vec4 u_lightColour;\nuniform vec4 u_ambientLight;\n\n// lightCalc function returns two floats (packed into a vec2)\n// One for diffuse component of lighting, the second for specular\n// - normalN:          Surface normal (normalized)\n// - surfaceToLightN:  Vector towards light (normalized)\n// - halfVector:       Half vector towards camera (normalized)\n// - shininess:        Hardness or size of specular highlights\nvec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {\n  float NdotL = dot(normalN, surfaceToLightN);\n  float NdotH = dot(normalN, halfVector);\n  \n  return vec2(\n    NdotL,\n    (NdotL > 0.0) ? pow(max(0.0, NdotH), shininess) : 0.0 // Specular term in y\n  );\n}\n\nvoid main(void) {\n  vec3 surfaceToLight = u_lightPosition.xyz - v_position.xyz;\n  vec3 surfaceToView = (u_camMatrix[3] - (u_world * v_position)).xyz;\n  vec3 normalN = normalize(v_normal);\n  vec3 surfaceToLightN = normalize(surfaceToLight);\n  vec3 surfaceToViewN = normalize(surfaceToView);\n  vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);\n\n  vec2 l = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);\n\n  vec4 diffuseColour = texture2D(u_matTexture, v_texCoord) * u_matDiffuse;\n\n  gl_FragColor = (u_ambientLight * diffuseColour * u_matAmbient) \n  + (diffuseColour * max(l.x, 0.0) * u_lightColour)\n  + (u_matSpecular * l.y * u_lightColour);\n}\n";
+var frag_default = "#version 300 es\n\n// ============================================================================\n// Phong vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// From vertex shader \nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\n\nuniform mat4 u_world;\nuniform mat4 u_camMatrix;\n\n// Material properties\nuniform vec4 u_matAmbient;\nuniform vec4 u_matDiffuse;\nuniform vec4 u_matSpecular;\nuniform float u_matShininess;\nuniform sampler2D u_matTexture;\n\n// Light properties\nuniform vec4 u_lightPosition;\nuniform vec4 u_lightColour;\nuniform vec4 u_ambientLight;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\n// lightCalc function returns two floats (packed into a vec2)\n// One for diffuse component of lighting, the second for specular\n// - normalN:          Surface normal (normalized)\n// - surfaceToLightN:  Vector towards light (normalized)\n// - halfVector:       Half vector towards camera (normalized)\n// - shininess:        Hardness or size of specular highlights\nvec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {\n  float NdotL = dot(normalN, surfaceToLightN);\n  float NdotH = dot(normalN, halfVector);\n  \n  return vec2(\n    NdotL,\n    (NdotL > 0.0) ? pow(max(0.0, NdotH), shininess) : 0.0 // Specular term in y\n  );\n}\n\nvoid main(void) {\n  vec3 surfaceToLight = u_lightPosition.xyz - v_position.xyz;\n  vec3 surfaceToView = (u_camMatrix[3] - (u_world * v_position)).xyz;\n  vec3 normalN = normalize(v_normal);\n  vec3 surfaceToLightN = normalize(surfaceToLight);\n  vec3 surfaceToViewN = normalize(surfaceToView);\n  vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);\n\n  vec2 l = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);\n\n  vec4 diffuseColour = texture(u_matTexture, v_texCoord) * u_matDiffuse;\n\n  outColour = (u_ambientLight * diffuseColour * u_matAmbient) \n  + (diffuseColour * max(l.x, 0.0) * u_lightColour)\n  + (u_matSpecular * l.y * u_lightColour);\n}\n";
 
 // shaders/phong/vert.glsl
-var vert_default = "// ============================================================================\n// Phong vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\n\n// Attributes from buffers\nattribute vec4 position;\nattribute vec3 normal;\nattribute vec2 texcoord;\n\n// Varying's to pass to fragment shader\nvarying vec2 v_texCoord;\nvarying vec3 v_normal;\nvarying vec4 v_position;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  v_position = u_world * position;\n\n  gl_Position = u_worldViewProjection * position;\n}";
+var vert_default = "#version 300 es\n\n// ============================================================================\n// Phong vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_normal;\nout vec4 v_position;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  v_position = u_world * position;\n\n  gl_Position = u_worldViewProjection * position;\n}";
 
 // shaders/gouraud/frag.glsl
-var frag_default2 = "// ============================================================================\n// Gouraud fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nvarying vec4 v_lightingDiffuse;\nvarying vec4 v_lightingSpecular;\nvarying vec2 v_texCoord;\n\nuniform sampler2D u_matTexture;\nuniform vec4 u_matDiffuse;\n\nvoid main() {\n  // Tried to set the objectColour in the vertex shader, rather than here.\n  // But texture mapping + Gouraud shading, it looks terrible\n  vec4 objectColour = texture2D(u_matTexture, v_texCoord) * u_matDiffuse;\n\n  gl_FragColor = (objectColour * v_lightingDiffuse) + v_lightingSpecular;\n}";
+var frag_default2 = "#version 300 es\n\n// ============================================================================\n// Gouraud fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// From vertex shader \nin vec4 v_lightingDiffuse;\nin vec4 v_lightingSpecular;\nin vec2 v_texCoord;\n\nuniform sampler2D u_matTexture;\nuniform vec4 u_matDiffuse;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\nvoid main() {\n  // Tried to set the objectColour in the vertex shader, rather than here.\n  // But texture mapping + Gouraud shading, it looks terrible\n  vec4 objectColour = texture(u_matTexture, v_texCoord) * u_matDiffuse;\n\n  outColour = (objectColour * v_lightingDiffuse) + v_lightingSpecular;\n}";
 
 // shaders/gouraud/vert.glsl
-var vert_default2 = "// ============================================================================\n// Gouraud vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nvarying vec4 v_lightingDiffuse;\nvarying vec4 v_lightingSpecular;\nvarying vec2 v_texCoord;\n\nuniform mat4 u_world;\nuniform mat4 u_camMatrix;\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\n\n// Material properties\nuniform vec4 u_matAmbient;\nuniform vec4 u_matSpecular;\nuniform float u_matShininess;\n\n// Light properties\nuniform vec4 u_lightPosition;\nuniform vec4 u_lightColour;\nuniform vec4 u_ambientLight;\n\n// Attributes from buffers\nattribute vec4 position;\nattribute vec3 normal;\nattribute vec2 texcoord;\n\n// lightCalc function returns two floats (packed into a vec2)\n// One for diffuse component of lighting, the second for specular\n// - normalN:          Surface normal (normalized)\n// - surfaceToLightN:  Vector towards light (normalized)\n// - halfVector:       Half vector towards camera (normalized)\n// - shininess:        Hardness or size of specular highlights\nvec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {\n  float NdotL = dot(normalN, surfaceToLightN);\n  float NdotH = dot(normalN, halfVector);\n  \n  return vec2(\n    NdotL,\n    (NdotL > 0.0) ? pow(max(0.0, NdotH), shininess) : 0.0 // Specular term in y\n  );\n}\n\nvoid main(void) {\n  vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  vec4 worldPos = u_world * position;\n  \n  vec3 surfaceToLight = u_lightPosition.xyz - worldPos.xyz;\n  vec3 surfaceToView = (u_camMatrix[3] - (u_world * worldPos)).xyz;\n  vec3 normalN = normalize(worldNormal);\n  vec3 surfaceToLightN = normalize(surfaceToLight);\n  vec3 surfaceToViewN = normalize(surfaceToView);\n  vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);\n\n  vec2 light = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);\n\n  // Output lighting value for fragment shader to use, no color\n  v_lightingDiffuse = (u_ambientLight  * u_matAmbient) +\n                      (u_lightColour * max(light.x, 0.0));\n\n  // Pass specular in a seperate varying\n  v_lightingSpecular = u_lightColour * u_matSpecular * light.y;\n\n  // Pass through varying texture coordinate, so we can get the colour there\n  v_texCoord = texcoord;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
+var vert_default2 = "#version 300 es\n\n// ============================================================================\n// Gouraud vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_world;\nuniform mat4 u_camMatrix;\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\n\n// Material properties\nuniform vec4 u_matAmbient;\nuniform vec4 u_matSpecular;\nuniform float u_matShininess;\n\n// Light properties\nuniform vec4 u_lightPosition;\nuniform vec4 u_lightColour;\nuniform vec4 u_ambientLight;\n\nout vec4 v_lightingDiffuse;\nout vec4 v_lightingSpecular;\nout vec2 v_texCoord;\n\n// lightCalc function returns two floats (packed into a vec2)\n// One for diffuse component of lighting, the second for specular\n// - normalN:          Surface normal (normalized)\n// - surfaceToLightN:  Vector towards light (normalized)\n// - halfVector:       Half vector towards camera (normalized)\n// - shininess:        Hardness or size of specular highlights\nvec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {\n  float NdotL = dot(normalN, surfaceToLightN);\n  float NdotH = dot(normalN, halfVector);\n  \n  return vec2(\n    NdotL,\n    (NdotL > 0.0) ? pow(max(0.0, NdotH), shininess) : 0.0 // Specular term in y\n  );\n}\n\nvoid main(void) {\n  vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  vec4 worldPos = u_world * position;\n  \n  vec3 surfaceToLight = u_lightPosition.xyz - worldPos.xyz;\n  vec3 surfaceToView = (u_camMatrix[3] - (u_world * worldPos)).xyz;\n  vec3 normalN = normalize(worldNormal);\n  vec3 surfaceToLightN = normalize(surfaceToLight);\n  vec3 surfaceToViewN = normalize(surfaceToView);\n  vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);\n\n  vec2 light = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);\n\n  // Output lighting value for fragment shader to use, no color\n  v_lightingDiffuse = (u_ambientLight  * u_matAmbient) +\n                      (u_lightColour * max(light.x, 0.0));\n\n  // Pass specular in a seperate varying\n  v_lightingSpecular = u_lightColour * u_matSpecular * light.y;\n\n  // Pass through varying texture coordinate, so we can get the colour there\n  v_texCoord = texcoord;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
+
+// shaders/gouraud-flat/frag.glsl
+var frag_default3 = "#version 300 es\n\n// ============================================================================\n// Gouraud fragment shader with flat shading\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// From vertex shader \nflat in vec4 v_lightingDiffuse;\nflat in vec4 v_lightingSpecular;\nin vec2 v_texCoord;\n\nuniform sampler2D u_matTexture;\nuniform vec4 u_matDiffuse;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\nvoid main() {\n  // Tried to set the objectColour in the vertex shader, rather than here.\n  // But texture mapping + Gouraud shading, it looks terrible\n  vec4 objectColour = texture(u_matTexture, v_texCoord) * u_matDiffuse;\n\n  outColour = (objectColour * v_lightingDiffuse) + v_lightingSpecular;\n}";
+
+// shaders/gouraud-flat/vert.glsl
+var vert_default3 = "#version 300 es\n\n// ============================================================================\n// Gouraud vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_world;\nuniform mat4 u_camMatrix;\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\n\n// Material properties\nuniform vec4 u_matAmbient;\nuniform vec4 u_matSpecular;\nuniform float u_matShininess;\n\n// Light properties\nuniform vec4 u_lightPosition;\nuniform vec4 u_lightColour;\nuniform vec4 u_ambientLight;\n\nflat out vec4 v_lightingDiffuse;\nflat out vec4 v_lightingSpecular;\nout vec2 v_texCoord;\n\n// lightCalc function returns two floats (packed into a vec2)\n// One for diffuse component of lighting, the second for specular\n// - normalN:          Surface normal (normalized)\n// - surfaceToLightN:  Vector towards light (normalized)\n// - halfVector:       Half vector towards camera (normalized)\n// - shininess:        Hardness or size of specular highlights\nvec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {\n  float NdotL = dot(normalN, surfaceToLightN);\n  float NdotH = dot(normalN, halfVector);\n  \n  return vec2(\n    NdotL,\n    (NdotL > 0.0) ? pow(max(0.0, NdotH), shininess) : 0.0 // Specular term in y\n  );\n}\n\nvoid main(void) {\n  vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  vec4 worldPos = u_world * position;\n  \n  vec3 surfaceToLight = u_lightPosition.xyz - worldPos.xyz;\n  vec3 surfaceToView = (u_camMatrix[3] - (u_world * worldPos)).xyz;\n  vec3 normalN = normalize(worldNormal);\n  vec3 surfaceToLightN = normalize(surfaceToLight);\n  vec3 surfaceToViewN = normalize(surfaceToView);\n  vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);\n\n  vec2 light = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);\n\n  // Output lighting value for fragment shader to use, no color\n  v_lightingDiffuse = (u_ambientLight  * u_matAmbient) +\n                      (u_lightColour * max(light.x, 0.0));\n\n  // Pass specular in a seperate varying\n  v_lightingSpecular = u_lightColour * u_matSpecular * light.y;\n\n  // Pass through varying texture coordinate, so we can get the colour there\n  v_texCoord = texcoord;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
 
 // src/core/context.ts
 var Context = class _Context {
@@ -5742,7 +5766,7 @@ var Context = class _Context {
     light.position = [0, 40, 50];
     light.colour = [1, 1, 1];
     this.lights[0] = light;
-    this.camera = new Camera();
+    this.camera = new Camera(1 /* PERSPECTIVE */);
     this.update = () => {
     };
     const epv = gl.getExtension("WEBGL_provoking_vertex");
@@ -5756,7 +5780,7 @@ var Context = class _Context {
   /**
    * Initialize and create a new Context which will render into provided canvas selector
    * */
-  static async init(canvasSelector) {
+  static async init(canvasSelector, backgroundColour = "#000") {
     const gl = getGl(true, canvasSelector);
     if (!gl) {
       import_loglevel4.default.error("\u{1F4A5} Failed to get WebGL context");
@@ -5765,11 +5789,14 @@ var Context = class _Context {
     const ctx = new _Context(gl);
     const canvas = gl.canvas;
     ctx.aspectRatio = canvas.clientWidth / canvas.clientHeight;
+    canvas.style.backgroundColor = backgroundColour;
     try {
       const phongProg = createProgramInfo(gl, [vert_default, frag_default]);
       ctx.programs["phong" /* PHONG */] = phongProg;
       const gouraudProg = createProgramInfo(gl, [vert_default2, frag_default2]);
       ctx.programs["gouraud" /* GOURAUD */] = gouraudProg;
+      const flatProg = createProgramInfo(gl, [vert_default3, frag_default3]);
+      ctx.programs["gouraud-flat" /* GOURAUD_FLAT */] = flatProg;
       import_loglevel4.default.info("\u{1F3A8} Loaded all shaders, GL is ready");
     } catch (err) {
       import_loglevel4.default.error(err);
@@ -6238,9 +6265,10 @@ var ModelPart = class {
 };
 
 // src/index.ts
-var VERSION = "0.0.1-alpha.5";
+var VERSION = "0.0.1-alpha.6";
 export {
   Camera,
+  CameraType,
   Context,
   Instance,
   Light,

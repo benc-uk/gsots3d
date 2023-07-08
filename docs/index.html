@@ -12,25 +12,22 @@
 <div class="col-content">
 <div class="tsd-page-title">
 <h2>gsots3d</h2></div>
-<div class="tsd-panel tsd-typography"><a id="md:gsots-3d" class="tsd-anchor"></a><h1><a href="#md:gsots-3d">GSOTS-3D</a></h1><p>A library for <em>Getting S&ast;&ast;t On The Screen in 3D</em></p>
-<p>An opinionated set of abstractions and wrappers around twgl and WebGL to make it useful </p>
+<div class="tsd-panel tsd-typography"><a id="md:🎨-gsots-3d" class="tsd-anchor"></a><h1><a href="#md:🎨-gsots-3d">🎨 GSOTS-3D</a></h1><p>A library for <em>Getting S&ast;&ast;t On The Screen in 3D</em></p>
+<p>An opinionated set of abstractions and wrappers around twgl and WebGL APIs to make it easy to get 3D stuff happening in your browser.</p>
 <p>Features</p>
 <ul>
-<li>Models, with loading &amp; parsing of OBJ with MTL</li>
-<li>Instancing of models</li>
-<li>Camera</li>
+<li>Model meshes, with loading &amp; parsing of OBJ with MTL</li>
+<li>Primitives; sphere, cube, plane</li>
+<li>Phong and Gouraud shaders</li>
+<li>Texture mapping</li>
+<li>Camera modes</li>
 <li>Multiple lights (one actually)</li>
-<li>Builtin shaders for standard rendering</li>
-<li>Rendering options</li>
 </ul>
-<a id="md:documentation" class="tsd-anchor"></a><h2><a href="#md:documentation">Documentation</a></h2><p><a href="https://code.benco.io/gsots3d/docs/">Reference documents are here</a></p>
-<a id="md:hello-world---example" class="tsd-anchor"></a><h2><a href="#md:hello-world---example">Hello World - Example</a></h2><p>The hello world equivalent in GSOTS is putting a simple object on the screen, This example creates a GSOTS <code>Context</code> to render a simple red sphere</p>
-<pre><code class="language-ts"><span class="hl-0">import</span><span class="hl-1"> { </span><span class="hl-2">Context</span><span class="hl-1">, </span><span class="hl-2">Material</span><span class="hl-1">} </span><span class="hl-0">from</span><span class="hl-1"> </span><span class="hl-3">&#39;gsots3d&#39;</span><br/><br/><span class="hl-4">// Create rendering context with canvas HTML element</span><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-6">gsots</span><span class="hl-1"> = </span><span class="hl-0">await</span><span class="hl-1"> </span><span class="hl-2">Context</span><span class="hl-1">.</span><span class="hl-7">init</span><span class="hl-1">()</span><br/><br/><span class="hl-4">// Create a red sphere of radius 5</span><br/><span class="hl-2">gsots</span><span class="hl-1">.</span><span class="hl-7">createSphereInstance</span><span class="hl-1">(</span><span class="hl-2">Material</span><span class="hl-1">.</span><span class="hl-6">RED</span><span class="hl-1">, </span><span class="hl-8">5.0</span><span class="hl-1">)</span><br/><br/><span class="hl-4">// Start rendering</span><br/><span class="hl-2">gsots</span><span class="hl-1">.</span><span class="hl-7">start</span><span class="hl-1">()</span>
+<a id="md:📝-documentation" class="tsd-anchor"></a><h2><a href="#md:📝-documentation">📝 Documentation</a></h2><p><a href="https://code.benco.io/gsots3d/docs/">Full API reference documents are here</a></p>
+<a id="md:💬-hello-world---example" class="tsd-anchor"></a><h2><a href="#md:💬-hello-world---example">💬 Hello World - Example</a></h2><p>The hello world equivalent in GSOTS is putting a simple object on the screen, This example creates a GSOTS <code>Context</code> to render a simple red sphere</p>
+<pre><code class="language-html"><span class="hl-0">&lt;</span><span class="hl-1">html</span><span class="hl-0">&gt;</span><br/><span class="hl-0">&lt;</span><span class="hl-1">body</span><span class="hl-0">&gt;</span><br/><span class="hl-2">  </span><span class="hl-3">&lt;!-- This canvas will be used for rendering --&gt;</span><br/><span class="hl-2">  </span><span class="hl-0">&lt;</span><span class="hl-1">canvas</span><span class="hl-2"> </span><span class="hl-4">width</span><span class="hl-2">=</span><span class="hl-5">&quot;800&quot;</span><span class="hl-2"> </span><span class="hl-4">height</span><span class="hl-2">=</span><span class="hl-5">&quot;600&quot;</span><span class="hl-0">&gt;&lt;/</span><span class="hl-1">canvas</span><span class="hl-0">&gt;</span><br/><br/><span class="hl-2">  </span><span class="hl-0">&lt;</span><span class="hl-1">script</span><span class="hl-6"> </span><span class="hl-4">type</span><span class="hl-6">=</span><span class="hl-5">&quot;module&quot;</span><span class="hl-0">&gt;</span><br/><span class="hl-6">    </span><span class="hl-7">import</span><span class="hl-6"> { </span><span class="hl-8">Context</span><span class="hl-6">, </span><span class="hl-8">Material</span><span class="hl-6"> } </span><span class="hl-7">from</span><span class="hl-6"> </span><span class="hl-9">&#39;./gsots3d.js&#39;</span><br/><br/><span class="hl-6">    </span><span class="hl-3">// Create rendering context</span><br/><span class="hl-6">    </span><span class="hl-10">const</span><span class="hl-6"> </span><span class="hl-11">gsots</span><span class="hl-6"> </span><span class="hl-2">=</span><span class="hl-6"> </span><span class="hl-7">await</span><span class="hl-6"> </span><span class="hl-8">Context</span><span class="hl-6">.</span><span class="hl-12">init</span><span class="hl-6">(</span><span class="hl-9">&#39;canvas&#39;</span><span class="hl-6">)</span><br/><br/><span class="hl-6">    </span><span class="hl-3">// Create a red sphere of radius 5</span><br/><span class="hl-6">    </span><span class="hl-8">gsots</span><span class="hl-6">.</span><span class="hl-12">createSphereInstance</span><span class="hl-6">(</span><span class="hl-8">Material</span><span class="hl-6">.</span><span class="hl-11">RED</span><span class="hl-6">, </span><span class="hl-13">5.0</span><span class="hl-6">)</span><br/><br/><span class="hl-6">    </span><span class="hl-3">// Start!</span><br/><span class="hl-6">    </span><span class="hl-8">gsots</span><span class="hl-6">.</span><span class="hl-12">start</span><span class="hl-6">()</span><br/><span class="hl-6">  </span><span class="hl-0">&lt;/</span><span class="hl-1">script</span><span class="hl-0">&gt;</span><br/><span class="hl-0">&lt;/</span><span class="hl-1">body</span><span class="hl-0">&gt;</span><br/><span class="hl-0">&lt;/</span><span class="hl-1">html</span><span class="hl-0">&gt;</span>
 </code><button>Copy</button></pre>
-<a id="md:demos" class="tsd-anchor"></a><h2><a href="#md:demos">Demos</a></h2><ul>
-<li><a href="https://code.benco.io/gsots3d/examples/test-1/">Simple scene test 1</a></li>
-</ul>
-<a id="md:example-screens" class="tsd-anchor"></a><h2><a href="#md:example-screens">Example Screens</a></h2><p><img src="https://user-images.githubusercontent.com/14982936/251233104-d035beaf-c64e-4bb2-bc12-d0ff32084551.png" alt="screenshot of example scene"></p>
+<a id="md:🕹️-demos-amp-samples" class="tsd-anchor"></a><h2><a href="#md:🕹️-demos-amp-samples">🕹️ Demos &amp; Samples</a></h2><a id="md:set-of-examples-amp-samples" class="tsd-anchor"></a><h3><a href="#md:set-of-examples-amp-samples"><a href="https://code.benco.io/gsots3d/examples/">Set of Examples &amp; Samples</a></a></h3><a id="md:🖼️-example-screens" class="tsd-anchor"></a><h2><a href="#md:🖼️-example-screens">🖼️ Example Screens</a></h2><p><img src="https://user-images.githubusercontent.com/14982936/252045019-ae3555c8-4ac1-4b1a-9ff8-b8fb7efa30ff.png" alt="screenshot of example scene"></p>
 </div></div>
 <div class="col-sidebar">
 <div class="page-menu">
@@ -53,17 +50,21 @@
 <ul>
 <li>
 <ul>
-<li><a href="#md:gsots-3d"><span>GSOTS-<wbr/>3D</span></a></li>
+<li><a href="#md:🎨-gsots-3d"><span>🎨 GSOTS-<wbr/>3D</span></a></li>
 <li>
 <ul>
-<li><a href="#md:documentation"><span>Documentation</span></a></li>
-<li><a href="#md:hello-world---example"><span>Hello <wbr/>World -<wbr/> <wbr/>Example</span></a></li>
-<li><a href="#md:demos"><span>Demos</span></a></li>
-<li><a href="#md:example-screens"><span>Example <wbr/>Screens</span></a></li></ul></li></ul></li></ul></div></details></div>
+<li><a href="#md:📝-documentation"><span>📝 <wbr/>Documentation</span></a></li>
+<li><a href="#md:💬-hello-world---example"><span>💬 <wbr/>Hello <wbr/>World -<wbr/> <wbr/>Example</span></a></li>
+<li><a href="#md:🕹️-demos-amp-samples"><span>🕹️ <wbr/>Demos &amp; <wbr/>Samples</span></a></li>
+<li>
+<ul>
+<li><a href="#md:set-of-examples-amp-samples"><span>Set of <wbr/>Examples &amp; <wbr/>Samples</span></a></li></ul></li>
+<li><a href="#md:🖼️-example-screens"><span>🖼️ <wbr/>Example <wbr/>Screens</span></a></li></ul></li></ul></li></ul></div></details></div>
 <div class="site-menu">
 <nav class="tsd-navigation"><a href="modules.html" class="current"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-4"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-namespace)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M9.33 16V7.24H10.77L13.446 14.74C13.43 14.54 13.41 14.296 13.386 14.008C13.37 13.712 13.354 13.404 13.338 13.084C13.33 12.756 13.326 12.448 13.326 12.16V7.24H14.37V16H12.93L10.266 8.5C10.282 8.692 10.298 8.936 10.314 9.232C10.33 9.52 10.342 9.828 10.35 10.156C10.366 10.476 10.374 10.784 10.374 11.08V16H9.33Z" fill="var(--color-text)"></path></g></svg><span>gsots3d</span></a>
 <ul class="tsd-small-nested-navigation">
-<li><a href="enums/ShaderProgram.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-8"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-enum)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M9.45 16V7.24H14.49V8.224H10.518V10.936H14.07V11.908H10.518V15.016H14.49V16H9.45Z" fill="var(--color-text)"></path></g></svg><span>Shader<wbr/>Program</span></a></li>
+<li><a href="enums/CameraType.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-8"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-enum)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M9.45 16V7.24H14.49V8.224H10.518V10.936H14.07V11.908H10.518V15.016H14.49V16H9.45Z" fill="var(--color-text)"></path></g></svg><span>Camera<wbr/>Type</span></a></li>
+<li><a href="enums/ShaderProgram.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-8"></use></svg><span>Shader<wbr/>Program</span></a></li>
 <li><a href="classes/Camera.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-128"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-class)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M11.898 16.1201C11.098 16.1201 10.466 15.8961 10.002 15.4481C9.53803 15.0001 9.30603 14.3841 9.30603 13.6001V9.64012C9.30603 8.85612 9.53803 8.24012 10.002 7.79212C10.466 7.34412 11.098 7.12012 11.898 7.12012C12.682 7.12012 13.306 7.34812 13.77 7.80412C14.234 8.25212 14.466 8.86412 14.466 9.64012H13.386C13.386 9.14412 13.254 8.76412 12.99 8.50012C12.734 8.22812 12.37 8.09212 11.898 8.09212C11.426 8.09212 11.054 8.22412 10.782 8.48812C10.518 8.75212 10.386 9.13212 10.386 9.62812V13.6001C10.386 14.0961 10.518 14.4801 10.782 14.7521C11.054 15.0161 11.426 15.1481 11.898 15.1481C12.37 15.1481 12.734 15.0161 12.99 14.7521C13.254 14.4801 13.386 14.0961 13.386 13.6001H14.466C14.466 14.3761 14.234 14.9921 13.77 15.4481C13.306 15.8961 12.682 16.1201 11.898 16.1201Z" fill="var(--color-text)"></path></g></svg><span>Camera</span></a></li>
 <li><a href="classes/Context.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-128"></use></svg><span>Context</span></a></li>
 <li><a href="classes/Instance.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-128"></use></svg><span>Instance</span></a></li>

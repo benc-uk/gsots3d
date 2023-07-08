@@ -34,4 +34,5 @@ export interface Renderable {
 export enum ShaderProgram {
   PHONG = 'phong',
   GOURAUD = 'gouraud',
+  GOURAUD_FLAT = 'gouraud-flat',
 }

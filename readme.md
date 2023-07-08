@@ -1,40 +1,48 @@
-# GSOTS-3D
+# 🎨 GSOTS-3D
 
 A library for *Getting S&ast;&ast;t On The Screen in 3D*
 
-An opinionated set of abstractions and wrappers around twgl and WebGL to make it useful 
+An opinionated set of abstractions and wrappers around twgl and WebGL APIs to make it easy to get 3D stuff happening in your browser.
 
 Features
-- Models, with loading & parsing of OBJ with MTL
-- Instancing of models
+- Model meshes, with loading & parsing of OBJ with MTL
 - Primitives; sphere, cube, plane
 - Phong and Gouraud shaders
 - Texture mapping
-- Camera!
+- Camera modes
 - Multiple lights (one actually)
 
 ## 📝 Documentation
 
-[Reference documents are here](https://code.benco.io/gsots3d/docs/)
+[Full API reference documents are here](https://code.benco.io/gsots3d/docs/)
 
 ## 💬 Hello World - Example
 
 The hello world equivalent in GSOTS is putting a simple object on the screen, This example creates a GSOTS `Context` to render a simple red sphere
 
-```ts
-import { Context, Material } from 'gsots3d'
+```html
+<html>
+<body>
+  <!-- This canvas will be used for rendering -->
+  <canvas width="800" height="600"></canvas>
 
-// Create rendering context with canvas HTML element
-const gsots = await Context.init()
+  <script type="module">
+    import { Context, Material } from './gsots3d.js'
 
-// Create a red sphere of radius 5
-gsots.createSphereInstance(Material.RED, 5.0)
+    // Create rendering context
+    const gsots = await Context.init('canvas')
 
-// Start rendering
-gsots.start()
+    // Create a red sphere of radius 5
+    gsots.createSphereInstance(Material.RED, 5.0)
+
+    // Start!
+    gsots.start()
+  </script>
+</body>
+</html>
 ```
 
-## 🕹️ Demos
+## 🕹️ Demos & Samples
 
 ### [Set of Examples & Samples](https://code.benco.io/gsots3d/examples/)
 

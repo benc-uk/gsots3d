@@ -2,8 +2,11 @@ import { Context, Material, ShaderProgram } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init()
 ctx.debug = true
+
 ctx.shaderProgram = ShaderProgram.GOURAUD
+ctx.shaderProgram = ShaderProgram.GOURAUD_FLAT
 ctx.shaderProgram = ShaderProgram.PHONG
+
 ctx.camera.position = [0, 0, 20]
 ctx.defaultLight.position = [80, 60, 50]
 ctx.ambientLight = [0.04, 0.04, 0.04]
