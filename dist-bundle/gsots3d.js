@@ -259,14 +259,6 @@ var require_loglevel = __commonJS({
   }
 });
 
-// src/core/types.ts
-var TEX_NEAREST = 9728;
-var TEX_LINEAR = 9729;
-var TEX_NEAREST_MIPMAP_NEAREST = 9984;
-var TEX_LINEAR_MIPMAP_NEAREST = 9985;
-var TEX_NEAREST_MIPMAP_LINEAR = 9986;
-var TEX_LINEAR_MIPMAP_LINEAR = 9987;
-
 // src/core/logging.ts
 var log = __toESM(require_loglevel(), 1);
 function setLogLevel(level) {
@@ -5544,28 +5536,23 @@ var UNIFORM_PREFIX = "u_light";
 var Light = class {
   constructor() {
     this.position = [0, 0, 0];
-    this.color = [1, 1, 1];
-    this.ambient = [0.1, 0.1, 0.1];
+    this.colour = [1, 1, 1];
   }
   /**
    * Applies the material to the given program as a set of uniforms
    * Each uniform is prefixed with `u_light`, e.g. `u_matPosition`
    */
   apply(programInfo) {
-    const uniforms = this.getUniforms();
-    setUniforms(programInfo, uniforms);
+    setUniforms(programInfo, this.Uniforms);
   }
   /**
    * Return a map of uniforms for this light, with a prefix
    */
-  getUniforms() {
-    const uniforms = {};
-    for (const [propName, propValue] of Object.entries(this)) {
-      if (propValue !== void 0) {
-        uniforms[`${UNIFORM_PREFIX}${propName[0].toUpperCase()}${propName.slice(1)}`] = propValue;
-      }
-    }
-    return uniforms;
+  get Uniforms() {
+    return {
+      [`${UNIFORM_PREFIX}Position`]: [...this.position, 1],
+      [`${UNIFORM_PREFIX}Colour`]: [...this.colour, 1]
+    };
   }
 };
 
@@ -5679,11 +5666,11 @@ var Instance = class {
   }
 };
 
-// shaders/frag.glsl
-var frag_default = "precision highp float;\n\nvarying vec3 v_lighting;\nvarying vec2 v_texCoord;\n\nuniform vec4 u_matDiffuse;\nuniform sampler2D u_matTexture;\n\nvoid main(void) {\n  vec4 diffuseColor = texture2D(u_matTexture, v_texCoord);\n  gl_FragColor = vec4(diffuseColor * u_matDiffuse) * vec4(v_lighting, 1.0);\n}\n";
+// shaders/phong/frag.glsl
+var frag_default = "precision highp float;\n\n// Outputs from vertex shader \nvarying vec3 v_normal;\nvarying vec2 v_texCoord;\nvarying vec4 v_position;\n\nuniform mat4 u_world;\nuniform mat4 u_camMatrix;\n\n// Material properties\nuniform vec4 u_matAmbient;\nuniform vec4 u_matDiffuse;\nuniform vec4 u_matSpecular;\nuniform float u_matShininess;\nuniform sampler2D u_matTexture;\n\n// Light properties\nuniform vec4 u_lightPosition;\nuniform vec4 u_lightColour;\nuniform vec4 u_ambientLight;\n\n// lightCalc function returns two floats (packed into a vec2)\n// One for diffuse component of lighting, the second for specular\n// - normalN:          Surface normal (normalized)\n// - surfaceToLightN:  Vector towards light (normalized)\n// - halfVector:       Half vector towards camera (normalized)\n// - shininess:        Hardness or size of specular highlights\nvec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {\n  float NdotL = dot(normalN, surfaceToLightN);\n  float NdotH = dot(normalN, halfVector);\n  \n  return vec2(\n    NdotL,\n    (NdotL > 0.0) ? pow(max(0.0, NdotH), shininess) : 0.0 // Specular term in y\n  );\n}\n\nvoid main(void) {\n  vec3 surfaceToLight = u_lightPosition.xyz - v_position.xyz;\n  vec3 surfaceToView = (u_camMatrix[3] - (u_world * v_position)).xyz;\n  vec3 normalN = normalize(v_normal);\n  vec3 surfaceToLightN = normalize(surfaceToLight);\n  vec3 surfaceToViewN = normalize(surfaceToView);\n  vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);\n\n  vec2 l = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);\n\n  vec4 diffuseColor = texture2D(u_matTexture, v_texCoord) * u_matDiffuse;\n\n  gl_FragColor = (u_ambientLight * diffuseColor * u_matAmbient) \n  + (diffuseColor * max(l.x, 0.0) * u_lightColour)\n  + (u_matSpecular * l.y * u_lightColour);\n}\n";
 
-// shaders/vert.glsl
-var vert_default = "precision highp float;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\n\nuniform vec3 u_lightPosition;\nuniform vec3 u_lightColor;\nuniform vec3 u_lightAmbient;\n\nattribute vec4 position;\nattribute vec3 normal;\nattribute vec2 texcoord;\n\n// varying to pass to fragment shader\nvarying vec3 v_lighting;\nvarying vec4 v_color;\nvarying vec2 v_texCoord;\n\nvoid main() {\n  v_texCoord = texcoord;\n\n  vec4 worldPos = u_world * position;\n  float distance = length(u_lightPosition - worldPos.xyz) * 0.06;\n  vec3 lightVector = normalize(u_lightPosition - worldPos.xyz);\n  vec4 normalWorld = u_worldInverseTranspose * vec4(normal, 1.0);\n  float intensity = clamp(dot(normalWorld.xyz, lightVector), 0.0, 0.8);\n\n  //v_lighting = u_lightAmbient + (u_lightColor * (intensity / (distance * distance)));\n  v_lighting = u_lightAmbient + (u_lightColor * intensity);\n  \n  gl_Position = u_worldViewProjection * position;\n}";
+// shaders/phong/vert.glsl
+var vert_default = "precision highp float;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\n\n// Attributes from buffers\nattribute vec4 position;\nattribute vec3 normal;\nattribute vec2 texcoord;\n\n// Varying's to pass to fragment shader\nvarying vec2 v_texCoord;\nvarying vec3 v_normal;\nvarying vec4 v_position;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  v_position = u_world * position;\n\n  gl_Position = u_worldViewProjection * position;\n}";
 
 // src/models/primitive.ts
 var Primitive = class {
@@ -5728,14 +5715,14 @@ var Context = class _Context {
     this.lights = [];
     this.resizeable = true;
     this.debug = false;
+    this.ambientLight = [0.05, 0.05, 0.05];
     this.gl = gl;
     this.models = new ModelCache();
     this.prevTime = 0;
     this.totalTime = 0;
     const light = new Light();
     light.position = [0, 40, 50];
-    light.color = [1, 1, 1];
-    light.ambient = [0.2, 0.2, 0.2];
+    light.colour = [1, 1, 1];
     this.lights[0] = light;
     this.camera = new Camera();
     this.update = () => {
@@ -5764,7 +5751,7 @@ var Context = class _Context {
     ctx.ctx2D = ctx2D;
     try {
       const modelProg = createProgramInfo(gl, [vert_default, frag_default]);
-      ctx.programs["standard"] = modelProg;
+      ctx.programs["phong"] = modelProg;
       import_loglevel3.default.info("\u{1F3A8} Loaded all shaders, GL is ready");
     } catch (err) {
       import_loglevel3.default.error(err);
@@ -5786,9 +5773,10 @@ var Context = class _Context {
     this.update(deltaTime);
     const uniforms = {
       u_worldInverseTranspose: mat4_exports.create(),
-      u_worldViewProjection: mat4_exports.create()
+      u_worldViewProjection: mat4_exports.create(),
+      u_ambientLight: [...this.ambientLight, 1]
     };
-    const stdGlProg = this.programs["standard"];
+    const phongProg = this.programs["phong"];
     if (this.resizeable) {
       resizeCanvasToDisplaySize(this.gl.canvas);
       resizeCanvasToDisplaySize(this.ctx2D?.canvas);
@@ -5800,10 +5788,10 @@ var Context = class _Context {
     uniforms.u_camMatrix = camMatrix;
     const projection = this.camera.projectionMatrix(this.aspectRatio);
     const viewProjection = mat4_exports.multiply(mat4_exports.create(), projection, viewMatrix);
-    this.gl.useProgram(stdGlProg.program);
-    this.lights[0].apply(stdGlProg);
+    this.gl.useProgram(phongProg.program);
+    this.lights[0].apply(phongProg);
     for (const instance of this.instances) {
-      instance.render(this.gl, uniforms, viewProjection, stdGlProg);
+      instance.render(this.gl, uniforms, viewProjection, phongProg);
     }
     if (this.ctx2D && this.debug) {
       this.ctx2D.clearRect(0, 0, this.ctx2D.canvas.width, this.ctx2D.canvas.height);
@@ -5911,7 +5899,7 @@ var Material = class _Material {
     return m;
   }
   /**
-   * Helper to create a new material with a solid diffuse colour
+   * Create a basic Material with a solid diffuse colour
    */
   static createDiffuse(r, g, b) {
     const m = new _Material();
@@ -5919,7 +5907,7 @@ var Material = class _Material {
     return m;
   }
   /**
-   * Helper to create a new material with an image texture
+   * Create a new material with a texture map loaded from a URL
    */
   static createTexture(url, filter = true) {
     const m = new _Material();
@@ -5934,29 +5922,37 @@ var Material = class _Material {
     });
     return m;
   }
+  /** Create a simple RED Material */
+  static get RED() {
+    return _Material.createDiffuse(1, 0, 0);
+  }
+  /** Create a simple GREEN Material */
+  static get GREEN() {
+    return _Material.createDiffuse(0, 1, 0);
+  }
+  /** Create a simple BLUE Material */
+  static get BLUE() {
+    const m = _Material.createDiffuse(0, 0, 1);
+    return m;
+  }
   /**
    * Applies the material to the given program as a set of uniforms
    * Each uniform is prefixed with `u_mat`, e.g. `u_matDiffuse`
    */
   apply(programInfo) {
-    const uniforms = this.getUniforms();
-    setUniforms(programInfo, uniforms);
+    setUniforms(programInfo, this.Uniforms);
   }
   /**
-   * Return a map of uniforms for this light, with a prefix
+   * Return a map of uniforms for this material, with a prefix
    */
-  getUniforms() {
-    const uniforms = {};
-    for (const [propName, propValue] of Object.entries(this)) {
-      if (propValue !== void 0) {
-        if (propName === "texture" || propName === "shininess") {
-          uniforms[`${UNIFORM_PREFIX2}Texture`] = propValue;
-          continue;
-        }
-        uniforms[`${UNIFORM_PREFIX2}${propName[0].toUpperCase()}${propName.slice(1)}`] = [...propValue, 1];
-      }
-    }
-    return uniforms;
+  get Uniforms() {
+    return {
+      [`${UNIFORM_PREFIX2}Texture`]: this.texture ? this.texture : null,
+      [`${UNIFORM_PREFIX2}Shininess`]: this.shininess ? this.shininess : 0,
+      [`${UNIFORM_PREFIX2}Diffuse`]: this.diffuse ? [...this.diffuse, 1] : [1, 1, 1, 1],
+      [`${UNIFORM_PREFIX2}Specular`]: this.specular ? [...this.specular, 1] : [0, 0, 0, 1],
+      [`${UNIFORM_PREFIX2}Ambient`]: this.ambient ? [...this.ambient, 1] : [1, 1, 1, 1]
+    };
   }
 };
 
@@ -6237,12 +6233,6 @@ export {
   PrimitiveCube,
   PrimitivePlane,
   PrimitiveSphere,
-  TEX_LINEAR,
-  TEX_LINEAR_MIPMAP_LINEAR,
-  TEX_LINEAR_MIPMAP_NEAREST,
-  TEX_NEAREST,
-  TEX_NEAREST_MIPMAP_LINEAR,
-  TEX_NEAREST_MIPMAP_NEAREST,
   VERSION,
   setLogLevel
 };

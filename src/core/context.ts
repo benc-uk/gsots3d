@@ -16,8 +16,8 @@ import { Camera } from '../render/camera.ts'
 import { Instance } from '../models/instance.ts'
 
 // Import shaders as hefty big strings
-import fragShader from '../../shaders/frag.glsl'
-import vertShader from '../../shaders/vert.glsl'
+import fragShaderPhong from '../../shaders/phong/frag.glsl'
+import vertShaderPhong from '../../shaders/phong/vert.glsl'
 import { PrimitiveCube, PrimitivePlane, PrimitiveSphere } from '../models/primitive.ts'
 
 /**
@@ -43,6 +43,7 @@ export class Context {
   public resizeable = true
   public debug = false
   public update: (delta: number) => void
+  public ambientLight: [number, number, number] = [0.05, 0.05, 0.05]
 
   private constructor(gl: WebGL2RenderingContext) {
     this.gl = gl
@@ -53,8 +54,7 @@ export class Context {
     // Default light
     const light = new Light()
     light.position = [0, 40, 50]
-    light.color = [1, 1, 1]
-    light.ambient = [0.2, 0.2, 0.2]
+    light.colour = [1, 1, 1]
     this.lights[0] = light
 
     this.camera = new Camera()
@@ -93,8 +93,8 @@ export class Context {
     ctx.ctx2D = ctx2D
 
     try {
-      const modelProg = createProgramInfo(gl, [vertShader, fragShader])
-      ctx.programs['standard'] = modelProg
+      const modelProg = createProgramInfo(gl, [vertShaderPhong, fragShaderPhong])
+      ctx.programs['phong'] = modelProg
 
       log.info('🎨 Loaded all shaders, GL is ready')
     } catch (err) {
@@ -126,9 +126,10 @@ export class Context {
     const uniforms = {
       u_worldInverseTranspose: mat4.create(),
       u_worldViewProjection: mat4.create(),
+      u_ambientLight: [...this.ambientLight, 1],
     } as UniformSet
 
-    const stdGlProg = this.programs['standard']
+    const phongProg = this.programs['phong']
 
     if (this.resizeable) {
       resizeCanvasToDisplaySize(<HTMLCanvasElement>this.gl.canvas)
@@ -149,14 +150,14 @@ export class Context {
     const viewProjection = mat4.multiply(mat4.create(), projection, viewMatrix)
 
     // this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT)
-    this.gl.useProgram(stdGlProg.program)
+    this.gl.useProgram(phongProg.program)
 
     // Since we only have one light, just apply it here
-    this.lights[0].apply(stdGlProg)
+    this.lights[0].apply(phongProg)
 
     // Draw all instances
     for (const instance of this.instances) {
-      instance.render(this.gl, uniforms, viewProjection, stdGlProg)
+      instance.render(this.gl, uniforms, viewProjection, phongProg)
     }
 
     if (this.ctx2D && this.debug) {

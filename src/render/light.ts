@@ -10,13 +10,11 @@ const UNIFORM_PREFIX = 'u_light'
 
 export class Light {
   public position: XYZ
-  public color: RGB
-  public ambient: RGB
+  public colour: RGB
 
   constructor() {
     this.position = [0, 0, 0]
-    this.color = [1, 1, 1]
-    this.ambient = [0.1, 0.1, 0.1]
+    this.colour = [1, 1, 1]
   }
 
   /**
@@ -24,23 +22,16 @@ export class Light {
    * Each uniform is prefixed with `u_light`, e.g. `u_matPosition`
    */
   apply(programInfo: ProgramInfo) {
-    const uniforms = this.getUniforms()
-
-    setUniforms(programInfo, uniforms)
+    setUniforms(programInfo, this.Uniforms)
   }
 
   /**
    * Return a map of uniforms for this light, with a prefix
    */
-  getUniforms(): UniformSet {
-    const uniforms = {} as UniformSet
-
-    for (const [propName, propValue] of Object.entries(this)) {
-      if (propValue !== undefined) {
-        uniforms[`${UNIFORM_PREFIX}${propName[0].toUpperCase()}${propName.slice(1)}`] = propValue
-      }
+  public get Uniforms(): UniformSet {
+    return {
+      [`${UNIFORM_PREFIX}Position`]: [...this.position, 1],
+      [`${UNIFORM_PREFIX}Colour`]: [...this.colour, 1],
     }
-
-    return uniforms
   }
 }

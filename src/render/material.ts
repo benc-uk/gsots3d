@@ -4,7 +4,7 @@
 // ============================================================================
 
 import { ProgramInfo, createTexture, setUniforms } from 'twgl.js'
-import { RGB, TEX_LINEAR_MIPMAP_LINEAR, UniformSet } from '../core/types.ts'
+import { RGB, UniformSet } from '../core/types.ts'
 import { MtlMaterial } from '../parsers/mtl-parser.ts'
 import { getGl } from '../core/gl.ts'
 
@@ -56,7 +56,7 @@ export class Material {
   }
 
   /**
-   * Helper to create a new material with a solid diffuse colour
+   * Create a basic Material with a solid diffuse colour
    */
   public static createDiffuse(r: number, g: number, b: number) {
     const m = new Material()
@@ -66,7 +66,7 @@ export class Material {
   }
 
   /**
-   * Helper to create a new material with an image texture
+   * Create a new material with a texture map loaded from a URL
    */
   public static createTexture(url: string, filter = true) {
     const m = new Material()
@@ -83,37 +83,41 @@ export class Material {
     return m
   }
 
+  /** Create a simple RED Material */
+  static get RED() {
+    return Material.createDiffuse(1.0, 0.0, 0.0)
+  }
+
+  /** Create a simple GREEN Material */
+  static get GREEN() {
+    return Material.createDiffuse(0.0, 1.0, 0.0)
+  }
+
+  /** Create a simple BLUE Material */
+  static get BLUE() {
+    const m = Material.createDiffuse(0.0, 0.0, 1.0)
+
+    return m
+  }
+
   /**
    * Applies the material to the given program as a set of uniforms
    * Each uniform is prefixed with `u_mat`, e.g. `u_matDiffuse`
    */
   public apply(programInfo: ProgramInfo) {
-    const uniforms = this.getUniforms()
-
-    setUniforms(programInfo, uniforms)
+    setUniforms(programInfo, this.Uniforms)
   }
 
   /**
-   * Return a map of uniforms for this light, with a prefix
+   * Return a map of uniforms for this material, with a prefix
    */
-  public getUniforms(): UniformSet {
-    const uniforms = {} as UniformSet
-
-    for (const [propName, propValue] of Object.entries(this)) {
-      if (propValue !== undefined) {
-        // Textures & scalar values are passed in as-is
-        if (propName === 'texture' || propName === 'shininess') {
-          uniforms[`${UNIFORM_PREFIX}Texture`] = propValue
-          continue
-        }
-
-        // Tuples are passed as a vec4 with alpha set to 1
-        uniforms[`${UNIFORM_PREFIX}${propName[0].toUpperCase()}${propName.slice(1)}`] = [...propValue, 1.0]
-      }
-    }
-
-    //console.log('Uniforms', uniforms)
-
-    return uniforms
+  public get Uniforms(): UniformSet {
+    return {
+      [`${UNIFORM_PREFIX}Texture`]: this.texture ? this.texture : null,
+      [`${UNIFORM_PREFIX}Shininess`]: this.shininess ? this.shininess : 0,
+      [`${UNIFORM_PREFIX}Diffuse`]: this.diffuse ? [...this.diffuse, 1] : [1, 1, 1, 1],
+      [`${UNIFORM_PREFIX}Specular`]: this.specular ? [...this.specular, 1] : [0, 0, 0, 1],
+      [`${UNIFORM_PREFIX}Ambient`]: this.ambient ? [...this.ambient, 1] : [1, 1, 1, 1],
+    } as UniformSet
   }
 }
