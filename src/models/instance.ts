@@ -7,12 +7,15 @@ import { mat4 } from 'gl-matrix'
 import { ProgramInfo } from 'twgl.js'
 import { Renderable, UniformSet } from '../core/types.ts'
 
+/**
+ * An instance of thing in the world to be rendered, with position, rotation, scale etc
+ */
 export class Instance {
   public readonly renderable: Renderable | undefined
   public position: [number, number, number] | undefined
   public scale: [number, number, number] | undefined
   public rotate: [number, number, number] | undefined
-  public transparent = false
+  //public transparent = false
 
   /**
    * @param {Model} model - Model to use for this instance

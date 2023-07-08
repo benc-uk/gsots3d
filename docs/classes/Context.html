@@ -16,7 +16,8 @@
 <li><a href="Context.html">Context</a></li></ul>
 <h1>Class Context</h1></div>
 <section class="tsd-panel tsd-comment">
-<div class="tsd-comment tsd-typography"><p>The main rendering context. This is the main entry point for the library.</p>
+<div class="tsd-comment tsd-typography"><p>The main rendering context. This is the effectively main entry point for the library.
+Typically you will create a single instance of this class using init() and use it to render your scene.</p>
 </div>
 <div class="tsd-comment tsd-typography"></div></section>
 <section class="tsd-panel tsd-hierarchy">
@@ -24,7 +25,7 @@
 <ul class="tsd-hierarchy">
 <li><span class="target">Context</span></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L26">core/context.ts:26</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L30">core/context.ts:30</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -48,6 +49,7 @@
 <a href="Context.html#prevTime" class="tsd-index-link tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>prev<wbr/>Time</span></a>
 <a href="Context.html#programs" class="tsd-index-link tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>programs</span></a>
 <a href="Context.html#resizeable" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>resizeable</span></a>
+<a href="Context.html#shaderProgram" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>shader<wbr/>Program</span></a>
 <a href="Context.html#started" class="tsd-index-link tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>started</span></a>
 <a href="Context.html#totalTime" class="tsd-index-link tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>total<wbr/>Time</span></a>
 <a href="Context.html#update" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>update</span></a>
@@ -81,52 +83,58 @@
 <h5><span class="tsd-kind-parameter">gl</span>: <span class="tsd-signature-type ">WebGL2RenderingContext</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="Context.html" class="tsd-signature-type tsd-kind-class">Context</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L48">core/context.ts:48</a></li></ul></aside></li></ul></section></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L62">core/context.ts:62</a></li></ul></aside></li></ul></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Properties</h2>
 <section class="tsd-panel tsd-member"><a id="ambientLight" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>ambient<wbr/>Light</span><a href="#ambientLight" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">ambient<wbr/>Light</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol"> = ...</span></div><aside class="tsd-sources">
+<div class="tsd-signature"><span class="tsd-kind-property">ambient<wbr/>Light</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol"> = ...</span></div>
+<div class="tsd-comment tsd-typography"><p>The level &amp; colour of ambient light</p>
+</div>
+<div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L46">core/context.ts:46</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L57">core/context.ts:57</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="aspectRatio" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>aspect<wbr/>Ratio</span><a href="#aspectRatio" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">aspect<wbr/>Ratio</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 1</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L28">core/context.ts:28</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L32">core/context.ts:32</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="camera" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagReadonly">Readonly</code> <span>camera</span><a href="#camera" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">camera</span><span class="tsd-signature-symbol">:</span> <a href="Camera.html" class="tsd-signature-type tsd-kind-class">Camera</a></div>
-<div class="tsd-comment tsd-typography"><p>Main camera for the</p>
+<div class="tsd-comment tsd-typography"><p>Main camera for this context</p>
 </div>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L38">core/context.ts:38</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L42">core/context.ts:42</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="ctx2D" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>ctx2D</span><a href="#ctx2D" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">ctx2D</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type ">CanvasRenderingContext2D</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L35">core/context.ts:35</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L39">core/context.ts:39</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="debug" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>debug</span><a href="#debug" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">debug</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></div><aside class="tsd-sources">
+<div class="tsd-signature"><span class="tsd-kind-property">debug</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></div>
+<div class="tsd-comment tsd-typography"><p>Show extra debug details on the canvas</p>
+</div>
+<div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L44">core/context.ts:44</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L51">core/context.ts:51</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="gl" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>gl</span><a href="#gl" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">gl</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type ">WebGL2RenderingContext</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L27">core/context.ts:27</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L31">core/context.ts:31</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="instances" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>instances</span><a href="#instances" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">instances</span><span class="tsd-signature-symbol">:</span> <a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = []</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L31">core/context.ts:31</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L35">core/context.ts:35</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="lights" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>lights</span><a href="#lights" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">lights</span><span class="tsd-signature-symbol">:</span> <a href="Light.html" class="tsd-signature-type tsd-kind-class">Light</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = []</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L32">core/context.ts:32</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L36">core/context.ts:36</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="models" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagReadonly">Readonly</code> <span>models</span><a href="#models" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">models</span><span class="tsd-signature-symbol">:</span> <a href="ModelCache.html" class="tsd-signature-type tsd-kind-class">ModelCache</a></div>
@@ -134,12 +142,12 @@
 </div>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L41">core/context.ts:41</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L45">core/context.ts:45</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="prevTime" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>prev<wbr/>Time</span><a href="#prevTime" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">prev<wbr/>Time</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L33">core/context.ts:33</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L37">core/context.ts:37</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="programs" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>programs</span><a href="#programs" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">programs</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span><br/><span>    </span>[<span class="tsd-kind-index-signature">key</span>: <span class="tsd-signature-type">string</span>]<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">ProgramInfo</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol"> = {}</span></div>
@@ -149,22 +157,33 @@
 <li class="tsd-parameter-index-signature">
 <h5><span class="tsd-signature-symbol">[</span><span class="tsd-kind-parameter">key</span>: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><span class="tsd-signature-type ">ProgramInfo</span></h5></li></ul></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L29">core/context.ts:29</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L33">core/context.ts:33</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="resizeable" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>resizeable</span><a href="#resizeable" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">resizeable</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = true</span></div><aside class="tsd-sources">
+<div class="tsd-signature"><span class="tsd-kind-property">resizeable</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = true</span></div>
+<div class="tsd-comment tsd-typography"><p>If the canvas can be resized, set this to true, otherwise it&#39;s an optimization to set to false</p>
+</div>
+<div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L43">core/context.ts:43</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L48">core/context.ts:48</a></li></ul></aside></section>
+<section class="tsd-panel tsd-member"><a id="shaderProgram" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><span>shader<wbr/>Program</span><a href="#shaderProgram" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
+<div class="tsd-signature"><span class="tsd-kind-property">shader<wbr/>Program</span><span class="tsd-signature-symbol">:</span> <a href="../enums/ShaderProgram.html" class="tsd-signature-type tsd-kind-enum">ShaderProgram</a><span class="tsd-signature-symbol"> = ShaderProgram.PHONG</span></div>
+<div class="tsd-comment tsd-typography"><p>The shader program to use for rendering</p>
+</div>
+<div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L60">core/context.ts:60</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="started" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>started</span><a href="#started" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">started</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L30">core/context.ts:30</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L34">core/context.ts:34</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="totalTime" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>total<wbr/>Time</span><a href="#totalTime" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">total<wbr/>Time</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L34">core/context.ts:34</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L38">core/context.ts:38</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="update" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>update</span><a href="#update" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">update</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">delta</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">)</span></div>
@@ -175,14 +194,17 @@
 <ul class="tsd-signatures">
 <li class="tsd-signature" id="update.__type-1.__type-2"><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">delta</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 <li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>The pre-render update hook function</p>
+</div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
 <h5><span class="tsd-kind-parameter">delta</span>: <span class="tsd-signature-type">number</span></h5></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4></li></ul></li></ul></div><aside class="tsd-sources">
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+<div class="tsd-comment tsd-typography"></div></li></ul></li></ul></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L45">core/context.ts:45</a></li></ul></aside></section></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L54">core/context.ts:54</a></li></ul></aside></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Accessors</h2>
 <section class="tsd-panel tsd-member"><a id="defaultLight" class="tsd-anchor"></a>
@@ -195,7 +217,7 @@
 <h4 class="tsd-returns-title">Returns <a href="Light.html" class="tsd-signature-type tsd-kind-class">Light</a></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L249">core/context.ts:249</a></li></ul></aside></li></ul></section></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L276">core/context.ts:276</a></li></ul></aside></li></ul></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Methods</h2>
 <section class="tsd-panel tsd-member"><a id="createCubeInstance" class="tsd-anchor"></a>
@@ -203,7 +225,7 @@
 <ul class="tsd-signatures">
 <li class="tsd-signature tsd-anchor-link" id="createCubeInstance.createCubeInstance-1"><span class="tsd-kind-call-signature">create<wbr/>Cube<wbr/>Instance</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">material</span>, <span class="tsd-kind-parameter">size</span><span class="tsd-signature-symbol">?</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a><a href="#createCubeInstance.createCubeInstance-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Add an instance of a primitive cube</p>
+<div class="tsd-comment tsd-typography"><p>Create an instance of a primitive cube</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
@@ -215,31 +237,32 @@
 <h4 class="tsd-returns-title">Returns <a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L234">core/context.ts:234</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L261">core/context.ts:261</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="createModelInstance" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>create<wbr/>Model<wbr/>Instance</span><a href="#createModelInstance" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
 <li class="tsd-signature tsd-anchor-link" id="createModelInstance.createModelInstance-1"><span class="tsd-kind-call-signature">create<wbr/>Model<wbr/>Instance</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">modelName</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a><a href="#createModelInstance.createModelInstance-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Add an instance of a model to the cache and return it</p>
+<div class="tsd-comment tsd-typography"><p>Create a new model instance, which should have been previously loaded into the cache</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
 <h5><span class="tsd-kind-parameter">modelName</span>: <span class="tsd-signature-type">string</span></h5>
+<div class="tsd-comment tsd-typography"><p>Name of the model previously loaded into the cache</p>
+</div>
 <div class="tsd-comment tsd-typography"></div></li></ul></div>
-<h4 class="tsd-returns-title">Returns <a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a></h4><p>A new instance of the model</p>
-
+<h4 class="tsd-returns-title">Returns <a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L191">core/context.ts:191</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L218">core/context.ts:218</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="createPlaneInstance" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>create<wbr/>Plane<wbr/>Instance</span><a href="#createPlaneInstance" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
 <li class="tsd-signature tsd-anchor-link" id="createPlaneInstance.createPlaneInstance-1"><span class="tsd-kind-call-signature">create<wbr/>Plane<wbr/>Instance</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">material</span>, <span class="tsd-kind-parameter">width</span><span class="tsd-signature-symbol">?</span>, <span class="tsd-kind-parameter">height</span><span class="tsd-signature-symbol">?</span>, <span class="tsd-kind-parameter">subdivisionsW</span><span class="tsd-signature-symbol">?</span>, <span class="tsd-kind-parameter">subdivisionsH</span><span class="tsd-signature-symbol">?</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a><a href="#createPlaneInstance.createPlaneInstance-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Add an instance of a primitive plane</p>
+<div class="tsd-comment tsd-typography"><p>Create an instance of a primitive plane</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
@@ -257,13 +280,13 @@
 <h4 class="tsd-returns-title">Returns <a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L219">core/context.ts:219</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L246">core/context.ts:246</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="createSphereInstance" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>create<wbr/>Sphere<wbr/>Instance</span><a href="#createSphereInstance" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
 <li class="tsd-signature tsd-anchor-link" id="createSphereInstance.createSphereInstance-1"><span class="tsd-kind-call-signature">create<wbr/>Sphere<wbr/>Instance</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">material</span>, <span class="tsd-kind-parameter">radius</span><span class="tsd-signature-symbol">?</span>, <span class="tsd-kind-parameter">subdivisionsH</span><span class="tsd-signature-symbol">?</span>, <span class="tsd-kind-parameter">subdivisionsV</span><span class="tsd-signature-symbol">?</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a><a href="#createSphereInstance.createSphereInstance-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Add an instance of a primitive sphere</p>
+<div class="tsd-comment tsd-typography"><p>Create an instance of a primitive sphere</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
@@ -279,49 +302,61 @@
 <h4 class="tsd-returns-title">Returns <a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L204">core/context.ts:204</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L231">core/context.ts:231</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="render" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>render</span><a href="#render" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-private">
 <li class="tsd-signature tsd-anchor-link" id="render.render-1"><span class="tsd-kind-call-signature">render</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">now</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span><a href="#render.render-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
 <li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Main render loop, called every frame</p>
+</div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
 <h5><span class="tsd-kind-parameter">now</span>: <span class="tsd-signature-type">number</span></h5></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
+<div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L115">core/context.ts:115</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L138">core/context.ts:138</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="start" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>start</span><a href="#start" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
 <li class="tsd-signature tsd-anchor-link" id="start.start-1"><span class="tsd-kind-call-signature">start</span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#start.start-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
 <li class="tsd-description">
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
+<div class="tsd-comment tsd-typography"><p>Start the rendering loop</p>
+</div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+<div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L176">core/context.ts:176</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L202">core/context.ts:202</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="stop" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>stop</span><a href="#stop" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
 <li class="tsd-signature tsd-anchor-link" id="stop.stop-1"><span class="tsd-kind-call-signature">stop</span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#stop.stop-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
 <li class="tsd-description">
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
+<div class="tsd-comment tsd-typography"><p>Stop the rendering loop</p>
+</div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+<div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L182">core/context.ts:182</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L210">core/context.ts:210</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="init" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagStatic">Static</code> <span>init</span><a href="#init" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
 <li class="tsd-signature tsd-anchor-link" id="init.init-1"><span class="tsd-kind-call-signature">init</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">canvasSelector</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="Context.html" class="tsd-signature-type tsd-kind-class">Context</a><span class="tsd-signature-symbol">&gt;</span><a href="#init.init-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
 <li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Initialize and create a new Context which will render into provided canvas selector</p>
+</div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
 <h5><span class="tsd-kind-parameter">canvasSelector</span>: <span class="tsd-signature-type">string</span></h5></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="Context.html" class="tsd-signature-type tsd-kind-class">Context</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="Context.html" class="tsd-signature-type tsd-kind-class">Context</a><span class="tsd-signature-symbol">&gt;</span></h4>
+<div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L69">core/context.ts:69</a></li></ul></aside></li></ul></section></section></div>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L86">core/context.ts:86</a></li></ul></aside></li></ul></section></section></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
@@ -354,6 +389,7 @@
 <li><a href="#prevTime" class="tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>prev<wbr/>Time</span></a></li>
 <li><a href="#programs" class="tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>programs</span></a></li>
 <li><a href="#resizeable" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>resizeable</span></a></li>
+<li><a href="#shaderProgram" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>shader<wbr/>Program</span></a></li>
 <li><a href="#started" class="tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>started</span></a></li>
 <li><a href="#totalTime" class="tsd-is-private"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>total<wbr/>Time</span></a></li>
 <li><a href="#update" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>update</span></a></li>
@@ -369,6 +405,7 @@
 <div class="site-menu">
 <nav class="tsd-navigation"><a href="../modules.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-4"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-namespace)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M9.33 16V7.24H10.77L13.446 14.74C13.43 14.54 13.41 14.296 13.386 14.008C13.37 13.712 13.354 13.404 13.338 13.084C13.33 12.756 13.326 12.448 13.326 12.16V7.24H14.37V16H12.93L10.266 8.5C10.282 8.692 10.298 8.936 10.314 9.232C10.33 9.52 10.342 9.828 10.35 10.156C10.366 10.476 10.374 10.784 10.374 11.08V16H9.33Z" fill="var(--color-text)"></path></g></svg><span>gsots3d</span></a>
 <ul class="tsd-small-nested-navigation">
+<li><a href="../enums/ShaderProgram.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-8"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-enum)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M9.45 16V7.24H14.49V8.224H10.518V10.936H14.07V11.908H10.518V15.016H14.49V16H9.45Z" fill="var(--color-text)"></path></g></svg><span>Shader<wbr/>Program</span></a></li>
 <li><a href="Camera.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-128"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-class)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M11.898 16.1201C11.098 16.1201 10.466 15.8961 10.002 15.4481C9.53803 15.0001 9.30603 14.3841 9.30603 13.6001V9.64012C9.30603 8.85612 9.53803 8.24012 10.002 7.79212C10.466 7.34412 11.098 7.12012 11.898 7.12012C12.682 7.12012 13.306 7.34812 13.77 7.80412C14.234 8.25212 14.466 8.86412 14.466 9.64012H13.386C13.386 9.14412 13.254 8.76412 12.99 8.50012C12.734 8.22812 12.37 8.09212 11.898 8.09212C11.426 8.09212 11.054 8.22412 10.782 8.48812C10.518 8.75212 10.386 9.13212 10.386 9.62812V13.6001C10.386 14.0961 10.518 14.4801 10.782 14.7521C11.054 15.0161 11.426 15.1481 11.898 15.1481C12.37 15.1481 12.734 15.0161 12.99 14.7521C13.254 14.4801 13.386 14.0961 13.386 13.6001H14.466C14.466 14.3761 14.234 14.9921 13.77 15.4481C13.306 15.8961 12.682 16.1201 11.898 16.1201Z" fill="var(--color-text)"></path></g></svg><span>Camera</span></a></li>
 <li><a href="Context.html" class="current"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-128"></use></svg><span>Context</span></a></li>
 <li><a href="Instance.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-128"></use></svg><span>Instance</span></a></li>

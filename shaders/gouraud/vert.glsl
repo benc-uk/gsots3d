@@ -1,12 +1,11 @@
 precision highp float;
 
-// Outputs from vertex shader 
-varying vec3 v_normal;
-varying vec2 v_texCoord;
-varying vec4 v_position;
+varying vec4 v_colour;
 
 uniform mat4 u_world;
 uniform mat4 u_camMatrix;
+uniform mat4 u_worldViewProjection;
+uniform mat4 u_worldInverseTranspose;
 
 // Material properties
 uniform vec4 u_matAmbient;
@@ -19,6 +18,11 @@ uniform sampler2D u_matTexture;
 uniform vec4 u_lightPosition;
 uniform vec4 u_lightColour;
 uniform vec4 u_ambientLight;
+
+// Attributes from buffers
+attribute vec4 position;
+attribute vec3 normal;
+attribute vec2 texcoord;
 
 // lightCalc function returns two floats (packed into a vec2)
 // One for diffuse component of lighting, the second for specular
@@ -37,18 +41,24 @@ vec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shinin
 }
 
 void main(void) {
-  vec3 surfaceToLight = u_lightPosition.xyz - v_position.xyz;
-  vec3 surfaceToView = (u_camMatrix[3] - (u_world * v_position)).xyz;
-  vec3 normalN = normalize(v_normal);
+  vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;
+  vec4 worldPos = u_world * position;
+  
+  vec3 surfaceToLight = u_lightPosition.xyz - worldPos.xyz;
+  vec3 surfaceToView = (u_camMatrix[3] - (u_world * worldPos)).xyz;
+  vec3 normalN = normalize(worldNormal);
   vec3 surfaceToLightN = normalize(surfaceToLight);
   vec3 surfaceToViewN = normalize(surfaceToView);
   vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);
 
-  vec2 l = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);
+  vec2 light = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);
 
-  vec4 diffuseColour = texture2D(u_matTexture, v_texCoord) * u_matDiffuse;
+  vec4 diffuseColour = texture2D(u_matTexture, texcoord) * u_matDiffuse;
 
-  gl_FragColor = (u_ambientLight * diffuseColour * u_matAmbient) 
-  + (diffuseColour * max(l.x, 0.0) * u_lightColour)
-  + (u_matSpecular * l.y * u_lightColour);
+  // Output colour is sum of ambient, diffuse and specular components
+  v_colour = (u_ambientLight * diffuseColour * u_matAmbient)
+  + (diffuseColour * u_lightColour * max(light.x, 0.0))
+  + (u_lightColour * u_matSpecular * light.y); 
+
+  gl_Position = u_worldViewProjection * position;
 }

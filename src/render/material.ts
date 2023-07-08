@@ -66,7 +66,7 @@ export class Material {
   }
 
   /**
-   * Create a new material with a texture map loaded from a URL
+   * Create a new Material with a texture map loaded from a URL
    */
   public static createTexture(url: string, filter = true) {
     const m = new Material()
@@ -85,7 +85,8 @@ export class Material {
 
   /** Create a simple RED Material */
   static get RED() {
-    return Material.createDiffuse(1.0, 0.0, 0.0)
+    const m = Material.createDiffuse(1.0, 0.0, 0.0)
+    return m
   }
 
   /** Create a simple GREEN Material */

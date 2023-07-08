@@ -7,21 +7,25 @@ import log from 'loglevel'
 import { ProgramInfo, createProgramInfo, resizeCanvasToDisplaySize } from 'twgl.js'
 import { mat4 } from 'gl-matrix'
 
-import { Material, VERSION } from '../index.ts'
+import { VERSION } from '../index.ts'
 import { getGl } from './gl.ts'
-import { UniformSet } from './types.ts'
-import { Light } from '../render/light.ts'
+import { ShaderProgram, UniformSet } from './types.ts'
 import { ModelCache } from '../models/cache.ts'
+import { Light } from '../render/light.ts'
 import { Camera } from '../render/camera.ts'
+import { Material } from '../render/material.ts'
 import { Instance } from '../models/instance.ts'
-
-// Import shaders as hefty big strings
-import fragShaderPhong from '../../shaders/phong/frag.glsl'
-import vertShaderPhong from '../../shaders/phong/vert.glsl'
 import { PrimitiveCube, PrimitivePlane, PrimitiveSphere } from '../models/primitive.ts'
 
+// Import shaders, tsup will inline these as text strings
+import fragShaderPhong from '../../shaders/phong/frag.glsl'
+import vertShaderPhong from '../../shaders/phong/vert.glsl'
+import fragShaderGouraud from '../../shaders/gouraud/frag.glsl'
+import vertShaderGouraud from '../../shaders/gouraud/vert.glsl'
+
 /**
- * The main rendering context. This is the main entry point for the library.
+ * The main rendering context. This is the effectively main entry point for the library.
+ * Typically you will create a single instance of this class using init() and use it to render your scene.
  */
 export class Context {
   private gl: WebGL2RenderingContext
@@ -34,16 +38,26 @@ export class Context {
   private totalTime: number
   private ctx2D: CanvasRenderingContext2D | undefined
 
-  /** Main camera for the */
+  /** Main camera for this context */
   public readonly camera: Camera
 
   /** Cache of models, used to create instances */
   public readonly models: ModelCache
 
+  /** If the canvas can be resized, set this to true, otherwise it's an optimization to set to false */
   public resizeable = true
+
+  /** Show extra debug details on the canvas */
   public debug = false
+
+  /** The pre-render update hook function */
   public update: (delta: number) => void
+
+  /** The level & colour of ambient light */
   public ambientLight: [number, number, number] = [0.05, 0.05, 0.05]
+
+  /** The shader program to use for rendering */
+  public shaderProgram = ShaderProgram.PHONG
 
   private constructor(gl: WebGL2RenderingContext) {
     this.gl = gl
@@ -66,6 +80,9 @@ export class Context {
     log.info('👑 GSOTS-3D context created')
   }
 
+  /**
+   * Initialize and create a new Context which will render into provided canvas selector
+   * */
   static async init(canvasSelector: string): Promise<Context> {
     const gl = getGl(true, canvasSelector)
 
@@ -93,8 +110,11 @@ export class Context {
     ctx.ctx2D = ctx2D
 
     try {
-      const modelProg = createProgramInfo(gl, [vertShaderPhong, fragShaderPhong])
-      ctx.programs['phong'] = modelProg
+      const phongProg = createProgramInfo(gl, [vertShaderPhong, fragShaderPhong])
+      ctx.programs[ShaderProgram.PHONG] = phongProg
+
+      const gouraudProg = createProgramInfo(gl, [vertShaderGouraud, fragShaderGouraud])
+      ctx.programs[ShaderProgram.GOURAUD] = gouraudProg
 
       log.info('🎨 Loaded all shaders, GL is ready')
     } catch (err) {
@@ -112,6 +132,9 @@ export class Context {
     return ctx
   }
 
+  /**
+   * Main render loop, called every frame
+   */
   private async render(now: number) {
     if (!this.gl) return
 
@@ -129,7 +152,7 @@ export class Context {
       u_ambientLight: [...this.ambientLight, 1],
     } as UniformSet
 
-    const phongProg = this.programs['phong']
+    const shaderProg = this.programs[this.shaderProgram]
 
     if (this.resizeable) {
       resizeCanvasToDisplaySize(<HTMLCanvasElement>this.gl.canvas)
@@ -150,14 +173,14 @@ export class Context {
     const viewProjection = mat4.multiply(mat4.create(), projection, viewMatrix)
 
     // this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT)
-    this.gl.useProgram(phongProg.program)
+    this.gl.useProgram(shaderProg.program)
 
     // Since we only have one light, just apply it here
-    this.lights[0].apply(phongProg)
+    this.lights[0].apply(shaderProg)
 
     // Draw all instances
     for (const instance of this.instances) {
-      instance.render(this.gl, uniforms, viewProjection, phongProg)
+      instance.render(this.gl, uniforms, viewProjection, shaderProg)
     }
 
     if (this.ctx2D && this.debug) {
@@ -173,20 +196,24 @@ export class Context {
     if (this.started) requestAnimationFrame(this.render)
   }
 
+  /**
+   * Start the rendering loop
+   */
   start() {
-    // Start the render loop
     this.started = true
     requestAnimationFrame(this.render)
   }
 
+  /**
+   * Stop the rendering loop
+   */
   stop() {
     this.started = false
   }
 
   /**
-   * Add an instance of a model to the cache and return it
-   * @param modelName
-   * @returns {Instance} A new instance of the model
+   * Create a new model instance, which should have been previously loaded into the cache
+   * @param modelName - Name of the model previously loaded into the cache
    */
   createModelInstance(modelName: string) {
     const model = this.models.get(modelName)
@@ -199,7 +226,7 @@ export class Context {
   }
 
   /**
-   * Add an instance of a primitive sphere
+   * Create an instance of a primitive sphere
    */
   createSphereInstance(material: Material, radius = 5, subdivisionsH = 16, subdivisionsV = 8) {
     const sphere = new PrimitiveSphere(this.gl, radius, subdivisionsH, subdivisionsV)
@@ -214,7 +241,7 @@ export class Context {
   }
 
   /**
-   * Add an instance of a primitive plane
+   * Create an instance of a primitive plane
    */
   createPlaneInstance(material: Material, width = 5, height = 5, subdivisionsW = 1, subdivisionsH = 1) {
     const plane = new PrimitivePlane(this.gl, width, height, subdivisionsW, subdivisionsH)
@@ -229,7 +256,7 @@ export class Context {
   }
 
   /**
-   * Add an instance of a primitive cube
+   * Create an instance of a primitive cube
    */
   createCubeInstance(material: Material, size = 5) {
     const cube = new PrimitiveCube(this.gl, size)

@@ -259,14 +259,21 @@ var require_loglevel = __commonJS({
   }
 });
 
+// src/core/types.ts
+var ShaderProgram = /* @__PURE__ */ ((ShaderProgram2) => {
+  ShaderProgram2["PHONG"] = "phong";
+  ShaderProgram2["GOURAUD"] = "gouraud";
+  return ShaderProgram2;
+})(ShaderProgram || {});
+
 // src/core/logging.ts
-var log = __toESM(require_loglevel(), 1);
+var import_loglevel = __toESM(require_loglevel(), 1);
 function setLogLevel(level) {
-  log.setLevel(level);
+  import_loglevel.default.setLevel(level);
 }
 
 // src/core/context.ts
-var import_loglevel3 = __toESM(require_loglevel(), 1);
+var import_loglevel4 = __toESM(require_loglevel(), 1);
 
 // node_modules/twgl.js/dist/5.x/twgl-full.module.js
 var VecType = Float32Array;
@@ -5516,20 +5523,38 @@ var mul = multiply;
 var sub = subtract;
 
 // src/core/gl.ts
-var import_loglevel = __toESM(require_loglevel(), 1);
+var import_loglevel2 = __toESM(require_loglevel(), 1);
 var glContext = void 0;
 function getGl(aa = true, selector = "canvas") {
   if (glContext) {
     return glContext;
   }
-  import_loglevel.default.info("\u{1F58C}\uFE0F Creating WebGL2 context");
+  import_loglevel2.default.info("\u{1F58C}\uFE0F Creating WebGL2 context");
   const canvas = document.querySelector(selector);
   glContext = canvas.getContext("webgl2", { antialias: aa }) ?? void 0;
   if (!glContext) {
-    import_loglevel.default.error("\u{1F4A5} Unable to create WebGL2 context!");
+    import_loglevel2.default.error("\u{1F4A5} Unable to create WebGL2 context!");
   }
   return glContext;
 }
+
+// src/models/cache.ts
+var import_loglevel3 = __toESM(require_loglevel(), 1);
+var ModelCache = class {
+  constructor() {
+    this.cache = /* @__PURE__ */ new Map();
+  }
+  get(name) {
+    if (!this.cache.has(name)) {
+      throw new Error(`Model ${name} not found in cache`);
+    }
+    return this.cache.get(name);
+  }
+  add(model) {
+    import_loglevel3.default.debug(`\u{1F9F0} Adding model '${model.name}' to cache`);
+    this.cache.set(model.name, model);
+  }
+};
 
 // src/render/light.ts
 var UNIFORM_PREFIX = "u_light";
@@ -5553,24 +5578,6 @@ var Light = class {
       [`${UNIFORM_PREFIX}Position`]: [...this.position, 1],
       [`${UNIFORM_PREFIX}Colour`]: [...this.colour, 1]
     };
-  }
-};
-
-// src/models/cache.ts
-var import_loglevel2 = __toESM(require_loglevel(), 1);
-var ModelCache = class {
-  constructor() {
-    this.cache = /* @__PURE__ */ new Map();
-  }
-  get(name) {
-    if (!this.cache.has(name)) {
-      throw new Error(`Model ${name} not found in cache`);
-    }
-    return this.cache.get(name);
-  }
-  add(model) {
-    import_loglevel2.default.debug(`\u{1F9F0} Adding model '${model.name}' to cache`);
-    this.cache.set(model.name, model);
   }
 };
 
@@ -5602,11 +5609,11 @@ var Camera = class {
 
 // src/models/instance.ts
 var Instance = class {
+  //public transparent = false
   /**
    * @param {Model} model - Model to use for this instance
    */
   constructor(renderable) {
-    this.transparent = false;
     this.renderable = renderable;
   }
   /**
@@ -5666,12 +5673,6 @@ var Instance = class {
   }
 };
 
-// shaders/phong/frag.glsl
-var frag_default = "precision highp float;\n\n// Outputs from vertex shader \nvarying vec3 v_normal;\nvarying vec2 v_texCoord;\nvarying vec4 v_position;\n\nuniform mat4 u_world;\nuniform mat4 u_camMatrix;\n\n// Material properties\nuniform vec4 u_matAmbient;\nuniform vec4 u_matDiffuse;\nuniform vec4 u_matSpecular;\nuniform float u_matShininess;\nuniform sampler2D u_matTexture;\n\n// Light properties\nuniform vec4 u_lightPosition;\nuniform vec4 u_lightColour;\nuniform vec4 u_ambientLight;\n\n// lightCalc function returns two floats (packed into a vec2)\n// One for diffuse component of lighting, the second for specular\n// - normalN:          Surface normal (normalized)\n// - surfaceToLightN:  Vector towards light (normalized)\n// - halfVector:       Half vector towards camera (normalized)\n// - shininess:        Hardness or size of specular highlights\nvec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {\n  float NdotL = dot(normalN, surfaceToLightN);\n  float NdotH = dot(normalN, halfVector);\n  \n  return vec2(\n    NdotL,\n    (NdotL > 0.0) ? pow(max(0.0, NdotH), shininess) : 0.0 // Specular term in y\n  );\n}\n\nvoid main(void) {\n  vec3 surfaceToLight = u_lightPosition.xyz - v_position.xyz;\n  vec3 surfaceToView = (u_camMatrix[3] - (u_world * v_position)).xyz;\n  vec3 normalN = normalize(v_normal);\n  vec3 surfaceToLightN = normalize(surfaceToLight);\n  vec3 surfaceToViewN = normalize(surfaceToView);\n  vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);\n\n  vec2 l = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);\n\n  vec4 diffuseColor = texture2D(u_matTexture, v_texCoord) * u_matDiffuse;\n\n  gl_FragColor = (u_ambientLight * diffuseColor * u_matAmbient) \n  + (diffuseColor * max(l.x, 0.0) * u_lightColour)\n  + (u_matSpecular * l.y * u_lightColour);\n}\n";
-
-// shaders/phong/vert.glsl
-var vert_default = "precision highp float;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\n\n// Attributes from buffers\nattribute vec4 position;\nattribute vec3 normal;\nattribute vec2 texcoord;\n\n// Varying's to pass to fragment shader\nvarying vec2 v_texCoord;\nvarying vec3 v_normal;\nvarying vec4 v_position;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  v_position = u_world * position;\n\n  gl_Position = u_worldViewProjection * position;\n}";
-
 // src/models/primitive.ts
 var Primitive = class {
   constructor() {
@@ -5705,6 +5706,18 @@ var PrimitivePlane = class extends Primitive {
   }
 };
 
+// shaders/phong/frag.glsl
+var frag_default = "precision highp float;\n\n// Outputs from vertex shader \nvarying vec3 v_normal;\nvarying vec2 v_texCoord;\nvarying vec4 v_position;\n\nuniform mat4 u_world;\nuniform mat4 u_camMatrix;\n\n// Material properties\nuniform vec4 u_matAmbient;\nuniform vec4 u_matDiffuse;\nuniform vec4 u_matSpecular;\nuniform float u_matShininess;\nuniform sampler2D u_matTexture;\n\n// Light properties\nuniform vec4 u_lightPosition;\nuniform vec4 u_lightColour;\nuniform vec4 u_ambientLight;\n\n// lightCalc function returns two floats (packed into a vec2)\n// One for diffuse component of lighting, the second for specular\n// - normalN:          Surface normal (normalized)\n// - surfaceToLightN:  Vector towards light (normalized)\n// - halfVector:       Half vector towards camera (normalized)\n// - shininess:        Hardness or size of specular highlights\nvec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {\n  float NdotL = dot(normalN, surfaceToLightN);\n  float NdotH = dot(normalN, halfVector);\n  \n  return vec2(\n    NdotL,\n    (NdotL > 0.0) ? pow(max(0.0, NdotH), shininess) : 0.0 // Specular term in y\n  );\n}\n\nvoid main(void) {\n  vec3 surfaceToLight = u_lightPosition.xyz - v_position.xyz;\n  vec3 surfaceToView = (u_camMatrix[3] - (u_world * v_position)).xyz;\n  vec3 normalN = normalize(v_normal);\n  vec3 surfaceToLightN = normalize(surfaceToLight);\n  vec3 surfaceToViewN = normalize(surfaceToView);\n  vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);\n\n  vec2 l = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);\n\n  vec4 diffuseColour = texture2D(u_matTexture, v_texCoord) * u_matDiffuse;\n\n  gl_FragColor = (u_ambientLight * diffuseColour * u_matAmbient) \n  + (diffuseColour * max(l.x, 0.0) * u_lightColour)\n  + (u_matSpecular * l.y * u_lightColour);\n}\n";
+
+// shaders/phong/vert.glsl
+var vert_default = "precision highp float;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\n\n// Attributes from buffers\nattribute vec4 position;\nattribute vec3 normal;\nattribute vec2 texcoord;\n\n// Varying's to pass to fragment shader\nvarying vec2 v_texCoord;\nvarying vec3 v_normal;\nvarying vec4 v_position;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  v_position = u_world * position;\n\n  gl_Position = u_worldViewProjection * position;\n}";
+
+// shaders/gouraud/frag.glsl
+var frag_default2 = "precision highp float;\n\nvarying vec4 v_colour;\n\nvoid main() {\n  gl_FragColor = v_colour;\n}";
+
+// shaders/gouraud/vert.glsl
+var vert_default2 = "precision highp float;\n\nvarying vec4 v_colour;\n\nuniform mat4 u_world;\nuniform mat4 u_camMatrix;\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\n\n// Material properties\nuniform vec4 u_matAmbient;\nuniform vec4 u_matDiffuse;\nuniform vec4 u_matSpecular;\nuniform float u_matShininess;\nuniform sampler2D u_matTexture;\n\n// Light properties\nuniform vec4 u_lightPosition;\nuniform vec4 u_lightColour;\nuniform vec4 u_ambientLight;\n\n// Attributes from buffers\nattribute vec4 position;\nattribute vec3 normal;\nattribute vec2 texcoord;\n\n// lightCalc function returns two floats (packed into a vec2)\n// One for diffuse component of lighting, the second for specular\n// - normalN:          Surface normal (normalized)\n// - surfaceToLightN:  Vector towards light (normalized)\n// - halfVector:       Half vector towards camera (normalized)\n// - shininess:        Hardness or size of specular highlights\nvec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {\n  float NdotL = dot(normalN, surfaceToLightN);\n  float NdotH = dot(normalN, halfVector);\n  \n  return vec2(\n    NdotL,\n    (NdotL > 0.0) ? pow(max(0.0, NdotH), shininess) : 0.0 // Specular term in y\n  );\n}\n\nvoid main(void) {\n  vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  vec4 worldPos = u_world * position;\n  \n  vec3 surfaceToLight = u_lightPosition.xyz - worldPos.xyz;\n  vec3 surfaceToView = (u_camMatrix[3] - (u_world * worldPos)).xyz;\n  vec3 normalN = normalize(worldNormal);\n  vec3 surfaceToLightN = normalize(surfaceToLight);\n  vec3 surfaceToViewN = normalize(surfaceToView);\n  vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);\n\n  vec2 light = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);\n\n  vec4 diffuseColour = texture2D(u_matTexture, texcoord) * u_matDiffuse;\n\n  // Output colour is sum of ambient, diffuse and specular components\n  v_colour = (u_ambientLight * diffuseColour * u_matAmbient)\n  + (diffuseColour * u_lightColour * max(light.x, 0.0))\n  + (u_lightColour * u_matSpecular * light.y); \n\n  gl_Position = u_worldViewProjection * position;\n}\n";
+
 // src/core/context.ts
 var Context = class _Context {
   constructor(gl) {
@@ -5713,9 +5726,14 @@ var Context = class _Context {
     this.started = false;
     this.instances = [];
     this.lights = [];
+    /** If the canvas can be resized, set this to true, otherwise it's an optimization to set to false */
     this.resizeable = true;
+    /** Show extra debug details on the canvas */
     this.debug = false;
+    /** The level & colour of ambient light */
     this.ambientLight = [0.05, 0.05, 0.05];
+    /** The shader program to use for rendering */
+    this.shaderProgram = "phong" /* PHONG */;
     this.gl = gl;
     this.models = new ModelCache();
     this.prevTime = 0;
@@ -5727,12 +5745,15 @@ var Context = class _Context {
     this.camera = new Camera();
     this.update = () => {
     };
-    import_loglevel3.default.info("\u{1F451} GSOTS-3D context created");
+    import_loglevel4.default.info("\u{1F451} GSOTS-3D context created");
   }
+  /**
+   * Initialize and create a new Context which will render into provided canvas selector
+   * */
   static async init(canvasSelector) {
     const gl = getGl(true, canvasSelector);
     if (!gl) {
-      import_loglevel3.default.error("\u{1F4A5} Failed to get WebGL context");
+      import_loglevel4.default.error("\u{1F4A5} Failed to get WebGL context");
       throw new Error("Failed to get WebGL context");
     }
     const ctx = new _Context(gl);
@@ -5745,16 +5766,18 @@ var Context = class _Context {
     document.getElementById("game")?.appendChild(textCanvas);
     const ctx2D = textCanvas.getContext("2d");
     if (!ctx2D) {
-      import_loglevel3.default.error("\u{1F4A5} Failed to get 2D canvas context");
+      import_loglevel4.default.error("\u{1F4A5} Failed to get 2D canvas context");
       throw new Error("Failed to get 2D canvas context");
     }
     ctx.ctx2D = ctx2D;
     try {
-      const modelProg = createProgramInfo(gl, [vert_default, frag_default]);
-      ctx.programs["phong"] = modelProg;
-      import_loglevel3.default.info("\u{1F3A8} Loaded all shaders, GL is ready");
+      const phongProg = createProgramInfo(gl, [vert_default, frag_default]);
+      ctx.programs["phong" /* PHONG */] = phongProg;
+      const gouraudProg = createProgramInfo(gl, [vert_default2, frag_default2]);
+      ctx.programs["gouraud" /* GOURAUD */] = gouraudProg;
+      import_loglevel4.default.info("\u{1F3A8} Loaded all shaders, GL is ready");
     } catch (err) {
-      import_loglevel3.default.error(err);
+      import_loglevel4.default.error(err);
       throw err;
     }
     gl.enable(gl.DEPTH_TEST);
@@ -5763,6 +5786,9 @@ var Context = class _Context {
     ctx.render = ctx.render.bind(ctx);
     return ctx;
   }
+  /**
+   * Main render loop, called every frame
+   */
   async render(now) {
     if (!this.gl)
       return;
@@ -5776,7 +5802,7 @@ var Context = class _Context {
       u_worldViewProjection: mat4_exports.create(),
       u_ambientLight: [...this.ambientLight, 1]
     };
-    const phongProg = this.programs["phong"];
+    const shaderProg = this.programs[this.shaderProgram];
     if (this.resizeable) {
       resizeCanvasToDisplaySize(this.gl.canvas);
       resizeCanvasToDisplaySize(this.ctx2D?.canvas);
@@ -5788,10 +5814,10 @@ var Context = class _Context {
     uniforms.u_camMatrix = camMatrix;
     const projection = this.camera.projectionMatrix(this.aspectRatio);
     const viewProjection = mat4_exports.multiply(mat4_exports.create(), projection, viewMatrix);
-    this.gl.useProgram(phongProg.program);
-    this.lights[0].apply(phongProg);
+    this.gl.useProgram(shaderProg.program);
+    this.lights[0].apply(shaderProg);
     for (const instance of this.instances) {
-      instance.render(this.gl, uniforms, viewProjection, phongProg);
+      instance.render(this.gl, uniforms, viewProjection, shaderProg);
     }
     if (this.ctx2D && this.debug) {
       this.ctx2D.clearRect(0, 0, this.ctx2D.canvas.width, this.ctx2D.canvas.height);
@@ -5804,17 +5830,22 @@ var Context = class _Context {
     if (this.started)
       requestAnimationFrame(this.render);
   }
+  /**
+   * Start the rendering loop
+   */
   start() {
     this.started = true;
     requestAnimationFrame(this.render);
   }
+  /**
+   * Stop the rendering loop
+   */
   stop() {
     this.started = false;
   }
   /**
-   * Add an instance of a model to the cache and return it
-   * @param modelName
-   * @returns {Instance} A new instance of the model
+   * Create a new model instance, which should have been previously loaded into the cache
+   * @param modelName - Name of the model previously loaded into the cache
    */
   createModelInstance(modelName) {
     const model = this.models.get(modelName);
@@ -5825,36 +5856,36 @@ var Context = class _Context {
     return instance;
   }
   /**
-   * Add an instance of a primitive sphere
+   * Create an instance of a primitive sphere
    */
   createSphereInstance(material, radius = 5, subdivisionsH = 16, subdivisionsV = 8) {
     const sphere = new PrimitiveSphere(this.gl, radius, subdivisionsH, subdivisionsV);
     sphere.material = material;
     const instance = new Instance(sphere);
     this.instances.push(instance);
-    import_loglevel3.default.debug(`\u{1F7E2} Created sphere instance, r:${radius}`);
+    import_loglevel4.default.debug(`\u{1F7E2} Created sphere instance, r:${radius}`);
     return instance;
   }
   /**
-   * Add an instance of a primitive plane
+   * Create an instance of a primitive plane
    */
   createPlaneInstance(material, width = 5, height = 5, subdivisionsW = 1, subdivisionsH = 1) {
     const plane = new PrimitivePlane(this.gl, width, height, subdivisionsW, subdivisionsH);
     plane.material = material;
     const instance = new Instance(plane);
     this.instances.push(instance);
-    import_loglevel3.default.debug(`\u{1F7E8} Created plane instance, w:${width} h:${height}`);
+    import_loglevel4.default.debug(`\u{1F7E8} Created plane instance, w:${width} h:${height}`);
     return instance;
   }
   /**
-   * Add an instance of a primitive cube
+   * Create an instance of a primitive cube
    */
   createCubeInstance(material, size = 5) {
     const cube = new PrimitiveCube(this.gl, size);
     cube.material = material;
     const instance = new Instance(cube);
     this.instances.push(instance);
-    import_loglevel3.default.debug(`\u{1F4E6} Created cube instance, size:${size}`);
+    import_loglevel4.default.debug(`\u{1F4E6} Created cube instance, size:${size}`);
     return instance;
   }
   /**
@@ -5907,7 +5938,7 @@ var Material = class _Material {
     return m;
   }
   /**
-   * Create a new material with a texture map loaded from a URL
+   * Create a new Material with a texture map loaded from a URL
    */
   static createTexture(url, filter = true) {
     const m = new _Material();
@@ -5924,7 +5955,8 @@ var Material = class _Material {
   }
   /** Create a simple RED Material */
   static get RED() {
-    return _Material.createDiffuse(1, 0, 0);
+    const m = _Material.createDiffuse(1, 0, 0);
+    return m;
   }
   /** Create a simple GREEN Material */
   static get GREEN() {
@@ -5957,7 +5989,7 @@ var Material = class _Material {
 };
 
 // src/models/model.ts
-var import_loglevel4 = __toESM(require_loglevel(), 1);
+var import_loglevel5 = __toESM(require_loglevel(), 1);
 
 // src/parsers/mtl-parser.ts
 function parseMTL(mtlFile) {
@@ -6202,7 +6234,7 @@ var Model = class _Model {
       const bufferInfo = createBufferInfoFromArrays(gl, g.data);
       model.parts.push(new ModelPart(bufferInfo, g.material));
     }
-    import_loglevel4.default.debug(
+    import_loglevel5.default.debug(
       `\u265F\uFE0F Model '${objFilename}' loaded with ${model.parts.length} parts, ${Object.keys(model.materials).length} materials`
     );
     return model;
@@ -6220,7 +6252,7 @@ var ModelPart = class {
 };
 
 // src/index.ts
-var VERSION = "0.0.3";
+var VERSION = "0.0.1-alpha.4";
 export {
   Camera,
   Context,
@@ -6233,6 +6265,7 @@ export {
   PrimitiveCube,
   PrimitivePlane,
   PrimitiveSphere,
+  ShaderProgram,
   VERSION,
   setLogLevel
 };
