@@ -1,11 +1,10 @@
 import { Context, Material } from '../../dist-bundle/gsots3d.js'
 
+// Create context with default canvas
 const ctx = await Context.init()
 
-const red = Material.RED
-red.specular = [1.0, 1.0, 1.0]
-red.shininess = 100
+// Create a red sphere of radius 5
+ctx.createSphereInstance(Material.RED, 5.0)
 
-ctx.createSphereInstance(red, 5, 12, 12)
-
+// Start rendering
 ctx.start()

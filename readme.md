@@ -18,20 +18,19 @@ Features
 
 ## Hello World - Example
 
-Simple working example of creating a Context to render a simple OBJ model
+The hello world equivalent in GSOTS is putting a simple object on the screen, This example creates a GSOTS `Context` to render a simple red sphere
 
 ```ts
-import { Model, Context } from 'gsots3d'
+import { Context, Material} from 'gsots3d'
 
-// Create context with default canvas
-const ctx = await Context.init()
+// Create rendering context with canvas HTML element
+const gsots = await Context.init()
 
-// Load a model and add it to the scene
-ctx.models.add(await Model.parse('./objects', 'table.obj'))
-ctx.createInstance('table')
+// Create a red sphere of radius 5
+gsots.createSphereInstance(Material.RED, 5.0)
 
 // Start rendering
-ctx.start()
+gsots.start()
 ```
 
 ## Demos

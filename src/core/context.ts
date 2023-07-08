@@ -7,7 +7,6 @@ import log from 'loglevel'
 import { ProgramInfo, createProgramInfo, resizeCanvasToDisplaySize } from 'twgl.js'
 import { mat4 } from 'gl-matrix'
 
-import { VERSION } from '../index.ts'
 import { getGl } from './gl.ts'
 import { ShaderProgram, UniformSet } from './types.ts'
 import { ModelCache } from '../models/cache.ts'
@@ -36,7 +35,6 @@ export class Context {
   private lights: Light[] = []
   private prevTime: number
   private totalTime: number
-  private ctx2D: CanvasRenderingContext2D | undefined
 
   /** Main camera for this context */
   public readonly camera: Camera
@@ -77,6 +75,13 @@ export class Context {
       // Do nothing
     }
 
+    const epv = gl.getExtension('WEBGL_provoking_vertex')
+    if (!epv) {
+      log.error('😢 WEBGL_provoking_vertex not available!')
+    } else {
+      epv.provokingVertexWEBGL(epv.FIRST_VERTEX_CONVENTION_WEBGL)
+    }
+
     log.info('👑 GSOTS-3D context created')
   }
 
@@ -95,19 +100,6 @@ export class Context {
 
     const canvas = <HTMLCanvasElement>gl.canvas
     ctx.aspectRatio = canvas.clientWidth / canvas.clientHeight
-
-    // HACK: Ugly hack to get 2D canvas context
-    const textCanvas = document.createElement('canvas')
-    textCanvas.width = canvas.clientWidth
-    textCanvas.height = canvas.clientHeight
-    textCanvas.style.backgroundColor = 'transparent'
-    document.getElementById('game')?.appendChild(textCanvas)
-    const ctx2D = textCanvas.getContext('2d')
-    if (!ctx2D) {
-      log.error('💥 Failed to get 2D canvas context')
-      throw new Error('Failed to get 2D canvas context')
-    }
-    ctx.ctx2D = ctx2D
 
     try {
       const phongProg = createProgramInfo(gl, [vertShaderPhong, fragShaderPhong])
@@ -156,7 +148,6 @@ export class Context {
 
     if (this.resizeable) {
       resizeCanvasToDisplaySize(<HTMLCanvasElement>this.gl.canvas)
-      resizeCanvasToDisplaySize(<HTMLCanvasElement>this.ctx2D?.canvas)
       this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height)
       this.aspectRatio = this.gl.canvas.width / this.gl.canvas.height
     }
@@ -181,15 +172,6 @@ export class Context {
     // Draw all instances
     for (const instance of this.instances) {
       instance.render(this.gl, uniforms, viewProjection, shaderProg)
-    }
-
-    if (this.ctx2D && this.debug) {
-      this.ctx2D.clearRect(0, 0, this.ctx2D.canvas.width, this.ctx2D.canvas.height)
-      this.ctx2D.fillStyle = 'white'
-      this.ctx2D.font = '19px monospace'
-      this.ctx2D.fillText(`GSOTS-3D v${VERSION}`, 10, 20)
-      this.ctx2D.fillText(`FPS: ${Math.round(1 / deltaTime)}`, 10, 40)
-      this.ctx2D.fillText(`Time: ${Math.round(this.totalTime * 100) / 100}`, 10, 60)
     }
 
     // Loop forever or not

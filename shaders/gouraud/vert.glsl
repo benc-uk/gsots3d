@@ -1,6 +1,13 @@
+// ============================================================================
+// Gouraud vertex shader
+// Ben Coleman, 2023
+// ============================================================================
+
 precision highp float;
 
-varying vec4 v_colour;
+varying vec4 v_lightingDiffuse;
+varying vec4 v_lightingSpecular;
+varying vec2 v_texCoord;
 
 uniform mat4 u_world;
 uniform mat4 u_camMatrix;
@@ -9,10 +16,8 @@ uniform mat4 u_worldInverseTranspose;
 
 // Material properties
 uniform vec4 u_matAmbient;
-uniform vec4 u_matDiffuse;
 uniform vec4 u_matSpecular;
 uniform float u_matShininess;
-uniform sampler2D u_matTexture;
 
 // Light properties
 uniform vec4 u_lightPosition;
@@ -53,12 +58,15 @@ void main(void) {
 
   vec2 light = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);
 
-  vec4 diffuseColour = texture2D(u_matTexture, texcoord) * u_matDiffuse;
+  // Output lighting value for fragment shader to use, no color
+  v_lightingDiffuse = (u_ambientLight  * u_matAmbient) +
+                      (u_lightColour * max(light.x, 0.0));
 
-  // Output colour is sum of ambient, diffuse and specular components
-  v_colour = (u_ambientLight * diffuseColour * u_matAmbient)
-  + (diffuseColour * u_lightColour * max(light.x, 0.0))
-  + (u_lightColour * u_matSpecular * light.y); 
+  // Pass specular in a seperate varying
+  v_lightingSpecular = u_lightColour * u_matSpecular * light.y;
+
+  // Pass through varying texture coordinate, so we can get the colour there
+  v_texCoord = texcoord;
 
   gl_Position = u_worldViewProjection * position;
 }
