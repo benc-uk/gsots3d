@@ -52,6 +52,8 @@ jobs:
         run: |
           npm ci --include=dev
           npm version prerelease --preid=pre
+          git config --global user.email "fake@nowhere.com"
+          git config --global user.name "CI Build"
 
       - name: Build all bundles
         env:
