@@ -51,9 +51,9 @@ jobs:
           NODE_ENV: production
         run: |
           npm ci --include=dev
-          npm version prerelease --preid=pre
           git config --global user.email "fake@nowhere.com"
           git config --global user.name "CI Build"
+          npm version prerelease --preid=pre
 
       - name: Build all bundles
         env:
