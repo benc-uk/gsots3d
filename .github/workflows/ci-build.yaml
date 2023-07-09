@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   lint-check:
@@ -32,6 +33,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint-check
 
+    # only run on main branch
+    if: github.ref == 'refs/heads/main'
+
     steps:
       - uses: actions/checkout@v3
 
@@ -39,17 +43,26 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: x.18
+          registry-url: 'https://npm.pkg.github.com'
           cache: 'npm'
 
-      - name: Build browser ESM bundle
+      - name: Build all bundles
         env:
           NODE_ENV: production
         run: |
           npm ci --include=dev
           npm run build-bundle
+          npm run build
 
-      - name: Update repo with dist-bundle
+      - name: Push dist-bundle back to GitHub
         uses: mikeal/publish-to-github-action@master
         env:
-          GITHUB_TOKEN: ${{ GITHUB.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH_NAME: main
+
+      - name: Publish prerelease to Github Packages
+        run: |
+          npm version prerelease --preid=main.${GITHUB_SHA:0:7} --no-git-tag-version
+          npm publish --tag=main
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
