@@ -2,23 +2,57 @@ name: CI Build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ['main']
   pull_request:
-    branches: [ "main" ]
+    branches: ['main']
+
+permissions:
+  contents: write
 
 jobs:
   lint-check:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Use Node.js v18
-      uses: actions/setup-node@v3
-      with:
-        node-version: x.18
-        cache: 'npm'
-        
-    - run: npm ci
-    - run: npm run lint    
-    - run: npm run check
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js v18
+        uses: actions/setup-node@v3
+        with:
+          node-version: x.18
+          cache: 'npm'
+
+      - name: Run lint and check
+        run: |
+          npm ci
+          npm run lint
+          npm run check
+
+  build:
+    runs-on: ubuntu-latest
+    needs: lint-check
+
+    steps:
+      - uses: actions/checkout@v3
+        # with:
+        #   persist-credentials: false
+        #   fetch-depth: 0
+
+      - name: Use Node.js v18
+        uses: actions/setup-node@v3
+        with:
+          node-version: x.18
+          cache: 'npm'
+
+      - name: Build browser ESM bundle
+        env:
+          NODE_ENV: production
+        run: |
+          npm ci --include=dev
+          npm run build-bundle
+
+      - name: Update repo with dist-bundle
+        uses: mikeal/publish-to-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ GITHUB.token }}
+          BRANCH_NAME: main

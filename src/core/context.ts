@@ -58,6 +58,7 @@ export class Context {
 
   /** Show extra debug details on the canvas */
   public debug = false
+  public test = false
 
   /** The pre-render update hook function */
   public update: (delta: number) => void
