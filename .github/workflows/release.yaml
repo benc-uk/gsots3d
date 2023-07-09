@@ -3,8 +3,8 @@ name: Release & Publish
 
 on:
   push:
-    tags-ignore:
-      - 'v*.*.*-pre*'
+    tags:
+      - 'v*.*.*'
 
 permissions:
   packages: write
