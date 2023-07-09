@@ -46,16 +46,21 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
           cache: 'npm'
 
-      - name: Build all bundles
+      - name: NPM install & version
         env:
           NODE_ENV: production
         run: |
           npm ci --include=dev
-          npm version prerelease --preid=next-${GITHUB_SHA:0:7} --no-git-tag-version
+          npm version prerelease --preid=pre
+
+      - name: Build all bundles
+        env:
+          NODE_ENV: production
+        run: |
           npm run build-bundle
           npm run build
 
-      - name: Push dist-bundle back to GitHub
+      - name: Push back to GitHub
         uses: mikeal/publish-to-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -63,6 +68,6 @@ jobs:
 
       - name: Publish prerelease to Github Packages
         run: |
-          npm publish --tag=next
+          npm publish --tag=pre
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

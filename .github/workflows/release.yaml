@@ -1,8 +1,12 @@
+# Runs on release tag push, but not prereleases
 name: Release & Publish
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*.*.*'
+    tags-ignore:
+      - 'v*.*.*-pre*'
 
 permissions:
   packages: write
