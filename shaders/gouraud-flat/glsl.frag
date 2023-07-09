@@ -7,7 +7,7 @@
 
 precision highp float;
 
-// From vertex shader 
+// From vertex shader
 flat in vec4 v_lightingDiffuse;
 flat in vec4 v_lightingSpecular;
 in vec2 v_texCoord;
@@ -23,5 +23,5 @@ void main() {
   // But texture mapping + Gouraud shading, it looks terrible
   vec4 objectColour = texture(u_matTexture, v_texCoord) * u_matDiffuse;
 
-  outColour = (objectColour * v_lightingDiffuse) + v_lightingSpecular;
+  outColour = objectColour * v_lightingDiffuse + v_lightingSpecular;
 }

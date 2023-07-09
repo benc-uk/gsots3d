@@ -8,7 +8,7 @@ import { ProgramInfo, createProgramInfo, resizeCanvasToDisplaySize } from 'twgl.
 import { mat4 } from 'gl-matrix'
 
 import { getGl } from './gl.ts'
-import { ShaderProgram, UniformSet } from './types.ts'
+import { UniformSet } from './types.ts'
 import { ModelCache } from '../models/cache.ts'
 import { Light } from '../render/light.ts'
 import { Camera, CameraType } from '../render/camera.ts'
@@ -17,12 +17,21 @@ import { Instance } from '../models/instance.ts'
 import { PrimitiveCube, PrimitivePlane, PrimitiveSphere } from '../models/primitive.ts'
 
 // Import shaders, tsup will inline these as text strings
-import fragShaderPhong from '../../shaders/phong/frag.glsl'
-import vertShaderPhong from '../../shaders/phong/vert.glsl'
-import fragShaderGouraud from '../../shaders/gouraud/frag.glsl'
-import vertShaderGouraud from '../../shaders/gouraud/vert.glsl'
-import fragShaderFlat from '../../shaders/gouraud-flat/frag.glsl'
-import vertShaderFlat from '../../shaders/gouraud-flat/vert.glsl'
+import fragShaderPhong from '../../shaders/phong/glsl.frag'
+import vertShaderPhong from '../../shaders/phong/glsl.vert'
+import fragShaderGouraud from '../../shaders/gouraud/glsl.frag'
+import vertShaderGouraud from '../../shaders/gouraud/glsl.vert'
+import fragShaderFlat from '../../shaders/gouraud-flat/glsl.frag'
+import vertShaderFlat from '../../shaders/gouraud-flat/glsl.vert'
+
+/**
+ * The set of supported shader programs that can be used
+ */
+export enum ShaderProgram {
+  PHONG = 'phong',
+  GOURAUD = 'gouraud',
+  GOURAUD_FLAT = 'gouraud-flat',
+}
 
 /**
  * The main rendering context. This is the effectively main entry point for the library.
@@ -59,6 +68,9 @@ export class Context {
   /** The shader program to use for rendering */
   public shaderProgram = ShaderProgram.PHONG
 
+  /**
+   * Constructor is private, use init() to create a new context
+   */
   private constructor(gl: WebGL2RenderingContext) {
     this.gl = gl
     this.models = new ModelCache()
@@ -74,22 +86,15 @@ export class Context {
     this.camera = new Camera(CameraType.PERSPECTIVE)
 
     this.update = () => {
-      // Do nothing
-    }
-
-    const epv = gl.getExtension('WEBGL_provoking_vertex')
-    if (!epv) {
-      log.error('😢 WEBGL_provoking_vertex not available!')
-    } else {
-      epv.provokingVertexWEBGL(epv.FIRST_VERTEX_CONVENTION_WEBGL)
+      // Placeholder empty update function
     }
 
     log.info('👑 GSOTS-3D context created')
   }
 
   /**
-   * Initialize and create a new Context which will render into provided canvas selector
-   * */
+   * Create & initialize a new Context which will render into provided canvas selector
+   */
   static async init(canvasSelector: string, backgroundColour = '#000'): Promise<Context> {
     const gl = getGl(true, canvasSelector)
 
@@ -114,7 +119,7 @@ export class Context {
       const flatProg = createProgramInfo(gl, [vertShaderFlat, fragShaderFlat])
       ctx.programs[ShaderProgram.GOURAUD_FLAT] = flatProg
 
-      log.info('🎨 Loaded all shaders, GL is ready')
+      log.info('🎨 Loaded all shaders & programs, GL is ready')
     } catch (err) {
       log.error(err)
       throw err
@@ -185,6 +190,13 @@ export class Context {
   }
 
   /**
+   * Get the default light
+   */
+  get defaultLight() {
+    return this.lights[0]
+  }
+
+  /**
    * Start the rendering loop
    */
   start() {
@@ -205,7 +217,7 @@ export class Context {
    */
   createModelInstance(modelName: string) {
     const model = this.models.get(modelName)
-    if (!model) throw new Error(`Model ${modelName} not found`)
+    if (!model) throw new Error(`💥 Model ${modelName} not found`)
 
     const instance = new Instance(model)
     this.instances.push(instance)
@@ -256,12 +268,5 @@ export class Context {
     log.debug(`📦 Created cube instance, size:${size}`)
 
     return instance
-  }
-
-  /**
-   * Get the default light
-   */
-  get defaultLight() {
-    return this.lights[0]
   }
 }

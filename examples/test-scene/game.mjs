@@ -1,16 +1,23 @@
 import { Model, Context, setLogLevel, Material } from '../../dist-bundle/gsots3d.js'
 
-setLogLevel('debug')
+// on lose focus
+window.onblur = () => {
+  ctx.stop()
+}
+
+// on focus
+window.onfocus = () => {
+  ctx.start()
+}
 
 const ctx = await Context.init('canvas')
-ctx.shaderProgram = 'gouraud'
 
-const tableMdl = await Model.parse('../objects', 'table.obj')
-const chestMdl = await Model.parse('../objects', 'chest.obj')
-const blockMdl = await Model.parse('../objects', 'block.obj')
-ctx.models.add(tableMdl)
-ctx.models.add(chestMdl)
-ctx.models.add(blockMdl)
+ctx.debug = true
+setLogLevel('debug')
+
+ctx.models.add(await Model.parse('../objects', 'table.obj'))
+ctx.models.add(await Model.parse('../objects', 'chest.obj'))
+ctx.models.add(await Model.parse('../objects', 'block.obj'))
 
 const table = ctx.createModelInstance('table')
 table.position = [5, 2.5, -4]
@@ -35,13 +42,13 @@ floor.position = [0, -8, 0]
 const matRed = Material.createDiffuse(0.8, 0.1, 0.1)
 matRed.specular = [1.0, 1.0, 1.0]
 matRed.shininess = 100
-const sphereRed = ctx.createSphereInstance(matRed, 2, 32, 16)
+const sphereRed = ctx.createSphereInstance(matRed, 2, 16, 8)
 sphereRed.position = [8, 7, -6]
 
 const matBlue = Material.createDiffuse(0.1, 0.1, 0.8)
 matBlue.specular = [0.5, 0.5, 0.5]
 matBlue.shininess = 20
-const sphereBlue = ctx.createSphereInstance(matBlue, 2, 32, 16)
+const sphereBlue = ctx.createSphereInstance(matBlue, 2, 16, 8)
 sphereBlue.position = [14, 7, -8]
 
 const mellonTx = Material.createTexture('../textures/mellon.jpg')
@@ -78,15 +85,4 @@ ctx.update = (delta) => {
   ctx.camera.position = [x, camHeight, z]
 }
 
-ctx.debug = true
 ctx.start()
-
-// on lose focus
-window.onblur = () => {
-  ctx.stop()
-}
-
-// on focus
-window.onfocus = () => {
-  ctx.start()
-}

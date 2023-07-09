@@ -25,7 +25,7 @@ Typically you will create a single instance of this class using init() and use i
 <ul class="tsd-hierarchy">
 <li><span class="target">Context</span></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L31">core/context.ts:31</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L40">core/context.ts:40</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -75,14 +75,17 @@ Typically you will create a single instance of this class using init() and use i
 <ul class="tsd-signatures tsd-is-private">
 <li class="tsd-signature tsd-anchor-link" id="constructor.new_Context"><span class="tsd-kind-constructor-signature">new <wbr/>Context</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">gl</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="Context.html" class="tsd-signature-type tsd-kind-class">Context</a><a href="#constructor.new_Context" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
 <li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Constructor is private, use init() to create a new context</p>
+</div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
 <h5><span class="tsd-kind-parameter">gl</span>: <span class="tsd-signature-type ">WebGL2RenderingContext</span></h5></li></ul></div>
-<h4 class="tsd-returns-title">Returns <a href="Context.html" class="tsd-signature-type tsd-kind-class">Context</a></h4><aside class="tsd-sources">
+<h4 class="tsd-returns-title">Returns <a href="Context.html" class="tsd-signature-type tsd-kind-class">Context</a></h4>
+<div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L62">core/context.ts:62</a></li></ul></aside></li></ul></section></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L74">core/context.ts:74</a></li></ul></aside></li></ul></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Properties</h2>
 <section class="tsd-panel tsd-member"><a id="ambientLight" class="tsd-anchor"></a>
@@ -92,12 +95,12 @@ Typically you will create a single instance of this class using init() and use i
 </div>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L57">core/context.ts:57</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L66">core/context.ts:66</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="aspectRatio" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>aspect<wbr/>Ratio</span><a href="#aspectRatio" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">aspect<wbr/>Ratio</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 1</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L33">core/context.ts:33</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L42">core/context.ts:42</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="camera" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagReadonly">Readonly</code> <span>camera</span><a href="#camera" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">camera</span><span class="tsd-signature-symbol">:</span> <a href="Camera.html" class="tsd-signature-type tsd-kind-class">Camera</a></div>
@@ -105,7 +108,7 @@ Typically you will create a single instance of this class using init() and use i
 </div>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L42">core/context.ts:42</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L51">core/context.ts:51</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="debug" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>debug</span><a href="#debug" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">debug</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></div>
@@ -113,22 +116,22 @@ Typically you will create a single instance of this class using init() and use i
 </div>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L51">core/context.ts:51</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L60">core/context.ts:60</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="gl" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>gl</span><a href="#gl" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">gl</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type ">WebGL2RenderingContext</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L32">core/context.ts:32</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L41">core/context.ts:41</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="instances" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>instances</span><a href="#instances" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">instances</span><span class="tsd-signature-symbol">:</span> <a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = []</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L36">core/context.ts:36</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L45">core/context.ts:45</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="lights" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>lights</span><a href="#lights" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">lights</span><span class="tsd-signature-symbol">:</span> <a href="Light.html" class="tsd-signature-type tsd-kind-class">Light</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = []</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L37">core/context.ts:37</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L46">core/context.ts:46</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="models" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagReadonly">Readonly</code> <span>models</span><a href="#models" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">models</span><span class="tsd-signature-symbol">:</span> <a href="ModelCache.html" class="tsd-signature-type tsd-kind-class">ModelCache</a></div>
@@ -136,12 +139,12 @@ Typically you will create a single instance of this class using init() and use i
 </div>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L45">core/context.ts:45</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L54">core/context.ts:54</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="prevTime" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>prev<wbr/>Time</span><a href="#prevTime" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">prev<wbr/>Time</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L38">core/context.ts:38</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L47">core/context.ts:47</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="programs" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>programs</span><a href="#programs" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">programs</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span><br/><span>    </span>[<span class="tsd-kind-index-signature">key</span>: <span class="tsd-signature-type">string</span>]<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">ProgramInfo</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol"> = {}</span></div>
@@ -151,7 +154,7 @@ Typically you will create a single instance of this class using init() and use i
 <li class="tsd-parameter-index-signature">
 <h5><span class="tsd-signature-symbol">[</span><span class="tsd-kind-parameter">key</span>: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><span class="tsd-signature-type ">ProgramInfo</span></h5></li></ul></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L34">core/context.ts:34</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L43">core/context.ts:43</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="resizeable" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>resizeable</span><a href="#resizeable" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">resizeable</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = true</span></div>
@@ -159,7 +162,7 @@ Typically you will create a single instance of this class using init() and use i
 </div>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L48">core/context.ts:48</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L57">core/context.ts:57</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="shaderProgram" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>shader<wbr/>Program</span><a href="#shaderProgram" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">shader<wbr/>Program</span><span class="tsd-signature-symbol">:</span> <a href="../enums/ShaderProgram.html" class="tsd-signature-type tsd-kind-enum">ShaderProgram</a><span class="tsd-signature-symbol"> = ShaderProgram.PHONG</span></div>
@@ -167,17 +170,17 @@ Typically you will create a single instance of this class using init() and use i
 </div>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L60">core/context.ts:60</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L69">core/context.ts:69</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="started" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>started</span><a href="#started" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">started</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L35">core/context.ts:35</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L44">core/context.ts:44</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="totalTime" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>total<wbr/>Time</span><a href="#totalTime" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">total<wbr/>Time</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L39">core/context.ts:39</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L48">core/context.ts:48</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="update" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>update</span><a href="#update" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">update</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">delta</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">)</span></div>
@@ -198,7 +201,7 @@ Typically you will create a single instance of this class using init() and use i
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
 <div class="tsd-comment tsd-typography"></div></li></ul></li></ul></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L54">core/context.ts:54</a></li></ul></aside></section></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L63">core/context.ts:63</a></li></ul></aside></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Accessors</h2>
 <section class="tsd-panel tsd-member"><a id="defaultLight" class="tsd-anchor"></a>
@@ -211,7 +214,7 @@ Typically you will create a single instance of this class using init() and use i
 <h4 class="tsd-returns-title">Returns <a href="Light.html" class="tsd-signature-type tsd-kind-class">Light</a></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L264">core/context.ts:264</a></li></ul></aside></li></ul></section></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L195">core/context.ts:195</a></li></ul></aside></li></ul></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Methods</h2>
 <section class="tsd-panel tsd-member"><a id="createCubeInstance" class="tsd-anchor"></a>
@@ -231,7 +234,7 @@ Typically you will create a single instance of this class using init() and use i
 <h4 class="tsd-returns-title">Returns <a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L249">core/context.ts:249</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L261">core/context.ts:261</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="createModelInstance" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>create<wbr/>Model<wbr/>Instance</span><a href="#createModelInstance" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -250,7 +253,7 @@ Typically you will create a single instance of this class using init() and use i
 <h4 class="tsd-returns-title">Returns <a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L206">core/context.ts:206</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L218">core/context.ts:218</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="createPlaneInstance" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>create<wbr/>Plane<wbr/>Instance</span><a href="#createPlaneInstance" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -274,7 +277,7 @@ Typically you will create a single instance of this class using init() and use i
 <h4 class="tsd-returns-title">Returns <a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L234">core/context.ts:234</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L246">core/context.ts:246</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="createSphereInstance" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>create<wbr/>Sphere<wbr/>Instance</span><a href="#createSphereInstance" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -296,7 +299,7 @@ Typically you will create a single instance of this class using init() and use i
 <h4 class="tsd-returns-title">Returns <a href="Instance.html" class="tsd-signature-type tsd-kind-class">Instance</a></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L219">core/context.ts:219</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L231">core/context.ts:231</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-private"><a id="render" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>render</span><a href="#render" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-private">
@@ -312,7 +315,7 @@ Typically you will create a single instance of this class using init() and use i
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L136">core/context.ts:136</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L141">core/context.ts:141</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="start" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>start</span><a href="#start" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -323,7 +326,7 @@ Typically you will create a single instance of this class using init() and use i
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L190">core/context.ts:190</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L202">core/context.ts:202</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="stop" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>stop</span><a href="#stop" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -334,13 +337,13 @@ Typically you will create a single instance of this class using init() and use i
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L198">core/context.ts:198</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L210">core/context.ts:210</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="init" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagStatic">Static</code> <span>init</span><a href="#init" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
 <li class="tsd-signature tsd-anchor-link" id="init.init-1"><span class="tsd-kind-call-signature">init</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">canvasSelector</span>, <span class="tsd-kind-parameter">backgroundColour</span><span class="tsd-signature-symbol">?</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="Context.html" class="tsd-signature-type tsd-kind-class">Context</a><span class="tsd-signature-symbol">&gt;</span><a href="#init.init-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Initialize and create a new Context which will render into provided canvas selector</p>
+<div class="tsd-comment tsd-typography"><p>Create &amp; initialize a new Context which will render into provided canvas selector</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
@@ -352,7 +355,7 @@ Typically you will create a single instance of this class using init() and use i
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="Context.html" class="tsd-signature-type tsd-kind-class">Context</a><span class="tsd-signature-symbol">&gt;</span></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L93">core/context.ts:93</a></li></ul></aside></li></ul></section></section></div>
+<li>Defined in <a href="https://github.com/benc-uk/gsots3d/blob/main/src/core/context.ts#L98">core/context.ts:98</a></li></ul></aside></li></ul></section></section></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">

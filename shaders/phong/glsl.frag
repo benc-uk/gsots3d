@@ -7,7 +7,7 @@
 
 precision highp float;
 
-// From vertex shader 
+// From vertex shader
 in vec3 v_normal;
 in vec2 v_texCoord;
 in vec4 v_position;
@@ -39,16 +39,18 @@ out vec4 outColour;
 vec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {
   float NdotL = dot(normalN, surfaceToLightN);
   float NdotH = dot(normalN, halfVector);
-  
+
   return vec2(
     NdotL,
-    (NdotL > 0.0) ? pow(max(0.0, NdotH), shininess) : 0.0 // Specular term in y
+    NdotL > 0.0
+      ? pow(max(0.0, NdotH), shininess)
+      : 0.0 // Specular term in y
   );
 }
 
-void main(void) {
+void main(void ) {
   vec3 surfaceToLight = u_lightPosition.xyz - v_position.xyz;
-  vec3 surfaceToView = (u_camMatrix[3] - (u_world * v_position)).xyz;
+  vec3 surfaceToView = (u_camMatrix[3] - u_world * v_position).xyz;
   vec3 normalN = normalize(v_normal);
   vec3 surfaceToLightN = normalize(surfaceToLight);
   vec3 surfaceToViewN = normalize(surfaceToView);
@@ -58,7 +60,8 @@ void main(void) {
 
   vec4 diffuseColour = texture(u_matTexture, v_texCoord) * u_matDiffuse;
 
-  outColour = (u_ambientLight * diffuseColour * u_matAmbient) 
-  + (diffuseColour * max(l.x, 0.0) * u_lightColour)
-  + (u_matSpecular * l.y * u_lightColour);
+  outColour =
+    u_ambientLight * diffuseColour * u_matAmbient +
+    diffuseColour * max(l.x, 0.0) * u_lightColour +
+    u_matSpecular * l.y * u_lightColour;
 }

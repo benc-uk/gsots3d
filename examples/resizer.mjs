@@ -4,6 +4,14 @@ window.onresize = function () {
   resizeCanvas()
 }
 
+window.ondblclick = function () {
+  if (document.fullscreenElement) {
+    document.exitFullscreen()
+  } else {
+    canvas.requestFullscreen()
+  }
+}
+
 function resizeCanvas() {
   canvas.width = window.innerWidth
   canvas.height = window.innerHeight

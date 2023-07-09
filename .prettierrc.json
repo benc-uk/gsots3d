@@ -1,5 +1,11 @@
 {
   "semi": false,
   "singleQuote": true,
-  "printWidth": 120
+  "printWidth": 120,
+  "overrides": [
+    {
+      "files": ["*.frag", "*.vert"],
+      "options": { "parser": "glsl-parser" }
+    }
+  ]
 }

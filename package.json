@@ -8,8 +8,8 @@
     "./parsers": "./dist/parsers/index.js"
   },
   "scripts": {
-    "lint": "eslint --ext .ts src && prettier --check src",
-    "lint-fix": "eslint --ext .ts src --fix && prettier --write src",
+    "lint": "eslint --ext .ts src && prettier --check src && prettier --check shaders",
+    "lint-fix": "eslint --ext .ts src --fix && prettier --write src && prettier --write shaders",
     "check": "tsc",
     "build": "tsc && tsup",
     "watch": "tsc && npm run build && run-when-changed --watch 'src/**/*.ts' --watch '**/*.glsl' --exec 'npm run build'",
@@ -37,6 +37,7 @@
     "@typescript-eslint/parser": "^5.60.1",
     "eslint": "^8.44.0",
     "prettier": "^2.8.8",
+    "prettier-plugin-glsl": "^0.0.10",
     "run-when-changed": "^2.1.0",
     "tsup": "^7.1.0",
     "typedoc": "^0.24.8",

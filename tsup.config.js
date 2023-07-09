@@ -10,6 +10,7 @@ export default defineConfig({
   outDir: 'dist',
   bundle: true,
   loader: {
-    '.glsl': 'text',
+    '.vert': 'text',
+    '.frag': 'text',
   },
 })

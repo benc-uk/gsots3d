@@ -27,12 +27,3 @@ export interface Renderable {
    */
   render(gl: WebGL2RenderingContext, uniforms: UniformSet, programInfo: ProgramInfo): void
 }
-
-/**
- * The set of supported shader programs that can be used
- */
-export enum ShaderProgram {
-  PHONG = 'phong',
-  GOURAUD = 'gouraud',
-  GOURAUD_FLAT = 'gouraud-flat',
-}
