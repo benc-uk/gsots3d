@@ -3,9 +3,6 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-/** @ignore */
-export const VERSION = '0.0.1-alpha.6'
-
 export * from './core/types.ts'
 export * from './core/logging.ts'
 export * from './core/context.ts'

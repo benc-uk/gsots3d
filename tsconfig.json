@@ -18,6 +18,8 @@
 
     // With moduleResolution set to NodeNext, we have to set this to true
     "allowImportingTsExtensions": true,
+
+    "resolveJsonModule": true,
   },
   "include": ["src/**/*"],
 }

@@ -24,6 +24,8 @@ import vertShaderGouraud from '../../shaders/gouraud/glsl.vert'
 import fragShaderFlat from '../../shaders/gouraud-flat/glsl.frag'
 import vertShaderFlat from '../../shaders/gouraud-flat/glsl.vert'
 
+import { version } from '../../package.json'
+
 /**
  * The set of supported shader programs that can be used
  */
@@ -58,7 +60,6 @@ export class Context {
 
   /** Show extra debug details on the canvas */
   public debug = false
-  public test = false
 
   /** The pre-render update hook function */
   public update: (delta: number) => void
@@ -90,7 +91,7 @@ export class Context {
       // Placeholder empty update function
     }
 
-    log.info('👑 GSOTS-3D context created')
+    log.info(`👑 GSOTS-3D context created, v${version}`)
   }
 
   /**

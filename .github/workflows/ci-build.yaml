@@ -51,6 +51,7 @@ jobs:
           NODE_ENV: production
         run: |
           npm ci --include=dev
+          npm version prerelease --preid=next --no-git-tag-version
           npm run build-bundle
           npm run build
 
@@ -62,7 +63,6 @@ jobs:
 
       - name: Publish prerelease to Github Packages
         run: |
-          npm version prerelease --preid=next --no-git-tag-version
           npm publish --tag=next
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
