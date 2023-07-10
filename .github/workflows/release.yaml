@@ -31,14 +31,19 @@ jobs:
           npm run build-bundle
           npm run build
 
-      - name: Push dist-bundle back to GitHub
-        uses: mikeal/publish-to-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH_NAME: main
+      - uses: ncipollo/release-action@v1
+        with:
+          name: 'v${{ github.ref }}'
+          body: 'Automated release of v${{ github.ref }} built by ${{ github.actor }}.'
 
-      - name: Publish full release to Github Packages
-        run: |
-          npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Push dist-bundle back to GitHub
+      #   uses: mikeal/publish-to-github-action@master
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     BRANCH_NAME: main
+
+      # - name: Publish full release to Github Packages
+      #   run: |
+      #     npm publish
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

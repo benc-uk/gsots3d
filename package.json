@@ -1,6 +1,6 @@
 {
   "name": "@benc-uk/gsots3d",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "description": "Getting S**t On The Screen in 3D. A twlg and WebGL2 wrapper for 3D graphics in the browser.",
   "type": "module",
   "publishConfig": {
@@ -13,6 +13,9 @@
   "exports": {
     ".": "./dist/index.js",
     "./parsers": "./dist/parsers/index.js"
+  },
+  "browser": {
+    ".": "./dist-browser/index.js"
   },
   "scripts": {
     "lint": "eslint --ext .ts src && prettier --check src && prettier --check shaders",
