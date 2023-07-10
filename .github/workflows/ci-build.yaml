@@ -41,6 +41,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal access token.
+          fetch-depth: 0 # otherwise, there would be errors pushing refs to the destination repository.
 
       - name: Use Node.js v18
         uses: actions/setup-node@v3
@@ -54,8 +57,6 @@ jobs:
           NODE_ENV: production
         run: |
           npm ci --include=dev
-          git config --global user.email "actions@github.com"
-          git config --global user.name "CI Build"
           npm version prerelease --preid=${GITHUB_SHA:0:7} --no-git-tag-version
           git status
 
@@ -65,12 +66,22 @@ jobs:
         run: |
           npm run build-bundle
           npm run build
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add dist-bundle
+          git commit -m "Add dist-bundle"
 
-      - name: Push back to GitHub
-        uses: mikeal/publish-to-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH_NAME: main
+      # - name: Push back to GitHub
+      #   uses: mikeal/publish-to-github-action@master
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     BRANCH_NAME: main
+
+      - name: Push dist-bundle back to GitHub
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
 
       - name: Publish prerelease to Github Packages
         run: |
