@@ -1,6 +1,6 @@
 {
   "name": "@benc-uk/gsots3d",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Getting S**t On The Screen in 3D. A twlg and WebGL2 wrapper for 3D graphics in the browser.",
   "type": "module",
   "publishConfig": {
