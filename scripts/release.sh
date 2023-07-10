@@ -22,6 +22,12 @@ if [[ $(git status -s) ]]; then
   exit 1
 fi
 
+# Check if there are any changes in the remote branch
+if [[ $(git rev-parse HEAD) != $(git rev-parse origin/main) ]]; then
+  echo "### 🚨 Please pull the latest changes before releasing a new version"
+  exit 1
+fi
+
 # We do things this way so dist-bundle is in the repo, BEFORE we create a new tag
 
 TAG=$(npm version "$VERSION_TYPE" --no-git-tag-version)
