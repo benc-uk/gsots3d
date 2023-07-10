@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+#
+# Script to release a new version of the package
+# This is not the same as the builds done by CI
+#
+
 VERSION_TYPE=${1:-patch}
 
 # Prompt user for confirmation

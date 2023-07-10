@@ -42,6 +42,28 @@ The hello world equivalent in GSOTS is putting a simple object on the screen, Th
 </html>
 ```
 
+## Using & Install
+
+#### Import as package
+
+The NPM package is published on [GitHub Packages](https://docs.github.com/en/packages), to install the package, simply run:
+
+```bash
+echo "@benc-uk:registry=https://npm.pkg.github.com" >> .npmrc
+npm install @benc-uk/gsots3d
+```
+
+#### Directly in browser
+
+A standalone ESM bundle is published via jsDelivr & GitHub, this can be used directly in a vanilla HTML+JS app to import the library, e.g.
+
+```js
+import { Context } from 'https://cdn.jsdelivr.net/gh/benc-uk/gsots3d@main/dist-bundle/gsots3d.min.js'
+```
+
+If you want to reference a specific version you can do so by changing `benc-uk/gsots3d@main` for example `benc-uk/gsots3d@0.0.2` 
+
+
 ## 🕹️ Demos & Samples
 
 ### [Set of Examples & Samples](https://code.benco.io/gsots3d/examples/)

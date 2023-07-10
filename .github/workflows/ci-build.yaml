@@ -16,6 +16,7 @@ permissions:
 
 jobs:
   lint-check:
+    # I hate this but it's the only way to skip the build job when releasing
     if: ${{ !contains(github.event.head_commit.message, 'Releasing new version') }}
     runs-on: ubuntu-latest
 
@@ -44,8 +45,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal access token.
-          fetch-depth: 0 # otherwise, there would be errors pushing refs to the destination repository.
+          persist-credentials: false
+          fetch-depth: 0
 
       - name: Use Node.js v18
         uses: actions/setup-node@v3
@@ -68,10 +69,10 @@ jobs:
         run: |
           npm run build-bundle
           npm run build
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions@users.noreply.github.com"
+          git config --local user.name "github-actions"
           git add dist-bundle
-          git commit -m "github-actions[bot] add dist-bundle"
+          git commit -m "Automated build of dist-bundle $(date -u)"
 
       - name: Push dist-bundle back to GitHub
         uses: ad-m/github-push-action@master
