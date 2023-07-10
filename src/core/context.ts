@@ -25,6 +25,7 @@ import fragShaderFlat from '../../shaders/gouraud-flat/glsl.frag'
 import vertShaderFlat from '../../shaders/gouraud-flat/glsl.vert'
 
 import { version } from '../../package.json'
+import { HUD } from './hud.ts'
 
 /**
  * The set of supported shader programs that can be used
@@ -70,6 +71,9 @@ export class Context {
   /** The shader program to use for rendering */
   public shaderProgram = ShaderProgram.PHONG
 
+  public readonly hud: HUD
+  private debugDiv: HTMLDivElement
+
   /**
    * Constructor is private, use init() to create a new context
    */
@@ -90,6 +94,12 @@ export class Context {
     this.update = () => {
       // Placeholder empty update function
     }
+
+    this.hud = new HUD(<HTMLCanvasElement>gl.canvas)
+
+    this.debugDiv = document.createElement('div')
+    this.debugDiv.style.padding = '10px'
+    this.hud.addHUDItem(this.debugDiv)
 
     log.info(`👑 GSOTS-3D context created, v${version}`)
   }
@@ -185,6 +195,16 @@ export class Context {
     // Draw all instances
     for (const instance of this.instances) {
       instance.render(this.gl, uniforms, viewProjection, shaderProg)
+    }
+
+    // Draw the debug HUD
+    if (this.debug) {
+      this.debugDiv.innerHTML = `
+        <b>GSOTS-3D v${version}</b><br><br>
+        <b>Camera: </b>${this.camera.toString()}<br>
+        <b>Instances: </b>${this.instances.length}<br>
+        <b>Render: </b>FPS: ${Math.round(1 / deltaTime)} / ${Math.round(this.totalTime)}s<br>
+      `
     }
 
     // Loop forever or not

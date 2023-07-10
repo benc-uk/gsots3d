@@ -102,4 +102,10 @@ export class Camera {
       return camProj
     }
   }
+
+  toString() {
+    // round down position to 2 decimal places
+    const pos = this.position.map((p) => Math.round(p * 100) / 100)
+    return `position: [${pos}]`
+  }
 }
