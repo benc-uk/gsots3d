@@ -34,4 +34,4 @@ git add dist-bundle package.json package-lock.json
 git commit -m "📦 Releasing new version ${TAG}"
 
 git tag "$TAG"
-git push origin --tags
+git push origin main --tags
