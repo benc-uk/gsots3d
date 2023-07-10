@@ -31,7 +31,7 @@ echo "### 🔨 Building browser ESM bundle"
 
 npm run build-bundle
 git add dist-bundle package.json package-lock.json
-# git commit -m "📦 Build browser ESM bundle for release"
+git commit -m "📦 Releasing new version ${TAG}"
 
 git tag "$TAG"
-git push origin "$TAG"
+git push origin --tags
