@@ -30,7 +30,8 @@ echo "### 🎈 Releasing new version ${TAG}"
 echo "### 🔨 Building browser ESM bundle"
 
 npm run build-bundle
-git add dist-bundle
+git add dist-bundle package.json package-lock.json
 git commit -m "📦 Build browser ESM bundle for release"
 
-git push --follow-tags origin main
+git tag "$TAG"
+git push origin main --tags
