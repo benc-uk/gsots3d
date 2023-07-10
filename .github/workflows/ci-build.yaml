@@ -69,13 +69,7 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add dist-bundle
-          git commit -m "Add dist-bundle"
-
-      # - name: Push back to GitHub
-      #   uses: mikeal/publish-to-github-action@master
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     BRANCH_NAME: main
+          git commit -m "github-actions[bot] add dist-bundle"
 
       - name: Push dist-bundle back to GitHub
         uses: ad-m/github-push-action@master
