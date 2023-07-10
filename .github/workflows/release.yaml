@@ -35,6 +35,7 @@ jobs:
         with:
           name: '${{ github.ref_name  }}'
           body: 'Automated release of ${{ github.ref_name }} built by ${{ github.actor }}.'
+          artifacts: 'dist-bundle/*'
 
       - name: Publish full release to Github Packages
         run: |
