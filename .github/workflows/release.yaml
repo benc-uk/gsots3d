@@ -34,8 +34,8 @@ jobs:
 
       - uses: ncipollo/release-action@v1
         with:
-          name: 'v${{ github.ref }}'
-          body: 'Automated release of v${{ github.ref }} built by ${{ github.actor }}.'
+          name: 'v${{ github.ref_name  }}'
+          body: 'Automated release of v${{ github.ref_name }} built by ${{ github.actor }}.'
 
       # - name: Push dist-bundle back to GitHub
       #   uses: mikeal/publish-to-github-action@master
