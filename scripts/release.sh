@@ -34,4 +34,4 @@ git add dist-bundle package.json package-lock.json
 git commit -m "📦 Build browser ESM bundle for release"
 
 git tag "$TAG"
-git push origin main --tags
+git push origin "$TAG"
