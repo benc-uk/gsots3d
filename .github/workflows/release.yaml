@@ -29,22 +29,15 @@ jobs:
           NODE_ENV: production
         run: |
           npm ci --include=dev
-          npm run build-bundle
           npm run build
 
       - uses: ncipollo/release-action@v1
         with:
-          name: 'v${{ github.ref_name  }}'
-          body: 'Automated release of v${{ github.ref_name }} built by ${{ github.actor }}.'
+          name: '${{ github.ref_name  }}'
+          body: 'Automated release of ${{ github.ref_name }} built by ${{ github.actor }}.'
 
-      # - name: Push dist-bundle back to GitHub
-      #   uses: mikeal/publish-to-github-action@master
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     BRANCH_NAME: main
-
-      # - name: Publish full release to Github Packages
-      #   run: |
-      #     npm publish
-      #   env:
-      #     NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish full release to Github Packages
+        run: |
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
