@@ -1,3 +1,4 @@
+# Runs on push to main branch and PRs to main branch
 name: CI Build
 
 on:

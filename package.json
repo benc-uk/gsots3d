@@ -1,7 +1,10 @@
 {
   "name": "@benc-uk/gsots3d",
   "version": "0.0.0",
-  "description": "Getting S**t On The Screen in 3D. A twlg and WebGL2 wrapper for 3D graphics in the browser.",
+  "description": "Getting S**t On The Screen in 3D. A library for doing 3D graphics in the browser.",
+  "author": "Ben Coleman",
+  "license": "MIT",
+  "homepage": "https://code.benco.io/gsots3d/docs",
   "type": "module",
   "publishConfig": {
     "@benc-uk:registry": "https://npm.pkg.github.com"
@@ -17,6 +20,17 @@
   "browser": {
     ".": "./dist-browser/index.js"
   },
+  "files": [
+    "dist/",
+    "readme.md"
+  ],
+  "keywords": [
+    "webgl",
+    "graphics",
+    "3d",
+    "twgl",
+    "typescript"
+  ],
   "scripts": {
     "lint": "eslint --ext .ts src && prettier --check src && prettier --check shaders",
     "lint-fix": "eslint --ext .ts src --fix && prettier --write src && prettier --write shaders",
@@ -29,19 +43,6 @@
     "docs": "typedoc --out docs --gitRevision main ./src/",
     "examples": "vite --port 3000 --open /examples ./examples/"
   },
-  "keywords": [
-    "webgl",
-    "graphics",
-    "3d",
-    "twgl",
-    "typescript"
-  ],
-  "files": [
-    "dist/",
-    "readme.md"
-  ],
-  "author": "Ben Coleman",
-  "license": "MIT",
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.60.1",
     "@typescript-eslint/parser": "^5.60.1",

@@ -1,4 +1,4 @@
-# Runs on release tag push, but not prereleases
+# Runs on release tag push, but not prereleases, we hope!
 name: Release & Publish
 
 on:
