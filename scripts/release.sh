@@ -33,5 +33,4 @@ npm run build-bundle
 git add dist-bundle
 git commit -m "📦 Build browser ESM bundle for release"
 
-git tag "$TAG"
-git push origin "$TAG"
+git push --follow-tags origin main
