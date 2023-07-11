@@ -1,3 +1,7 @@
+// ==================================================================================
+// TSUP config file that creates the regular build that can be used in Node.js
+// ==================================================================================
+
 import { defineConfig } from 'tsup'
 import process from 'process'
 

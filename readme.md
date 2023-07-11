@@ -66,8 +66,11 @@ If you want to reference a specific released version you can do so by changing `
 
 ## 🕹️ Demos & Samples
 
-### [Set of Examples & Samples](https://code.benco.io/gsots3d/examples/)
+### [Live demos of samples](https://code.benco.io/gsots3d/examples/)
 
-## 🖼️ Example Screens
+### [Example Code](./examples/)
+
+
+## 🖼️ Screenshots
 
 ![screenshot of example scene](https://user-images.githubusercontent.com/14982936/252045019-ae3555c8-4ac1-4b1a-9ff8-b8fb7efa30ff.png)

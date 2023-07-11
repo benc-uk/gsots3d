@@ -49,6 +49,7 @@ export class Context {
   private lights: Light[] = []
   private prevTime: number
   private totalTime: number
+  private debugDiv: HTMLDivElement
 
   /** Main camera for this context */
   public readonly camera: Camera
@@ -71,8 +72,8 @@ export class Context {
   /** The shader program to use for rendering */
   public shaderProgram = ShaderProgram.PHONG
 
+  /** A HUD you can use to render HTML elements over the canvas */
   public readonly hud: HUD
-  private debugDiv: HTMLDivElement
 
   /**
    * Constructor is private, use init() to create a new context
@@ -98,7 +99,8 @@ export class Context {
     this.hud = new HUD(<HTMLCanvasElement>gl.canvas)
 
     this.debugDiv = document.createElement('div')
-    this.debugDiv.style.padding = '10px'
+    this.debugDiv.classList.add('gsots3d-debug')
+    this.debugDiv.style.padding = '15px'
     this.hud.addHUDItem(this.debugDiv)
 
     log.info(`👑 GSOTS-3D context created, v${version}`)
