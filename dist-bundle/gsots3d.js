@@ -5746,14 +5746,14 @@ var glsl_default5 = "#version 300 es\n\n// =====================================
 var glsl_default6 = "#version 300 es\n\n// ============================================================================\n// Gouraud vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_world;\nuniform mat4 u_camMatrix;\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\n\n// Material properties\nuniform vec4 u_matAmbient;\nuniform vec4 u_matSpecular;\nuniform float u_matShininess;\n\n// Light properties\nuniform vec4 u_lightPosition;\nuniform vec4 u_lightColour;\nuniform vec4 u_ambientLight;\n\nflat out vec4 v_lightingDiffuse;\nflat out vec4 v_lightingSpecular;\nout vec2 v_texCoord;\n\n// lightCalc function returns two floats (packed into a vec2)\n// One for diffuse component of lighting, the second for specular\n// - normalN:          Surface normal (normalized)\n// - surfaceToLightN:  Vector towards light (normalized)\n// - halfVector:       Half vector towards camera (normalized)\n// - shininess:        Hardness or size of specular highlights\nvec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {\n  float NdotL = dot(normalN, surfaceToLightN);\n  float NdotH = dot(normalN, halfVector);\n\n  return vec2(\n    NdotL,\n    NdotL > 0.0\n      ? pow(max(0.0, NdotH), shininess)\n      : 0.0 // Specular term in y\n  );\n}\n\nvoid main(void ) {\n  vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  vec4 worldPos = u_world * position;\n\n  vec3 surfaceToLight = u_lightPosition.xyz - worldPos.xyz;\n  vec3 surfaceToView = (u_camMatrix[3] - u_world * worldPos).xyz;\n  vec3 normalN = normalize(worldNormal);\n  vec3 surfaceToLightN = normalize(surfaceToLight);\n  vec3 surfaceToViewN = normalize(surfaceToView);\n  vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);\n\n  vec2 light = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);\n\n  // Output lighting value for fragment shader to use, no color\n  v_lightingDiffuse = u_ambientLight * u_matAmbient + u_lightColour * max(light.x, 0.0);\n\n  // Pass specular in a seperate varying\n  v_lightingSpecular = u_lightColour * u_matSpecular * light.y;\n\n  // Pass through varying texture coordinate, so we can get the colour there\n  v_texCoord = texcoord;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
 
 // package.json
-var version = "0.0.1-f6220c6.0";
+var version = "0.0.1-db92066.0";
 
 // src/core/hud.ts
 var HUD = class {
   constructor(canvas) {
     const parent = canvas.parentElement;
     if (!parent)
-      throw new Error("Canvas must have a parent element");
+      throw new Error("\u{1F4A5} Canvas must have a parent element");
     this.hud = document.createElement("div");
     this.hud.style.position = "absolute";
     this.hud.style.top = "0";
@@ -5762,11 +5762,14 @@ var HUD = class {
     this.hud.style.height = "100%";
     this.hud.style.color = "#fff";
     this.hud.style.pointerEvents = "none";
-    this.hud.classList.add("hud");
+    this.hud.classList.add("gsots3d-hud");
     parent.appendChild(this.hud);
   }
   addHUDItem(item) {
     this.hud.appendChild(item);
+  }
+  debug(msg) {
+    this.hud.innerHTML = msg;
   }
 };
 
@@ -5808,7 +5811,8 @@ var Context = class _Context {
     };
     this.hud = new HUD(gl.canvas);
     this.debugDiv = document.createElement("div");
-    this.debugDiv.style.padding = "10px";
+    this.debugDiv.classList.add("gsots3d-debug");
+    this.debugDiv.style.padding = "15px";
     this.hud.addHUDItem(this.debugDiv);
     import_loglevel4.default.info(`\u{1F451} GSOTS-3D context created, v${version}`);
   }
