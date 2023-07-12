@@ -5557,20 +5557,19 @@ var ModelCache = class {
 };
 
 // src/utils/vecmat.ts
-function normalize3Tuple(t) {
-  const [x, y, z] = t;
+function normalize3Tuple(tuple) {
+  const [x, y, z] = tuple;
   const len = Math.sqrt(x * x + y * y + z * z);
-  return t.map((v) => v / len);
+  return tuple.map((v) => v / len);
 }
 
-// src/render/light-dir.ts
+// src/render/lights.ts
 var UNIFORM_PREFIX = "u_light";
 var LightDirectional = class {
   /** Create a default directional light, pointing downward */
   constructor() {
     this._direction = [0, -1, 0];
     this.colour = [1, 1, 1];
-    this.intensity = 1;
   }
   set direction(d) {
     this._direction = normalize3Tuple(d);
@@ -5586,10 +5585,10 @@ var LightDirectional = class {
    * Applies the light to the given program as a set of uniforms
    */
   apply(programInfo) {
-    setUniforms(programInfo, this.Uniforms);
+    setUniforms(programInfo, this.uniforms);
   }
   /** Return a map of uniforms for this light, with a prefix */
-  get Uniforms() {
+  get uniforms() {
     return {
       [`${UNIFORM_PREFIX}Direction`]: [...this.direction, 1],
       [`${UNIFORM_PREFIX}Colour`]: [...this.colour, 1]
@@ -5766,7 +5765,7 @@ var glsl_default5 = "#version 300 es\n\n// =====================================
 var glsl_default6 = "#version 300 es\n\n// ============================================================================\n// Gouraud vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_world;\nuniform mat4 u_camMatrix;\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\n\n// Material properties\nuniform vec4 u_matAmbient;\nuniform vec4 u_matSpecular;\nuniform float u_matShininess;\n\n// Light properties\nuniform vec4 u_lightDirection;\nuniform vec4 u_lightColour;\nuniform vec4 u_ambientLight;\n\nflat out vec4 v_lightingDiffuse;\nflat out vec4 v_lightingSpecular;\nout vec2 v_texCoord;\n\n// lightCalc function returns two floats (packed into a vec2)\n// One for diffuse component of lighting, the second for specular\n// - normalN:          Surface normal (normalized)\n// - surfaceToLightN:  Vector towards light (normalized)\n// - halfVector:       Half vector towards camera (normalized)\n// - shininess:        Hardness or size of specular highlights\nvec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {\n  float NdotL = dot(normalN, surfaceToLightN);\n  float NdotH = dot(normalN, halfVector);\n\n  return vec2(\n    NdotL,\n    NdotL > 0.0\n      ? pow(max(0.0, NdotH), shininess)\n      : 0.0 // Specular term in y\n  );\n}\n\nvoid main() {\n  vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  vec4 worldPos = u_world * position;\n\n  vec3 surfaceToLight = -u_lightDirection.xyz;\n  vec3 surfaceToView = (u_camMatrix[3] - u_world * worldPos).xyz;\n  vec3 normalN = normalize(worldNormal);\n  vec3 surfaceToLightN = normalize(surfaceToLight);\n  vec3 surfaceToViewN = normalize(surfaceToView);\n  vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);\n\n  vec2 l = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);\n\n  // Output lighting value for fragment shader to use, no color\n  v_lightingDiffuse = u_ambientLight * u_matAmbient + u_lightColour * max(l.x, 0.0);\n\n  // Pass specular in a seperate varying\n  v_lightingSpecular = u_lightColour * u_matSpecular * l.y;\n\n  // Pass through varying texture coordinate, so we can get the colour there\n  v_texCoord = texcoord;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
 
 // package.json
-var version = "0.0.1-alpha.1";
+var version = "0.0.1-4f98977.0";
 
 // src/core/hud.ts
 var HUD = class {
@@ -5975,33 +5974,8 @@ var Context = class _Context {
   }
 };
 
-// src/render/light.ts
-var UNIFORM_PREFIX2 = "u_light";
-var Light = class {
-  /** Create a new default light */
-  constructor() {
-    this.position = [0, 0, 0];
-    this.colour = [1, 1, 1];
-    this.intensity = 1;
-  }
-  /**
-   * Applies the light to the given program as a set of uniforms
-   * Each uniform is prefixed with `u_light`, e.g. `u_lightPosition`
-   */
-  apply(programInfo) {
-    setUniforms(programInfo, this.Uniforms);
-  }
-  /** Return a map of uniforms for this light, with a prefix */
-  get Uniforms() {
-    return {
-      [`${UNIFORM_PREFIX2}Position`]: [...this.position, 1],
-      [`${UNIFORM_PREFIX2}Colour`]: [...this.colour, 1]
-    };
-  }
-};
-
 // src/render/material.ts
-var UNIFORM_PREFIX3 = "u_mat";
+var UNIFORM_PREFIX2 = "u_mat";
 var Material = class _Material {
   /**
    * Create a new material with default diffuse colour
@@ -6091,19 +6065,19 @@ var Material = class _Material {
    * Each uniform is prefixed with `u_mat`, e.g. `u_matDiffuse`
    */
   apply(programInfo) {
-    setUniforms(programInfo, this.Uniforms);
+    setUniforms(programInfo, this.uniforms);
   }
   /**
    * Return a map of uniforms for this material, with a prefix
    */
-  get Uniforms() {
+  get uniforms() {
     return {
-      [`${UNIFORM_PREFIX3}DiffuseTex`]: this.diffuseTex ? this.diffuseTex : null,
-      [`${UNIFORM_PREFIX3}SpecularTex`]: this.specularTex ? this.specularTex : null,
-      [`${UNIFORM_PREFIX3}Shininess`]: this.shininess ? this.shininess : 0,
-      [`${UNIFORM_PREFIX3}Diffuse`]: this.diffuse ? [...this.diffuse, 1] : [1, 1, 1, 1],
-      [`${UNIFORM_PREFIX3}Specular`]: this.specular ? [...this.specular, 1] : [0, 0, 0, 1],
-      [`${UNIFORM_PREFIX3}Ambient`]: this.ambient ? [...this.ambient, 1] : [1, 1, 1, 1]
+      [`${UNIFORM_PREFIX2}DiffuseTex`]: this.diffuseTex ? this.diffuseTex : null,
+      [`${UNIFORM_PREFIX2}SpecularTex`]: this.specularTex ? this.specularTex : null,
+      [`${UNIFORM_PREFIX2}Shininess`]: this.shininess ? this.shininess : 0,
+      [`${UNIFORM_PREFIX2}Diffuse`]: this.diffuse ? [...this.diffuse, 1] : [1, 1, 1, 1],
+      [`${UNIFORM_PREFIX2}Specular`]: this.specular ? [...this.specular, 1] : [0, 0, 0, 1],
+      [`${UNIFORM_PREFIX2}Ambient`]: this.ambient ? [...this.ambient, 1] : [1, 1, 1, 1]
     };
   }
 };
@@ -6376,7 +6350,7 @@ export {
   Context,
   HUD,
   Instance,
-  Light,
+  LightDirectional,
   Material,
   Model,
   ModelCache,
@@ -6390,7 +6364,7 @@ export {
 /*! Bundled license information:
 
 twgl.js/dist/5.x/twgl-full.module.js:
-  (* @license twgl.js 5.3.1 Copyright (c) 2015, Gregg Tavares All Rights Reserved.
+  (* @license twgl.js 5.4.0 Copyright (c) 2015, Gregg Tavares All Rights Reserved.
   Available via the MIT license.
   see: http://github.com/greggman/twgl.js for details *)
 */
