@@ -4,12 +4,16 @@
     "noEmit": true,
 
     // Need to be set to true in the future
-    "noImplicitAny": false,
+
 
     // Sensible defaults
     "strict": true,
     "esModuleInterop": true,
-
+    "noImplicitAny": true,
+    "noUnusedParameters": true,
+    "noUnusedLocals": true,
+    "noImplicitReturns": true,
+    
     // Stops tsc from complaining about ESM
     "target": "es2020",
     

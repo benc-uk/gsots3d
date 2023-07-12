@@ -49,7 +49,7 @@ vec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shinin
   );
 }
 
-void main(void ) {
+void main() {
   vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;
   vec4 worldPos = u_world * position;
 
@@ -60,13 +60,13 @@ void main(void ) {
   vec3 surfaceToViewN = normalize(surfaceToView);
   vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);
 
-  vec2 light = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);
+  vec2 l = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);
 
   // Output lighting value for fragment shader to use, no color
-  v_lightingDiffuse = u_ambientLight * u_matAmbient + u_lightColour * max(light.x, 0.0);
+  v_lightingDiffuse = u_ambientLight * u_matAmbient + u_lightColour * max(l.x, 0.0);
 
   // Pass specular in a seperate varying
-  v_lightingSpecular = u_lightColour * u_matSpecular * light.y;
+  v_lightingSpecular = u_lightColour * u_matSpecular * l.y;
 
   // Pass through varying texture coordinate, so we can get the colour there
   v_texCoord = texcoord;

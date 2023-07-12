@@ -207,6 +207,8 @@ export class Context {
         <b>Instances: </b>${this.instances.length}<br>
         <b>Render: </b>FPS: ${Math.round(1 / deltaTime)} / ${Math.round(this.totalTime)}s<br>
       `
+    } else {
+      this.debugDiv.innerHTML = ''
     }
 
     // Loop forever or not
@@ -266,9 +268,15 @@ export class Context {
 
   /**
    * Create an instance of a primitive plane
+   * @param material - Material to apply to the plane
+   * @param width - Width of the plane
+   * @param height - Height of the plane
+   * @param subdivisionsW - Number of subdivisions along the width
+   * @param subdivisionsH - Number of subdivisions along the height
+   * @param tiling - Number of times to tile the texture over the plane
    */
-  createPlaneInstance(material: Material, width = 5, height = 5, subdivisionsW = 1, subdivisionsH = 1) {
-    const plane = new PrimitivePlane(this.gl, width, height, subdivisionsW, subdivisionsH)
+  createPlaneInstance(material: Material, width = 5, height = 5, subdivisionsW = 1, subdivisionsH = 1, tiling = 1) {
+    const plane = new PrimitivePlane(this.gl, width, height, subdivisionsW, subdivisionsH, tiling)
     plane.material = material
 
     const instance = new Instance(plane)

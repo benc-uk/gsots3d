@@ -16,10 +16,26 @@
         "@typescript-eslint"
     ],
     "rules": {
-      "@typescript-eslint/no-explicit-any": "error",
+      // Standard rules
       "no-var": "error",
       "prefer-const": "error",
       "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars" : "error"
+      "no-undef": "error",
+
+      // Prevents duplicate imports
+      "no-duplicate-imports": "error",
+      
+      // Prevents return in constructor
+      "no-constructor-return": "error",
+
+      // Prevents return in promise executor
+      "no-promise-executor-return": "error",
+
+      // disable string concatenation
+      "prefer-template": "error",
+
+      // TypeScript specific
+      "@typescript-eslint/no-unused-vars" : "error",
+      "@typescript-eslint/no-explicit-any": "error"
     }
 }

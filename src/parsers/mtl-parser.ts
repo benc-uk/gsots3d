@@ -30,36 +30,36 @@ export function parseMTL(mtlFile: string): Map<string, MtlMaterial> {
   let material = {} as MtlMaterial
 
   const keywords = {
-    newmtl(_, unparsedArgs: string) {
+    newmtl(_: string[], unparsedArgs: string) {
       material = {} as MtlMaterial
       materials.set(unparsedArgs, material)
     },
 
-    Ns(parts) {
+    Ns(parts: string[]) {
       material.ns = parseFloat(parts[0])
     },
-    Ka(parts) {
-      material.ka = parts.map(parseFloat)
+    Ka(parts: string[]) {
+      material.ka = <[number, number, number]>parts.map(parseFloat)
     },
-    Kd(parts) {
-      material.kd = parts.map(parseFloat)
+    Kd(parts: string[]) {
+      material.kd = <[number, number, number]>parts.map(parseFloat)
     },
-    Ks(parts) {
-      material.ks = parts.map(parseFloat)
+    Ks(parts: string[]) {
+      material.ks = <[number, number, number]>parts.map(parseFloat)
     },
-    Ke(parts) {
-      material.ke = parts.map(parseFloat)
+    Ke(parts: string[]) {
+      material.ke = <[number, number, number]>parts.map(parseFloat)
     },
-    Ni(parts) {
+    Ni(parts: string[]) {
       material.ni = parseFloat(parts[0])
     },
-    d(parts) {
+    d(parts: string[]) {
       material.d = parseFloat(parts[0])
     },
-    illum(parts) {
+    illum(parts: string[]) {
       material.illum = parseInt(parts[0])
     },
-  }
+  } as Record<string, (parts: string[], unparsedArgs: string) => void>
 
   const keywordRE = /(\w*)(?: )*(.*)/
   const lines = mtlFile.split('\n')

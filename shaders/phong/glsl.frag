@@ -20,7 +20,10 @@ uniform vec4 u_matAmbient;
 uniform vec4 u_matDiffuse;
 uniform vec4 u_matSpecular;
 uniform float u_matShininess;
-uniform sampler2D u_matTexture;
+
+// Texture properties
+uniform sampler2D u_matDiffuseTex;
+uniform sampler2D u_matSpecularTex;
 
 // Light properties
 uniform vec4 u_lightPosition;
@@ -48,7 +51,7 @@ vec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shinin
   );
 }
 
-void main(void ) {
+void main() {
   vec3 surfaceToLight = u_lightPosition.xyz - v_position.xyz;
   vec3 surfaceToView = (u_camMatrix[3] - u_world * v_position).xyz;
   vec3 normalN = normalize(v_normal);
@@ -58,10 +61,11 @@ void main(void ) {
 
   vec2 l = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);
 
-  vec4 diffuseColour = texture(u_matTexture, v_texCoord) * u_matDiffuse;
+  vec4 diffuseColour = texture(u_matDiffuseTex, v_texCoord) * u_matDiffuse;
+  vec4 specularColour = texture(u_matSpecularTex, v_texCoord) * u_matSpecular;
 
   outColour =
     u_ambientLight * diffuseColour * u_matAmbient +
     diffuseColour * max(l.x, 0.0) * u_lightColour +
-    u_matSpecular * l.y * u_lightColour;
+    specularColour * l.y * u_lightColour;
 }

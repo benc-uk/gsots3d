@@ -52,19 +52,19 @@ export function parseOBJ(objFile: string): ParseResult {
   const materialLibs = Array<string>()
 
   const keywords = {
-    v(parts) {
+    v(parts: string[]) {
       objPositions.push(parts.map(parseFloat))
     },
 
-    vn(parts) {
+    vn(parts: string[]) {
       objNormals.push(parts.map(parseFloat))
     },
 
-    vt(parts) {
+    vt(parts: string[]) {
       objTexcoords.push(parts.map(parseFloat))
     },
 
-    f(parts) {
+    f(parts: string[]) {
       setGeometry()
       const numTriangles = parts.length - 2
       for (let tri = 0; tri < numTriangles; ++tri) {
@@ -74,12 +74,12 @@ export function parseOBJ(objFile: string): ParseResult {
       }
     },
 
-    usemtl(_, unparsedArgs: string) {
+    usemtl(_: string[], unparsedArgs: string) {
       material = unparsedArgs
       newGeometry()
     },
 
-    mtllib(_, unparsedArgs: string) {
+    mtllib(_: string[], unparsedArgs: string) {
       materialLibs.push(unparsedArgs)
     },
 
@@ -91,7 +91,7 @@ export function parseOBJ(objFile: string): ParseResult {
     o() {
       return
     },
-  }
+  } as Record<string, (parts: string[], unparsedArgs: string) => void>
 
   /**
    * Updates webglVertexData per vertex

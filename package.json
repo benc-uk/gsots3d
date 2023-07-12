@@ -1,6 +1,6 @@
 {
   "name": "@benc-uk/gsots3d",
-  "version": "0.0.1-alpha.0",
+  "version": "0.0.1-alpha.1",
   "description": "Getting S**t On The Screen in 3D. A library for doing 3D graphics in the browser.",
   "author": "Ben Coleman",
   "license": "MIT",
@@ -38,7 +38,7 @@
     "build": "tsc && tsup",
     "watch": "tsc && npm run build && run-when-changed --watch 'src/**/*.ts' --watch '**/*.glsl' --exec 'npm run build'",
     "build-bundle": "tsc && tsup --config tsup.config-bundle.js && mv dist-bundle/index.js dist-bundle/gsots3d.js",
-    "watch-bundle": "tsc && npm run build-bundle && run-when-changed --watch 'src/**/*.ts' --watch '**/*.glsl' --exec 'npm run build-bundle'",
+    "watch-bundle": "tsc && npm run build-bundle && run-when-changed --watch 'src/**/*.ts' --watch 'shaders/**/glsl.frag' --watch 'shaders/**/glsl.vert' --exec 'npm run build-bundle'",
     "clean": "rm -rf dist",
     "docs": "typedoc --out docs --gitRevision main ./src/",
     "examples": "vite --port 3000 --open /examples ./examples/"

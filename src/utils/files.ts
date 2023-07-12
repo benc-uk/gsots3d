@@ -32,7 +32,7 @@ export async function fetchFile(filePath: string) {
  * @param {string} fragPath - URL path to fragment shader
  * @returns {Promise<Shader>} Pair of shaders as strings
  */
-export async function fetchShaders(vertPath, fragPath) {
+export async function fetchShaders(vertPath: string, fragPath: string) {
   const vsResp = await fetch(vertPath)
   const fsResp = await fetch(fragPath)
 

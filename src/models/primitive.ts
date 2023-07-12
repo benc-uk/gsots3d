@@ -4,7 +4,15 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-import { ProgramInfo, drawBufferInfo, setBuffersAndAttributes, setUniforms, primitives, BufferInfo } from 'twgl.js'
+import {
+  ProgramInfo,
+  drawBufferInfo,
+  setBuffersAndAttributes,
+  setUniforms,
+  primitives,
+  BufferInfo,
+  createBufferInfoFromArrays,
+} from 'twgl.js'
 import { Renderable, UniformSet } from '../core/types.ts'
 import { Material } from '../index.ts'
 
@@ -49,9 +57,22 @@ export class PrimitiveCube extends Primitive {
 }
 
 export class PrimitivePlane extends Primitive {
-  constructor(gl: WebGL2RenderingContext, width: number, height: number, subdivisionsW: number, subdivisionsH: number) {
+  constructor(
+    gl: WebGL2RenderingContext,
+    width: number,
+    height: number,
+    subdivisionsW: number,
+    subdivisionsH: number,
+    tilingFactor: number
+  ) {
     super()
 
-    this.bufferInfo = primitives.createPlaneBufferInfo(gl, width, height, subdivisionsW, subdivisionsH)
+    const planeVerts = primitives.createPlaneVertices(width, height, subdivisionsW, subdivisionsH)
+
+    for (let i = 0; i < planeVerts.texcoord.length; i++) {
+      planeVerts.texcoord[i] = planeVerts.texcoord[i] * tilingFactor
+    }
+
+    this.bufferInfo = createBufferInfoFromArrays(gl, planeVerts)
   }
 }
