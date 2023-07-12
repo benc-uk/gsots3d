@@ -5556,18 +5556,34 @@ var ModelCache = class {
   }
 };
 
-// src/render/light.ts
+// src/utils/vecmat.ts
+function normalize3Tuple(t) {
+  const [x, y, z] = t;
+  const len = Math.sqrt(x * x + y * y + z * z);
+  return t.map((v) => v / len);
+}
+
+// src/render/light-dir.ts
 var UNIFORM_PREFIX = "u_light";
-var Light = class {
-  /** Create a new default light */
+var LightDirectional = class {
+  /** Create a default directional light, pointing downward */
   constructor() {
-    this.position = [0, 0, 0];
+    this._direction = [0, -1, 0];
     this.colour = [1, 1, 1];
     this.intensity = 1;
   }
+  set direction(d) {
+    this._direction = normalize3Tuple(d);
+  }
+  get direction() {
+    return this._direction;
+  }
+  /** Convenience method allows setting the direction as a point relative to the world origin */
+  setAsPosition(x, y, z) {
+    this._direction = normalize3Tuple([0 - x, 0 - y, 0 - z]);
+  }
   /**
    * Applies the light to the given program as a set of uniforms
-   * Each uniform is prefixed with `u_light`, e.g. `u_lightPosition`
    */
   apply(programInfo) {
     setUniforms(programInfo, this.Uniforms);
@@ -5575,7 +5591,7 @@ var Light = class {
   /** Return a map of uniforms for this light, with a prefix */
   get Uniforms() {
     return {
-      [`${UNIFORM_PREFIX}Position`]: [...this.position, 1],
+      [`${UNIFORM_PREFIX}Direction`]: [...this.direction, 1],
       [`${UNIFORM_PREFIX}Colour`]: [...this.colour, 1]
     };
   }
@@ -5732,7 +5748,7 @@ var PrimitivePlane = class extends Primitive {
 };
 
 // shaders/phong/glsl.frag
-var glsl_default = "#version 300 es\n\n// ============================================================================\n// Phong vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// From vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\n\nuniform mat4 u_world;\nuniform mat4 u_camMatrix;\n\n// Material properties\nuniform vec4 u_matAmbient;\nuniform vec4 u_matDiffuse;\nuniform vec4 u_matSpecular;\nuniform float u_matShininess;\n\n// Texture properties\nuniform sampler2D u_matDiffuseTex;\nuniform sampler2D u_matSpecularTex;\n\n// Light properties\nuniform vec4 u_lightPosition;\nuniform vec4 u_lightColour;\nuniform vec4 u_ambientLight;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\n// lightCalc function returns two floats (packed into a vec2)\n// One for diffuse component of lighting, the second for specular\n// - normalN:          Surface normal (normalized)\n// - surfaceToLightN:  Vector towards light (normalized)\n// - halfVector:       Half vector towards camera (normalized)\n// - shininess:        Hardness or size of specular highlights\nvec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {\n  float NdotL = dot(normalN, surfaceToLightN);\n  float NdotH = dot(normalN, halfVector);\n\n  return vec2(\n    NdotL,\n    NdotL > 0.0\n      ? pow(max(0.0, NdotH), shininess)\n      : 0.0 // Specular term in y\n  );\n}\n\nvoid main() {\n  vec3 surfaceToLight = u_lightPosition.xyz - v_position.xyz;\n  vec3 surfaceToView = (u_camMatrix[3] - u_world * v_position).xyz;\n  vec3 normalN = normalize(v_normal);\n  vec3 surfaceToLightN = normalize(surfaceToLight);\n  vec3 surfaceToViewN = normalize(surfaceToView);\n  vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);\n\n  vec2 l = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);\n\n  vec4 diffuseColour = texture(u_matDiffuseTex, v_texCoord) * u_matDiffuse;\n  vec4 specularColour = texture(u_matSpecularTex, v_texCoord) * u_matSpecular;\n\n  outColour =\n    u_ambientLight * diffuseColour * u_matAmbient +\n    diffuseColour * max(l.x, 0.0) * u_lightColour +\n    specularColour * l.y * u_lightColour;\n}\n";
+var glsl_default = "#version 300 es\n\n// ============================================================================\n// Phong vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// From vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\n\n// Main matrices\nuniform mat4 u_world;\nuniform mat4 u_camMatrix;\n\n// Material properties\nuniform vec4 u_matAmbient;\nuniform vec4 u_matDiffuse;\nuniform vec4 u_matSpecular;\nuniform float u_matShininess;\n\n// Texture properties\nuniform sampler2D u_matDiffuseTex;\nuniform sampler2D u_matSpecularTex;\n\n// Global directional & ambient light\nuniform vec4 u_lightDirection;\nuniform vec4 u_lightColour;\nuniform vec4 u_ambientLight;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\n// lightCalc function returns two floats (packed into a vec2)\n// One for diffuse component of lighting, the second for specular\n// - normalN:          Surface normal (normalized)\n// - surfaceToLightN:  Vector towards light (normalized)\n// - halfVector:       Half vector towards camera (normalized)\n// - shininess:        Hardness or size of specular highlights\nvec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {\n  float NdotL = dot(normalN, surfaceToLightN);\n  float NdotH = dot(normalN, halfVector);\n\n  return vec2(\n    NdotL,\n    NdotL > 0.0\n      ? pow(max(0.0, NdotH), shininess)\n      : 0.0 // Specular term in y\n  );\n}\n\nvoid main() {\n  // flip the direction of the light around 180 degrees\n  vec3 surfaceToLight = -u_lightDirection.xyz;\n  vec3 surfaceToView = (u_camMatrix[3] - u_world * v_position).xyz;\n  vec3 normalN = normalize(v_normal);\n  vec3 surfaceToLightN = normalize(surfaceToLight);\n  vec3 surfaceToViewN = normalize(surfaceToView);\n  vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);\n\n  vec2 l = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);\n\n  vec4 diffuseColour = texture(u_matDiffuseTex, v_texCoord) * u_matDiffuse;\n  vec4 specularColour = texture(u_matSpecularTex, v_texCoord) * u_matSpecular;\n\n  outColour =\n    u_ambientLight * diffuseColour * u_matAmbient +\n    diffuseColour * max(l.x, 0.0) * u_lightColour +\n    specularColour * l.y * u_lightColour;\n}\n";
 
 // shaders/phong/glsl.vert
 var glsl_default2 = "#version 300 es\n\n// ============================================================================\n// Phong vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_normal;\nout vec4 v_position;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  v_position = u_worldViewProjection * position;\n  gl_Position = v_position;\n}\n";
@@ -5741,16 +5757,16 @@ var glsl_default2 = "#version 300 es\n\n// =====================================
 var glsl_default3 = "#version 300 es\n\n// ============================================================================\n// Gouraud fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// From vertex shader\nin vec4 v_lightingDiffuse;\nin vec4 v_lightingSpecular;\nin vec2 v_texCoord;\n\nuniform sampler2D u_matDiffuseTex;\nuniform vec4 u_matDiffuse;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\nvoid main() {\n  // Tried to set the objectColour in the vertex shader, rather than here.\n  // But texture mapping + Gouraud shading, it looks terrible\n  vec4 objectColour = texture(u_matDiffuseTex, v_texCoord) * u_matDiffuse;\n\n  outColour = objectColour * v_lightingDiffuse + v_lightingSpecular;\n}\n";
 
 // shaders/gouraud/glsl.vert
-var glsl_default4 = "#version 300 es\n\n// ============================================================================\n// Gouraud vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_world;\nuniform mat4 u_camMatrix;\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\n\n// Material properties\nuniform vec4 u_matAmbient;\nuniform vec4 u_matSpecular;\nuniform float u_matShininess;\n\n// Light properties\nuniform vec4 u_lightPosition;\nuniform vec4 u_lightColour;\nuniform vec4 u_ambientLight;\n\nout vec4 v_lightingDiffuse;\nout vec4 v_lightingSpecular;\nout vec2 v_texCoord;\n\n// lightCalc function returns two floats (packed into a vec2)\n// One for diffuse component of lighting, the second for specular\n// - normalN:          Surface normal (normalized)\n// - surfaceToLightN:  Vector towards light (normalized)\n// - halfVector:       Half vector towards camera (normalized)\n// - shininess:        Hardness or size of specular highlights\nvec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {\n  float NdotL = dot(normalN, surfaceToLightN);\n  float NdotH = dot(normalN, halfVector);\n\n  return vec2(\n    NdotL,\n    NdotL > 0.0\n      ? pow(max(0.0, NdotH), shininess)\n      : 0.0 // Specular term in y\n  );\n}\n\nvoid main() {\n  vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  vec4 worldPos = u_worldViewProjection * position;\n\n  vec3 surfaceToLight = u_lightPosition.xyz - worldPos.xyz;\n  vec3 surfaceToView = (u_camMatrix[3] - u_world * worldPos).xyz;\n  vec3 normalN = normalize(worldNormal);\n  vec3 surfaceToLightN = normalize(surfaceToLight);\n  vec3 surfaceToViewN = normalize(surfaceToView);\n  vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);\n\n  vec2 l = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);\n\n  // Output lighting value for fragment shader to use, no color\n  v_lightingDiffuse = u_ambientLight * u_matAmbient + u_lightColour * max(l.x, 0.0);\n\n  // Pass specular in a seperate varying\n  v_lightingSpecular = u_lightColour * u_matSpecular * l.y;\n\n  // Pass through varying texture coordinate, so we can get the colour there\n  v_texCoord = texcoord;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
+var glsl_default4 = "#version 300 es\n\n// ============================================================================\n// Gouraud vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_world;\nuniform mat4 u_camMatrix;\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\n\n// Material properties\nuniform vec4 u_matAmbient;\nuniform vec4 u_matSpecular;\nuniform float u_matShininess;\n\n// Light properties\nuniform vec4 u_lightDirection;\nuniform vec4 u_lightColour;\nuniform vec4 u_ambientLight;\n\nout vec4 v_lightingDiffuse;\nout vec4 v_lightingSpecular;\nout vec2 v_texCoord;\n\n// lightCalc function returns two floats (packed into a vec2)\n// One for diffuse component of lighting, the second for specular\n// - normalN:          Surface normal (normalized)\n// - surfaceToLightN:  Vector towards light (normalized)\n// - halfVector:       Half vector towards camera (normalized)\n// - shininess:        Hardness or size of specular highlights\nvec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {\n  float NdotL = dot(normalN, surfaceToLightN);\n  float NdotH = dot(normalN, halfVector);\n\n  return vec2(\n    NdotL,\n    NdotL > 0.0\n      ? pow(max(0.0, NdotH), shininess)\n      : 0.0 // Specular term in y\n  );\n}\n\nvoid main() {\n  vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  vec4 worldPos = u_worldViewProjection * position;\n\n  vec3 surfaceToLight = -u_lightDirection.xyz;\n  vec3 surfaceToView = (u_camMatrix[3] - u_world * worldPos).xyz;\n  vec3 normalN = normalize(worldNormal);\n  vec3 surfaceToLightN = normalize(surfaceToLight);\n  vec3 surfaceToViewN = normalize(surfaceToView);\n  vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);\n\n  vec2 l = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);\n\n  // Output lighting value for fragment shader to use, no color\n  v_lightingDiffuse = u_ambientLight * u_matAmbient + u_lightColour * max(l.x, 0.0);\n\n  // Pass specular in a seperate varying\n  v_lightingSpecular = u_lightColour * u_matSpecular * l.y;\n\n  // Pass through varying texture coordinate, so we can get the colour there\n  v_texCoord = texcoord;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
 
 // shaders/gouraud-flat/glsl.frag
 var glsl_default5 = "#version 300 es\n\n// ============================================================================\n// Gouraud fragment shader with flat shading\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// From vertex shader\nflat in vec4 v_lightingDiffuse;\nflat in vec4 v_lightingSpecular;\nin vec2 v_texCoord;\n\nuniform sampler2D u_matDiffuseTex;\nuniform vec4 u_matDiffuse;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\nvoid main() {\n  // Tried to set the objectColour in the vertex shader, rather than here.\n  // But texture mapping + Gouraud shading, it looks terrible\n  vec4 objectColour = texture(u_matDiffuseTex, v_texCoord) * u_matDiffuse;\n\n  outColour = objectColour * v_lightingDiffuse + v_lightingSpecular;\n}\n";
 
 // shaders/gouraud-flat/glsl.vert
-var glsl_default6 = "#version 300 es\n\n// ============================================================================\n// Gouraud vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_world;\nuniform mat4 u_camMatrix;\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\n\n// Material properties\nuniform vec4 u_matAmbient;\nuniform vec4 u_matSpecular;\nuniform float u_matShininess;\n\n// Light properties\nuniform vec4 u_lightPosition;\nuniform vec4 u_lightColour;\nuniform vec4 u_ambientLight;\n\nflat out vec4 v_lightingDiffuse;\nflat out vec4 v_lightingSpecular;\nout vec2 v_texCoord;\n\n// lightCalc function returns two floats (packed into a vec2)\n// One for diffuse component of lighting, the second for specular\n// - normalN:          Surface normal (normalized)\n// - surfaceToLightN:  Vector towards light (normalized)\n// - halfVector:       Half vector towards camera (normalized)\n// - shininess:        Hardness or size of specular highlights\nvec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {\n  float NdotL = dot(normalN, surfaceToLightN);\n  float NdotH = dot(normalN, halfVector);\n\n  return vec2(\n    NdotL,\n    NdotL > 0.0\n      ? pow(max(0.0, NdotH), shininess)\n      : 0.0 // Specular term in y\n  );\n}\n\nvoid main() {\n  vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  vec4 worldPos = u_world * position;\n\n  vec3 surfaceToLight = u_lightPosition.xyz - worldPos.xyz;\n  vec3 surfaceToView = (u_camMatrix[3] - u_world * worldPos).xyz;\n  vec3 normalN = normalize(worldNormal);\n  vec3 surfaceToLightN = normalize(surfaceToLight);\n  vec3 surfaceToViewN = normalize(surfaceToView);\n  vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);\n\n  vec2 l = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);\n\n  // Output lighting value for fragment shader to use, no color\n  v_lightingDiffuse = u_ambientLight * u_matAmbient + u_lightColour * max(l.x, 0.0);\n\n  // Pass specular in a seperate varying\n  v_lightingSpecular = u_lightColour * u_matSpecular * l.y;\n\n  // Pass through varying texture coordinate, so we can get the colour there\n  v_texCoord = texcoord;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
+var glsl_default6 = "#version 300 es\n\n// ============================================================================\n// Gouraud vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_world;\nuniform mat4 u_camMatrix;\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\n\n// Material properties\nuniform vec4 u_matAmbient;\nuniform vec4 u_matSpecular;\nuniform float u_matShininess;\n\n// Light properties\nuniform vec4 u_lightDirection;\nuniform vec4 u_lightColour;\nuniform vec4 u_ambientLight;\n\nflat out vec4 v_lightingDiffuse;\nflat out vec4 v_lightingSpecular;\nout vec2 v_texCoord;\n\n// lightCalc function returns two floats (packed into a vec2)\n// One for diffuse component of lighting, the second for specular\n// - normalN:          Surface normal (normalized)\n// - surfaceToLightN:  Vector towards light (normalized)\n// - halfVector:       Half vector towards camera (normalized)\n// - shininess:        Hardness or size of specular highlights\nvec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {\n  float NdotL = dot(normalN, surfaceToLightN);\n  float NdotH = dot(normalN, halfVector);\n\n  return vec2(\n    NdotL,\n    NdotL > 0.0\n      ? pow(max(0.0, NdotH), shininess)\n      : 0.0 // Specular term in y\n  );\n}\n\nvoid main() {\n  vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  vec4 worldPos = u_world * position;\n\n  vec3 surfaceToLight = -u_lightDirection.xyz;\n  vec3 surfaceToView = (u_camMatrix[3] - u_world * worldPos).xyz;\n  vec3 normalN = normalize(worldNormal);\n  vec3 surfaceToLightN = normalize(surfaceToLight);\n  vec3 surfaceToViewN = normalize(surfaceToView);\n  vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);\n\n  vec2 l = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);\n\n  // Output lighting value for fragment shader to use, no color\n  v_lightingDiffuse = u_ambientLight * u_matAmbient + u_lightColour * max(l.x, 0.0);\n\n  // Pass specular in a seperate varying\n  v_lightingSpecular = u_lightColour * u_matSpecular * l.y;\n\n  // Pass through varying texture coordinate, so we can get the colour there\n  v_texCoord = texcoord;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
 
 // package.json
-var version = "0.0.1-b69ec2f.0";
+var version = "0.0.1-alpha.1";
 
 // src/core/hud.ts
 var HUD = class {
@@ -5793,7 +5809,6 @@ var Context = class _Context {
     this.programs = {};
     this.started = false;
     this.instances = [];
-    this.lights = [];
     /** If the canvas can be resized, set this to true, otherwise it's an optimization to set to false */
     this.resizeable = true;
     /** Show extra debug details on the canvas */
@@ -5806,10 +5821,8 @@ var Context = class _Context {
     this.models = new ModelCache();
     this.prevTime = 0;
     this.totalTime = 0;
-    const light = new Light();
-    light.position = [0, 40, 50];
-    light.colour = [1, 1, 1];
-    this.lights[0] = light;
+    this.globalLight = new LightDirectional();
+    this.globalLight.setAsPosition(20, 50, 30);
     this.camera = new Camera(1 /* PERSPECTIVE */);
     this.update = () => {
     };
@@ -5879,7 +5892,7 @@ var Context = class _Context {
     const projection = this.camera.projectionMatrix(this.aspectRatio);
     const viewProjection = mat4_exports.multiply(mat4_exports.create(), projection, viewMatrix);
     this.gl.useProgram(shaderProg.program);
-    this.lights[0].apply(shaderProg);
+    this.globalLight.apply(shaderProg);
     for (const instance of this.instances) {
       instance.render(this.gl, uniforms, viewProjection, shaderProg);
     }
@@ -5895,12 +5908,6 @@ var Context = class _Context {
     }
     if (this.started)
       requestAnimationFrame(this.render);
-  }
-  /**
-   * Get the default light
-   */
-  get defaultLight() {
-    return this.lights[0];
   }
   /**
    * Start the rendering loop
@@ -5968,8 +5975,33 @@ var Context = class _Context {
   }
 };
 
+// src/render/light.ts
+var UNIFORM_PREFIX2 = "u_light";
+var Light = class {
+  /** Create a new default light */
+  constructor() {
+    this.position = [0, 0, 0];
+    this.colour = [1, 1, 1];
+    this.intensity = 1;
+  }
+  /**
+   * Applies the light to the given program as a set of uniforms
+   * Each uniform is prefixed with `u_light`, e.g. `u_lightPosition`
+   */
+  apply(programInfo) {
+    setUniforms(programInfo, this.Uniforms);
+  }
+  /** Return a map of uniforms for this light, with a prefix */
+  get Uniforms() {
+    return {
+      [`${UNIFORM_PREFIX2}Position`]: [...this.position, 1],
+      [`${UNIFORM_PREFIX2}Colour`]: [...this.colour, 1]
+    };
+  }
+};
+
 // src/render/material.ts
-var UNIFORM_PREFIX2 = "u_mat";
+var UNIFORM_PREFIX3 = "u_mat";
 var Material = class _Material {
   /**
    * Create a new material with default diffuse colour
@@ -6066,12 +6098,12 @@ var Material = class _Material {
    */
   get Uniforms() {
     return {
-      [`${UNIFORM_PREFIX2}DiffuseTex`]: this.diffuseTex ? this.diffuseTex : null,
-      [`${UNIFORM_PREFIX2}SpecularTex`]: this.specularTex ? this.specularTex : null,
-      [`${UNIFORM_PREFIX2}Shininess`]: this.shininess ? this.shininess : 0,
-      [`${UNIFORM_PREFIX2}Diffuse`]: this.diffuse ? [...this.diffuse, 1] : [1, 1, 1, 1],
-      [`${UNIFORM_PREFIX2}Specular`]: this.specular ? [...this.specular, 1] : [0, 0, 0, 1],
-      [`${UNIFORM_PREFIX2}Ambient`]: this.ambient ? [...this.ambient, 1] : [1, 1, 1, 1]
+      [`${UNIFORM_PREFIX3}DiffuseTex`]: this.diffuseTex ? this.diffuseTex : null,
+      [`${UNIFORM_PREFIX3}SpecularTex`]: this.specularTex ? this.specularTex : null,
+      [`${UNIFORM_PREFIX3}Shininess`]: this.shininess ? this.shininess : 0,
+      [`${UNIFORM_PREFIX3}Diffuse`]: this.diffuse ? [...this.diffuse, 1] : [1, 1, 1, 1],
+      [`${UNIFORM_PREFIX3}Specular`]: this.specular ? [...this.specular, 1] : [0, 0, 0, 1],
+      [`${UNIFORM_PREFIX3}Ambient`]: this.ambient ? [...this.ambient, 1] : [1, 1, 1, 1]
     };
   }
 };

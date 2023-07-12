@@ -157,13 +157,13 @@ export class Material {
    * Each uniform is prefixed with `u_mat`, e.g. `u_matDiffuse`
    */
   public apply(programInfo: ProgramInfo) {
-    setUniforms(programInfo, this.Uniforms)
+    setUniforms(programInfo, this.uniforms)
   }
 
   /**
    * Return a map of uniforms for this material, with a prefix
    */
-  public get Uniforms(): UniformSet {
+  public get uniforms(): UniformSet {
     return {
       [`${UNIFORM_PREFIX}DiffuseTex`]: this.diffuseTex ? this.diffuseTex : null,
       [`${UNIFORM_PREFIX}SpecularTex`]: this.specularTex ? this.specularTex : null,

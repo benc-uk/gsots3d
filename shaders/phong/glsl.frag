@@ -12,6 +12,7 @@ in vec3 v_normal;
 in vec2 v_texCoord;
 in vec4 v_position;
 
+// Main matrices
 uniform mat4 u_world;
 uniform mat4 u_camMatrix;
 
@@ -25,8 +26,8 @@ uniform float u_matShininess;
 uniform sampler2D u_matDiffuseTex;
 uniform sampler2D u_matSpecularTex;
 
-// Light properties
-uniform vec4 u_lightPosition;
+// Global directional & ambient light
+uniform vec4 u_lightDirection;
 uniform vec4 u_lightColour;
 uniform vec4 u_ambientLight;
 
@@ -52,7 +53,8 @@ vec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shinin
 }
 
 void main() {
-  vec3 surfaceToLight = u_lightPosition.xyz - v_position.xyz;
+  // flip the direction of the light around 180 degrees
+  vec3 surfaceToLight = -u_lightDirection.xyz;
   vec3 surfaceToView = (u_camMatrix[3] - u_world * v_position).xyz;
   vec3 normalN = normalize(v_normal);
   vec3 surfaceToLightN = normalize(surfaceToLight);

@@ -23,7 +23,7 @@ uniform vec4 u_matSpecular;
 uniform float u_matShininess;
 
 // Light properties
-uniform vec4 u_lightPosition;
+uniform vec4 u_lightDirection;
 uniform vec4 u_lightColour;
 uniform vec4 u_ambientLight;
 
@@ -53,7 +53,7 @@ void main() {
   vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;
   vec4 worldPos = u_worldViewProjection * position;
 
-  vec3 surfaceToLight = u_lightPosition.xyz - worldPos.xyz;
+  vec3 surfaceToLight = -u_lightDirection.xyz;
   vec3 surfaceToView = (u_camMatrix[3] - u_world * worldPos).xyz;
   vec3 normalN = normalize(worldNormal);
   vec3 surfaceToLightN = normalize(surfaceToLight);

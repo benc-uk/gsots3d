@@ -10,7 +10,7 @@ import { mat4 } from 'gl-matrix'
 import { getGl } from './gl.ts'
 import { UniformSet } from './types.ts'
 import { ModelCache } from '../models/cache.ts'
-import { Light } from '../render/light.ts'
+import { LightDirectional } from '../render/lights.ts'
 import { Camera, CameraType } from '../render/camera.ts'
 import { Material } from '../render/material.ts'
 import { Instance } from '../models/instance.ts'
@@ -46,7 +46,8 @@ export class Context {
   private programs: { [key: string]: ProgramInfo } = {}
   private started = false
   private instances: Instance[] = []
-  private lights: Light[] = []
+  // private lights: DirectionalLight[] = []
+  public globalLight: LightDirectional
   private prevTime: number
   private totalTime: number
   private debugDiv: HTMLDivElement
@@ -84,11 +85,9 @@ export class Context {
     this.prevTime = 0
     this.totalTime = 0
 
-    // Default light
-    const light = new Light()
-    light.position = [0, 40, 50]
-    light.colour = [1, 1, 1]
-    this.lights[0] = light
+    // Main global light
+    this.globalLight = new LightDirectional()
+    this.globalLight.setAsPosition(20, 50, 30)
 
     this.camera = new Camera(CameraType.PERSPECTIVE)
 
@@ -192,7 +191,7 @@ export class Context {
     this.gl.useProgram(shaderProg.program)
 
     // Since we only have one light, just apply it here
-    this.lights[0].apply(shaderProg)
+    this.globalLight.apply(shaderProg)
 
     // Draw all instances
     for (const instance of this.instances) {
@@ -213,13 +212,6 @@ export class Context {
 
     // Loop forever or not
     if (this.started) requestAnimationFrame(this.render)
-  }
-
-  /**
-   * Get the default light
-   */
-  get defaultLight() {
-    return this.lights[0]
   }
 
   /**

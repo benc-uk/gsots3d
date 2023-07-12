@@ -1,17 +1,6 @@
 import { Model, Context, setLogLevel, Material } from '../../dist-bundle/gsots3d.js'
 
-// on lose focus
-window.onblur = () => {
-  ctx.stop()
-}
-
-// on focus
-window.onfocus = () => {
-  ctx.start()
-}
-
 const ctx = await Context.init('canvas')
-ctx.shaderProgram = 'gouraud-flat'
 ctx.debug = true
 setLogLevel('debug')
 
@@ -78,8 +67,8 @@ ctx.camera.position = [0, camHeight, 30]
 ctx.camera.lookAt = [0, 0, 0]
 ctx.camera.far = 500
 
-// Static light
-ctx.defaultLight.position = [70, 150, 120]
+// Lights
+ctx.globalLight.setAsPosition(260, 150, 120)
 ctx.ambientLight = [0.09, 0.09, 0.09]
 
 let angle = Math.PI / 2

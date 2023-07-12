@@ -8,10 +8,10 @@ ctx.shaderProgram = ShaderProgram.GOURAUD_FLAT
 ctx.shaderProgram = ShaderProgram.PHONG
 
 ctx.camera.position = [0, 0, 20]
-ctx.defaultLight.position = [80, 60, 50]
+ctx.globalLight.setAsPosition(8, 20, 18)
 ctx.ambientLight = [0.04, 0.04, 0.04]
 
-const mat = Material.createTexture('../textures/earth.jpg')
+const mat = Material.createBasicTexture('../textures/earth.jpg')
 mat.specular = [0.7, 0.7, 0.7]
 mat.shininess = 50
 

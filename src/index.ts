@@ -8,7 +8,7 @@ export * from './core/logging.ts'
 export * from './core/context.ts'
 export * from './core/hud.ts'
 
-export * from './render/light.ts'
+export * from './render/lights.ts'
 export * from './render/camera.ts'
 export * from './render/material.ts'
 
