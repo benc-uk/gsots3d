@@ -6,7 +6,13 @@ set -e
 # This is not the same as the builds done by CI
 #
 
-VERSION_TYPE=${1:-patch}
+VERSION_TYPE=${1:-prerelease}
+
+# Set preid if version type is prerelease
+if [[ "$VERSION_TYPE" == "prerelease" ]]; then
+  PREID=${2:-alpha}
+  VERSION_TYPE="$VERSION_TYPE --preid=$PREID"
+fi
 
 # Prompt user for confirmation
 read -p "### 🚀 Releasing new version. Are you sure? (y/n) " -n 1 -r
