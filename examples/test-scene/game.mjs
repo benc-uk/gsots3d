@@ -28,8 +28,8 @@ setLogLevel('debug')
   block.rotateY(1.2)
 
   const floorMat = Material.createBasicTexture('../textures/stone-wall.png')
-  floorMat.specular = [0.0, 0.0, 0.0]
-  floorMat.shininess = 0
+  floorMat.specular = [1.0, 1.0, 1.0]
+  floorMat.shininess = 300
   const floor = ctx.createPlaneInstance(floorMat, 260, 260, 10, 10, 6)
   floor.position = [0, -8, 0]
 
@@ -71,7 +71,7 @@ ctx.camera.far = 500
 ctx.globalLight.setAsPosition(260, 150, 120)
 ctx.ambientLight = [0.09, 0.09, 0.09]
 
-let angle = Math.PI / 2
+let angle = 3.6
 let radius = 40
 
 window.onkeydown = (e) => {

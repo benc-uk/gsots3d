@@ -24,6 +24,6 @@ out vec4 v_position;
 void main() {
   v_texCoord = texcoord;
   v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;
-  v_position = u_worldViewProjection * position;
-  gl_Position = v_position;
+  v_position = u_world * position;
+  gl_Position = u_worldViewProjection * position;
 }

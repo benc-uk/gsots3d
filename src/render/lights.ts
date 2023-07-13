@@ -7,8 +7,6 @@ import { ProgramInfo, setUniforms } from 'twgl.js'
 import { RGB, UniformSet, XYZ } from '../core/types.ts'
 import { normalize3Tuple } from '../utils/vecmat.ts'
 
-const UNIFORM_PREFIX = 'u_light'
-
 /**
  * A directional light source, typically global with the context having a single instance
  */
@@ -40,23 +38,31 @@ export class LightDirectional {
     return this._direction
   }
 
-  /** Convenience method allows setting the direction as a point relative to the world origin */
+  /**
+   * Convenience method allows setting the direction as a point relative to the world origin
+   */
   setAsPosition(x: number, y: number, z: number) {
     this._direction = normalize3Tuple([0 - x, 0 - y, 0 - z])
   }
 
   /**
-   * Applies the light to the given program as a set of uniforms
+   * Applies the light to the given program as uniform struct
    */
-  apply(programInfo: ProgramInfo) {
-    setUniforms(programInfo, this.uniforms)
+  apply(programInfo: ProgramInfo, uniformSuffix = '') {
+    const uni = {
+      [`u_lightDir${uniformSuffix}`]: this.uniforms,
+    }
+
+    setUniforms(programInfo, uni)
   }
 
-  /** Return a map of uniforms for this light, with a prefix */
+  /**
+   * Return the base set of uniforms for this light
+   */
   public get uniforms(): UniformSet {
     return {
-      [`${UNIFORM_PREFIX}Direction`]: [...this.direction, 1],
-      [`${UNIFORM_PREFIX}Colour`]: [...this.colour, 1],
-    }
+      direction: this.direction,
+      colour: this.colour,
+    } as UniformSet
   }
 }

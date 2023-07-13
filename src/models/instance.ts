@@ -75,7 +75,8 @@ export class Instance {
       mat4.rotateZ(world, world, this.rotate[2])
     }
 
-    if (uniforms.u) uniforms.u_world = world
+    // Really important, for normals & lighting
+    uniforms.u_world = world
 
     // Populate u_worldInverseTranspose - used for normals & shading
     mat4.invert(<mat4>uniforms.u_worldInverseTranspose, world)

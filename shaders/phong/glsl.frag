@@ -1,38 +1,42 @@
 #version 300 es
 
 // ============================================================================
-// Phong vertex shader
+// Phong fragment shader
 // Ben Coleman, 2023
 // ============================================================================
 
 precision highp float;
+
+struct LightDir {
+  vec3 direction;
+  vec3 colour;
+};
+
+struct Material {
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+  float shininess;
+  sampler2D diffuseTex;
+  sampler2D specularTex;
+};
 
 // From vertex shader
 in vec3 v_normal;
 in vec2 v_texCoord;
 in vec4 v_position;
 
-// Main matrices
+// Some global uniforms
 uniform mat4 u_world;
-uniform mat4 u_camMatrix;
+uniform vec3 u_camPos;
+uniform vec3 u_lightAmbientGlobal;
 
-// Material properties
-uniform vec4 u_matAmbient;
-uniform vec4 u_matDiffuse;
-uniform vec4 u_matSpecular;
-uniform float u_matShininess;
-
-// Texture properties
-uniform sampler2D u_matDiffuseTex;
-uniform sampler2D u_matSpecularTex;
-
-// Global directional & ambient light
-uniform vec4 u_lightDirection;
-uniform vec4 u_lightColour;
-uniform vec4 u_ambientLight;
+// Main light and material uniforms
+uniform LightDir u_lightDirGlobal;
+uniform Material u_mat;
 
 // Output colour of this pixel/fragment
-out vec4 outColour;
+out vec3 outColour;
 
 // lightCalc function returns two floats (packed into a vec2)
 // One for diffuse component of lighting, the second for specular
@@ -54,20 +58,20 @@ vec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shinin
 
 void main() {
   // flip the direction of the light around 180 degrees
-  vec3 surfaceToLight = -u_lightDirection.xyz;
-  vec3 surfaceToView = (u_camMatrix[3] - u_world * v_position).xyz;
+  vec3 surfaceToLight = -u_lightDirGlobal.direction;
+  vec3 surfaceToView = (u_camPos - v_position.xyz).xyz;
   vec3 normalN = normalize(v_normal);
   vec3 surfaceToLightN = normalize(surfaceToLight);
   vec3 surfaceToViewN = normalize(surfaceToView);
   vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);
 
-  vec2 l = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);
+  vec2 l = lightCalc(normalN, surfaceToLightN, halfVector, u_mat.shininess);
 
-  vec4 diffuseColour = texture(u_matDiffuseTex, v_texCoord) * u_matDiffuse;
-  vec4 specularColour = texture(u_matSpecularTex, v_texCoord) * u_matSpecular;
+  vec3 diffuseColour = vec3(texture(u_mat.diffuseTex, v_texCoord)) * u_mat.diffuse;
+  vec3 specularColour = vec3(texture(u_mat.specularTex, v_texCoord)) * u_mat.specular;
 
   outColour =
-    u_ambientLight * diffuseColour * u_matAmbient +
-    diffuseColour * max(l.x, 0.0) * u_lightColour +
-    specularColour * l.y * u_lightColour;
+    u_lightAmbientGlobal * diffuseColour * u_mat.ambient +
+    diffuseColour * max(l.x, 0.0) * u_lightDirGlobal.colour +
+    specularColour * l.y * u_lightDirGlobal.colour;
 }

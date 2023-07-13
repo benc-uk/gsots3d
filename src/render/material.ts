@@ -8,38 +8,29 @@ import { RGB, UniformSet } from '../core/types.ts'
 import { MtlMaterial } from '../parsers/mtl-parser.ts'
 import { getGl } from '../core/gl.ts'
 
-const UNIFORM_PREFIX = 'u_mat'
-
 export class Material {
   /**
    * Diffuse colour will be multiplied with the diffuse texture
    * @default [1, 1, 1]
    */
-  public diffuse?: RGB
+  public diffuse: RGB
 
   /**
    * Specular colour will be multiplied with the specular texture
    * @default [0, 0, 0]
    */
-  public specular?: RGB
+  public specular: RGB
 
   /**
    * Shininess, for size of specular highlights
    * @default 0
    */
-  public shininess?: number
+  public shininess: number
 
   /**
    * Ambient colour will be multiplied with the ambient light level & colour
    */
-  public ambient?: RGB
-
-  /**
-   * Emissive colour will be used for glowing material. NOT IMPLEMENTED!
-   * @default undefined
-   * @notImplemented
-   */
-  public emissive?: RGB
+  public ambient: RGB
 
   /**
    * Diffuse texture map
@@ -61,7 +52,6 @@ export class Material {
     this.specular = [0, 0, 0]
     this.shininess = 0
     this.ambient = [1, 1, 1]
-    this.emissive = undefined
 
     const gl = getGl()
     if (!gl) return
@@ -86,11 +76,10 @@ export class Material {
   public static fromMtl(rawMtl: MtlMaterial) {
     const m = new Material()
 
-    m.diffuse = rawMtl.kd
-    m.specular = rawMtl.ks
-    m.shininess = rawMtl.ns
-    m.ambient = rawMtl.ka
-    m.emissive = rawMtl.ke
+    m.diffuse = rawMtl.kd ? rawMtl.kd : [1, 1, 1]
+    m.specular = rawMtl.ks ? rawMtl.ks : [0, 0, 0]
+    m.shininess = rawMtl.ns ? rawMtl.ns : 0
+    m.ambient = rawMtl.ka ? rawMtl.ka : [1, 1, 1]
 
     return m
   }
@@ -153,24 +142,27 @@ export class Material {
   }
 
   /**
-   * Applies the material to the given program as a set of uniforms
-   * Each uniform is prefixed with `u_mat`, e.g. `u_matDiffuse`
+   * Applies the material to the given program as a uniform struct
    */
-  public apply(programInfo: ProgramInfo) {
-    setUniforms(programInfo, this.uniforms)
+  apply(programInfo: ProgramInfo, uniformSuffix = '') {
+    const uni = {
+      [`u_mat${uniformSuffix}`]: this.uniforms,
+    }
+
+    setUniforms(programInfo, uni)
   }
 
   /**
-   * Return a map of uniforms for this material, with a prefix
+   * Return the base set of uniforms for this material
    */
   public get uniforms(): UniformSet {
     return {
-      [`${UNIFORM_PREFIX}DiffuseTex`]: this.diffuseTex ? this.diffuseTex : null,
-      [`${UNIFORM_PREFIX}SpecularTex`]: this.specularTex ? this.specularTex : null,
-      [`${UNIFORM_PREFIX}Shininess`]: this.shininess ? this.shininess : 0,
-      [`${UNIFORM_PREFIX}Diffuse`]: this.diffuse ? [...this.diffuse, 1] : [1, 1, 1, 1],
-      [`${UNIFORM_PREFIX}Specular`]: this.specular ? [...this.specular, 1] : [0, 0, 0, 1],
-      [`${UNIFORM_PREFIX}Ambient`]: this.ambient ? [...this.ambient, 1] : [1, 1, 1, 1],
+      ambient: this.ambient,
+      diffuse: this.diffuse,
+      specular: this.specular,
+      shininess: this.shininess,
+      diffuseTex: this.diffuseTex ? this.diffuseTex : null,
+      specularTex: this.specularTex ? this.specularTex : null,
     } as UniformSet
   }
 }

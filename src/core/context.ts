@@ -165,7 +165,8 @@ export class Context {
     const uniforms = {
       u_worldInverseTranspose: mat4.create(),
       u_worldViewProjection: mat4.create(),
-      u_ambientLight: [...this.ambientLight, 1],
+      u_lightAmbientGlobal: this.ambientLight,
+      u_camPos: this.camera.position,
     } as UniformSet
 
     const shaderProg = this.programs[this.shaderProgram]
@@ -191,7 +192,7 @@ export class Context {
     this.gl.useProgram(shaderProg.program)
 
     // Since we only have one light, just apply it here
-    this.globalLight.apply(shaderProg)
+    this.globalLight.apply(shaderProg, 'Global')
 
     // Draw all instances
     for (const instance of this.instances) {
