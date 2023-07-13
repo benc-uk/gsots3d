@@ -7,66 +7,66 @@
 
 precision highp float;
 
+struct LightDir {
+  vec3 direction;
+  vec3 colour;
+};
+
+struct Material {
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+  float shininess;
+  sampler2D diffuseTex;
+  sampler2D specularTex;
+};
+
 // Input attributes from buffers
 in vec4 position;
 in vec3 normal;
 in vec2 texcoord;
 
+// Some global uniforms
 uniform mat4 u_world;
-uniform mat4 u_camMatrix;
+uniform vec3 u_camPos;
+uniform vec3 u_lightAmbientGlobal;
 uniform mat4 u_worldViewProjection;
 uniform mat4 u_worldInverseTranspose;
 
-// Material properties
-uniform vec4 u_matAmbient;
-uniform vec4 u_matSpecular;
-uniform float u_matShininess;
+// Main light and material uniforms
+uniform LightDir u_lightDirGlobal;
+uniform Material u_mat;
 
-// Light properties
-uniform vec4 u_lightDirection;
-uniform vec4 u_lightColour;
-uniform vec4 u_ambientLight;
-
-flat out vec4 v_lightingDiffuse;
-flat out vec4 v_lightingSpecular;
+flat out vec3 v_lightingDiffuse;
+flat out vec3 v_lightingSpecular;
 out vec2 v_texCoord;
 
-// lightCalc function returns two floats (packed into a vec2)
-// One for diffuse component of lighting, the second for specular
-// - normalN:          Surface normal (normalized)
-// - surfaceToLightN:  Vector towards light (normalized)
-// - halfVector:       Half vector towards camera (normalized)
-// - shininess:        Hardness or size of specular highlights
-vec2 lightCalc(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess) {
-  float NdotL = dot(normalN, surfaceToLightN);
-  float NdotH = dot(normalN, halfVector);
+/*
+ * Legacy lighting calc
+ */
+vec2 lightCalc(vec3 N, vec3 L, vec3 H, float shininess) {
+  float diff = dot(N, L);
 
-  return vec2(
-    NdotL,
-    NdotL > 0.0
-      ? pow(max(0.0, NdotH), shininess)
-      : 0.0 // Specular term in y
-  );
+  return vec2(diff, diff > 0.0 ? pow(max(dot(N, H), 0.0), shininess) : 0.0);
 }
 
 void main() {
+  LightDir light = u_lightDirGlobal;
   vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;
-  vec4 worldPos = u_world * position;
+  vec3 worldPos = (u_world * position).xyz;
 
-  vec3 surfaceToLight = -u_lightDirection.xyz;
-  vec3 surfaceToView = (u_camMatrix[3] - u_world * worldPos).xyz;
-  vec3 normalN = normalize(worldNormal);
-  vec3 surfaceToLightN = normalize(surfaceToLight);
-  vec3 surfaceToViewN = normalize(surfaceToView);
-  vec3 halfVector = normalize(surfaceToLightN + surfaceToViewN);
+  vec3 V = normalize(u_camPos - worldPos);
+  vec3 N = normalize(worldNormal);
+  vec3 L = normalize(-light.direction.xyz);
+  vec3 H = normalize(L + V);
 
-  vec2 l = lightCalc(normalN, surfaceToLightN, halfVector, u_matShininess);
+  vec2 l = lightCalc(N, L, H, u_mat.shininess);
 
   // Output lighting value for fragment shader to use, no color
-  v_lightingDiffuse = u_ambientLight * u_matAmbient + u_lightColour * max(l.x, 0.0);
+  v_lightingDiffuse = u_lightAmbientGlobal * u_mat.ambient + light.colour * max(l.x, 0.0);
 
   // Pass specular in a seperate varying
-  v_lightingSpecular = u_lightColour * u_matSpecular * l.y;
+  v_lightingSpecular = light.colour * u_mat.specular * l.y;
 
   // Pass through varying texture coordinate, so we can get the colour there
   v_texCoord = texcoord;

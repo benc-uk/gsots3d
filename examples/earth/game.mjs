@@ -9,7 +9,7 @@ ctx.shaderProgram = ShaderProgram.PHONG
 
 ctx.camera.position = [0, 0, 20]
 ctx.globalLight.setAsPosition(8, 20, 18)
-ctx.ambientLight = [0.04, 0.04, 0.04]
+ctx.ambientLight = [0.1, 0.1, 0.1]
 
 const mat = Material.createBasicTexture('../textures/earth.jpg')
 mat.specular = [0.7, 0.7, 0.7]

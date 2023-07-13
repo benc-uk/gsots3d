@@ -2,6 +2,7 @@ import { Model, Context, setLogLevel, Material } from '../../dist-bundle/gsots3d
 
 const ctx = await Context.init('canvas')
 ctx.debug = true
+ctx.shaderProgram = 'flat'
 setLogLevel('debug')
 
 // Setup scene
@@ -28,8 +29,8 @@ setLogLevel('debug')
   block.rotateY(1.2)
 
   const floorMat = Material.createBasicTexture('../textures/stone-wall.png')
-  floorMat.specular = [1.0, 1.0, 1.0]
-  floorMat.shininess = 300
+  floorMat.specular = [0.4, 0.4, 0.4]
+  floorMat.shininess = 100
   const floor = ctx.createPlaneInstance(floorMat, 260, 260, 10, 10, 6)
   floor.position = [0, -8, 0]
 
@@ -40,8 +41,8 @@ setLogLevel('debug')
   sphereRed.position = [8, 7, -6]
 
   const matBlue = Material.createSolidColour(0.1, 0.1, 0.8)
-  matBlue.specular = [0.5, 0.5, 0.5]
-  matBlue.shininess = 20
+  matBlue.specular = [0.4, 0.4, 0.4]
+  matBlue.shininess = 6
   const sphereBlue = ctx.createSphereInstance(matBlue, 2, 16, 8)
   sphereBlue.position = [14, 7, -8]
 
@@ -69,9 +70,9 @@ ctx.camera.far = 500
 
 // Lights
 ctx.globalLight.setAsPosition(260, 150, 120)
-ctx.ambientLight = [0.09, 0.09, 0.09]
+ctx.ambientLight = [0.2, 0.2, 0.2]
 
-let angle = 3.6
+let angle = 1.1
 let radius = 40
 
 window.onkeydown = (e) => {

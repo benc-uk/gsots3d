@@ -5,7 +5,8 @@
   },
   "[glsl]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true
   },
   // Magical setting that makes all TS problems show up in the Problems tab
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,

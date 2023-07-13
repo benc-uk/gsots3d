@@ -3,9 +3,10 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-import log from 'loglevel'
+import { version } from '../../package.json'
 import { ProgramInfo, createProgramInfo, resizeCanvasToDisplaySize } from 'twgl.js'
 import { mat4 } from 'gl-matrix'
+import log from 'loglevel'
 
 import { getGl } from './gl.ts'
 import { UniformSet } from './types.ts'
@@ -14,26 +15,21 @@ import { LightDirectional } from '../render/lights.ts'
 import { Camera, CameraType } from '../render/camera.ts'
 import { Material } from '../render/material.ts'
 import { Instance } from '../models/instance.ts'
+import { HUD } from './hud.ts'
 import { PrimitiveCube, PrimitivePlane, PrimitiveSphere } from '../models/primitive.ts'
 
 // Import shaders, tsup will inline these as text strings
 import fragShaderPhong from '../../shaders/phong/glsl.frag'
 import vertShaderPhong from '../../shaders/phong/glsl.vert'
-import fragShaderGouraud from '../../shaders/gouraud/glsl.frag'
-import vertShaderGouraud from '../../shaders/gouraud/glsl.vert'
 import fragShaderFlat from '../../shaders/gouraud-flat/glsl.frag'
 import vertShaderFlat from '../../shaders/gouraud-flat/glsl.vert'
-
-import { version } from '../../package.json'
-import { HUD } from './hud.ts'
 
 /**
  * The set of supported shader programs that can be used
  */
 export enum ShaderProgram {
   PHONG = 'phong',
-  GOURAUD = 'gouraud',
-  GOURAUD_FLAT = 'gouraud-flat',
+  FLAT = 'flat',
 }
 
 /**
@@ -43,10 +39,9 @@ export enum ShaderProgram {
 export class Context {
   private gl: WebGL2RenderingContext
   private aspectRatio = 1
-  private programs: { [key: string]: ProgramInfo } = {}
+  private programs: Map<ShaderProgram, ProgramInfo> = new Map()
   private started = false
   private instances: Instance[] = []
-  // private lights: DirectionalLight[] = []
   public globalLight: LightDirectional
   private prevTime: number
   private totalTime: number
@@ -102,6 +97,12 @@ export class Context {
     this.debugDiv.style.padding = '15px'
     this.hud.addHUDItem(this.debugDiv)
 
+    // TODO: Left for reference related to flat shading
+    // const epv = gl.getExtension('WEBGL_provoking_vertex')
+    // if (epv) {
+    //   epv.provokingVertexWEBGL(epv.FIRST_VERTEX_CONVENTION_WEBGL)
+    // }
+
     log.info(`👑 GSOTS-3D context created, v${version}`)
   }
 
@@ -122,15 +123,13 @@ export class Context {
     ctx.aspectRatio = canvas.clientWidth / canvas.clientHeight
     canvas.style.backgroundColor = backgroundColour
 
+    // Load shaders and build map of programs
     try {
       const phongProg = createProgramInfo(gl, [vertShaderPhong, fragShaderPhong])
-      ctx.programs[ShaderProgram.PHONG] = phongProg
-
-      const gouraudProg = createProgramInfo(gl, [vertShaderGouraud, fragShaderGouraud])
-      ctx.programs[ShaderProgram.GOURAUD] = gouraudProg
+      ctx.programs.set(ShaderProgram.PHONG, phongProg)
 
       const flatProg = createProgramInfo(gl, [vertShaderFlat, fragShaderFlat])
-      ctx.programs[ShaderProgram.GOURAUD_FLAT] = flatProg
+      ctx.programs.set(ShaderProgram.FLAT, flatProg)
 
       log.info('🎨 Loaded all shaders & programs, GL is ready')
     } catch (err) {
@@ -169,8 +168,6 @@ export class Context {
       u_camPos: this.camera.position,
     } as UniformSet
 
-    const shaderProg = this.programs[this.shaderProgram]
-
     if (this.resizeable) {
       resizeCanvasToDisplaySize(<HTMLCanvasElement>this.gl.canvas)
       this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height)
@@ -189,6 +186,12 @@ export class Context {
     const viewProjection = mat4.multiply(mat4.create(), projection, viewMatrix)
 
     // this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT)
+
+    const shaderProg = this.programs.get(this.shaderProgram)
+    if (shaderProg === undefined) {
+      throw new Error(`💥Shader program ${this.shaderProgram} is not valid!`)
+    }
+
     this.gl.useProgram(shaderProg.program)
 
     // Since we only have one light, just apply it here
