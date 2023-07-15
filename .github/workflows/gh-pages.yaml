@@ -42,18 +42,8 @@ jobs:
           node-version: 18
           cache: 'npm'
 
-      - name: Build
-        run: |
-          mkdir -p site
-          cp -r examples/ docs/ dist-bundle/ ./site
-
-      - name: Convert Markdown to HTML
-        run: |
-          npm install -g showdown
-          curl https://raw.githubusercontent.com/sindresorhus/github-markdown-css/main/github-markdown-dark.css > site/github.css
-          echo '<html><head><link rel="shortcut icon" href="https://visualpharm.com/assets/959/3D%20Model-595b40b65ba036ed117d3abd.svg" type="image/svg"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css"><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script><style>body {background-color: #0d1117; min-width: 200px; max-width: 980px; margin: 0 auto; padding: 45px;}</style><link rel="stylesheet" href="./github.css"><title>GSOTS-3D</title></head><body><article class="markdown-body">' > site/index.html
-          showdown makehtml -i readme.md -o site/index.html --flavor github --append
-          echo "<script>hljs.highlightAll();</script></article></body></html>" >> site/index.html
+      - name: Build site
+        run: ./etc/build-site.sh
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2

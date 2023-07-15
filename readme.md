@@ -1,9 +1,11 @@
 # 🎨 GSOTS-3D
 
-A library for _Getting S\*\*t On The Screen in 3D_
+<img src="etc/site/icon.png" align="left" width="120px"/>
 
-A way to (hopefully) make it easy to get 3D stuff happening in your browser.  
-An opinionated set of abstractions and wrappers around WebGL & twgl.
+A library for _Getting S\*\*t On The Screen in 3D_  
+So you can get cool looking 3D stuff happening in your browser, if that's your thing.
+
+This library is an opinionated set of abstractions and wrappers around WebGL & twgl. GSOTS takes the pain out of the process of loading models, defining a camera, rendering a scene, lighting etc.
 
 Features
 
@@ -36,7 +38,7 @@ The hello world equivalent in GSOTS is putting a simple object on the screen, Th
       // Create rendering context
       const gsots = await Context.init('canvas')
 
-      // Create a red sphere of radius 5
+      // Create a red sphere of radius 5 at the origin
       gsots.createSphereInstance(Material.RED, 5.0)
 
       // Start and render into the canvas
