@@ -1,13 +1,14 @@
 # 🎨 GSOTS-3D
 
-A library for *Getting S&ast;&ast;t On The Screen in 3D*
+A library for _Getting S\*\*t On The Screen in 3D_
 
 A way to (hopefully) make it easy to get 3D stuff happening in your browser.  
 An opinionated set of abstractions and wrappers around WebGL & twgl.
 
 Features
+
 - Models: Meshes with loading & parsing of OBJ & MTL
-- Materials with texture mapping, specular maps 
+- Materials with texture mapping, specular maps
 - Lights: directional (global) and multiple point lights
 - Primitives: sphere, cube, plane
 - Rendering: Phong and flat-Gouraud shading modes
@@ -23,23 +24,23 @@ The hello world equivalent in GSOTS is putting a simple object on the screen, Th
 
 ```html
 <html>
-<body>
-  <!-- This canvas will be used for rendering -->
-  <canvas width="800" height="600"></canvas>
+  <body>
+    <!-- This canvas will be used for rendering -->
+    <canvas width="800" height="600"></canvas>
 
-  <script type="module">
-    import { Context, Material } from './gsots3d.js'
+    <script type="module">
+      import { Context, Material } from './gsots3d.js'
 
-    // Create rendering context
-    const gsots = await Context.init('canvas')
+      // Create rendering context
+      const gsots = await Context.init('canvas')
 
-    // Create a red sphere of radius 5
-    gsots.createSphereInstance(Material.RED, 5.0)
+      // Create a red sphere of radius 5
+      gsots.createSphereInstance(Material.RED, 5.0)
 
-    // Start and render into the canvas
-    gsots.start()
-  </script>
-</body>
+      // Start and render into the canvas
+      gsots.start()
+    </script>
+  </body>
 </html>
 ```
 
@@ -63,14 +64,13 @@ A standalone ESM bundle is delivered via jsDelivr & GitHub, this can be used dir
 import { Context } from 'https://cdn.jsdelivr.net/gh/benc-uk/gsots3d@main/dist-bundle/gsots3d.min.js'
 ```
 
-If you want to reference a specific released version you can do so by changing `benc-uk/gsots3d@main` for example `benc-uk/gsots3d@0.0.1` 
+If you want to reference a specific released version you can do so by changing `benc-uk/gsots3d@main` for example `benc-uk/gsots3d@0.0.1`
 
 ## 🕹️ Demos & Samples
 
 ### [Live demos of samples](https://code.benco.io/gsots3d/examples/)
 
 ### [Example Code](./examples/)
-
 
 ## 🖼️ Screenshots
 
