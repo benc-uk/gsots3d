@@ -8,7 +8,6 @@ setLogLevel('debug')
 {
   ctx.models.add(await Model.parse('../objects', 'table.obj'))
   ctx.models.add(await Model.parse('../objects', 'chest.obj'))
-  ctx.models.add(await Model.parse('../objects', 'block.obj'))
 
   const table = ctx.createModelInstance('table')
   table.position = [5, 2.5, -4]
