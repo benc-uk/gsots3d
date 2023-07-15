@@ -16,7 +16,9 @@ Features
 
 ## 📝 Documentation
 
-[Full API reference documents are here](https://code.benco.io/gsots3d/docs/)
+[Full API reference](https://code.benco.io/gsots3d/docs/)
+
+[GitHub Project](https://github.com/benc-uk/gsots3d)
 
 ## 💬 Hello World - Example
 
@@ -68,9 +70,9 @@ If you want to reference a specific released version you can do so by changing `
 
 ## 🕹️ Demos & Samples
 
-### [Live demos of samples](https://code.benco.io/gsots3d/examples/)
+### [Live demos](./examples/)
 
-### [Example Code](./examples/)
+### [Example code](https://github.com/benc-uk/gsots3d/tree/main/examples)
 
 ## 🖼️ Screenshots
 
