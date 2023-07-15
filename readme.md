@@ -78,4 +78,7 @@ If you want to reference a specific released version you can do so by changing `
 
 ## 🖼️ Screenshots
 
-![screenshot of example scene](https://user-images.githubusercontent.com/14982936/252045019-ae3555c8-4ac1-4b1a-9ff8-b8fb7efa30ff.png)
+![screenshot of example scene](https://user-images.githubusercontent.com/14982936/253750428-60a25ac3-e4e4-4eeb-b863-08d31248ab00.png)
+
+![screenshot of example scene](https://user-images.githubusercontent.com/14982936/253750405-8c9aba84-fa42-4c52-9813-6d5255c3254b.png)
+

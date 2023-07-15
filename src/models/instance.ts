@@ -6,6 +6,7 @@
 import { mat4 } from 'gl-matrix'
 import { ProgramInfo } from 'twgl.js'
 import { Renderable, UniformSet } from '../core/types.ts'
+import { Material } from '../render/material.ts'
 
 /**
  * An instance of thing in the world to be rendered, with position, rotation, scale etc
@@ -15,7 +16,12 @@ export class Instance {
   public position: [number, number, number] | undefined
   public scale: [number, number, number] | undefined
   public rotate: [number, number, number] | undefined
-  //public transparent = false
+
+  /**
+   * Material to use for this instance, this will override ALL the materials on the model.
+   * Really only useful for simple models without a MTL file
+   */
+  public material?: Material
 
   /**
    * @param {Model} model - Model to use for this instance
@@ -86,6 +92,6 @@ export class Instance {
     mat4.multiply(<mat4>uniforms.u_worldViewProjection, viewProjection, world)
 
     // Render the renderable thing wrapped by this instance
-    this.renderable.render(gl, uniforms, programInfo)
+    this.renderable.render(gl, uniforms, programInfo, this.material)
   }
 }

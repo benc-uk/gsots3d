@@ -5704,7 +5704,6 @@ var Camera = class {
 
 // src/models/instance.ts
 var Instance = class {
-  //public transparent = false
   /**
    * @param {Model} model - Model to use for this instance
    */
@@ -5763,7 +5762,7 @@ var Instance = class {
     mat4_exports.invert(uniforms.u_worldInverseTranspose, world);
     mat4_exports.transpose(uniforms.u_worldInverseTranspose, uniforms.u_worldInverseTranspose);
     mat4_exports.multiply(uniforms.u_worldViewProjection, viewProjection, world);
-    this.renderable.render(gl, uniforms, programInfo);
+    this.renderable.render(gl, uniforms, programInfo, this.material);
   }
 };
 
@@ -5792,15 +5791,126 @@ var HUD = class {
   }
 };
 
+// src/render/material.ts
+var Material = class _Material {
+  /**
+   * Create a new material with default diffuse colour
+   */
+  constructor() {
+    this.diffuse = [1, 1, 1];
+    this.specular = [0, 0, 0];
+    this.shininess = 0;
+    this.ambient = [1, 1, 1];
+    const gl = getGl();
+    if (!gl)
+      return;
+    this.diffuseTex = createTexture(gl, {
+      min: gl.NEAREST,
+      mag: gl.NEAREST,
+      src: [255, 255, 255, 255]
+    });
+    this.specularTex = createTexture(gl, {
+      min: gl.NEAREST,
+      mag: gl.NEAREST,
+      src: [255, 255, 255, 255]
+    });
+  }
+  /**
+   * Create a new material from a raw MTL material
+   */
+  static fromMtl(rawMtl) {
+    const m = new _Material();
+    m.diffuse = rawMtl.kd ? rawMtl.kd : [1, 1, 1];
+    m.specular = rawMtl.ks ? rawMtl.ks : [0, 0, 0];
+    m.shininess = rawMtl.ns ? rawMtl.ns : 0;
+    m.ambient = rawMtl.ka ? rawMtl.ka : [1, 1, 1];
+    return m;
+  }
+  /**
+   * Create a basic Material with a solid diffuse colour
+   */
+  static createSolidColour(r, g, b) {
+    const m = new _Material();
+    m.diffuse = [r, g, b];
+    return m;
+  }
+  /**
+   * Create a new Material with a texture map loaded from a URL
+   */
+  static createBasicTexture(url, filter = true) {
+    const m = new _Material();
+    const gl = getGl();
+    if (!gl)
+      return m;
+    gl.LINEAR_MIPMAP_LINEAR;
+    m.diffuseTex = createTexture(gl, {
+      min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
+      mag: filter ? gl.LINEAR : gl.NEAREST,
+      src: url
+    });
+    return m;
+  }
+  addSpecularTexture(url, filter = true) {
+    const gl = getGl();
+    if (!gl)
+      return;
+    this.specularTex = createTexture(gl, {
+      min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
+      mag: filter ? gl.LINEAR : gl.NEAREST,
+      src: url
+    });
+  }
+  /** Create a simple RED Material */
+  static get RED() {
+    const m = _Material.createSolidColour(1, 0, 0);
+    return m;
+  }
+  /** Create a simple GREEN Material */
+  static get GREEN() {
+    return _Material.createSolidColour(0, 1, 0);
+  }
+  /** Create a simple BLUE Material */
+  static get BLUE() {
+    const m = _Material.createSolidColour(0, 0, 1);
+    return m;
+  }
+  /**
+   * Applies the material to the given program as a uniform struct
+   */
+  apply(programInfo, uniformSuffix = "") {
+    const uni = {
+      [`u_mat${uniformSuffix}`]: this.uniforms
+    };
+    setUniforms(programInfo, uni);
+  }
+  /**
+   * Return the base set of uniforms for this material
+   */
+  get uniforms() {
+    return {
+      ambient: this.ambient,
+      diffuse: this.diffuse,
+      specular: this.specular,
+      shininess: this.shininess,
+      diffuseTex: this.diffuseTex ? this.diffuseTex : null,
+      specularTex: this.specularTex ? this.specularTex : null
+    };
+  }
+};
+
 // src/models/primitive.ts
 var Primitive = class {
   constructor() {
     this.material = new Material();
   }
-  render(gl, uniforms, programInfo) {
+  render(gl, uniforms, programInfo, materialOverride) {
     if (!this.bufferInfo)
       return;
-    this.material.apply(programInfo);
+    if (materialOverride === void 0) {
+      this.material.apply(programInfo);
+    } else {
+      materialOverride.apply(programInfo);
+    }
     setBuffersAndAttributes(gl, programInfo, this.bufferInfo);
     setUniforms(programInfo, uniforms);
     drawBufferInfo(gl, this.bufferInfo);
@@ -6032,113 +6142,6 @@ var Context = class _Context {
   }
 };
 
-// src/render/material.ts
-var Material = class _Material {
-  /**
-   * Create a new material with default diffuse colour
-   */
-  constructor() {
-    this.diffuse = [1, 1, 1];
-    this.specular = [0, 0, 0];
-    this.shininess = 0;
-    this.ambient = [1, 1, 1];
-    const gl = getGl();
-    if (!gl)
-      return;
-    this.diffuseTex = createTexture(gl, {
-      min: gl.NEAREST,
-      mag: gl.NEAREST,
-      src: [255, 255, 255, 255]
-    });
-    this.specularTex = createTexture(gl, {
-      min: gl.NEAREST,
-      mag: gl.NEAREST,
-      src: [255, 255, 255, 255]
-    });
-  }
-  /**
-   * Create a new material from a raw MTL material
-   */
-  static fromMtl(rawMtl) {
-    const m = new _Material();
-    m.diffuse = rawMtl.kd ? rawMtl.kd : [1, 1, 1];
-    m.specular = rawMtl.ks ? rawMtl.ks : [0, 0, 0];
-    m.shininess = rawMtl.ns ? rawMtl.ns : 0;
-    m.ambient = rawMtl.ka ? rawMtl.ka : [1, 1, 1];
-    return m;
-  }
-  /**
-   * Create a basic Material with a solid diffuse colour
-   */
-  static createSolidColour(r, g, b) {
-    const m = new _Material();
-    m.diffuse = [r, g, b];
-    return m;
-  }
-  /**
-   * Create a new Material with a texture map loaded from a URL
-   */
-  static createBasicTexture(url, filter = true) {
-    const m = new _Material();
-    const gl = getGl();
-    if (!gl)
-      return m;
-    gl.LINEAR_MIPMAP_LINEAR;
-    m.diffuseTex = createTexture(gl, {
-      min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
-      mag: filter ? gl.LINEAR : gl.NEAREST,
-      src: url
-    });
-    return m;
-  }
-  addSpecularTexture(url, filter = true) {
-    const gl = getGl();
-    if (!gl)
-      return;
-    this.specularTex = createTexture(gl, {
-      min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
-      mag: filter ? gl.LINEAR : gl.NEAREST,
-      src: url
-    });
-  }
-  /** Create a simple RED Material */
-  static get RED() {
-    const m = _Material.createSolidColour(1, 0, 0);
-    return m;
-  }
-  /** Create a simple GREEN Material */
-  static get GREEN() {
-    return _Material.createSolidColour(0, 1, 0);
-  }
-  /** Create a simple BLUE Material */
-  static get BLUE() {
-    const m = _Material.createSolidColour(0, 0, 1);
-    return m;
-  }
-  /**
-   * Applies the material to the given program as a uniform struct
-   */
-  apply(programInfo, uniformSuffix = "") {
-    const uni = {
-      [`u_mat${uniformSuffix}`]: this.uniforms
-    };
-    setUniforms(programInfo, uni);
-  }
-  /**
-   * Return the base set of uniforms for this material
-   */
-  get uniforms() {
-    return {
-      ambient: this.ambient,
-      diffuse: this.diffuse,
-      specular: this.specular,
-      shininess: this.shininess,
-      diffuseTex: this.diffuseTex ? this.diffuseTex : null,
-      specularTex: this.specularTex ? this.specularTex : null
-    };
-  }
-};
-
 // src/models/model.ts
 var import_loglevel5 = __toESM(require_loglevel(), 1);
 
@@ -6335,11 +6338,15 @@ var Model = class _Model {
     this.materials = {};
     this.name = name;
   }
-  render(gl, uniforms, programInfo) {
+  render(gl, uniforms, programInfo, materialOverride) {
     for (const part of this.parts) {
       const bufferInfo = part.bufferInfo;
-      const material = this.materials[part.materialName];
-      material.apply(programInfo);
+      if (materialOverride === void 0) {
+        const material = this.materials[part.materialName];
+        material.apply(programInfo);
+      } else {
+        materialOverride.apply(programInfo);
+      }
       setBuffersAndAttributes(gl, programInfo, bufferInfo);
       setUniforms(programInfo, uniforms);
       drawBufferInfo(gl, bufferInfo);
@@ -6428,7 +6435,7 @@ export {
 /*! Bundled license information:
 
 twgl.js/dist/5.x/twgl-full.module.js:
-  (* @license twgl.js 5.4.0 Copyright (c) 2015, Gregg Tavares All Rights Reserved.
+  (* @license twgl.js 5.4.1 Copyright (c) 2015, Gregg Tavares All Rights Reserved.
   Available via the MIT license.
   see: http://github.com/greggman/twgl.js for details *)
 */

@@ -37,12 +37,21 @@ export class Model implements Renderable {
     this.name = name
   }
 
-  render(gl: WebGL2RenderingContext, uniforms: UniformSet, programInfo: ProgramInfo): void {
+  render(
+    gl: WebGL2RenderingContext,
+    uniforms: UniformSet,
+    programInfo: ProgramInfo,
+    materialOverride?: Material
+  ): void {
     for (const part of this.parts) {
       const bufferInfo = part.bufferInfo
 
-      const material = this.materials[part.materialName]
-      material.apply(programInfo)
+      if (materialOverride === undefined) {
+        const material = this.materials[part.materialName]
+        material.apply(programInfo)
+      } else {
+        materialOverride.apply(programInfo)
+      }
 
       setBuffersAndAttributes(gl, programInfo, bufferInfo)
       setUniforms(programInfo, uniforms)

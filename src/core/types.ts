@@ -5,6 +5,7 @@
 
 import { mat4 } from 'gl-matrix'
 import { ProgramInfo } from 'twgl.js'
+import { Material } from '../render/material.ts'
 
 /** A map of uniforms that can be used when WebGL rendering, typically applied with twlg.setUniforms() */
 export type UniformSet = { [key: string]: number | number[] | mat4 | WebGLTexture | null }
@@ -25,5 +26,5 @@ export interface Renderable {
   /**
    * Called to render this render-able thing
    */
-  render(gl: WebGL2RenderingContext, uniforms: UniformSet, programInfo: ProgramInfo): void
+  render(gl: WebGL2RenderingContext, uniforms: UniformSet, programInfo: ProgramInfo, material?: Material): void
 }

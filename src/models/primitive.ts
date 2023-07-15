@@ -14,7 +14,7 @@ import {
   createBufferInfoFromArrays,
 } from 'twgl.js'
 import { Renderable, UniformSet } from '../core/types.ts'
-import { Material } from '../index.ts'
+import { Material } from '../render/material.ts'
 
 /**
  * A simple primitive 3D object, like a sphere or cube
@@ -28,10 +28,19 @@ export abstract class Primitive implements Renderable {
     this.material = new Material()
   }
 
-  render(gl: WebGL2RenderingContext, uniforms: UniformSet, programInfo: ProgramInfo): void {
+  render(
+    gl: WebGL2RenderingContext,
+    uniforms: UniformSet,
+    programInfo: ProgramInfo,
+    materialOverride?: Material
+  ): void {
     if (!this.bufferInfo) return
 
-    this.material.apply(programInfo)
+    if (materialOverride === undefined) {
+      this.material.apply(programInfo)
+    } else {
+      materialOverride.apply(programInfo)
+    }
 
     setBuffersAndAttributes(gl, programInfo, this.bufferInfo)
     setUniforms(programInfo, uniforms)
