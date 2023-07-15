@@ -43,7 +43,9 @@ jobs:
           cache: 'npm'
 
       - name: Build site
-        run: ./etc/build-site.sh
+        run: |
+          npm i -g showdown
+          ./etc/build-site.sh
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
