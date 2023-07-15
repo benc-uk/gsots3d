@@ -49,8 +49,8 @@ jobs:
 
       - name: Convert Markdown to HTML
         run: |
-          npm install -g markdown-to-html
-          markdown-to-html --source readme.md --output site/index.html
+          npm install markdown-to-html
+          ./node_modules/.bin/markdown-to-html --source readme.md --output site/index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
