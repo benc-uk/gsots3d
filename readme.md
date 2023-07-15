@@ -1,6 +1,6 @@
 # 🎨 GSOTS-3D
 
-<img src="etc/site/icon.png" align="left" width="120px"/>
+<img src="https://code.benco.io/gsots3d/icon.png" align="left" width="120px"/>
 
 A library for _Getting S\*\*t On The Screen in 3D_  
 So you can get cool looking 3D stuff happening in your browser, if that's your thing.
@@ -18,7 +18,7 @@ Features
 
 ## 📝 Documentation
 
-[Full API reference](./docs/)
+[Full API reference](https://code.benco.io/gsots3d/docs/)
 
 [GitHub Project](https://github.com/benc-uk/gsots3d)
 
