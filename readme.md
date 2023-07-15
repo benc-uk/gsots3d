@@ -2,15 +2,16 @@
 
 A library for *Getting S&ast;&ast;t On The Screen in 3D*
 
-An opinionated set of abstractions and wrappers around twgl and WebGL APIs to make it easy to get 3D stuff happening in your browser.
+A way to (hopefully) make it easy to get 3D stuff happening in your browser.  
+An opinionated set of abstractions and wrappers around WebGL & twgl.
 
 Features
-- Model meshes, with loading & parsing of OBJ with MTL
-- Primitives; sphere, cube, plane
-- Phong and Gouraud shaders
-- Texture mapping
-- Camera modes
-- Multiple lights (one actually)
+- Models: Meshes with loading & parsing of OBJ & MTL
+- Materials with texture mapping, specular maps 
+- Lights: directional (global) and multiple point lights
+- Primitives: sphere, cube, plane
+- Rendering: Phong and flat-Gouraud shading modes
+- Camera: Perspective and orthographic
 
 ## 📝 Documentation
 
@@ -35,7 +36,7 @@ The hello world equivalent in GSOTS is putting a simple object on the screen, Th
     // Create a red sphere of radius 5
     gsots.createSphereInstance(Material.RED, 5.0)
 
-    // Start!
+    // Start and render into the canvas
     gsots.start()
   </script>
 </body>

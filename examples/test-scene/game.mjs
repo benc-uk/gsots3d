@@ -1,8 +1,7 @@
-import { Model, Context, setLogLevel, Material } from '../../dist-bundle/gsots3d.js'
+import { Model, Context, setLogLevel, Material, LightPoint, BLACK } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init('canvas')
 ctx.debug = true
-ctx.shaderProgram = 'flat'
 setLogLevel('debug')
 
 // Setup scene
@@ -29,12 +28,12 @@ setLogLevel('debug')
   block.rotateY(1.2)
 
   const floorMat = Material.createBasicTexture('../textures/stone-wall.png')
-  floorMat.specular = [0.4, 0.4, 0.4]
+  floorMat.specular = BLACK
   floorMat.shininess = 100
   const floor = ctx.createPlaneInstance(floorMat, 260, 260, 10, 10, 6)
   floor.position = [0, -8, 0]
 
-  const matRed = Material.createSolidColour(0.8, 0.1, 0.1)
+  const matRed = Material.createSolidColour(1.0, 1.0, 1.0)
   matRed.specular = [1.0, 1.0, 1.0]
   matRed.shininess = 100
   const sphereRed = ctx.createSphereInstance(matRed, 2, 16, 8)
@@ -63,17 +62,30 @@ setLogLevel('debug')
 }
 
 // Camera
-let camHeight = 30
+let camHeight = 40
 ctx.camera.position = [0, camHeight, 30]
 ctx.camera.lookAt = [0, 0, 0]
 ctx.camera.far = 500
 
 // Lights
 ctx.globalLight.setAsPosition(260, 150, 120)
-ctx.ambientLight = [0.2, 0.2, 0.2]
+ctx.globalLight.colour = [0.9, 0.9, 0.9]
+ctx.globalLight.ambient = [0.01, 0.01, 0.01]
+
+const light1 = new LightPoint()
+light1.position = [-30, 19, -60]
+light1.colour = [0.0, 0.99, 0.0]
+light1.ambient = [0.0, 0.0, 0.0]
+ctx.lights.push(light1)
+
+const light2 = new LightPoint()
+light2.position = [10, 30, 60]
+light2.colour = [1.0, 0.0, 0.4]
+light2.ambient = [0.0, 0.0, 0.0]
+ctx.lights.push(light2)
 
 let angle = 1.1
-let radius = 40
+let radius = 50
 
 window.onkeydown = (e) => {
   // rotate camera

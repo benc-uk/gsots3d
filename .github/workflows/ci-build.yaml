@@ -40,7 +40,7 @@ jobs:
     needs: lint-check
 
     # only run on main branch
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'DISABLE THIS JOB FOR NOW'
 
     steps:
       - uses: actions/checkout@v3

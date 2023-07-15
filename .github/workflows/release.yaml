@@ -37,7 +37,7 @@ jobs:
           body: 'Automated release of ${{ github.ref_name }} built by ${{ github.actor }}.'
           artifacts: 'dist-bundle/*'
 
-      - name: Publish full release to Github Packages
+      - name: Publish release to Github Packages
         run: |
           npm publish
         env:

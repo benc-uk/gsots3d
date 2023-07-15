@@ -11,7 +11,7 @@ import log from 'loglevel'
 import { getGl } from './gl.ts'
 import { UniformSet } from './types.ts'
 import { ModelCache } from '../models/cache.ts'
-import { LightDirectional } from '../render/lights.ts'
+import { LightDirectional, LightPoint } from '../render/lights.ts'
 import { Camera, CameraType } from '../render/camera.ts'
 import { Material } from '../render/material.ts'
 import { Instance } from '../models/instance.ts'
@@ -42,10 +42,10 @@ export class Context {
   private programs: Map<ShaderProgram, ProgramInfo> = new Map()
   private started = false
   private instances: Instance[] = []
-  public globalLight: LightDirectional
   private prevTime: number
   private totalTime: number
   private debugDiv: HTMLDivElement
+  public lights: LightPoint[] = []
 
   /** Main camera for this context */
   public readonly camera: Camera
@@ -70,6 +70,9 @@ export class Context {
 
   /** A HUD you can use to render HTML elements over the canvas */
   public readonly hud: HUD
+
+  /** Global directional light */
+  public globalLight: LightDirectional
 
   /**
    * Constructor is private, use init() to create a new context
@@ -196,6 +199,17 @@ export class Context {
 
     // Since we only have one light, just apply it here
     this.globalLight.apply(shaderProg, 'Global')
+
+    // Add the rest of u_lights is the closest lights up to MAX_LIGHTS
+    let lightCount = 0
+    for (const light of this.lights) {
+      if (lightCount > 16) break
+      uniforms[`u_lightsPos[${lightCount++}]`] = light.uniforms
+    }
+
+    uniforms.u_lightsPosCount = lightCount
+
+    // log.debug(uniforms)
 
     // Draw all instances
     for (const instance of this.instances) {

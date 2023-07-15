@@ -16,3 +16,5 @@ export * from './models/model.ts'
 export * from './models/cache.ts'
 export * from './models/instance.ts'
 export * from './models/primitive.ts'
+
+export * from './utils/tuples.ts'

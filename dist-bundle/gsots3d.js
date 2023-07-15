@@ -266,7 +266,7 @@ function setLogLevel(level) {
 }
 
 // package.json
-var version = "0.0.1-d3d319e.0";
+var version = "0.0.1-alpha.2";
 
 // node_modules/twgl.js/dist/5.x/twgl-full.module.js
 var VecType = Float32Array;
@@ -5559,23 +5559,40 @@ var ModelCache = class {
   }
 };
 
-// src/utils/vecmat.ts
+// src/utils/tuples.ts
 function normalize3Tuple(tuple) {
   const [x, y, z] = tuple;
   const len = Math.sqrt(x * x + y * y + z * z);
   return tuple.map((v) => v / len);
 }
+function scaleTuple(tuple, scale2) {
+  return tuple.map((v) => v * scale2);
+}
+function scaleTupleClamped(colour, scale2) {
+  scaleTuple(colour, scale2);
+  return colour.map((v) => Math.min(Math.max(v, 0), 1));
+}
+var ZERO = [0, 0, 0];
+var BLACK = [0, 0, 0];
+var WHITE = [1, 1, 1];
 
 // src/render/lights.ts
 var LightDirectional = class {
   /** Create a default directional light, pointing downward */
   constructor() {
     this._direction = [0, -1, 0];
-    this.colour = [1, 1, 1];
+    this.colour = WHITE;
+    this.ambient = BLACK;
   }
+  /**
+   * Set the direction of the light ensuring it is normalized
+   */
   set direction(d) {
     this._direction = normalize3Tuple(d);
   }
+  /**
+   * Get the direction of the light
+   */
   get direction() {
     return this._direction;
   }
@@ -5600,7 +5617,40 @@ var LightDirectional = class {
   get uniforms() {
     return {
       direction: this.direction,
-      colour: this.colour
+      colour: this.colour,
+      ambient: this.ambient
+    };
+  }
+};
+var LightPoint = class {
+  constructor() {
+    this.position = [0, 100, 0];
+    this.colour = WHITE;
+    this.ambient = BLACK;
+    this.constant = 1;
+    this.linear = 5e-4;
+    this.quad = 2e-5;
+  }
+  /**
+   * Applies the light to the given program as uniform struct
+   */
+  apply(programInfo, uniformSuffix = "") {
+    const uni = {
+      [`u_lightPos${uniformSuffix}`]: this.uniforms
+    };
+    setUniforms(programInfo, uni);
+  }
+  /**
+   * Return the base set of uniforms for this light
+   */
+  get uniforms() {
+    return {
+      quad: this.quad,
+      position: this.position,
+      colour: this.colour,
+      ambient: this.ambient,
+      constant: this.constant,
+      linear: this.linear
     };
   }
 };
@@ -5780,7 +5830,7 @@ var PrimitivePlane = class extends Primitive {
 };
 
 // shaders/phong/glsl.frag
-var glsl_default = "#version 300 es\n\n// ============================================================================\n// Phong fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  float shininess;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// From vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\n\n// Some global uniforms\nuniform mat4 u_world;\nuniform vec3 u_camPos;\nuniform vec3 u_lightAmbientGlobal;\n\n// Main light and material uniforms\nuniform LightDir u_lightDirGlobal;\nuniform Material u_mat;\n\n// Output colour of this pixel/fragment\nout vec3 outColour;\n\n/*\n * Shade a fragment using a directional light source\n */\nvec3 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(-light.direction);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, v_texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, v_texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  vec3 ambient = u_lightAmbientGlobal * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;\n  vec3 specular = light.colour * spec * specularCol;\n\n  return ambient + diffuse + specular;\n}\n\nvoid main() {\n  vec3 V = normalize(u_camPos - v_position.xyz);\n\n  outColour = shadeDirLight(u_lightDirGlobal, u_mat, normalize(v_normal), V);\n}\n";
+var glsl_default = "#version 300 es\n\n// ============================================================================\n// Phong fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision mediump float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n};\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  float shininess;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// From vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\n\n// Some global uniforms\nuniform mat4 u_world;\nuniform vec3 u_camPos;\nuniform vec3 u_lightAmbientGlobal;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n\n// Output colour of this pixel/fragment\nout vec3 outColour;\n\n/*\n * Shade a fragment using a directional light source\n */\nvec3 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(-light.direction);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, v_texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, v_texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;\n  vec3 specular = light.colour * spec * specularCol;\n\n  return ambient + diffuse + specular;\n}\n\n/*\n * Shade a fragment using a positional light source\n */\nvec3 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(light.position - v_position.xyz);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, v_texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, v_texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // attenuation\n  float dist = length(light.position - v_position.xyz);\n  float attenuation = 1.0 / (light.constant + light.linear * dist + light.quad * (dist * dist));\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;\n  vec3 specular = light.colour * spec * specularCol;\n\n  ambient *= attenuation;\n  diffuse *= attenuation;\n  specular *= attenuation;\n\n  return ambient + diffuse + specular;\n}\n\nvoid main() {\n  vec3 V = normalize(u_camPos - v_position.xyz);\n\n  vec3 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, normalize(v_normal), V);\n\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    outColorPart += shadePosLight(u_lightsPos[i], u_mat, normalize(v_normal), V);\n  }\n\n  outColour = outColorPart;\n}\n";
 
 // shaders/phong/glsl.vert
 var glsl_default2 = "#version 300 es\n\n// ============================================================================\n// Phong vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_normal;\nout vec4 v_position;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  v_position = u_world * position;\n  gl_Position = u_worldViewProjection * position;\n}\n";
@@ -5806,6 +5856,7 @@ var Context = class _Context {
     this.programs = /* @__PURE__ */ new Map();
     this.started = false;
     this.instances = [];
+    this.lights = [];
     /** If the canvas can be resized, set this to true, otherwise it's an optimization to set to false */
     this.resizeable = true;
     /** Show extra debug details on the canvas */
@@ -5892,6 +5943,13 @@ var Context = class _Context {
     }
     this.gl.useProgram(shaderProg.program);
     this.globalLight.apply(shaderProg, "Global");
+    let lightCount = 0;
+    for (const light of this.lights) {
+      if (lightCount > 16)
+        break;
+      uniforms[`u_lightsPos[${lightCount++}]`] = light.uniforms;
+    }
+    uniforms.u_lightsPosCount = lightCount;
     for (const instance of this.instances) {
       instance.render(this.gl, uniforms, viewProjection, shaderProg);
     }
@@ -6344,12 +6402,14 @@ var ModelPart = class {
   }
 };
 export {
+  BLACK,
   Camera,
   CameraType,
   Context,
   HUD,
   Instance,
   LightDirectional,
+  LightPoint,
   Material,
   Model,
   ModelCache,
@@ -6358,6 +6418,11 @@ export {
   PrimitivePlane,
   PrimitiveSphere,
   ShaderProgram,
+  WHITE,
+  ZERO,
+  normalize3Tuple,
+  scaleTuple,
+  scaleTupleClamped,
   setLogLevel
 };
 /*! Bundled license information:

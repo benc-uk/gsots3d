@@ -41,7 +41,7 @@ fi
 
 # We do things this way so dist-bundle is in the repo, BEFORE we create a new tag
 
-TAG=$(npm version "$VERSION_TYPE" --no-git-tag-version)
+TAG=$(npm version $VERSION_TYPE --no-git-tag-version)
 
 echo "### 🎈 Releasing new version ${TAG}"
 echo "### 🔨 Building browser ESM bundle"
