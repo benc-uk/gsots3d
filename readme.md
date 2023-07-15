@@ -18,7 +18,7 @@ Features
 
 ## 📝 Documentation
 
-[Full API reference](https://code.benco.io/gsots3d/docs/)
+[Full API reference](./docs/)
 
 [GitHub Project](https://github.com/benc-uk/gsots3d)
 
