@@ -33,10 +33,10 @@ li a {
   transform: translate(-50%, -50%);
   background-color: rgba(0, 0, 0, 0.8);
   border-radius: 5px;
-  padding: 10px;
-  width: 60%;
-  height: 220px;
+  padding: 1rem 2rem;
+  width: 50%;
+  /* height: 200px; */
   box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   cursor: unset;
 }

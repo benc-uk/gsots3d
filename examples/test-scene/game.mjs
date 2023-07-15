@@ -88,6 +88,7 @@ let angle = 1.1
 let radius = 50
 
 window.onkeydown = (e) => {
+  autoRotate = false
   // rotate camera
   if (e.key === 'ArrowLeft') {
     angle += 0.03
@@ -130,8 +131,14 @@ window.onkeydown = (e) => {
   }
 }
 
+let autoRotate = true
+
 // Update loop
-ctx.update = () => {
+ctx.update = (delta) => {
+  if (autoRotate) {
+    angle += delta * 0.4
+  }
+
   const x = Math.cos(angle) * radius
   const z = Math.sin(angle) * radius
   ctx.camera.position = [x, camHeight, z]
