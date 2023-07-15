@@ -16,7 +16,7 @@ import { Camera, CameraType } from '../render/camera.ts'
 import { Material } from '../render/material.ts'
 import { Instance } from '../models/instance.ts'
 import { HUD } from './hud.ts'
-import { PrimitiveCube, PrimitivePlane, PrimitiveSphere } from '../models/primitive.ts'
+import { PrimitiveCube, PrimitivePlane, PrimitiveSphere, PrimitiveCylinder } from '../models/primitive.ts'
 
 // Import shaders, tsup will inline these as text strings
 import fragShaderPhong from '../../shaders/phong/glsl.frag'
@@ -308,6 +308,21 @@ export class Context {
     this.instances.push(instance)
 
     log.debug(`📦 Created cube instance, size:${size}`)
+
+    return instance
+  }
+
+  /**
+   * Create an instance of a primitive cylinder
+   */
+  createCylinderInstance(material: Material, r = 2, h = 5, subdivisionsR = 16, subdivisionsH = 1, caps = true) {
+    const cube = new PrimitiveCylinder(this.gl, r, h, subdivisionsR, subdivisionsH, caps)
+    cube.material = material
+
+    const instance = new Instance(cube)
+    this.instances.push(instance)
+
+    log.debug(`🛢️ Created cylinder instance, r:${r}`)
 
     return instance
   }

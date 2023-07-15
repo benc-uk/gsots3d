@@ -22,11 +22,6 @@ setLogLevel('debug')
   chest2.position = [13, 0, 11]
   chest2.rotateY(Math.PI / 1.5)
 
-  const block = ctx.createModelInstance('block')
-  block.position = [-12, -6, 28]
-  block.scale = [0.5, 0.5, 0.5]
-  block.rotateY(1.2)
-
   const floorMat = Material.createBasicTexture('../textures/stone-wall.png')
   floorMat.specular = BLACK
   floorMat.shininess = 100
@@ -59,6 +54,12 @@ setLogLevel('debug')
   const cube = ctx.createCubeInstance(crateMat, 15)
   cube.rotateY(Math.PI / 4)
   cube.position = [-13, 0, -18]
+
+  const woodMat = Material.createBasicTexture('../textures/wood-plank.jpg')
+  const cyl = ctx.createCylinderInstance(woodMat, 5, 10, 16, 1)
+  woodMat.shininess = 40
+  woodMat.specular = [1.0, 1.0, 1.0]
+  cyl.position = [-9, -3, 16]
 }
 
 // Camera

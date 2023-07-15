@@ -85,3 +85,18 @@ export class PrimitivePlane extends Primitive {
     this.bufferInfo = createBufferInfoFromArrays(gl, planeVerts)
   }
 }
+
+export class PrimitiveCylinder extends Primitive {
+  constructor(
+    gl: WebGL2RenderingContext,
+    radius: number,
+    height: number,
+    subdivisionsR: number,
+    subdivisionsV: number,
+    caps: boolean
+  ) {
+    super()
+
+    this.bufferInfo = primitives.createCylinderBufferInfo(gl, radius, height, subdivisionsR, subdivisionsV, caps, caps)
+  }
+}

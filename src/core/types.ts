@@ -26,5 +26,5 @@ export interface Renderable {
   /**
    * Called to render this render-able thing
    */
-  render(gl: WebGL2RenderingContext, uniforms: UniformSet, programInfo: ProgramInfo, material?: Material): void
+  render(gl: WebGL2RenderingContext, uniforms: UniformSet, programInfo: ProgramInfo, materialOverride?: Material): void
 }

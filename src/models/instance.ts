@@ -18,8 +18,8 @@ export class Instance {
   public rotate: [number, number, number] | undefined
 
   /**
-   * Material to use for this instance, this will override ALL the materials on the model.
-   * Really only useful for simple models without a MTL file
+   * Material to use for this instance, this will override ALL the materials on the model!
+   * Really only useful for simple untextured models without a MTL file
    */
   public material?: Material
 

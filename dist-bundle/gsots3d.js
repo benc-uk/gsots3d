@@ -5938,6 +5938,12 @@ var PrimitivePlane = class extends Primitive {
     this.bufferInfo = createBufferInfoFromArrays(gl, planeVerts);
   }
 };
+var PrimitiveCylinder = class extends Primitive {
+  constructor(gl, radius, height, subdivisionsR, subdivisionsV, caps) {
+    super();
+    this.bufferInfo = primitives.createCylinderBufferInfo(gl, radius, height, subdivisionsR, subdivisionsV, caps, caps);
+  }
+};
 
 // shaders/phong/glsl.frag
 var glsl_default = "#version 300 es\n\n// ============================================================================\n// Phong fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n};\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  float shininess;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// From vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\n\n// Some global uniforms\nuniform mat4 u_world;\nuniform vec3 u_camPos;\nuniform vec3 u_lightAmbientGlobal;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n\n// Output colour of this pixel/fragment\nout vec3 outColour;\n\n/*\n * Shade a fragment using a directional light source\n */\nvec3 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(-light.direction);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, v_texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, v_texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;\n  vec3 specular = light.colour * spec * specularCol;\n\n  return ambient + diffuse + specular;\n}\n\n/*\n * Shade a fragment using a positional light source\n */\nvec3 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(light.position - v_position.xyz);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, v_texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, v_texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // attenuation\n  float dist = length(light.position - v_position.xyz);\n  float attenuation = 1.0 / (light.constant + light.linear * dist + light.quad * (dist * dist));\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;\n  vec3 specular = light.colour * spec * specularCol;\n\n  ambient *= attenuation;\n  diffuse *= attenuation;\n  specular *= attenuation;\n\n  return ambient + diffuse + specular;\n}\n\nvoid main() {\n  vec3 V = normalize(u_camPos - v_position.xyz);\n\n  vec3 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, normalize(v_normal), V);\n\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    outColorPart += shadePosLight(u_lightsPos[i], u_mat, normalize(v_normal), V);\n  }\n\n  outColour = outColorPart;\n}\n";
@@ -6138,6 +6144,17 @@ var Context = class _Context {
     const instance = new Instance(cube);
     this.instances.push(instance);
     import_loglevel4.default.debug(`\u{1F4E6} Created cube instance, size:${size}`);
+    return instance;
+  }
+  /**
+   * Create an instance of a primitive cylinder
+   */
+  createCylinderInstance(material, r = 2, h = 5, subdivisionsR = 16, subdivisionsH = 1, caps = true) {
+    const cube = new PrimitiveCylinder(this.gl, r, h, subdivisionsR, subdivisionsH, caps);
+    cube.material = material;
+    const instance = new Instance(cube);
+    this.instances.push(instance);
+    import_loglevel4.default.debug(`\u{1F6E2}\uFE0F Created cylinder instance, r:${r}`);
     return instance;
   }
 };
@@ -6422,6 +6439,7 @@ export {
   ModelCache,
   Primitive,
   PrimitiveCube,
+  PrimitiveCylinder,
   PrimitivePlane,
   PrimitiveSphere,
   ShaderProgram,
