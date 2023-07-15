@@ -5,7 +5,7 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-precision mediump float;
+precision highp float;
 
 const int MAX_LIGHTS = 16;
 

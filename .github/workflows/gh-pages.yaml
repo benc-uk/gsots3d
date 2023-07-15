@@ -41,6 +41,12 @@ jobs:
           mkdir -p site
           cp -r examples/ docs/ dist-bundle/ readme.md ./site
 
+      - name: Convert Markdown to HTML
+        uses: natescherer/markdown-to-html-with-github-style-action@v1.1.0
+        with:
+          path: readme.md
+          outputpath: site
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
