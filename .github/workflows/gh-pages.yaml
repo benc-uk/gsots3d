@@ -39,13 +39,12 @@ jobs:
       - name: Build
         run: |
           mkdir -p site
-          cp -r examples/ docs/ dist-bundle/ readme.md ./site
+          cp -r examples/ docs/ dist-bundle/ ./site
 
       - name: Convert Markdown to HTML
-        uses: natescherer/markdown-to-html-with-github-style-action@v1.1.0
-        with:
-          path: readme.md
-          outputpath: site
+        run: |
+          npm install -g markdown-to-html
+          markdown-to-html --source readme.md --output site/index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
