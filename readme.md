@@ -80,5 +80,6 @@ If you want to reference a specific released version you can do so by changing `
 
 ![screenshot of example scene](https://user-images.githubusercontent.com/14982936/253750428-60a25ac3-e4e4-4eeb-b863-08d31248ab00.png)
 
-![screenshot of example scene](https://user-images.githubusercontent.com/14982936/253750405-8c9aba84-fa42-4c52-9813-6d5255c3254b.png)
+![screenshot of some teapots!](https://user-images.githubusercontent.com/14982936/253750405-8c9aba84-fa42-4c52-9813-6d5255c3254b.png)
 
+![screenshot of treasure chest](https://user-images.githubusercontent.com/14982936/253808708-32c89ca7-ad08-4c26-9de1-2964aa32a0a2.png)
