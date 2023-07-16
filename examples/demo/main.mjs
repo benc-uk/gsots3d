@@ -1,4 +1,4 @@
-import { Model, Context, setLogLevel, Material, LightPoint, BLACK } from '../../dist-bundle/gsots3d.js'
+import { Model, Context, setLogLevel, Material, LightPoint, BLACK, rgbColourHex } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init('canvas')
 ctx.debug = true
@@ -6,86 +6,90 @@ setLogLevel('debug')
 
 // Setup scene
 {
-  ctx.models.add(await Model.parse('../_objects', 'HSM0015.obj'))
+  ctx.models.add(await Model.parse('../_objects', 'table.obj'))
   ctx.models.add(await Model.parse('../_objects', 'chest.obj'))
   ctx.models.add(await Model.parse('../_objects', 'treasure_chest.obj'))
-  ctx.models.add(await Model.parse('../_objects', 'hamburger.obj'))
   ctx.models.add(await Model.parse('../_objects', 'icosahedron.obj'))
   ctx.models.add(await Model.parse('../_objects', 'teapot.obj'))
+  ctx.models.add(await Model.parse('../_objects', 'wine.obj'))
 
-  const table = ctx.createModelInstance('HSM0015')
-  table.position = [65, -22, -25]
+  const table = ctx.createModelInstance('table')
+  table.position = [16, 0, -15]
   table.rotateXDeg(-90)
-  table.scale = [0.22, 0.4, 0.3]
-  // table.rotateX(Math.PI / 2)
+  table.rotateZDeg(-12)
+  table.scale = [0.2, 0.3, 0.5]
 
   const chest1 = ctx.createModelInstance('treasure_chest')
-  chest1.position = [-19, -8, 5]
+  chest1.position = [-23, 0, 2]
   chest1.rotateXDeg(-90)
   chest1.rotateZDeg(66)
 
   const chest2 = ctx.createModelInstance('treasure_chest')
-  chest2.scale = [1.3, 1.3, 1.3]
-  chest2.position = [13, -6, 11]
+  chest2.scale = [1.4, 1.4, 1.4]
+  chest2.position = [13, 0, 6]
   chest2.rotateXDeg(-90)
 
   const floorMat = Material.createBasicTexture('../_textures/stone-wall.png')
   floorMat.specular = BLACK
   floorMat.shininess = 100
   const floor = ctx.createPlaneInstance(floorMat, 260, 260, 10, 10, 6)
-  floor.position = [0, -8, 0]
+  floor.position = [0, 0, 0]
 
-  const matRed = Material.createSolidColour(1.0, 1.0, 1.0)
-  matRed.specular = [1.0, 1.0, 1.0]
-  matRed.shininess = 100
-  const sphereRed = ctx.createSphereInstance(matRed, 2, 16, 8)
-  sphereRed.position = [8, 7, -6]
+  const matWhite = Material.createSolidColour(1.0, 1.0, 1.0)
+  matWhite.specular = [1.0, 1.0, 1.0]
+  matWhite.shininess = 100
+  const sphereWhite = ctx.createSphereInstance(matWhite, 3, 16, 8)
+  sphereWhite.position = [12, 20.5, -8]
 
   const matBlue = Material.createSolidColour(0.1, 0.1, 0.8)
-  matBlue.specular = [0.4, 0.4, 0.4]
-  matBlue.shininess = 6
-  const sphereBlue = ctx.createSphereInstance(matBlue, 2, 16, 8)
-  sphereBlue.position = [14, 7, -8]
+  matBlue.diffuse = rgbColourHex('#518287')
+  matBlue.specular = [0.4, 0.4, 0.8]
+  matBlue.shininess = 18
+  const cylinder = ctx.createCylinderInstance(matBlue, 2.3, 6, 16, 8)
+  cylinder.position = [10, 20, -20]
 
   const mellonTx = Material.createBasicTexture('../_textures/mellon.jpg')
-  const mellon = ctx.createSphereInstance(mellonTx, 3, 32, 16)
+  const mellon = ctx.createSphereInstance(mellonTx, 4, 32, 16)
   mellonTx.diffuse = [0.7, 1.4, 0.7]
   mellonTx.specular = [1.0, 1.0, 1.0]
   mellonTx.shininess = 25
-  mellon.position = [11, 8, -13]
+  mellon.position = [18, 21, -17]
 
   const crateMat = Material.createBasicTexture('../_textures/crate.png')
   crateMat.addSpecularTexture('../_textures/crate-specular.png')
   crateMat.shininess = 40
   crateMat.specular = [2.0, 2.0, 2.0]
-  const cube = ctx.createCubeInstance(crateMat, 15)
+  const cube = ctx.createCubeInstance(crateMat, 13)
   cube.rotateY(Math.PI / 4)
-  cube.position = [-13, 0, -18]
-
-  const burger = ctx.createModelInstance('hamburger')
-  burger.position = [-33, 17, -30]
-  burger.scale = [0.45, 0.45, 0.45]
+  cube.position = [-13, 6.5, -18]
 
   const tp = ctx.createModelInstance('teapot')
   const tpMat = Material.createSolidColour(1, 0.8, 0.1)
   tp.material = tpMat
-  tp.scale = [1.5, 1.5, 1.5]
-  tp.position = [14, 3.5, -1]
+  tp.scale = [1.7, 1.8, 1.7]
+  tp.position = [22, 17.5, -8]
   tp.rotateYDeg(45)
 
   const ico = ctx.createModelInstance('icosahedron')
-  const icoMat = Material.createSolidColour(1, 0.1, 0.1)
+  const icoMat = Material.createSolidColour(0.6, 0.2, 0.2)
   icoMat.specular = [1.0, 1.0, 1.0]
+  icoMat.ambient = [1.0, 1.0, 1.0]
   icoMat.shininess = 80
   ico.material = icoMat
-  ico.position = [-0.9, -0.5, 2]
+  ico.position = [-6, 4.95, 2]
+  ico.rotateXDeg(20)
   ico.scale = [6.5, 6.5, 6.5]
+
+  const bottle = ctx.createModelInstance('wine')
+  bottle.position = [-14, 11, -14]
+  bottle.rotateXDeg(-90)
+  bottle.scale = [0.6, 0.6, 0.6]
 }
 
 // Camera
 let camHeight = 40
 ctx.camera.position = [0, camHeight, 30]
-ctx.camera.lookAt = [0, 0, 0]
+ctx.camera.lookAt = [0, 10, 0]
 ctx.camera.far = 500
 
 // Lights

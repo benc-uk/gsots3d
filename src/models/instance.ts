@@ -24,7 +24,7 @@ export class Instance {
   public material?: Material
 
   /**
-   * @param {Model} model - Model to use for this instance
+   * @param {Renderable} renderable - Renderable to use for this instance
    */
   constructor(renderable: Renderable) {
     this.renderable = renderable
@@ -78,21 +78,24 @@ export class Instance {
     if (!gl) return
 
     // Local instance transforms are applied in this order to form the world matrix
-    const world = mat4.create()
-    mat4.identity(world)
-    if (this.scale) {
-      mat4.scale(world, world, this.scale)
-    }
+    // let world = mat4.create()
+    const scale = mat4.create()
+    const rotate = mat4.create()
+    const translate = mat4.create()
 
-    if (this.position) {
-      mat4.translate(world, world, this.position)
-    }
-
+    // Apply scale, rotate, translate in that order
+    if (this.scale) mat4.scale(scale, scale, this.scale)
     if (this.rotate) {
-      mat4.rotateX(world, world, this.rotate[0])
-      mat4.rotateY(world, world, this.rotate[1])
-      mat4.rotateZ(world, world, this.rotate[2])
+      mat4.rotateX(rotate, rotate, this.rotate[0])
+      mat4.rotateY(rotate, rotate, this.rotate[1])
+      mat4.rotateZ(rotate, rotate, this.rotate[2])
     }
+    if (this.position) mat4.translate(translate, translate, this.position)
+
+    // Combine all transforms into world matrix, in reverse order
+    const world = translate
+    mat4.multiply(world, world, rotate)
+    mat4.multiply(world, world, scale)
 
     // Really important, for normals & lighting
     uniforms.u_world = world

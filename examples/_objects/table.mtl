@@ -12,5 +12,5 @@ newmtl _HSM0015_CoffeeTable_V4Material__70
 	Kd 1.0000 1.0000 1.0000
 	Ks 0.0000 0.0000 0.0000
 	Ke 0.0000 0.0000 0.0000
-	map_Ka Coffee_Table_Diff.jpg
-	map_Kd Coffee_Table_Diff.jpg
+	map_Ka table_diffuse.jpg
+	map_Kd table_diffuse.jpg

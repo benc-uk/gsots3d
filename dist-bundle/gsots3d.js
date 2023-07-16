@@ -5572,6 +5572,16 @@ function scaleTupleClamped(colour, scale2) {
   scaleTuple(colour, scale2);
   return colour.map((v) => Math.min(Math.max(v, 0), 1));
 }
+function rgbColour255(r, g, b) {
+  return [r / 255, g / 255, b / 255];
+}
+function rgbColourHex(hexString) {
+  const hex = hexString.replace("#", "");
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  return rgbColour255(r, g, b);
+}
 var ZERO = [0, 0, 0];
 var BLACK = [0, 0, 0];
 var WHITE = [1, 1, 1];
@@ -5705,7 +5715,7 @@ var Camera = class {
 // src/models/instance.ts
 var Instance = class {
   /**
-   * @param {Model} model - Model to use for this instance
+   * @param {Renderable} renderable - Renderable to use for this instance
    */
   constructor(renderable) {
     this.renderable = renderable;
@@ -5755,19 +5765,21 @@ var Instance = class {
       return;
     if (!gl)
       return;
-    const world = mat4_exports.create();
-    mat4_exports.identity(world);
-    if (this.scale) {
-      mat4_exports.scale(world, world, this.scale);
-    }
-    if (this.position) {
-      mat4_exports.translate(world, world, this.position);
-    }
+    const scale2 = mat4_exports.create();
+    const rotate2 = mat4_exports.create();
+    const translate2 = mat4_exports.create();
+    if (this.scale)
+      mat4_exports.scale(scale2, scale2, this.scale);
     if (this.rotate) {
-      mat4_exports.rotateX(world, world, this.rotate[0]);
-      mat4_exports.rotateY(world, world, this.rotate[1]);
-      mat4_exports.rotateZ(world, world, this.rotate[2]);
+      mat4_exports.rotateX(rotate2, rotate2, this.rotate[0]);
+      mat4_exports.rotateY(rotate2, rotate2, this.rotate[1]);
+      mat4_exports.rotateZ(rotate2, rotate2, this.rotate[2]);
     }
+    if (this.position)
+      mat4_exports.translate(translate2, translate2, this.position);
+    const world = translate2;
+    mat4_exports.multiply(world, world, rotate2);
+    mat4_exports.multiply(world, world, scale2);
     uniforms.u_world = world;
     mat4_exports.invert(uniforms.u_worldInverseTranspose, world);
     mat4_exports.transpose(uniforms.u_worldInverseTranspose, uniforms.u_worldInverseTranspose);
@@ -6470,6 +6482,8 @@ export {
   WHITE,
   ZERO,
   normalize3Tuple,
+  rgbColour255,
+  rgbColourHex,
   scaleTuple,
   scaleTupleClamped,
   setLogLevel

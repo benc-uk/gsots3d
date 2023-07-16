@@ -2,7 +2,6 @@ import { Context, Material, Model } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init()
 ctx.debug = true
-ctx.shaderProgram = 'flat'
 
 ctx.camera.position = [0, 7, 20]
 ctx.globalLight.setAsPosition(18, 20, 25)

@@ -16,11 +16,20 @@ Features
 - Rendering: Phong and flat-Gouraud shading modes
 - Camera: Perspective and orthographic
 
-## 📝 Documentation
+## 🕹️ Demos & Samples
 
-[Full API reference](https://code.benco.io/gsots3d/docs/)
+### [Live demos](./examples/)
 
-[GitHub Project](https://github.com/benc-uk/gsots3d)
+### [Example code](https://github.com/benc-uk/gsots3d/tree/main/examples)
+
+## 🖼️ Screenshots
+
+![screenshot of example scene](https://user-images.githubusercontent.com/14982936/253817000-93846b97-35a8-4fa5-bd79-c4a24176b6df.png)
+
+![screenshot of some teapots!](https://user-images.githubusercontent.com/14982936/253750405-8c9aba84-fa42-4c52-9813-6d5255c3254b.png)
+
+![screenshot of treasure chest](https://user-images.githubusercontent.com/14982936/253808708-32c89ca7-ad08-4c26-9de1-2964aa32a0a2.png)
+
 
 ## 💬 Hello World - Example
 
@@ -70,16 +79,8 @@ import { Context } from 'https://cdn.jsdelivr.net/gh/benc-uk/gsots3d@main/dist-b
 
 If you want to reference a specific released version you can do so by changing `benc-uk/gsots3d@main` for example `benc-uk/gsots3d@0.0.1`
 
-## 🕹️ Demos & Samples
+## 📝 Documentation
 
-### [Live demos](./examples/)
+[Full API reference](https://code.benco.io/gsots3d/docs/)
 
-### [Example code](https://github.com/benc-uk/gsots3d/tree/main/examples)
-
-## 🖼️ Screenshots
-
-![screenshot of example scene](https://user-images.githubusercontent.com/14982936/253750428-60a25ac3-e4e4-4eeb-b863-08d31248ab00.png)
-
-![screenshot of some teapots!](https://user-images.githubusercontent.com/14982936/253750405-8c9aba84-fa42-4c52-9813-6d5255c3254b.png)
-
-![screenshot of treasure chest](https://user-images.githubusercontent.com/14982936/253808708-32c89ca7-ad08-4c26-9de1-2964aa32a0a2.png)
+[GitHub Project](https://github.com/benc-uk/gsots3d)
