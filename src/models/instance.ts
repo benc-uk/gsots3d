@@ -54,6 +54,18 @@ export class Instance {
     this.rotate[2] += angle
   }
 
+  rotateZDeg(angle: number) {
+    this.rotateZ((angle * Math.PI) / 180)
+  }
+
+  rotateYDeg(angle: number) {
+    this.rotateY((angle * Math.PI) / 180)
+  }
+
+  rotateXDeg(angle: number) {
+    this.rotateX((angle * Math.PI) / 180)
+  }
+
   /**
    * Render this instance in the world
    * @param {WebGL2RenderingContext} gl - WebGL context to render into
@@ -67,6 +79,7 @@ export class Instance {
 
     // Local instance transforms are applied in this order to form the world matrix
     const world = mat4.create()
+    mat4.identity(world)
     if (this.scale) {
       mat4.scale(world, world, this.scale)
     }

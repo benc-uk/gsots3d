@@ -73,13 +73,26 @@ export class Material {
   /**
    * Create a new material from a raw MTL material
    */
-  public static fromMtl(rawMtl: MtlMaterial) {
+  public static fromMtl(rawMtl: MtlMaterial, path: string, filter = true, flipY = true) {
     const m = new Material()
 
     m.diffuse = rawMtl.kd ? rawMtl.kd : [1, 1, 1]
     m.specular = rawMtl.ks ? rawMtl.ks : [0, 0, 0]
     m.shininess = rawMtl.ns ? rawMtl.ns : 0
     m.ambient = rawMtl.ka ? rawMtl.ka : [1, 1, 1]
+
+    if (rawMtl.texDiffuse) {
+      const gl = getGl()
+      if (!gl) return m
+
+      gl.LINEAR_MIPMAP_LINEAR
+      m.diffuseTex = createTexture(gl, {
+        min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
+        mag: filter ? gl.LINEAR : gl.NEAREST,
+        src: `${path}/${rawMtl.texDiffuse}`,
+        flipY: flipY ? 1 : 0,
+      })
+    }
 
     return m
   }

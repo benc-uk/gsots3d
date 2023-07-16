@@ -62,9 +62,6 @@ export class Context {
   /** The pre-render update hook function */
   public update: (delta: number) => void
 
-  /** The level & colour of ambient light */
-  public ambientLight: [number, number, number] = [0.05, 0.05, 0.05]
-
   /** The shader program to use for rendering */
   public shaderProgram = ShaderProgram.PHONG
 
@@ -167,7 +164,6 @@ export class Context {
     const uniforms = {
       u_worldInverseTranspose: mat4.create(),
       u_worldViewProjection: mat4.create(),
-      u_lightAmbientGlobal: this.ambientLight,
       u_camPos: this.camera.position,
     } as UniformSet
 

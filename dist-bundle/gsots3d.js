@@ -5734,6 +5734,15 @@ var Instance = class {
       this.rotate = [0, 0, 0];
     this.rotate[2] += angle;
   }
+  rotateZDeg(angle) {
+    this.rotateZ(angle * Math.PI / 180);
+  }
+  rotateYDeg(angle) {
+    this.rotateY(angle * Math.PI / 180);
+  }
+  rotateXDeg(angle) {
+    this.rotateX(angle * Math.PI / 180);
+  }
   /**
    * Render this instance in the world
    * @param {WebGL2RenderingContext} gl - WebGL context to render into
@@ -5747,6 +5756,7 @@ var Instance = class {
     if (!gl)
       return;
     const world = mat4_exports.create();
+    mat4_exports.identity(world);
     if (this.scale) {
       mat4_exports.scale(world, world, this.scale);
     }
@@ -5818,12 +5828,24 @@ var Material = class _Material {
   /**
    * Create a new material from a raw MTL material
    */
-  static fromMtl(rawMtl) {
+  static fromMtl(rawMtl, path, filter = true, flipY = true) {
     const m = new _Material();
     m.diffuse = rawMtl.kd ? rawMtl.kd : [1, 1, 1];
     m.specular = rawMtl.ks ? rawMtl.ks : [0, 0, 0];
     m.shininess = rawMtl.ns ? rawMtl.ns : 0;
     m.ambient = rawMtl.ka ? rawMtl.ka : [1, 1, 1];
+    if (rawMtl.texDiffuse) {
+      const gl = getGl();
+      if (!gl)
+        return m;
+      gl.LINEAR_MIPMAP_LINEAR;
+      m.diffuseTex = createTexture(gl, {
+        min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
+        mag: filter ? gl.LINEAR : gl.NEAREST,
+        src: `${path}/${rawMtl.texDiffuse}`,
+        flipY: flipY ? 1 : 0
+      });
+    }
     return m;
   }
   /**
@@ -5955,7 +5977,7 @@ var glsl_default2 = "#version 300 es\n\n// =====================================
 var glsl_default3 = "#version 300 es\n\n// ============================================================================\n// Gouraud fragment shader with flat shading\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  float shininess;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// From vertex shader\nflat in vec3 v_lightingDiffuse;\nflat in vec3 v_lightingSpecular;\nin vec2 v_texCoord;\n\nuniform Material u_mat;\n\n// Output colour of this pixel/fragment\nout vec3 outColour;\n\nvoid main() {\n  // Tried to set the objectColour in the vertex shader, rather than here.\n  // But texture mapping + Gouraud shading, it looks terrible\n  vec3 objectColour = vec3(texture(u_mat.diffuseTex, v_texCoord)) * u_mat.diffuse;\n\n  outColour = objectColour * v_lightingDiffuse + v_lightingSpecular;\n}\n";
 
 // shaders/gouraud-flat/glsl.vert
-var glsl_default4 = "#version 300 es\n\n// ============================================================================\n// Gouraud vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  float shininess;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\n// Some global uniforms\nuniform mat4 u_world;\nuniform vec3 u_camPos;\nuniform vec3 u_lightAmbientGlobal;\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\n\n// Main light and material uniforms\nuniform LightDir u_lightDirGlobal;\nuniform Material u_mat;\n\nflat out vec3 v_lightingDiffuse;\nflat out vec3 v_lightingSpecular;\nout vec2 v_texCoord;\n\n/*\n * Legacy lighting calc\n */\nvec2 lightCalc(vec3 N, vec3 L, vec3 H, float shininess) {\n  float diff = dot(N, L);\n\n  return vec2(diff, diff > 0.0 ? pow(max(dot(N, H), 0.0), shininess) : 0.0);\n}\n\nvoid main() {\n  LightDir light = u_lightDirGlobal;\n  vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  vec3 worldPos = (u_world * position).xyz;\n\n  vec3 V = normalize(u_camPos - worldPos);\n  vec3 N = normalize(worldNormal);\n  vec3 L = normalize(-light.direction.xyz);\n  vec3 H = normalize(L + V);\n\n  vec2 l = lightCalc(N, L, H, u_mat.shininess);\n\n  // Output lighting value for fragment shader to use, no color\n  v_lightingDiffuse = u_lightAmbientGlobal * u_mat.ambient + light.colour * max(l.x, 0.0);\n\n  // Pass specular in a seperate varying\n  v_lightingSpecular = light.colour * u_mat.specular * l.y;\n\n  // Pass through varying texture coordinate, so we can get the colour there\n  v_texCoord = texcoord;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
+var glsl_default4 = "#version 300 es\n\n// ============================================================================\n// Gouraud vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  float shininess;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\n// Some global uniforms\nuniform mat4 u_world;\nuniform vec3 u_camPos;\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\n\n// Main light and material uniforms\nuniform LightDir u_lightDirGlobal;\nuniform Material u_mat;\n\nflat out vec3 v_lightingDiffuse;\nflat out vec3 v_lightingSpecular;\nout vec2 v_texCoord;\n\n/*\n * Legacy lighting calc\n */\nvec2 lightCalc(vec3 N, vec3 L, vec3 H, float shininess) {\n  float diff = dot(N, L);\n\n  return vec2(diff, diff > 0.0 ? pow(max(dot(N, H), 0.0), shininess) : 0.0);\n}\n\nvoid main() {\n  LightDir light = u_lightDirGlobal;\n  vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  vec3 worldPos = (u_world * position).xyz;\n\n  vec3 V = normalize(u_camPos - worldPos);\n  vec3 N = normalize(worldNormal);\n  vec3 L = normalize(-light.direction.xyz);\n  vec3 H = normalize(L + V);\n\n  vec2 l = lightCalc(N, L, H, u_mat.shininess);\n\n  // Output lighting value for fragment shader to use, no color\n  v_lightingDiffuse = light.ambient * u_mat.ambient + light.colour * max(l.x, 0.0);\n\n  // Pass specular in a seperate varying\n  v_lightingSpecular = light.colour * u_mat.specular * l.y;\n\n  // Pass through varying texture coordinate, so we can get the colour there\n  v_texCoord = texcoord;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
 
 // src/core/context.ts
 var ShaderProgram = /* @__PURE__ */ ((ShaderProgram2) => {
@@ -5977,8 +5999,6 @@ var Context = class _Context {
     this.resizeable = true;
     /** Show extra debug details on the canvas */
     this.debug = false;
-    /** The level & colour of ambient light */
-    this.ambientLight = [0.05, 0.05, 0.05];
     /** The shader program to use for rendering */
     this.shaderProgram = "phong" /* PHONG */;
     this.gl = gl;
@@ -6040,7 +6060,6 @@ var Context = class _Context {
     const uniforms = {
       u_worldInverseTranspose: mat4_exports.create(),
       u_worldViewProjection: mat4_exports.create(),
-      u_lightAmbientGlobal: this.ambientLight,
       u_camPos: this.camera.position
     };
     if (this.resizeable) {
@@ -6194,6 +6213,9 @@ function parseMTL(mtlFile) {
     },
     illum(parts) {
       material.illum = parseInt(parts[0]);
+    },
+    map_Kd(_, unparsedArgs) {
+      material.texDiffuse = unparsedArgs;
     }
   };
   const keywordRE2 = /(\w*)(?: )*(.*)/;
@@ -6211,7 +6233,6 @@ function parseMTL(mtlFile) {
     const parts = line.split(/\s+/).slice(1);
     const handler = keywords[keyword];
     if (!handler) {
-      console.warn("unhandled keyword:", keyword);
       continue;
     }
     handler(parts, unparsedArgs);
@@ -6247,7 +6268,7 @@ function parseOBJ(objFile) {
       objNormals.push(parts.map(parseFloat));
     },
     vt(parts) {
-      objTexcoords.push(parts.map(parseFloat));
+      objTexcoords.push([parseFloat(parts[0]), parseFloat(parts[1])]);
     },
     f(parts) {
       setGeometry();
@@ -6270,6 +6291,9 @@ function parseOBJ(objFile) {
       return;
     },
     o() {
+      return;
+    },
+    g() {
       return;
     }
   };
@@ -6376,7 +6400,7 @@ var Model = class _Model {
    * @param {string} objFilename - The name of the OBJ file
    * @returns {Promise<Model>}
    */
-  static async parse(path = ".", objFilename) {
+  static async parse(path = ".", objFilename, filterTextures = false, flipTextureY = true) {
     const name = objFilename.split(".")[0];
     const model = new _Model(name);
     let objFile;
@@ -6394,7 +6418,7 @@ var Model = class _Model {
         const mtlFile = await fetchFile(`${path}/${objData.matLibNames[0]}`);
         const materialsRawList = parseMTL(mtlFile);
         for (const [matName, matRaw] of materialsRawList) {
-          model.materials[matName] = Material.fromMtl(matRaw);
+          model.materials[matName] = Material.fromMtl(matRaw, path, filterTextures, flipTextureY);
         }
       } catch (err) {
         console.warn(`Unable to load material library ${objData.matLibNames[0]}`);

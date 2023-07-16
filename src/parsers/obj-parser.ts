@@ -61,7 +61,8 @@ export function parseOBJ(objFile: string): ParseResult {
     },
 
     vt(parts: string[]) {
-      objTexcoords.push(parts.map(parseFloat))
+      // Only 2D texcoords supported, so ignore the 3rd if present
+      objTexcoords.push([parseFloat(parts[0]), parseFloat(parts[1])])
     },
 
     f(parts: string[]) {
@@ -89,6 +90,10 @@ export function parseOBJ(objFile: string): ParseResult {
     },
 
     o() {
+      return
+    },
+
+    g() {
       return
     },
   } as Record<string, (parts: string[], unparsedArgs: string) => void>

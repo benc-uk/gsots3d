@@ -2,6 +2,7 @@ import { Context, Material, Model } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init()
 ctx.debug = true
+ctx.shaderProgram = 'flat'
 
 ctx.camera.position = [0, 7, 20]
 ctx.globalLight.setAsPosition(18, 20, 25)
@@ -10,9 +11,9 @@ ctx.globalLight.ambient = [0.1, 0.1, 0.1]
 const matBlue = Material.BLUE
 matBlue.specular = [1.0, 1.0, 1.0]
 matBlue.shininess = 200
-matBlue.diffuse = [0.2, 0.35, 0.9]
+matBlue.diffuse = [0.1, 0.26, 0.9]
 
-ctx.models.add(await Model.parse('../objects', 'teapot.obj'))
+ctx.models.add(await Model.parse('../_objects', 'teapot.obj'))
 
 const teapot = ctx.createModelInstance('teapot')
 teapot.scale = [2.5, 2.5, 2.5]
@@ -41,6 +42,8 @@ teapot3.rotateY(-0.615)
 
 ctx.update = () => {
   teapot.rotateY(0.015)
+  teapot2.rotateY(-0.015)
+  teapot3.rotateY(0.01)
 }
 
 ctx.start()

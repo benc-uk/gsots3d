@@ -16,6 +16,8 @@ export type MtlMaterial = {
   ni?: number
   d?: number
   illum?: number
+  texDiffuse?: string
+  texSpecular?: string
 }
 
 /**
@@ -59,6 +61,10 @@ export function parseMTL(mtlFile: string): Map<string, MtlMaterial> {
     illum(parts: string[]) {
       material.illum = parseInt(parts[0])
     },
+
+    map_Kd(_: string[], unparsedArgs: string) {
+      material.texDiffuse = unparsedArgs
+    },
   } as Record<string, (parts: string[], unparsedArgs: string) => void>
 
   const keywordRE = /(\w*)(?: )*(.*)/
@@ -80,7 +86,7 @@ export function parseMTL(mtlFile: string): Map<string, MtlMaterial> {
 
     const handler = keywords[keyword]
     if (!handler) {
-      console.warn('unhandled keyword:', keyword)
+      //console.warn('unhandled keyword:', keyword)
       continue
     }
 

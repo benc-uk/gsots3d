@@ -67,7 +67,7 @@ export class Model implements Renderable {
    * @param {string} objFilename - The name of the OBJ file
    * @returns {Promise<Model>}
    */
-  static async parse(path = '.', objFilename: string) {
+  static async parse(path = '.', objFilename: string, filterTextures = false, flipTextureY = true) {
     // Create a new model with the name of the file
     const name = objFilename.split('.')[0]
     const model = new Model(name)
@@ -94,14 +94,14 @@ export class Model implements Renderable {
         const materialsRawList = parseMTL(mtlFile)
 
         for (const [matName, matRaw] of materialsRawList) {
-          model.materials[matName] = Material.fromMtl(matRaw)
+          model.materials[matName] = Material.fromMtl(matRaw, path, filterTextures, flipTextureY)
         }
       } catch (err) {
         console.warn(`Unable to load material library ${objData.matLibNames[0]}`)
       }
     }
 
-    // Fall back default material, some blueish color
+    // Fall back default material
     model.materials['__default'] = new Material()
 
     const gl = getGl()

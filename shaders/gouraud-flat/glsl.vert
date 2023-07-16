@@ -10,6 +10,16 @@ precision highp float;
 struct LightDir {
   vec3 direction;
   vec3 colour;
+  vec3 ambient;
+};
+
+struct LightPos {
+  vec3 position;
+  vec3 colour;
+  vec3 ambient;
+  float constant;
+  float linear;
+  float quad;
 };
 
 struct Material {
@@ -29,7 +39,6 @@ in vec2 texcoord;
 // Some global uniforms
 uniform mat4 u_world;
 uniform vec3 u_camPos;
-uniform vec3 u_lightAmbientGlobal;
 uniform mat4 u_worldViewProjection;
 uniform mat4 u_worldInverseTranspose;
 
@@ -63,7 +72,7 @@ void main() {
   vec2 l = lightCalc(N, L, H, u_mat.shininess);
 
   // Output lighting value for fragment shader to use, no color
-  v_lightingDiffuse = u_lightAmbientGlobal * u_mat.ambient + light.colour * max(l.x, 0.0);
+  v_lightingDiffuse = light.ambient * u_mat.ambient + light.colour * max(l.x, 0.0);
 
   // Pass specular in a seperate varying
   v_lightingSpecular = light.colour * u_mat.specular * l.y;
