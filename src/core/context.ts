@@ -15,6 +15,7 @@ import { LightDirectional, LightPoint } from '../render/lights.ts'
 import { Camera, CameraType } from '../render/camera.ts'
 import { Material } from '../render/material.ts'
 import { BillboardType, Instance } from '../models/instance.ts'
+import { Billboard } from '../models/billboard.ts'
 import { HUD } from './hud.ts'
 import { PrimitiveCube, PrimitivePlane, PrimitiveSphere, PrimitiveCylinder } from '../models/primitive.ts'
 
@@ -25,7 +26,6 @@ import fragShaderFlat from '../../shaders/gouraud-flat/glsl.frag'
 import vertShaderFlat from '../../shaders/gouraud-flat/glsl.vert'
 import fragShaderBill from '../../shaders/billboard/glsl.frag'
 import vertShaderBill from '../../shaders/billboard/glsl.vert'
-import { Billboard } from '../models/billboard.ts'
 
 /**
  * The set of supported shader programs that can be used
@@ -49,6 +49,8 @@ export class Context {
   private prevTime: number
   private totalTime: number
   private debugDiv: HTMLDivElement
+
+  /** All the dynamic point lights in the scene */
   public lights: LightPoint[] = []
 
   /** Main camera for this context */

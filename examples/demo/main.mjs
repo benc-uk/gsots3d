@@ -38,7 +38,7 @@ setLogLevel('debug')
   chest2.position = [13, 0, 6]
   chest2.rotateXDeg(-90)
 
-  const bb = ctx.createBillboardInstance('../../_textures/doom-imp.png', 22, 22, BillboardType.SPHERICAL)
+  const bb = ctx.createBillboardInstance('../_textures/doom-imp.png', 22, 22, BillboardType.SPHERICAL)
   bb.position = [-4, 11, -4]
 
   const floorMat = Material.createBasicTexture('../_textures/stone-wall.png')
