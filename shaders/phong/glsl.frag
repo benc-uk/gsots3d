@@ -41,7 +41,6 @@ in vec4 v_position;
 // Some global uniforms
 uniform mat4 u_world;
 uniform vec3 u_camPos;
-uniform vec3 u_lightAmbientGlobal;
 
 // Main lights and material uniforms
 uniform Material u_mat;

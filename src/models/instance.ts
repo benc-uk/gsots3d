@@ -7,6 +7,14 @@ import { mat4 } from 'gl-matrix'
 import { ProgramInfo } from 'twgl.js'
 import { Renderable, UniformSet } from '../core/types.ts'
 import { Material } from '../render/material.ts'
+import { Billboard } from './billboard.ts'
+
+/** Billboarding modes, most things will ue NONE */
+export enum BillboardType {
+  NONE,
+  SPHERICAL,
+  CYLINDRICAL,
+}
 
 /**
  * An instance of thing in the world to be rendered, with position, rotation, scale etc
@@ -18,6 +26,13 @@ export class Instance {
   public rotate: [number, number, number] | undefined
 
   /**
+   * If this instance is to be drawn as a billboard, and what type
+   * @see BillboardType
+   * @default BillboardType.NONE
+   */
+  public billboard: BillboardType | undefined
+
+  /**
    * Material to use for this instance, this will override ALL the materials on the model!
    * Really only useful for simple untextured models without a MTL file
    */
@@ -27,6 +42,7 @@ export class Instance {
    * @param {Renderable} renderable - Renderable to use for this instance
    */
   constructor(renderable: Renderable) {
+    this.billboard = BillboardType.NONE
     this.renderable = renderable
   }
 
@@ -73,7 +89,7 @@ export class Instance {
    * @param {mat4} viewProjection - View projection matrix
    * @param {ProgramInfo} programInfo - Shader program info
    */
-  render(gl: WebGL2RenderingContext, uniforms: UniformSet, viewProjection: mat4, programInfo: ProgramInfo) {
+  render(gl: WebGL2RenderingContext, uniforms: UniformSet, programInfo: ProgramInfo) {
     if (!this.renderable) return
     if (!gl) return
 
@@ -97,15 +113,41 @@ export class Instance {
     mat4.multiply(world, world, rotate)
     mat4.multiply(world, world, scale)
 
-    // Really important, for normals & lighting
+    // Populate u_world - used for normals & shading
     uniforms.u_world = world
 
     // Populate u_worldInverseTranspose - used for normals & shading
     mat4.invert(<mat4>uniforms.u_worldInverseTranspose, world)
     mat4.transpose(<mat4>uniforms.u_worldInverseTranspose, <mat4>uniforms.u_worldInverseTranspose)
 
-    // Populate u_worldViewProjection which is pretty fundamental
-    mat4.multiply(<mat4>uniforms.u_worldViewProjection, viewProjection, world)
+    // Create worldView matrix, used for positioning
+    const worldView = mat4.multiply(mat4.create(), <mat4>uniforms.u_view, world)
+
+    if (this.billboard !== BillboardType.NONE) {
+      // For CYLINDRICAL billboarding, we need to remove some parts of the worldView matrix
+      // See: https://www.geeks3d.com/20140807/billboarding-vertex-shader-glsl/
+      worldView[0] = 1.0
+      worldView[1] = 0
+      worldView[2] = 0
+      worldView[8] = 0
+      worldView[9] = 0
+      worldView[10] = 1.0
+
+      if (this.billboard === BillboardType.SPHERICAL) {
+        // For SPHERICAL billboarding, we remove some more
+        worldView[4] = 0
+        worldView[5] = 1.0
+        worldView[6] = 0
+      }
+    }
+
+    // Finally populate u_worldViewProjection used for rendering
+    mat4.multiply(<mat4>uniforms.u_worldViewProjection, <mat4>uniforms.u_proj, worldView)
+
+    // if renderable is a billboard, we need to chnage program
+    if (this.renderable instanceof Billboard) {
+      gl.useProgram(programInfo.program)
+    }
 
     // Render the renderable thing wrapped by this instance
     this.renderable.render(gl, uniforms, programInfo, this.material)

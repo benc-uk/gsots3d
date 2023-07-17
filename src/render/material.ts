@@ -110,7 +110,7 @@ export class Material {
   /**
    * Create a new Material with a texture map loaded from a URL
    */
-  public static createBasicTexture(url: string, filter = true) {
+  public static createBasicTexture(url: string, filter = true, flipY = false) {
     const m = new Material()
     const gl = getGl()
     if (!gl) return m
@@ -120,6 +120,7 @@ export class Material {
       min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
       mag: filter ? gl.LINEAR : gl.NEAREST,
       src: url,
+      flipY: flipY ? 1 : 0,
     })
 
     return m

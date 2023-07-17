@@ -1,4 +1,13 @@
-import { Model, Context, setLogLevel, Material, LightPoint, BLACK, rgbColourHex } from '../../dist-bundle/gsots3d.js'
+import {
+  Model,
+  Context,
+  setLogLevel,
+  Material,
+  LightPoint,
+  BLACK,
+  rgbColourHex,
+  BillboardType,
+} from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init('canvas')
 ctx.debug = true
@@ -28,6 +37,9 @@ setLogLevel('debug')
   chest2.scale = [1.4, 1.4, 1.4]
   chest2.position = [13, 0, 6]
   chest2.rotateXDeg(-90)
+
+  const bb = ctx.createBillboardInstance('../../_textures/doom-imp.png', 22, 22, BillboardType.SPHERICAL)
+  bb.position = [-4, 11, -4]
 
   const floorMat = Material.createBasicTexture('../_textures/stone-wall.png')
   floorMat.specular = BLACK
@@ -76,7 +88,7 @@ setLogLevel('debug')
   icoMat.ambient = [1.0, 1.0, 1.0]
   icoMat.shininess = 80
   ico.material = icoMat
-  ico.position = [-6, 4.95, 2]
+  ico.position = [-6, 4.95, 12]
   ico.rotateXDeg(20)
   ico.scale = [6.5, 6.5, 6.5]
 

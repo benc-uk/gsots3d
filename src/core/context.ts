@@ -14,7 +14,7 @@ import { ModelCache } from '../models/cache.ts'
 import { LightDirectional, LightPoint } from '../render/lights.ts'
 import { Camera, CameraType } from '../render/camera.ts'
 import { Material } from '../render/material.ts'
-import { Instance } from '../models/instance.ts'
+import { BillboardType, Instance } from '../models/instance.ts'
 import { HUD } from './hud.ts'
 import { PrimitiveCube, PrimitivePlane, PrimitiveSphere, PrimitiveCylinder } from '../models/primitive.ts'
 
@@ -23,6 +23,9 @@ import fragShaderPhong from '../../shaders/phong/glsl.frag'
 import vertShaderPhong from '../../shaders/phong/glsl.vert'
 import fragShaderFlat from '../../shaders/gouraud-flat/glsl.frag'
 import vertShaderFlat from '../../shaders/gouraud-flat/glsl.vert'
+import fragShaderBill from '../../shaders/billboard/glsl.frag'
+import vertShaderBill from '../../shaders/billboard/glsl.vert'
+import { Billboard } from '../models/billboard.ts'
 
 /**
  * The set of supported shader programs that can be used
@@ -30,6 +33,7 @@ import vertShaderFlat from '../../shaders/gouraud-flat/glsl.vert'
 export enum ShaderProgram {
   PHONG = 'phong',
   FLAT = 'flat',
+  BILLBOARD = 'billboard',
 }
 
 /**
@@ -131,6 +135,9 @@ export class Context {
       const flatProg = createProgramInfo(gl, [vertShaderFlat, fragShaderFlat])
       ctx.programs.set(ShaderProgram.FLAT, flatProg)
 
+      const billboardProg = createProgramInfo(gl, [vertShaderBill, fragShaderBill])
+      ctx.programs.set(ShaderProgram.BILLBOARD, billboardProg)
+
       log.info('🎨 Loaded all shaders & programs, GL is ready')
     } catch (err) {
       log.error(err)
@@ -161,12 +168,6 @@ export class Context {
     // Call the external update function
     this.update(deltaTime)
 
-    const uniforms = {
-      u_worldInverseTranspose: mat4.create(),
-      u_worldViewProjection: mat4.create(),
-      u_camPos: this.camera.position,
-    } as UniformSet
-
     if (this.resizeable) {
       resizeCanvasToDisplaySize(<HTMLCanvasElement>this.gl.canvas)
       this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height)
@@ -175,25 +176,23 @@ export class Context {
 
     // Do this in every frame since camera can move
     const camMatrix = this.camera.matrix
-    const viewMatrix = mat4.invert(mat4.create(), camMatrix)
 
-    // Forward view matrix, only for specular lighting
-    uniforms.u_camMatrix = camMatrix
+    // The uniforms that are the same for all instances
+    const uniforms = {
+      u_worldInverseTranspose: mat4.create(), // Updated per instance
+      u_worldViewProjection: mat4.create(), // Updated per instance
+      u_view: mat4.invert(mat4.create(), camMatrix),
+      u_proj: this.camera.projectionMatrix(this.aspectRatio),
+      u_camPos: this.camera.position,
+    } as UniformSet
 
-    // Calculate view projection matrix
-    const projection = this.camera.projectionMatrix(this.aspectRatio)
-    const viewProjection = mat4.multiply(mat4.create(), projection, viewMatrix)
-
-    // this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT)
-
-    const shaderProg = this.programs.get(this.shaderProgram)
+    let shaderProg = this.programs.get(this.shaderProgram)
     if (shaderProg === undefined) {
       throw new Error(`💥Shader program ${this.shaderProgram} is not valid!`)
     }
 
+    // Apply global light to the program
     this.gl.useProgram(shaderProg.program)
-
-    // Since we only have one light, just apply it here
     this.globalLight.apply(shaderProg, 'Global')
 
     // Add the rest of u_lights is the closest lights up to MAX_LIGHTS
@@ -205,11 +204,17 @@ export class Context {
 
     uniforms.u_lightsPosCount = lightCount
 
-    // log.debug(uniforms)
-
     // Draw all instances
     for (const instance of this.instances) {
-      instance.render(this.gl, uniforms, viewProjection, shaderProg)
+      if (instance.billboard) {
+        shaderProg = this.programs.get(ShaderProgram.BILLBOARD)
+      } else {
+        shaderProg = this.programs.get(this.shaderProgram)
+      }
+
+      if (!shaderProg) continue
+      this.gl.useProgram(shaderProg.program)
+      instance.render(this.gl, uniforms, shaderProg)
     }
 
     // Draw the debug HUD
@@ -319,6 +324,21 @@ export class Context {
     this.instances.push(instance)
 
     log.debug(`🛢️ Created cylinder instance, r:${r}`)
+
+    return instance
+  }
+
+  createBillboardInstance(texturePath: string, width = 5, height = 5, type = BillboardType.CYLINDRICAL) {
+    log.debug(`🚧 Creating billboard instance ${width}, ${height}`)
+    const billboard = new Billboard(this.gl, width, height)
+
+    billboard.material = Material.createBasicTexture(texturePath)
+
+    const instance = new Instance(billboard)
+    instance.billboard = type
+    this.instances.push(instance)
+
+    log.debug(`🚧 Created billboard instance`)
 
     return instance
   }

@@ -5712,107 +5712,6 @@ var Camera = class {
   }
 };
 
-// src/models/instance.ts
-var Instance = class {
-  /**
-   * @param {Renderable} renderable - Renderable to use for this instance
-   */
-  constructor(renderable) {
-    this.renderable = renderable;
-  }
-  /**
-   * Rotate this instance around the X axis
-   */
-  rotateX(angle) {
-    if (!this.rotate)
-      this.rotate = [0, 0, 0];
-    this.rotate[0] += angle;
-  }
-  /**
-   * Rotate this instance around the Y axis
-   */
-  rotateY(angle) {
-    if (!this.rotate)
-      this.rotate = [0, 0, 0];
-    this.rotate[1] += angle;
-  }
-  /**
-   * Rotate this instance around the Z axis
-   */
-  rotateZ(angle) {
-    if (!this.rotate)
-      this.rotate = [0, 0, 0];
-    this.rotate[2] += angle;
-  }
-  rotateZDeg(angle) {
-    this.rotateZ(angle * Math.PI / 180);
-  }
-  rotateYDeg(angle) {
-    this.rotateY(angle * Math.PI / 180);
-  }
-  rotateXDeg(angle) {
-    this.rotateX(angle * Math.PI / 180);
-  }
-  /**
-   * Render this instance in the world
-   * @param {WebGL2RenderingContext} gl - WebGL context to render into
-   * @param {UniformSet} uniforms - Map of uniforms to pass to shader
-   * @param {mat4} viewProjection - View projection matrix
-   * @param {ProgramInfo} programInfo - Shader program info
-   */
-  render(gl, uniforms, viewProjection, programInfo) {
-    if (!this.renderable)
-      return;
-    if (!gl)
-      return;
-    const scale2 = mat4_exports.create();
-    const rotate2 = mat4_exports.create();
-    const translate2 = mat4_exports.create();
-    if (this.scale)
-      mat4_exports.scale(scale2, scale2, this.scale);
-    if (this.rotate) {
-      mat4_exports.rotateX(rotate2, rotate2, this.rotate[0]);
-      mat4_exports.rotateY(rotate2, rotate2, this.rotate[1]);
-      mat4_exports.rotateZ(rotate2, rotate2, this.rotate[2]);
-    }
-    if (this.position)
-      mat4_exports.translate(translate2, translate2, this.position);
-    const world = translate2;
-    mat4_exports.multiply(world, world, rotate2);
-    mat4_exports.multiply(world, world, scale2);
-    uniforms.u_world = world;
-    mat4_exports.invert(uniforms.u_worldInverseTranspose, world);
-    mat4_exports.transpose(uniforms.u_worldInverseTranspose, uniforms.u_worldInverseTranspose);
-    mat4_exports.multiply(uniforms.u_worldViewProjection, viewProjection, world);
-    this.renderable.render(gl, uniforms, programInfo, this.material);
-  }
-};
-
-// src/core/hud.ts
-var HUD = class {
-  constructor(canvas) {
-    const parent = canvas.parentElement;
-    if (!parent)
-      throw new Error("\u{1F4A5} Canvas must have a parent element");
-    this.hud = document.createElement("div");
-    this.hud.style.position = "absolute";
-    this.hud.style.top = "0";
-    this.hud.style.left = "0";
-    this.hud.style.width = "100%";
-    this.hud.style.height = "100%";
-    this.hud.style.color = "#fff";
-    this.hud.style.pointerEvents = "none";
-    this.hud.classList.add("gsots3d-hud");
-    parent.appendChild(this.hud);
-  }
-  addHUDItem(item) {
-    this.hud.appendChild(item);
-  }
-  debug(msg) {
-    this.hud.innerHTML = msg;
-  }
-};
-
 // src/render/material.ts
 var Material = class _Material {
   /**
@@ -5871,7 +5770,7 @@ var Material = class _Material {
   /**
    * Create a new Material with a texture map loaded from a URL
    */
-  static createBasicTexture(url, filter = true) {
+  static createBasicTexture(url, filter = true, flipY = false) {
     const m = new _Material();
     const gl = getGl();
     if (!gl)
@@ -5880,7 +5779,8 @@ var Material = class _Material {
     m.diffuseTex = createTexture(gl, {
       min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
       mag: filter ? gl.LINEAR : gl.NEAREST,
-      src: url
+      src: url,
+      flipY: flipY ? 1 : 0
     });
     return m;
   }
@@ -5932,6 +5832,153 @@ var Material = class _Material {
   }
 };
 
+// src/models/billboard.ts
+var Billboard = class {
+  constructor(gl, width, height) {
+    this.material = new Material();
+    const transform = mat4_exports.create();
+    mat4_exports.rotateX(transform, transform, Math.PI / 2);
+    this.bufferInfo = primitives.createPlaneBufferInfo(gl, width, height, 1, 1, transform);
+  }
+  render(gl, uniforms, programInfo, materialOverride) {
+    if (!this.bufferInfo)
+      return;
+    if (materialOverride === void 0) {
+      this.material.apply(programInfo);
+    } else {
+      materialOverride.apply(programInfo);
+    }
+    setBuffersAndAttributes(gl, programInfo, this.bufferInfo);
+    setUniforms(programInfo, uniforms);
+    drawBufferInfo(gl, this.bufferInfo);
+  }
+};
+
+// src/models/instance.ts
+var BillboardType = /* @__PURE__ */ ((BillboardType2) => {
+  BillboardType2[BillboardType2["NONE"] = 0] = "NONE";
+  BillboardType2[BillboardType2["SPHERICAL"] = 1] = "SPHERICAL";
+  BillboardType2[BillboardType2["CYLINDRICAL"] = 2] = "CYLINDRICAL";
+  return BillboardType2;
+})(BillboardType || {});
+var Instance = class {
+  /**
+   * @param {Renderable} renderable - Renderable to use for this instance
+   */
+  constructor(renderable) {
+    this.billboard = 0 /* NONE */;
+    this.renderable = renderable;
+  }
+  /**
+   * Rotate this instance around the X axis
+   */
+  rotateX(angle) {
+    if (!this.rotate)
+      this.rotate = [0, 0, 0];
+    this.rotate[0] += angle;
+  }
+  /**
+   * Rotate this instance around the Y axis
+   */
+  rotateY(angle) {
+    if (!this.rotate)
+      this.rotate = [0, 0, 0];
+    this.rotate[1] += angle;
+  }
+  /**
+   * Rotate this instance around the Z axis
+   */
+  rotateZ(angle) {
+    if (!this.rotate)
+      this.rotate = [0, 0, 0];
+    this.rotate[2] += angle;
+  }
+  rotateZDeg(angle) {
+    this.rotateZ(angle * Math.PI / 180);
+  }
+  rotateYDeg(angle) {
+    this.rotateY(angle * Math.PI / 180);
+  }
+  rotateXDeg(angle) {
+    this.rotateX(angle * Math.PI / 180);
+  }
+  /**
+   * Render this instance in the world
+   * @param {WebGL2RenderingContext} gl - WebGL context to render into
+   * @param {UniformSet} uniforms - Map of uniforms to pass to shader
+   * @param {mat4} viewProjection - View projection matrix
+   * @param {ProgramInfo} programInfo - Shader program info
+   */
+  render(gl, uniforms, programInfo) {
+    if (!this.renderable)
+      return;
+    if (!gl)
+      return;
+    const scale2 = mat4_exports.create();
+    const rotate2 = mat4_exports.create();
+    const translate2 = mat4_exports.create();
+    if (this.scale)
+      mat4_exports.scale(scale2, scale2, this.scale);
+    if (this.rotate) {
+      mat4_exports.rotateX(rotate2, rotate2, this.rotate[0]);
+      mat4_exports.rotateY(rotate2, rotate2, this.rotate[1]);
+      mat4_exports.rotateZ(rotate2, rotate2, this.rotate[2]);
+    }
+    if (this.position)
+      mat4_exports.translate(translate2, translate2, this.position);
+    const world = translate2;
+    mat4_exports.multiply(world, world, rotate2);
+    mat4_exports.multiply(world, world, scale2);
+    uniforms.u_world = world;
+    mat4_exports.invert(uniforms.u_worldInverseTranspose, world);
+    mat4_exports.transpose(uniforms.u_worldInverseTranspose, uniforms.u_worldInverseTranspose);
+    const worldView = mat4_exports.multiply(mat4_exports.create(), uniforms.u_view, world);
+    if (this.billboard !== 0 /* NONE */) {
+      worldView[0] = 1;
+      worldView[1] = 0;
+      worldView[2] = 0;
+      worldView[8] = 0;
+      worldView[9] = 0;
+      worldView[10] = 1;
+      if (this.billboard === 1 /* SPHERICAL */) {
+        worldView[4] = 0;
+        worldView[5] = 1;
+        worldView[6] = 0;
+      }
+    }
+    mat4_exports.multiply(uniforms.u_worldViewProjection, uniforms.u_proj, worldView);
+    if (this.renderable instanceof Billboard) {
+      gl.useProgram(programInfo.program);
+    }
+    this.renderable.render(gl, uniforms, programInfo, this.material);
+  }
+};
+
+// src/core/hud.ts
+var HUD = class {
+  constructor(canvas) {
+    const parent = canvas.parentElement;
+    if (!parent)
+      throw new Error("\u{1F4A5} Canvas must have a parent element");
+    this.hud = document.createElement("div");
+    this.hud.style.position = "absolute";
+    this.hud.style.top = "0";
+    this.hud.style.left = "0";
+    this.hud.style.width = "100%";
+    this.hud.style.height = "100%";
+    this.hud.style.color = "#fff";
+    this.hud.style.pointerEvents = "none";
+    this.hud.classList.add("gsots3d-hud");
+    parent.appendChild(this.hud);
+  }
+  addHUDItem(item) {
+    this.hud.appendChild(item);
+  }
+  debug(msg) {
+    this.hud.innerHTML = msg;
+  }
+};
+
 // src/models/primitive.ts
 var Primitive = class {
   constructor() {
@@ -5980,7 +6027,7 @@ var PrimitiveCylinder = class extends Primitive {
 };
 
 // shaders/phong/glsl.frag
-var glsl_default = "#version 300 es\n\n// ============================================================================\n// Phong fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n};\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  float shininess;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// From vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\n\n// Some global uniforms\nuniform mat4 u_world;\nuniform vec3 u_camPos;\nuniform vec3 u_lightAmbientGlobal;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n\n// Output colour of this pixel/fragment\nout vec3 outColour;\n\n/*\n * Shade a fragment using a directional light source\n */\nvec3 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(-light.direction);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, v_texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, v_texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;\n  vec3 specular = light.colour * spec * specularCol;\n\n  return ambient + diffuse + specular;\n}\n\n/*\n * Shade a fragment using a positional light source\n */\nvec3 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(light.position - v_position.xyz);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, v_texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, v_texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // attenuation\n  float dist = length(light.position - v_position.xyz);\n  float attenuation = 1.0 / (light.constant + light.linear * dist + light.quad * (dist * dist));\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;\n  vec3 specular = light.colour * spec * specularCol;\n\n  ambient *= attenuation;\n  diffuse *= attenuation;\n  specular *= attenuation;\n\n  return ambient + diffuse + specular;\n}\n\nvoid main() {\n  vec3 V = normalize(u_camPos - v_position.xyz);\n\n  vec3 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, normalize(v_normal), V);\n\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    outColorPart += shadePosLight(u_lightsPos[i], u_mat, normalize(v_normal), V);\n  }\n\n  outColour = outColorPart;\n}\n";
+var glsl_default = "#version 300 es\n\n// ============================================================================\n// Phong fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n};\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  float shininess;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// From vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\n\n// Some global uniforms\nuniform mat4 u_world;\nuniform vec3 u_camPos;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n\n// Output colour of this pixel/fragment\nout vec3 outColour;\n\n/*\n * Shade a fragment using a directional light source\n */\nvec3 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(-light.direction);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, v_texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, v_texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;\n  vec3 specular = light.colour * spec * specularCol;\n\n  return ambient + diffuse + specular;\n}\n\n/*\n * Shade a fragment using a positional light source\n */\nvec3 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(light.position - v_position.xyz);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, v_texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, v_texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // attenuation\n  float dist = length(light.position - v_position.xyz);\n  float attenuation = 1.0 / (light.constant + light.linear * dist + light.quad * (dist * dist));\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;\n  vec3 specular = light.colour * spec * specularCol;\n\n  ambient *= attenuation;\n  diffuse *= attenuation;\n  specular *= attenuation;\n\n  return ambient + diffuse + specular;\n}\n\nvoid main() {\n  vec3 V = normalize(u_camPos - v_position.xyz);\n\n  vec3 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, normalize(v_normal), V);\n\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    outColorPart += shadePosLight(u_lightsPos[i], u_mat, normalize(v_normal), V);\n  }\n\n  outColour = outColorPart;\n}\n";
 
 // shaders/phong/glsl.vert
 var glsl_default2 = "#version 300 es\n\n// ============================================================================\n// Phong vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_normal;\nout vec4 v_position;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  v_position = u_world * position;\n  gl_Position = u_worldViewProjection * position;\n}\n";
@@ -5991,10 +6038,17 @@ var glsl_default3 = "#version 300 es\n\n// =====================================
 // shaders/gouraud-flat/glsl.vert
 var glsl_default4 = "#version 300 es\n\n// ============================================================================\n// Gouraud vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  float shininess;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\n// Some global uniforms\nuniform mat4 u_world;\nuniform vec3 u_camPos;\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\n\n// Main light and material uniforms\nuniform LightDir u_lightDirGlobal;\nuniform Material u_mat;\n\nflat out vec3 v_lightingDiffuse;\nflat out vec3 v_lightingSpecular;\nout vec2 v_texCoord;\n\n/*\n * Legacy lighting calc\n */\nvec2 lightCalc(vec3 N, vec3 L, vec3 H, float shininess) {\n  float diff = dot(N, L);\n\n  return vec2(diff, diff > 0.0 ? pow(max(dot(N, H), 0.0), shininess) : 0.0);\n}\n\nvoid main() {\n  LightDir light = u_lightDirGlobal;\n  vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  vec3 worldPos = (u_world * position).xyz;\n\n  vec3 V = normalize(u_camPos - worldPos);\n  vec3 N = normalize(worldNormal);\n  vec3 L = normalize(-light.direction.xyz);\n  vec3 H = normalize(L + V);\n\n  vec2 l = lightCalc(N, L, H, u_mat.shininess);\n\n  // Output lighting value for fragment shader to use, no color\n  v_lightingDiffuse = light.ambient * u_mat.ambient + light.colour * max(l.x, 0.0);\n\n  // Pass specular in a seperate varying\n  v_lightingSpecular = light.colour * u_mat.specular * l.y;\n\n  // Pass through varying texture coordinate, so we can get the colour there\n  v_texCoord = texcoord;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
 
+// shaders/billboard/glsl.frag
+var glsl_default5 = "#version 300 es\n\n// ============================================================================\n// Billboard fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  float shininess;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\n// From vertex shader\nin vec2 v_texCoord;\nin vec4 v_position;\n\n// Uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\n\n// Output colour of this pixel/fragment\nout vec3 outColour;\n\nvoid main() {\n  vec4 texel = texture(u_mat.diffuseTex, v_texCoord);\n\n  // Magic to make transparent sprites work, without blending\n  if (texel.a < 0.5) {\n    discard;\n  }\n\n  outColour = texel.rgb; // * u_lightDirGlobal.colour * texel.rgb * u_mat.diffuse;\n}\n";
+
+// shaders/billboard/glsl.vert
+var glsl_default6 = "#version 300 es\n\n// ============================================================================\n// Billboard vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_world;\n\n// Output varying's to pass to fragment shader\nout vec4 v_position;\nout vec2 v_texCoord;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_position = u_world * position;\n  gl_Position = u_worldViewProjection * position;\n}\n";
+
 // src/core/context.ts
 var ShaderProgram = /* @__PURE__ */ ((ShaderProgram2) => {
   ShaderProgram2["PHONG"] = "phong";
   ShaderProgram2["FLAT"] = "flat";
+  ShaderProgram2["BILLBOARD"] = "billboard";
   return ShaderProgram2;
 })(ShaderProgram || {});
 var Context = class _Context {
@@ -6047,6 +6101,8 @@ var Context = class _Context {
       ctx.programs.set("phong" /* PHONG */, phongProg);
       const flatProg = createProgramInfo(gl, [glsl_default4, glsl_default3]);
       ctx.programs.set("flat" /* FLAT */, flatProg);
+      const billboardProg = createProgramInfo(gl, [glsl_default6, glsl_default5]);
+      ctx.programs.set("billboard" /* BILLBOARD */, billboardProg);
       import_loglevel4.default.info("\u{1F3A8} Loaded all shaders & programs, GL is ready");
     } catch (err) {
       import_loglevel4.default.error(err);
@@ -6069,22 +6125,22 @@ var Context = class _Context {
     this.prevTime = now;
     this.totalTime += deltaTime;
     this.update(deltaTime);
-    const uniforms = {
-      u_worldInverseTranspose: mat4_exports.create(),
-      u_worldViewProjection: mat4_exports.create(),
-      u_camPos: this.camera.position
-    };
     if (this.resizeable) {
       resizeCanvasToDisplaySize(this.gl.canvas);
       this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
       this.aspectRatio = this.gl.canvas.width / this.gl.canvas.height;
     }
     const camMatrix = this.camera.matrix;
-    const viewMatrix = mat4_exports.invert(mat4_exports.create(), camMatrix);
-    uniforms.u_camMatrix = camMatrix;
-    const projection = this.camera.projectionMatrix(this.aspectRatio);
-    const viewProjection = mat4_exports.multiply(mat4_exports.create(), projection, viewMatrix);
-    const shaderProg = this.programs.get(this.shaderProgram);
+    const uniforms = {
+      u_worldInverseTranspose: mat4_exports.create(),
+      // Updated per instance
+      u_worldViewProjection: mat4_exports.create(),
+      // Updated per instance
+      u_view: mat4_exports.invert(mat4_exports.create(), camMatrix),
+      u_proj: this.camera.projectionMatrix(this.aspectRatio),
+      u_camPos: this.camera.position
+    };
+    let shaderProg = this.programs.get(this.shaderProgram);
     if (shaderProg === void 0) {
       throw new Error(`\u{1F4A5}Shader program ${this.shaderProgram} is not valid!`);
     }
@@ -6098,7 +6154,15 @@ var Context = class _Context {
     }
     uniforms.u_lightsPosCount = lightCount;
     for (const instance of this.instances) {
-      instance.render(this.gl, uniforms, viewProjection, shaderProg);
+      if (instance.billboard) {
+        shaderProg = this.programs.get("billboard" /* BILLBOARD */);
+      } else {
+        shaderProg = this.programs.get(this.shaderProgram);
+      }
+      if (!shaderProg)
+        continue;
+      this.gl.useProgram(shaderProg.program);
+      instance.render(this.gl, uniforms, shaderProg);
     }
     if (this.debug) {
       this.debugDiv.innerHTML = `
@@ -6186,6 +6250,16 @@ var Context = class _Context {
     const instance = new Instance(cube);
     this.instances.push(instance);
     import_loglevel4.default.debug(`\u{1F6E2}\uFE0F Created cylinder instance, r:${r}`);
+    return instance;
+  }
+  createBillboardInstance(texturePath, width = 5, height = 5, type = 2 /* CYLINDRICAL */) {
+    import_loglevel4.default.debug(`\u{1F6A7} Creating billboard instance ${width}, ${height}`);
+    const billboard = new Billboard(this.gl, width, height);
+    billboard.material = Material.createBasicTexture(texturePath);
+    const instance = new Instance(billboard);
+    instance.billboard = type;
+    this.instances.push(instance);
+    import_loglevel4.default.debug(`\u{1F6A7} Created billboard instance`);
     return instance;
   }
 };
@@ -6463,6 +6537,7 @@ var ModelPart = class {
 };
 export {
   BLACK,
+  BillboardType,
   Camera,
   CameraType,
   Context,
