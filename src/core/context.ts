@@ -5,7 +5,7 @@
 
 import { version } from '../../package.json'
 import { ProgramInfo, createProgramInfo, resizeCanvasToDisplaySize } from 'twgl.js'
-import { mat4 } from 'gl-matrix'
+import { mat4, vec3 } from 'gl-matrix'
 import log from 'loglevel'
 
 import { getGl } from './gl.ts'
@@ -183,7 +183,17 @@ export class Context {
     this.gl.useProgram(this.mainProgInfo.program)
     this.globalLight.apply(this.mainProgInfo, 'Global')
 
-    // Add the rest of u_lights is the closest lights up to MAX_LIGHTS
+    // Only sort lights if we have more than MAX_LIGHTS, it's expensive!
+    if (this.lights.length > MAX_LIGHTS) {
+      // Sort lights by distance to camera so we can use the closest ones
+      this.lights.sort((lightA, lightB) => {
+        const ad = vec3.distance(lightA.position, this.camera.position)
+        const bd = vec3.distance(lightB.position, this.camera.position)
+        return ad - bd
+      })
+    }
+
+    // Add the point lights into u_lightsPos array up to MAX_LIGHTS
     let lightCount = 0
     for (const light of this.lights) {
       if (lightCount >= MAX_LIGHTS) break
@@ -192,7 +202,7 @@ export class Context {
 
     uniforms.u_lightsPosCount = lightCount
 
-    // Draw all instances
+    // MAIN LOOP - Draw all instances
     for (const instance of this.instances) {
       if (instance.billboard) {
         instance.render(this.gl, uniforms, this.billboardProgInfo)
@@ -213,7 +223,7 @@ export class Context {
       this.debugDiv.innerHTML = ''
     }
 
-    // Loop forever or not
+    // Loop forever or stop if not started
     if (this.started) requestAnimationFrame(this.render)
   }
 
@@ -222,6 +232,7 @@ export class Context {
    */
   start() {
     this.started = true
+    // Restart the render loop
     requestAnimationFrame(this.render)
   }
 
@@ -238,7 +249,7 @@ export class Context {
    */
   setRenderMode(mode: RenderMode) {
     if (!this.programs.has(mode)) {
-      throw new Error(`💥 Render mode '${mode}' is not valid`)
+      throw new Error(`💥 Render mode '${mode}' is not valid, you will have a bad time 💩`)
     }
 
     this.mainProgInfo = this.programs.get(mode)

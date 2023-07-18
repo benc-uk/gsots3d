@@ -588,7 +588,7 @@ function getArray$1(array) {
 }
 var texcoordRE = /coord|texture/i;
 var colorRE = /color|colour/i;
-function guessNumComponentsFromName(name, length2) {
+function guessNumComponentsFromName(name, length3) {
   let numComponents;
   if (texcoordRE.test(name)) {
     numComponents = 2;
@@ -597,8 +597,8 @@ function guessNumComponentsFromName(name, length2) {
   } else {
     numComponents = 3;
   }
-  if (length2 % numComponents > 0) {
-    throw new Error(`Can not guess numComponents for attribute '${name}'. Tried ${numComponents} but ${length2} values is not evenly divisible by ${numComponents}. You should specify it.`);
+  if (length3 % numComponents > 0) {
+    throw new Error(`Can not guess numComponents for attribute '${name}'. Tried ${numComponents} but ${length3} values is not evenly divisible by ${numComponents}. You should specify it.`);
   }
   return numComponents;
 }
@@ -737,14 +737,14 @@ function getNumElementsFromNonIndexedArrays(arrays) {
     key = Object.keys(arrays)[0];
   }
   const array = arrays[key];
-  const length2 = getArray$1(array).length;
-  if (length2 === void 0) {
+  const length3 = getArray$1(array).length;
+  if (length3 === void 0) {
     return 1;
   }
   const numComponents = getNumComponents$1(array, key);
-  const numElements = length2 / numComponents;
-  if (length2 % numComponents > 0) {
-    throw new Error(`numComponents ${numComponents} not correct for length ${length2}`);
+  const numElements = length3 / numComponents;
+  if (length3 % numComponents > 0) {
+    throw new Error(`numComponents ${numComponents} not correct for length ${length3}`);
   }
   return numElements;
 }
@@ -886,10 +886,10 @@ function flattenNormals(vertices) {
     let nx = nax + nbx + ncx;
     let ny = nay + nby + ncy;
     let nz = naz + nbz + ncz;
-    const length2 = Math.sqrt(nx * nx + ny * ny + nz * nz);
-    nx /= length2;
-    ny /= length2;
-    nz /= length2;
+    const length3 = Math.sqrt(nx * nx + ny * ny + nz * nz);
+    nx /= length3;
+    ny /= length3;
+    nz /= length3;
     normals[ii + 0] = nx;
     normals[ii + 1] = ny;
     normals[ii + 2] = nz;
@@ -903,9 +903,9 @@ function flattenNormals(vertices) {
   return vertices;
 }
 function applyFuncToV3Array(array, matrix, fn) {
-  const len = array.length;
+  const len2 = array.length;
   const tmp = new Float32Array(3);
-  for (let ii = 0; ii < len; ii += 3) {
+  for (let ii = 0; ii < len2; ii += 3) {
     fn(matrix, [array[ii], array[ii + 1], array[ii + 2]], tmp);
     array[ii] = tmp[0];
     array[ii + 1] = tmp[1];
@@ -1938,7 +1938,7 @@ function createCrescentVertices(verticalRadius, outerRadius, innerRadius, thickn
   const positions = createAugmentedTypedArray(3, numVertices);
   const normals = createAugmentedTypedArray(3, numVertices);
   const texcoords = createAugmentedTypedArray(2, numVertices);
-  function lerp(a, b, s) {
+  function lerp2(a, b, s) {
     return a + (b - a) * s;
   }
   function createArc(arcRadius, x, normalMult, normalAdd, uMult, uAdd) {
@@ -1946,10 +1946,10 @@ function createCrescentVertices(verticalRadius, outerRadius, innerRadius, thickn
       const uBack = x / (subdivisionsThick - 1);
       const v = z / subdivisionsDown;
       const xBack = (uBack - 0.5) * 2;
-      const angle = (startOffset + v * offsetRange) * Math.PI;
-      const s = Math.sin(angle);
-      const c = Math.cos(angle);
-      const radius = lerp(verticalRadius, arcRadius, s);
+      const angle2 = (startOffset + v * offsetRange) * Math.PI;
+      const s = Math.sin(angle2);
+      const c = Math.cos(angle2);
+      const radius = lerp2(verticalRadius, arcRadius, s);
       const px = xBack * thickness;
       const py = c * verticalRadius;
       const pz = s * radius;
@@ -2159,14 +2159,14 @@ var arraySpecPropertyNames = [
 ];
 function copyElements(src, dst, dstNdx, offset) {
   offset = offset || 0;
-  const length2 = src.length;
-  for (let ii = 0; ii < length2; ++ii) {
+  const length3 = src.length;
+  for (let ii = 0; ii < length3; ++ii) {
     dst[dstNdx + ii] = src[ii] + offset;
   }
 }
-function createArrayOfSameType(srcArray, length2) {
+function createArrayOfSameType(srcArray, length3) {
   const arraySrc = getArray(srcArray);
-  const newArray = new arraySrc.constructor(length2);
+  const newArray = new arraySrc.constructor(length3);
   let newArraySpec = newArray;
   if (arraySrc.numComponents && arraySrc.numElements) {
     augmentTypedArray(newArray, arraySrc.numComponents);
@@ -2199,19 +2199,19 @@ function concatVertices(arrayOfArrays) {
     });
   }
   function getLengthOfCombinedArrays(name) {
-    let length2 = 0;
+    let length3 = 0;
     let arraySpec;
     for (let ii = 0; ii < arrayOfArrays.length; ++ii) {
       const arrays = arrayOfArrays[ii];
       const arrayInfo = arrays[name];
       const array = getArray(arrayInfo);
-      length2 += array.length;
+      length3 += array.length;
       if (!arraySpec || arrayInfo.data) {
         arraySpec = arrayInfo;
       }
     }
     return {
-      length: length2,
+      length: length3,
       spec: arraySpec
     };
   }
@@ -3607,7 +3607,7 @@ function matAttribSetter(gl, index, typeInfo) {
     const type = b.type || FLOAT;
     const typeInfo2 = typeMap[type];
     const stride = typeInfo2.size * numComponents;
-    const normalize = b.normalize || false;
+    const normalize2 = b.normalize || false;
     const offset = b.offset || 0;
     const rowOffset = stride / count;
     for (let i = 0; i < count; ++i) {
@@ -3616,7 +3616,7 @@ function matAttribSetter(gl, index, typeInfo) {
         index + i,
         size,
         type,
-        normalize,
+        normalize2,
         stride,
         offset + rowOffset * i
       );
@@ -4253,6 +4253,7 @@ function resizeCanvasToDisplaySize(canvas, multiplier) {
 // node_modules/gl-matrix/esm/common.js
 var EPSILON = 1e-6;
 var ARRAY_TYPE = typeof Float32Array !== "undefined" ? Float32Array : Array;
+var RANDOM = Math.random;
 var degree = Math.PI / 180;
 if (!Math.hypot)
   Math.hypot = function() {
@@ -4656,7 +4657,7 @@ function scale(out, a, v) {
 }
 function rotate(out, a, rad, axis) {
   var x = axis[0], y = axis[1], z = axis[2];
-  var len = Math.hypot(x, y, z);
+  var len2 = Math.hypot(x, y, z);
   var s, c, t;
   var a00, a01, a02, a03;
   var a10, a11, a12, a13;
@@ -4664,13 +4665,13 @@ function rotate(out, a, rad, axis) {
   var b00, b01, b02;
   var b10, b11, b12;
   var b20, b21, b22;
-  if (len < EPSILON) {
+  if (len2 < EPSILON) {
     return null;
   }
-  len = 1 / len;
-  x *= len;
-  y *= len;
-  z *= len;
+  len2 = 1 / len2;
+  x *= len2;
+  y *= len2;
+  z *= len2;
   s = Math.sin(rad);
   c = Math.cos(rad);
   t = 1 - c;
@@ -4848,15 +4849,15 @@ function fromScaling(out, v) {
 }
 function fromRotation(out, rad, axis) {
   var x = axis[0], y = axis[1], z = axis[2];
-  var len = Math.hypot(x, y, z);
+  var len2 = Math.hypot(x, y, z);
   var s, c, t;
-  if (len < EPSILON) {
+  if (len2 < EPSILON) {
     return null;
   }
-  len = 1 / len;
-  x *= len;
-  y *= len;
-  z *= len;
+  len2 = 1 / len2;
+  x *= len2;
+  y *= len2;
+  z *= len2;
   s = Math.sin(rad);
   c = Math.cos(rad);
   t = 1 - c;
@@ -5314,7 +5315,7 @@ function orthoZO(out, left, right, bottom, top, near, far) {
   return out;
 }
 function lookAt(out, eye, center, up) {
-  var x0, x1, x2, y0, y1, y2, z0, z1, z2, len;
+  var x0, x1, x2, y0, y1, y2, z0, z1, z2, len2;
   var eyex = eye[0];
   var eyey = eye[1];
   var eyez = eye[2];
@@ -5330,37 +5331,37 @@ function lookAt(out, eye, center, up) {
   z0 = eyex - centerx;
   z1 = eyey - centery;
   z2 = eyez - centerz;
-  len = 1 / Math.hypot(z0, z1, z2);
-  z0 *= len;
-  z1 *= len;
-  z2 *= len;
+  len2 = 1 / Math.hypot(z0, z1, z2);
+  z0 *= len2;
+  z1 *= len2;
+  z2 *= len2;
   x0 = upy * z2 - upz * z1;
   x1 = upz * z0 - upx * z2;
   x2 = upx * z1 - upy * z0;
-  len = Math.hypot(x0, x1, x2);
-  if (!len) {
+  len2 = Math.hypot(x0, x1, x2);
+  if (!len2) {
     x0 = 0;
     x1 = 0;
     x2 = 0;
   } else {
-    len = 1 / len;
-    x0 *= len;
-    x1 *= len;
-    x2 *= len;
+    len2 = 1 / len2;
+    x0 *= len2;
+    x1 *= len2;
+    x2 *= len2;
   }
   y0 = z1 * x2 - z2 * x1;
   y1 = z2 * x0 - z0 * x2;
   y2 = z0 * x1 - z1 * x0;
-  len = Math.hypot(y0, y1, y2);
-  if (!len) {
+  len2 = Math.hypot(y0, y1, y2);
+  if (!len2) {
     y0 = 0;
     y1 = 0;
     y2 = 0;
   } else {
-    len = 1 / len;
-    y0 *= len;
-    y1 *= len;
-    y2 *= len;
+    len2 = 1 / len2;
+    y0 *= len2;
+    y1 *= len2;
+    y2 *= len2;
   }
   out[0] = x0;
   out[1] = y0;
@@ -5383,20 +5384,20 @@ function lookAt(out, eye, center, up) {
 function targetTo(out, eye, target, up) {
   var eyex = eye[0], eyey = eye[1], eyez = eye[2], upx = up[0], upy = up[1], upz = up[2];
   var z0 = eyex - target[0], z1 = eyey - target[1], z2 = eyez - target[2];
-  var len = z0 * z0 + z1 * z1 + z2 * z2;
-  if (len > 0) {
-    len = 1 / Math.sqrt(len);
-    z0 *= len;
-    z1 *= len;
-    z2 *= len;
+  var len2 = z0 * z0 + z1 * z1 + z2 * z2;
+  if (len2 > 0) {
+    len2 = 1 / Math.sqrt(len2);
+    z0 *= len2;
+    z1 *= len2;
+    z2 *= len2;
   }
   var x0 = upy * z2 - upz * z1, x1 = upz * z0 - upx * z2, x2 = upx * z1 - upy * z0;
-  len = x0 * x0 + x1 * x1 + x2 * x2;
-  if (len > 0) {
-    len = 1 / Math.sqrt(len);
-    x0 *= len;
-    x1 *= len;
-    x2 *= len;
+  len2 = x0 * x0 + x1 * x1 + x2 * x2;
+  if (len2 > 0) {
+    len2 = 1 / Math.sqrt(len2);
+    x0 *= len2;
+    x1 *= len2;
+    x2 *= len2;
   }
   out[0] = x0;
   out[1] = x1;
@@ -5479,23 +5480,23 @@ function multiplyScalar(out, a, b) {
   out[15] = a[15] * b;
   return out;
 }
-function multiplyScalarAndAdd(out, a, b, scale2) {
-  out[0] = a[0] + b[0] * scale2;
-  out[1] = a[1] + b[1] * scale2;
-  out[2] = a[2] + b[2] * scale2;
-  out[3] = a[3] + b[3] * scale2;
-  out[4] = a[4] + b[4] * scale2;
-  out[5] = a[5] + b[5] * scale2;
-  out[6] = a[6] + b[6] * scale2;
-  out[7] = a[7] + b[7] * scale2;
-  out[8] = a[8] + b[8] * scale2;
-  out[9] = a[9] + b[9] * scale2;
-  out[10] = a[10] + b[10] * scale2;
-  out[11] = a[11] + b[11] * scale2;
-  out[12] = a[12] + b[12] * scale2;
-  out[13] = a[13] + b[13] * scale2;
-  out[14] = a[14] + b[14] * scale2;
-  out[15] = a[15] + b[15] * scale2;
+function multiplyScalarAndAdd(out, a, b, scale3) {
+  out[0] = a[0] + b[0] * scale3;
+  out[1] = a[1] + b[1] * scale3;
+  out[2] = a[2] + b[2] * scale3;
+  out[3] = a[3] + b[3] * scale3;
+  out[4] = a[4] + b[4] * scale3;
+  out[5] = a[5] + b[5] * scale3;
+  out[6] = a[6] + b[6] * scale3;
+  out[7] = a[7] + b[7] * scale3;
+  out[8] = a[8] + b[8] * scale3;
+  out[9] = a[9] + b[9] * scale3;
+  out[10] = a[10] + b[10] * scale3;
+  out[11] = a[11] + b[11] * scale3;
+  out[12] = a[12] + b[12] * scale3;
+  out[13] = a[13] + b[13] * scale3;
+  out[14] = a[14] + b[14] * scale3;
+  out[15] = a[15] + b[15] * scale3;
   return out;
 }
 function exactEquals(a, b) {
@@ -5514,6 +5515,390 @@ function equals(a, b) {
 }
 var mul = multiply;
 var sub = subtract;
+
+// node_modules/gl-matrix/esm/vec3.js
+var vec3_exports = {};
+__export(vec3_exports, {
+  add: () => add3,
+  angle: () => angle,
+  bezier: () => bezier,
+  ceil: () => ceil,
+  clone: () => clone2,
+  copy: () => copy2,
+  create: () => create2,
+  cross: () => cross,
+  dist: () => dist,
+  distance: () => distance,
+  div: () => div,
+  divide: () => divide,
+  dot: () => dot,
+  equals: () => equals2,
+  exactEquals: () => exactEquals2,
+  floor: () => floor,
+  forEach: () => forEach,
+  fromValues: () => fromValues2,
+  hermite: () => hermite,
+  inverse: () => inverse2,
+  len: () => len,
+  length: () => length2,
+  lerp: () => lerp,
+  max: () => max,
+  min: () => min,
+  mul: () => mul2,
+  multiply: () => multiply2,
+  negate: () => negate,
+  normalize: () => normalize,
+  random: () => random,
+  rotateX: () => rotateX2,
+  rotateY: () => rotateY2,
+  rotateZ: () => rotateZ2,
+  round: () => round,
+  scale: () => scale2,
+  scaleAndAdd: () => scaleAndAdd,
+  set: () => set2,
+  sqrDist: () => sqrDist,
+  sqrLen: () => sqrLen,
+  squaredDistance: () => squaredDistance,
+  squaredLength: () => squaredLength,
+  str: () => str2,
+  sub: () => sub2,
+  subtract: () => subtract2,
+  transformMat3: () => transformMat3,
+  transformMat4: () => transformMat4,
+  transformQuat: () => transformQuat,
+  zero: () => zero
+});
+function create2() {
+  var out = new ARRAY_TYPE(3);
+  if (ARRAY_TYPE != Float32Array) {
+    out[0] = 0;
+    out[1] = 0;
+    out[2] = 0;
+  }
+  return out;
+}
+function clone2(a) {
+  var out = new ARRAY_TYPE(3);
+  out[0] = a[0];
+  out[1] = a[1];
+  out[2] = a[2];
+  return out;
+}
+function length2(a) {
+  var x = a[0];
+  var y = a[1];
+  var z = a[2];
+  return Math.hypot(x, y, z);
+}
+function fromValues2(x, y, z) {
+  var out = new ARRAY_TYPE(3);
+  out[0] = x;
+  out[1] = y;
+  out[2] = z;
+  return out;
+}
+function copy2(out, a) {
+  out[0] = a[0];
+  out[1] = a[1];
+  out[2] = a[2];
+  return out;
+}
+function set2(out, x, y, z) {
+  out[0] = x;
+  out[1] = y;
+  out[2] = z;
+  return out;
+}
+function add3(out, a, b) {
+  out[0] = a[0] + b[0];
+  out[1] = a[1] + b[1];
+  out[2] = a[2] + b[2];
+  return out;
+}
+function subtract2(out, a, b) {
+  out[0] = a[0] - b[0];
+  out[1] = a[1] - b[1];
+  out[2] = a[2] - b[2];
+  return out;
+}
+function multiply2(out, a, b) {
+  out[0] = a[0] * b[0];
+  out[1] = a[1] * b[1];
+  out[2] = a[2] * b[2];
+  return out;
+}
+function divide(out, a, b) {
+  out[0] = a[0] / b[0];
+  out[1] = a[1] / b[1];
+  out[2] = a[2] / b[2];
+  return out;
+}
+function ceil(out, a) {
+  out[0] = Math.ceil(a[0]);
+  out[1] = Math.ceil(a[1]);
+  out[2] = Math.ceil(a[2]);
+  return out;
+}
+function floor(out, a) {
+  out[0] = Math.floor(a[0]);
+  out[1] = Math.floor(a[1]);
+  out[2] = Math.floor(a[2]);
+  return out;
+}
+function min(out, a, b) {
+  out[0] = Math.min(a[0], b[0]);
+  out[1] = Math.min(a[1], b[1]);
+  out[2] = Math.min(a[2], b[2]);
+  return out;
+}
+function max(out, a, b) {
+  out[0] = Math.max(a[0], b[0]);
+  out[1] = Math.max(a[1], b[1]);
+  out[2] = Math.max(a[2], b[2]);
+  return out;
+}
+function round(out, a) {
+  out[0] = Math.round(a[0]);
+  out[1] = Math.round(a[1]);
+  out[2] = Math.round(a[2]);
+  return out;
+}
+function scale2(out, a, b) {
+  out[0] = a[0] * b;
+  out[1] = a[1] * b;
+  out[2] = a[2] * b;
+  return out;
+}
+function scaleAndAdd(out, a, b, scale3) {
+  out[0] = a[0] + b[0] * scale3;
+  out[1] = a[1] + b[1] * scale3;
+  out[2] = a[2] + b[2] * scale3;
+  return out;
+}
+function distance(a, b) {
+  var x = b[0] - a[0];
+  var y = b[1] - a[1];
+  var z = b[2] - a[2];
+  return Math.hypot(x, y, z);
+}
+function squaredDistance(a, b) {
+  var x = b[0] - a[0];
+  var y = b[1] - a[1];
+  var z = b[2] - a[2];
+  return x * x + y * y + z * z;
+}
+function squaredLength(a) {
+  var x = a[0];
+  var y = a[1];
+  var z = a[2];
+  return x * x + y * y + z * z;
+}
+function negate(out, a) {
+  out[0] = -a[0];
+  out[1] = -a[1];
+  out[2] = -a[2];
+  return out;
+}
+function inverse2(out, a) {
+  out[0] = 1 / a[0];
+  out[1] = 1 / a[1];
+  out[2] = 1 / a[2];
+  return out;
+}
+function normalize(out, a) {
+  var x = a[0];
+  var y = a[1];
+  var z = a[2];
+  var len2 = x * x + y * y + z * z;
+  if (len2 > 0) {
+    len2 = 1 / Math.sqrt(len2);
+  }
+  out[0] = a[0] * len2;
+  out[1] = a[1] * len2;
+  out[2] = a[2] * len2;
+  return out;
+}
+function dot(a, b) {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+function cross(out, a, b) {
+  var ax = a[0], ay = a[1], az = a[2];
+  var bx = b[0], by = b[1], bz = b[2];
+  out[0] = ay * bz - az * by;
+  out[1] = az * bx - ax * bz;
+  out[2] = ax * by - ay * bx;
+  return out;
+}
+function lerp(out, a, b, t) {
+  var ax = a[0];
+  var ay = a[1];
+  var az = a[2];
+  out[0] = ax + t * (b[0] - ax);
+  out[1] = ay + t * (b[1] - ay);
+  out[2] = az + t * (b[2] - az);
+  return out;
+}
+function hermite(out, a, b, c, d, t) {
+  var factorTimes2 = t * t;
+  var factor1 = factorTimes2 * (2 * t - 3) + 1;
+  var factor2 = factorTimes2 * (t - 2) + t;
+  var factor3 = factorTimes2 * (t - 1);
+  var factor4 = factorTimes2 * (3 - 2 * t);
+  out[0] = a[0] * factor1 + b[0] * factor2 + c[0] * factor3 + d[0] * factor4;
+  out[1] = a[1] * factor1 + b[1] * factor2 + c[1] * factor3 + d[1] * factor4;
+  out[2] = a[2] * factor1 + b[2] * factor2 + c[2] * factor3 + d[2] * factor4;
+  return out;
+}
+function bezier(out, a, b, c, d, t) {
+  var inverseFactor = 1 - t;
+  var inverseFactorTimesTwo = inverseFactor * inverseFactor;
+  var factorTimes2 = t * t;
+  var factor1 = inverseFactorTimesTwo * inverseFactor;
+  var factor2 = 3 * t * inverseFactorTimesTwo;
+  var factor3 = 3 * factorTimes2 * inverseFactor;
+  var factor4 = factorTimes2 * t;
+  out[0] = a[0] * factor1 + b[0] * factor2 + c[0] * factor3 + d[0] * factor4;
+  out[1] = a[1] * factor1 + b[1] * factor2 + c[1] * factor3 + d[1] * factor4;
+  out[2] = a[2] * factor1 + b[2] * factor2 + c[2] * factor3 + d[2] * factor4;
+  return out;
+}
+function random(out, scale3) {
+  scale3 = scale3 || 1;
+  var r = RANDOM() * 2 * Math.PI;
+  var z = RANDOM() * 2 - 1;
+  var zScale = Math.sqrt(1 - z * z) * scale3;
+  out[0] = Math.cos(r) * zScale;
+  out[1] = Math.sin(r) * zScale;
+  out[2] = z * scale3;
+  return out;
+}
+function transformMat4(out, a, m) {
+  var x = a[0], y = a[1], z = a[2];
+  var w = m[3] * x + m[7] * y + m[11] * z + m[15];
+  w = w || 1;
+  out[0] = (m[0] * x + m[4] * y + m[8] * z + m[12]) / w;
+  out[1] = (m[1] * x + m[5] * y + m[9] * z + m[13]) / w;
+  out[2] = (m[2] * x + m[6] * y + m[10] * z + m[14]) / w;
+  return out;
+}
+function transformMat3(out, a, m) {
+  var x = a[0], y = a[1], z = a[2];
+  out[0] = x * m[0] + y * m[3] + z * m[6];
+  out[1] = x * m[1] + y * m[4] + z * m[7];
+  out[2] = x * m[2] + y * m[5] + z * m[8];
+  return out;
+}
+function transformQuat(out, a, q) {
+  var qx = q[0], qy = q[1], qz = q[2], qw = q[3];
+  var x = a[0], y = a[1], z = a[2];
+  var uvx = qy * z - qz * y, uvy = qz * x - qx * z, uvz = qx * y - qy * x;
+  var uuvx = qy * uvz - qz * uvy, uuvy = qz * uvx - qx * uvz, uuvz = qx * uvy - qy * uvx;
+  var w2 = qw * 2;
+  uvx *= w2;
+  uvy *= w2;
+  uvz *= w2;
+  uuvx *= 2;
+  uuvy *= 2;
+  uuvz *= 2;
+  out[0] = x + uvx + uuvx;
+  out[1] = y + uvy + uuvy;
+  out[2] = z + uvz + uuvz;
+  return out;
+}
+function rotateX2(out, a, b, rad) {
+  var p = [], r = [];
+  p[0] = a[0] - b[0];
+  p[1] = a[1] - b[1];
+  p[2] = a[2] - b[2];
+  r[0] = p[0];
+  r[1] = p[1] * Math.cos(rad) - p[2] * Math.sin(rad);
+  r[2] = p[1] * Math.sin(rad) + p[2] * Math.cos(rad);
+  out[0] = r[0] + b[0];
+  out[1] = r[1] + b[1];
+  out[2] = r[2] + b[2];
+  return out;
+}
+function rotateY2(out, a, b, rad) {
+  var p = [], r = [];
+  p[0] = a[0] - b[0];
+  p[1] = a[1] - b[1];
+  p[2] = a[2] - b[2];
+  r[0] = p[2] * Math.sin(rad) + p[0] * Math.cos(rad);
+  r[1] = p[1];
+  r[2] = p[2] * Math.cos(rad) - p[0] * Math.sin(rad);
+  out[0] = r[0] + b[0];
+  out[1] = r[1] + b[1];
+  out[2] = r[2] + b[2];
+  return out;
+}
+function rotateZ2(out, a, b, rad) {
+  var p = [], r = [];
+  p[0] = a[0] - b[0];
+  p[1] = a[1] - b[1];
+  p[2] = a[2] - b[2];
+  r[0] = p[0] * Math.cos(rad) - p[1] * Math.sin(rad);
+  r[1] = p[0] * Math.sin(rad) + p[1] * Math.cos(rad);
+  r[2] = p[2];
+  out[0] = r[0] + b[0];
+  out[1] = r[1] + b[1];
+  out[2] = r[2] + b[2];
+  return out;
+}
+function angle(a, b) {
+  var ax = a[0], ay = a[1], az = a[2], bx = b[0], by = b[1], bz = b[2], mag1 = Math.sqrt(ax * ax + ay * ay + az * az), mag2 = Math.sqrt(bx * bx + by * by + bz * bz), mag = mag1 * mag2, cosine = mag && dot(a, b) / mag;
+  return Math.acos(Math.min(Math.max(cosine, -1), 1));
+}
+function zero(out) {
+  out[0] = 0;
+  out[1] = 0;
+  out[2] = 0;
+  return out;
+}
+function str2(a) {
+  return "vec3(" + a[0] + ", " + a[1] + ", " + a[2] + ")";
+}
+function exactEquals2(a, b) {
+  return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
+}
+function equals2(a, b) {
+  var a0 = a[0], a1 = a[1], a2 = a[2];
+  var b0 = b[0], b1 = b[1], b2 = b[2];
+  return Math.abs(a0 - b0) <= EPSILON * Math.max(1, Math.abs(a0), Math.abs(b0)) && Math.abs(a1 - b1) <= EPSILON * Math.max(1, Math.abs(a1), Math.abs(b1)) && Math.abs(a2 - b2) <= EPSILON * Math.max(1, Math.abs(a2), Math.abs(b2));
+}
+var sub2 = subtract2;
+var mul2 = multiply2;
+var div = divide;
+var dist = distance;
+var sqrDist = squaredDistance;
+var len = length2;
+var sqrLen = squaredLength;
+var forEach = function() {
+  var vec = create2();
+  return function(a, stride, offset, count, fn, arg) {
+    var i, l;
+    if (!stride) {
+      stride = 3;
+    }
+    if (!offset) {
+      offset = 0;
+    }
+    if (count) {
+      l = Math.min(count * stride + offset, a.length);
+    } else {
+      l = a.length;
+    }
+    for (i = offset; i < l; i += stride) {
+      vec[0] = a[i];
+      vec[1] = a[i + 1];
+      vec[2] = a[i + 2];
+      fn(vec, vec, arg);
+      a[i] = vec[0];
+      a[i + 1] = vec[1];
+      a[i + 2] = vec[2];
+    }
+    return a;
+  };
+}();
 
 // src/core/context.ts
 var import_loglevel4 = __toESM(require_loglevel(), 1);
@@ -5562,14 +5947,14 @@ var ModelCache = class {
 // src/utils/tuples.ts
 function normalize3Tuple(tuple) {
   const [x, y, z] = tuple;
-  const len = Math.sqrt(x * x + y * y + z * z);
-  return tuple.map((v) => v / len);
+  const len2 = Math.sqrt(x * x + y * y + z * z);
+  return tuple.map((v) => v / len2);
 }
-function scaleTuple(tuple, scale2) {
-  return tuple.map((v) => v * scale2);
+function scaleTuple(tuple, scale3) {
+  return tuple.map((v) => v * scale3);
 }
-function scaleTupleClamped(colour, scale2) {
-  scaleTuple(colour, scale2);
+function scaleTupleClamped(colour, scale3) {
+  scaleTuple(colour, scale3);
   return colour.map((v) => Math.min(Math.max(v, 0), 1));
 }
 function rgbColour255(r, g, b) {
@@ -5850,35 +6235,35 @@ var Instance = class {
   /**
    * Rotate this instance around the X axis
    */
-  rotateX(angle) {
+  rotateX(angle2) {
     if (!this.rotate)
       this.rotate = [0, 0, 0];
-    this.rotate[0] += angle;
+    this.rotate[0] += angle2;
   }
   /**
    * Rotate this instance around the Y axis
    */
-  rotateY(angle) {
+  rotateY(angle2) {
     if (!this.rotate)
       this.rotate = [0, 0, 0];
-    this.rotate[1] += angle;
+    this.rotate[1] += angle2;
   }
   /**
    * Rotate this instance around the Z axis
    */
-  rotateZ(angle) {
+  rotateZ(angle2) {
     if (!this.rotate)
       this.rotate = [0, 0, 0];
-    this.rotate[2] += angle;
+    this.rotate[2] += angle2;
   }
-  rotateZDeg(angle) {
-    this.rotateZ(angle * Math.PI / 180);
+  rotateZDeg(angle2) {
+    this.rotateZ(angle2 * Math.PI / 180);
   }
-  rotateYDeg(angle) {
-    this.rotateY(angle * Math.PI / 180);
+  rotateYDeg(angle2) {
+    this.rotateY(angle2 * Math.PI / 180);
   }
-  rotateXDeg(angle) {
-    this.rotateX(angle * Math.PI / 180);
+  rotateXDeg(angle2) {
+    this.rotateX(angle2 * Math.PI / 180);
   }
   /**
    * Render this instance in the world
@@ -5893,11 +6278,11 @@ var Instance = class {
     if (!gl)
       return;
     gl.useProgram(programInfo.program);
-    const scale2 = mat4_exports.create();
+    const scale3 = mat4_exports.create();
     const rotate2 = mat4_exports.create();
     const translate2 = mat4_exports.create();
     if (this.scale)
-      mat4_exports.scale(scale2, scale2, this.scale);
+      mat4_exports.scale(scale3, scale3, this.scale);
     if (this.rotate) {
       mat4_exports.rotateX(rotate2, rotate2, this.rotate[0]);
       mat4_exports.rotateY(rotate2, rotate2, this.rotate[1]);
@@ -5907,7 +6292,7 @@ var Instance = class {
       mat4_exports.translate(translate2, translate2, this.position);
     const world = translate2;
     mat4_exports.multiply(world, world, rotate2);
-    mat4_exports.multiply(world, world, scale2);
+    mat4_exports.multiply(world, world, scale3);
     uniforms.u_world = world;
     mat4_exports.invert(uniforms.u_worldInverseTranspose, world);
     mat4_exports.transpose(uniforms.u_worldInverseTranspose, uniforms.u_worldInverseTranspose);
@@ -6141,6 +6526,13 @@ var Context = class _Context {
     this.globalLight.apply(this.billboardProgInfo, "Global");
     this.gl.useProgram(this.mainProgInfo.program);
     this.globalLight.apply(this.mainProgInfo, "Global");
+    if (this.lights.length > MAX_LIGHTS) {
+      this.lights.sort((lightA, lightB) => {
+        const ad = vec3_exports.distance(lightA.position, this.camera.position);
+        const bd = vec3_exports.distance(lightB.position, this.camera.position);
+        return ad - bd;
+      });
+    }
     let lightCount = 0;
     for (const light of this.lights) {
       if (lightCount >= MAX_LIGHTS)
@@ -6187,7 +6579,7 @@ var Context = class _Context {
    */
   setRenderMode(mode) {
     if (!this.programs.has(mode)) {
-      throw new Error(`\u{1F4A5} Render mode '${mode}' is not valid`);
+      throw new Error(`\u{1F4A5} Render mode '${mode}' is not valid, you will have a bad time \u{1F4A9}`);
     }
     this.mainProgInfo = this.programs.get(mode);
   }
