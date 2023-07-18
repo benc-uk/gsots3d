@@ -9,7 +9,7 @@ import { mat4, vec3 } from 'gl-matrix'
 import log from 'loglevel'
 
 import { getGl } from './gl.ts'
-import { UniformSet } from './types.ts'
+import { RGB, UniformSet, XYZ } from './types.ts'
 import { ModelCache } from '../models/cache.ts'
 import { LightDirectional, LightPoint } from '../render/lights.ts'
 import { Camera, CameraType } from '../render/camera.ts'
@@ -35,7 +35,7 @@ export enum RenderMode {
   FLAT = 'flat',
 }
 
-export const MAX_LIGHTS = 16
+const MAX_LIGHTS = 16
 
 /**
  * The main rendering context. This is the effectively main entry point for the library.
@@ -360,5 +360,21 @@ export class Context {
     log.debug(`🚧 Created billboard instance with texture: ${texturePath}`)
 
     return instance
+  }
+
+  createPointLight(position: XYZ, colour: RGB = [1, 1, 1], intensity = 1) {
+    const light = new LightPoint(position, colour)
+    light.position = position
+    light.colour = colour
+
+    // A very simple scaling of the light attenuation
+    // Users can still set the attenuation manually if they want
+    light.constant /= intensity
+    light.linear /= intensity
+    light.quad /= intensity
+
+    this.lights.push(light)
+
+    return light
   }
 }

@@ -5,7 +5,7 @@
 
 import { ProgramInfo, setUniforms } from 'twgl.js'
 import { RGB, UniformSet, XYZ } from '../core/types.ts'
-import { BLACK, WHITE, normalize3Tuple } from '../utils/tuples.ts'
+import { Colours, normalize3Tuple } from '../utils/tuples.ts'
 
 /**
  * A directional light source, typically global with the context having only a single instance
@@ -32,8 +32,8 @@ export class LightDirectional {
   /** Create a default directional light, pointing downward */
   constructor() {
     this._direction = [0, -1, 0]
-    this.colour = WHITE
-    this.ambient = BLACK
+    this.colour = Colours.WHITE
+    this.ambient = Colours.BLACK
   }
 
   /**
@@ -121,15 +121,17 @@ export class LightPoint {
    */
   public quad: number
 
-  constructor() {
-    this.position = [0, 100, 0]
+  constructor(position: XYZ, colour: RGB) {
+    this.position = position
 
-    this.colour = WHITE
-    this.ambient = BLACK
+    this.colour = colour
+    this.ambient = Colours.BLACK
 
-    this.constant = 1.0
-    this.linear = 0.0005
-    this.quad = 0.00002
+    this.constant = 0.5
+    this.linear = 0.018
+    this.quad = 0.0003
+
+    console.log(`Created point light at ${this}`)
   }
 
   /**

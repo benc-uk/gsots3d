@@ -5967,17 +5967,24 @@ function rgbColourHex(hexString) {
   const b = parseInt(hex.substring(4, 6), 16);
   return rgbColour255(r, g, b);
 }
-var ZERO = [0, 0, 0];
-var BLACK = [0, 0, 0];
-var WHITE = [1, 1, 1];
+var Colours = class {
+};
+Colours.RED = [1, 0, 0];
+Colours.GREEN = [0, 1, 0];
+Colours.BLUE = [0, 0, 1];
+Colours.YELLOW = [1, 1, 0];
+Colours.CYAN = [0, 1, 1];
+Colours.MAGENTA = [1, 0, 1];
+Colours.BLACK = [0, 0, 0];
+Colours.WHITE = [1, 1, 1];
 
 // src/render/lights.ts
 var LightDirectional = class {
   /** Create a default directional light, pointing downward */
   constructor() {
     this._direction = [0, -1, 0];
-    this.colour = WHITE;
-    this.ambient = BLACK;
+    this.colour = Colours.WHITE;
+    this.ambient = Colours.BLACK;
   }
   /**
    * Set the direction of the light ensuring it is normalized
@@ -6018,13 +6025,14 @@ var LightDirectional = class {
   }
 };
 var LightPoint = class {
-  constructor() {
-    this.position = [0, 100, 0];
-    this.colour = WHITE;
-    this.ambient = BLACK;
-    this.constant = 1;
-    this.linear = 5e-4;
-    this.quad = 2e-5;
+  constructor(position, colour) {
+    this.position = position;
+    this.colour = colour;
+    this.ambient = Colours.BLACK;
+    this.constant = 0.5;
+    this.linear = 0.018;
+    this.quad = 3e-4;
+    console.log(`Created point light at ${this}`);
   }
   /**
    * Applies the light to the given program as uniform struct
@@ -6191,6 +6199,11 @@ var Material = class _Material {
   /** Create a simple BLUE Material */
   static get BLUE() {
     const m = _Material.createSolidColour(0, 0, 1);
+    return m;
+  }
+  /** Create a simple BLUE Material */
+  static get WHITE() {
+    const m = _Material.createSolidColour(1, 1, 1);
     return m;
   }
   /**
@@ -6666,6 +6679,16 @@ var Context = class _Context {
     import_loglevel4.default.debug(`\u{1F6A7} Created billboard instance with texture: ${texturePath}`);
     return instance;
   }
+  createPointLight(position, colour = [1, 1, 1], intensity = 1) {
+    const light = new LightPoint(position, colour);
+    light.position = position;
+    light.colour = colour;
+    light.constant /= intensity;
+    light.linear /= intensity;
+    light.quad /= intensity;
+    this.lights.push(light);
+    return light;
+  }
 };
 
 // src/models/model.ts
@@ -6940,10 +6963,10 @@ var ModelPart = class {
   }
 };
 export {
-  BLACK,
   BillboardType,
   Camera,
   CameraType,
+  Colours,
   Context,
   HUD,
   Instance,
@@ -6959,8 +6982,6 @@ export {
   PrimitivePlane,
   PrimitiveSphere,
   RenderMode,
-  WHITE,
-  ZERO,
   normalize3Tuple,
   rgbColour255,
   rgbColourHex,

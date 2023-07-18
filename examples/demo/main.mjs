@@ -1,4 +1,4 @@
-import { Model, Context, Material, LightPoint, BLACK, rgbColourHex, BillboardType } from '../../dist-bundle/gsots3d.js'
+import { Model, Context, Material, rgbColourHex, BillboardType, Colours } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init('canvas')
 window.addEventListener('resize', () => ctx.resize())
@@ -33,7 +33,7 @@ ctx.debug = true
   bb.position = [-4, 11, -4]
 
   const floorMat = Material.createBasicTexture('../_textures/stone-wall.png')
-  floorMat.specular = BLACK
+  floorMat.specular = Colours.BLACK
   floorMat.shininess = 100
   const floor = ctx.createPlaneInstance(floorMat, 260, 260, 10, 10, 6)
   floor.position = [0, 0, 0]
@@ -46,8 +46,8 @@ ctx.debug = true
 
   const matBlue = Material.createSolidColour(0.1, 0.1, 0.8)
   matBlue.diffuse = rgbColourHex('#518287')
-  matBlue.specular = [0.4, 0.4, 0.8]
-  matBlue.shininess = 18
+  // matBlue.specular = [0.4, 0.4, 0.8]
+  // matBlue.shininess = 18
   const cylinder = ctx.createCylinderInstance(matBlue, 2.3, 6, 16, 8)
   cylinder.position = [10, 20, -20]
 
@@ -69,6 +69,8 @@ ctx.debug = true
   const tp = ctx.createModelInstance('teapot')
   const tpMat = Material.createSolidColour(1, 0.8, 0.1)
   tp.material = tpMat
+  tpMat.shininess = 70
+  tpMat.specular = [0.8, 0.8, 0.8]
   tp.scale = [1.7, 1.8, 1.7]
   tp.position = [22, 17.5, -8]
   tp.rotateYDeg(45)
@@ -96,22 +98,11 @@ ctx.camera.lookAt = [0, 10, 0]
 ctx.camera.far = 500
 
 // Lights
-ctx.globalLight.setAsPosition(260, 150, 120)
-ctx.globalLight.colour = [0.9, 0.9, 0.9]
+ctx.globalLight.setAsPosition(4, 3, 1.5)
+ctx.globalLight.colour = [0.7, 0.7, 0.7]
 ctx.globalLight.ambient = [0.01, 0.01, 0.01]
-
-const greenLight = new LightPoint()
-greenLight.position = [-30, 19, -60]
-greenLight.colour = [0.2, 0.99, 0.0]
-greenLight.ambient = [0.0, 0.0, 0.0]
-greenLight.linear = 0.018
-ctx.lights.push(greenLight)
-
-const pinkLight = new LightPoint()
-pinkLight.position = [10, 30, 60]
-pinkLight.colour = [1.0, 0.0, 0.4]
-pinkLight.ambient = [0.0, 0.0, 0.0]
-ctx.lights.push(pinkLight)
+ctx.createPointLight([-30, 19, -60], Colours.GREEN)
+ctx.createPointLight([10, 30, 60], [0.9, 0.1, 0.4], 2.4)
 
 let angle = 1.1
 let radius = 50

@@ -155,6 +155,13 @@ export class Material {
     return m
   }
 
+  /** Create a simple BLUE Material */
+  static get WHITE() {
+    const m = Material.createSolidColour(1.0, 1.0, 1.0)
+
+    return m
+  }
+
   /**
    * Applies the material to the given program as a uniform struct
    */

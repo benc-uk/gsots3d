@@ -145,11 +145,6 @@ export class Instance {
     // Finally populate u_worldViewProjection used for rendering
     mat4.multiply(<mat4>uniforms.u_worldViewProjection, <mat4>uniforms.u_proj, worldView)
 
-    // // if renderable is a billboard, we need to chnage program
-    // if (this.renderable instanceof Billboard) {
-    //   gl.useProgram(programInfo.program)
-    // }
-
     // Render the renderable thing wrapped by this instance
     this.renderable.render(gl, uniforms, programInfo, this.material)
   }

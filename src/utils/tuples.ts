@@ -58,11 +58,16 @@ export function rgbColourHex(hexString: string) {
   return rgbColour255(r, g, b)
 }
 
-/** A zero 3-tuple */
-export const ZERO = [0, 0, 0] as XYZ
-
-/** A black RGB 3-tuple */
-export const BLACK = [0, 0, 0] as RGB
-
-/** A white RGB 3-tuple */
-export const WHITE = [1, 1, 1] as RGB
+/**
+ * A set of common colours as RGB tuples
+ */
+export class Colours {
+  static readonly RED = [1, 0, 0] as RGB
+  static readonly GREEN = [0, 1, 0] as RGB
+  static readonly BLUE = [0, 0, 1] as RGB
+  static readonly YELLOW = [1, 1, 0] as RGB
+  static readonly CYAN = [0, 1, 1] as RGB
+  static readonly MAGENTA = [1, 0, 1] as RGB
+  static readonly BLACK = [0, 0, 0] as RGB
+  static readonly WHITE = [1, 1, 1] as RGB
+}
