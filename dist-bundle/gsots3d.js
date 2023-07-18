@@ -5832,28 +5832,6 @@ var Material = class _Material {
   }
 };
 
-// src/models/billboard.ts
-var Billboard = class {
-  constructor(gl, width, height) {
-    this.material = new Material();
-    const transform = mat4_exports.create();
-    mat4_exports.rotateX(transform, transform, Math.PI / 2);
-    this.bufferInfo = primitives.createPlaneBufferInfo(gl, width, height, 1, 1, transform);
-  }
-  render(gl, uniforms, programInfo, materialOverride) {
-    if (!this.bufferInfo)
-      return;
-    if (materialOverride === void 0) {
-      this.material.apply(programInfo);
-    } else {
-      materialOverride.apply(programInfo);
-    }
-    setBuffersAndAttributes(gl, programInfo, this.bufferInfo);
-    setUniforms(programInfo, uniforms);
-    drawBufferInfo(gl, this.bufferInfo);
-  }
-};
-
 // src/models/instance.ts
 var BillboardType = /* @__PURE__ */ ((BillboardType2) => {
   BillboardType2[BillboardType2["NONE"] = 0] = "NONE";
@@ -5914,6 +5892,7 @@ var Instance = class {
       return;
     if (!gl)
       return;
+    gl.useProgram(programInfo.program);
     const scale2 = mat4_exports.create();
     const rotate2 = mat4_exports.create();
     const translate2 = mat4_exports.create();
@@ -5947,10 +5926,29 @@ var Instance = class {
       }
     }
     mat4_exports.multiply(uniforms.u_worldViewProjection, uniforms.u_proj, worldView);
-    if (this.renderable instanceof Billboard) {
-      gl.useProgram(programInfo.program);
-    }
     this.renderable.render(gl, uniforms, programInfo, this.material);
+  }
+};
+
+// src/models/billboard.ts
+var Billboard = class {
+  constructor(gl, width, height) {
+    this.material = new Material();
+    const transform = mat4_exports.create();
+    mat4_exports.rotateX(transform, transform, Math.PI / 2);
+    this.bufferInfo = primitives.createPlaneBufferInfo(gl, width, height, 1, 1, transform);
+  }
+  render(gl, uniforms, programInfo, materialOverride) {
+    if (!this.bufferInfo)
+      return;
+    if (materialOverride === void 0) {
+      this.material.apply(programInfo);
+    } else {
+      materialOverride.apply(programInfo);
+    }
+    setBuffersAndAttributes(gl, programInfo, this.bufferInfo);
+    setUniforms(programInfo, uniforms);
+    drawBufferInfo(gl, this.bufferInfo);
   }
 };
 
@@ -6039,18 +6037,18 @@ var glsl_default3 = "#version 300 es\n\n// =====================================
 var glsl_default4 = "#version 300 es\n\n// ============================================================================\n// Gouraud vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  float shininess;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\n// Some global uniforms\nuniform mat4 u_world;\nuniform vec3 u_camPos;\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\n\n// Main light and material uniforms\nuniform LightDir u_lightDirGlobal;\nuniform Material u_mat;\n\nflat out vec3 v_lightingDiffuse;\nflat out vec3 v_lightingSpecular;\nout vec2 v_texCoord;\n\n/*\n * Legacy lighting calc\n */\nvec2 lightCalc(vec3 N, vec3 L, vec3 H, float shininess) {\n  float diff = dot(N, L);\n\n  return vec2(diff, diff > 0.0 ? pow(max(dot(N, H), 0.0), shininess) : 0.0);\n}\n\nvoid main() {\n  LightDir light = u_lightDirGlobal;\n  vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  vec3 worldPos = (u_world * position).xyz;\n\n  vec3 V = normalize(u_camPos - worldPos);\n  vec3 N = normalize(worldNormal);\n  vec3 L = normalize(-light.direction.xyz);\n  vec3 H = normalize(L + V);\n\n  vec2 l = lightCalc(N, L, H, u_mat.shininess);\n\n  // Output lighting value for fragment shader to use, no color\n  v_lightingDiffuse = light.ambient * u_mat.ambient + light.colour * max(l.x, 0.0);\n\n  // Pass specular in a seperate varying\n  v_lightingSpecular = light.colour * u_mat.specular * l.y;\n\n  // Pass through varying texture coordinate, so we can get the colour there\n  v_texCoord = texcoord;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
 
 // shaders/billboard/glsl.frag
-var glsl_default5 = "#version 300 es\n\n// ============================================================================\n// Billboard fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  float shininess;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\n// From vertex shader\nin vec2 v_texCoord;\nin vec4 v_position;\n\n// Uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\n\n// Output colour of this pixel/fragment\nout vec3 outColour;\n\nvoid main() {\n  vec4 texel = texture(u_mat.diffuseTex, v_texCoord);\n\n  // Magic to make transparent sprites work, without blending\n  if (texel.a < 0.5) {\n    discard;\n  }\n\n  outColour = texel.rgb; // * u_lightDirGlobal.colour * texel.rgb * u_mat.diffuse;\n}\n";
+var glsl_default5 = "#version 300 es\n\n// ============================================================================\n// Billboard fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  float shininess;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\n// From vertex shader\nin vec2 v_texCoord;\nin vec4 v_position;\n\n// Uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\n\n// Output colour of this pixel/fragment\nout vec3 outColour;\n\nvoid main() {\n  vec4 texel = texture(u_mat.diffuseTex, v_texCoord);\n\n  // Magic to make transparent sprites work, without blending\n  if (texel.a < 0.5) {\n    discard;\n  }\n\n  outColour = texel.rgb * u_mat.diffuse * u_lightDirGlobal.colour;\n}\n";
 
 // shaders/billboard/glsl.vert
 var glsl_default6 = "#version 300 es\n\n// ============================================================================\n// Billboard vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_world;\n\n// Output varying's to pass to fragment shader\nout vec4 v_position;\nout vec2 v_texCoord;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_position = u_world * position;\n  gl_Position = u_worldViewProjection * position;\n}\n";
 
 // src/core/context.ts
-var ShaderProgram = /* @__PURE__ */ ((ShaderProgram2) => {
-  ShaderProgram2["PHONG"] = "phong";
-  ShaderProgram2["FLAT"] = "flat";
-  ShaderProgram2["BILLBOARD"] = "billboard";
-  return ShaderProgram2;
-})(ShaderProgram || {});
+var RenderMode = /* @__PURE__ */ ((RenderMode2) => {
+  RenderMode2["PHONG"] = "phong";
+  RenderMode2["FLAT"] = "flat";
+  return RenderMode2;
+})(RenderMode || {});
+var MAX_LIGHTS = 16;
 var Context = class _Context {
   /**
    * Constructor is private, use init() to create a new context
@@ -6060,13 +6058,14 @@ var Context = class _Context {
     this.programs = /* @__PURE__ */ new Map();
     this.started = false;
     this.instances = [];
+    /** All the dynamic point lights in the scene */
     this.lights = [];
-    /** If the canvas can be resized, set this to true, otherwise it's an optimization to set to false */
-    this.resizeable = true;
     /** Show extra debug details on the canvas */
     this.debug = false;
-    /** The shader program to use for rendering */
-    this.shaderProgram = "phong" /* PHONG */;
+    /** The pre-render update hook function */
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    this.update = () => {
+    };
     this.gl = gl;
     this.models = new ModelCache();
     this.prevTime = 0;
@@ -6074,8 +6073,6 @@ var Context = class _Context {
     this.globalLight = new LightDirectional();
     this.globalLight.setAsPosition(20, 50, 30);
     this.camera = new Camera(1 /* PERSPECTIVE */);
-    this.update = () => {
-    };
     this.hud = new HUD(gl.canvas);
     this.debugDiv = document.createElement("div");
     this.debugDiv.classList.add("gsots3d-debug");
@@ -6102,8 +6099,9 @@ var Context = class _Context {
       const flatProg = createProgramInfo(gl, [glsl_default4, glsl_default3]);
       ctx.programs.set("flat" /* FLAT */, flatProg);
       const billboardProg = createProgramInfo(gl, [glsl_default6, glsl_default5]);
-      ctx.programs.set("billboard" /* BILLBOARD */, billboardProg);
-      import_loglevel4.default.info("\u{1F3A8} Loaded all shaders & programs, GL is ready");
+      ctx.billboardProgInfo = billboardProg;
+      ctx.mainProgInfo = phongProg;
+      import_loglevel4.default.info(`\u{1F3A8} Loaded all shaders & programs, GL is ready`);
     } catch (err) {
       import_loglevel4.default.error(err);
       throw err;
@@ -6120,16 +6118,15 @@ var Context = class _Context {
   async render(now) {
     if (!this.gl)
       return;
+    if (!this.mainProgInfo || !this.billboardProgInfo) {
+      import_loglevel4.default.error("\u{1F4A5} Missing program info, this is really bad!");
+      return;
+    }
     now *= 1e-3;
     const deltaTime = now - this.prevTime;
     this.prevTime = now;
     this.totalTime += deltaTime;
     this.update(deltaTime);
-    if (this.resizeable) {
-      resizeCanvasToDisplaySize(this.gl.canvas);
-      this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
-      this.aspectRatio = this.gl.canvas.width / this.gl.canvas.height;
-    }
     const camMatrix = this.camera.matrix;
     const uniforms = {
       u_worldInverseTranspose: mat4_exports.create(),
@@ -6140,29 +6137,23 @@ var Context = class _Context {
       u_proj: this.camera.projectionMatrix(this.aspectRatio),
       u_camPos: this.camera.position
     };
-    let shaderProg = this.programs.get(this.shaderProgram);
-    if (shaderProg === void 0) {
-      throw new Error(`\u{1F4A5}Shader program ${this.shaderProgram} is not valid!`);
-    }
-    this.gl.useProgram(shaderProg.program);
-    this.globalLight.apply(shaderProg, "Global");
+    this.gl.useProgram(this.billboardProgInfo.program);
+    this.globalLight.apply(this.billboardProgInfo, "Global");
+    this.gl.useProgram(this.mainProgInfo.program);
+    this.globalLight.apply(this.mainProgInfo, "Global");
     let lightCount = 0;
     for (const light of this.lights) {
-      if (lightCount > 16)
+      if (lightCount >= MAX_LIGHTS)
         break;
       uniforms[`u_lightsPos[${lightCount++}]`] = light.uniforms;
     }
     uniforms.u_lightsPosCount = lightCount;
     for (const instance of this.instances) {
       if (instance.billboard) {
-        shaderProg = this.programs.get("billboard" /* BILLBOARD */);
+        instance.render(this.gl, uniforms, this.billboardProgInfo);
       } else {
-        shaderProg = this.programs.get(this.shaderProgram);
+        instance.render(this.gl, uniforms, this.mainProgInfo);
       }
-      if (!shaderProg)
-        continue;
-      this.gl.useProgram(shaderProg.program);
-      instance.render(this.gl, uniforms, shaderProg);
     }
     if (this.debug) {
       this.debugDiv.innerHTML = `
@@ -6191,6 +6182,16 @@ var Context = class _Context {
     this.started = false;
   }
   /**
+   * Change the render mode, e.g. Phong or Flat
+   * @param mode - Set the render mode to one of the available sets
+   */
+  setRenderMode(mode) {
+    if (!this.programs.has(mode)) {
+      throw new Error(`\u{1F4A5} Render mode '${mode}' is not valid`);
+    }
+    this.mainProgInfo = this.programs.get(mode);
+  }
+  /**
    * Create a new model instance, which should have been previously loaded into the cache
    * @param modelName - Name of the model previously loaded into the cache
    */
@@ -6201,6 +6202,11 @@ var Context = class _Context {
     const instance = new Instance(model);
     this.instances.push(instance);
     return instance;
+  }
+  resize() {
+    resizeCanvasToDisplaySize(this.gl.canvas);
+    this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
+    this.aspectRatio = this.gl.canvas.width / this.gl.canvas.height;
   }
   /**
    * Create an instance of a primitive sphere
@@ -6252,14 +6258,20 @@ var Context = class _Context {
     import_loglevel4.default.debug(`\u{1F6E2}\uFE0F Created cylinder instance, r:${r}`);
     return instance;
   }
+  /**
+   * Create an instance of a billboard/sprite in the scene
+   * @param texturePath - Path to the texture image file to use for the billboard
+   * @param width - Width of the billboard (default: 5)
+   * @param height - Height of the billboard (default: 5)
+   * @param type - Type of billboard to create (default: CYLINDRICAL)
+   */
   createBillboardInstance(texturePath, width = 5, height = 5, type = 2 /* CYLINDRICAL */) {
-    import_loglevel4.default.debug(`\u{1F6A7} Creating billboard instance ${width}, ${height}`);
     const billboard = new Billboard(this.gl, width, height);
     billboard.material = Material.createBasicTexture(texturePath);
     const instance = new Instance(billboard);
     instance.billboard = type;
     this.instances.push(instance);
-    import_loglevel4.default.debug(`\u{1F6A7} Created billboard instance`);
+    import_loglevel4.default.debug(`\u{1F6A7} Created billboard instance with texture: ${texturePath}`);
     return instance;
   }
 };
@@ -6545,6 +6557,7 @@ export {
   Instance,
   LightDirectional,
   LightPoint,
+  MAX_LIGHTS,
   Material,
   Model,
   ModelCache,
@@ -6553,7 +6566,7 @@ export {
   PrimitiveCylinder,
   PrimitivePlane,
   PrimitiveSphere,
-  ShaderProgram,
+  RenderMode,
   WHITE,
   ZERO,
   normalize3Tuple,

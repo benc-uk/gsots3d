@@ -1,6 +1,7 @@
 import { Context, Material, Model } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init()
+window.addEventListener('resize', () => ctx.resize())
 ctx.debug = true
 
 ctx.camera.position = [0, 7, 20]

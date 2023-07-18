@@ -2,6 +2,7 @@ import { Context, Material } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init()
 ctx.debug = true
+window.addEventListener('resize', () => ctx.resize())
 
 ctx.camera.position = [0, 6, 20]
 ctx.globalLight.setAsPosition(18, 30, 18)

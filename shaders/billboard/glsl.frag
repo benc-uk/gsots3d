@@ -41,5 +41,5 @@ void main() {
     discard;
   }
 
-  outColour = texel.rgb; // * u_lightDirGlobal.colour * texel.rgb * u_mat.diffuse;
+  outColour = texel.rgb * u_mat.diffuse * u_lightDirGlobal.colour;
 }

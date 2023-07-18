@@ -1,3 +1,7 @@
+//
+// Common code for all examples & samples
+//
+
 const canvas = document.querySelector('canvas')
 
 window.onresize = function () {

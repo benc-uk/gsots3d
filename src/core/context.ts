@@ -28,13 +28,14 @@ import fragShaderBill from '../../shaders/billboard/glsl.frag'
 import vertShaderBill from '../../shaders/billboard/glsl.vert'
 
 /**
- * The set of supported shader programs that can be used
+ * The set of supported rendering modes
  */
-export enum ShaderProgram {
+export enum RenderMode {
   PHONG = 'phong',
   FLAT = 'flat',
-  BILLBOARD = 'billboard',
 }
+
+export const MAX_LIGHTS = 16
 
 /**
  * The main rendering context. This is the effectively main entry point for the library.
@@ -43,12 +44,17 @@ export enum ShaderProgram {
 export class Context {
   private gl: WebGL2RenderingContext
   private aspectRatio = 1
-  private programs: Map<ShaderProgram, ProgramInfo> = new Map()
+  private programs: Map<string, ProgramInfo> = new Map()
   private started = false
   private instances: Instance[] = []
   private prevTime: number
   private totalTime: number
   private debugDiv: HTMLDivElement
+  private billboardProgInfo?: ProgramInfo
+  private mainProgInfo?: ProgramInfo
+
+  /** Global directional light */
+  public globalLight: LightDirectional
 
   /** All the dynamic point lights in the scene */
   public lights: LightPoint[] = []
@@ -59,23 +65,15 @@ export class Context {
   /** Cache of models, used to create instances */
   public readonly models: ModelCache
 
-  /** If the canvas can be resized, set this to true, otherwise it's an optimization to set to false */
-  public resizeable = true
-
   /** Show extra debug details on the canvas */
   public debug = false
 
   /** The pre-render update hook function */
-  public update: (delta: number) => void
-
-  /** The shader program to use for rendering */
-  public shaderProgram = ShaderProgram.PHONG
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  public update: (delta: number) => void = () => {}
 
   /** A HUD you can use to render HTML elements over the canvas */
   public readonly hud: HUD
-
-  /** Global directional light */
-  public globalLight: LightDirectional
 
   /**
    * Constructor is private, use init() to create a new context
@@ -92,22 +90,12 @@ export class Context {
 
     this.camera = new Camera(CameraType.PERSPECTIVE)
 
-    this.update = () => {
-      // Placeholder empty update function
-    }
-
     this.hud = new HUD(<HTMLCanvasElement>gl.canvas)
 
     this.debugDiv = document.createElement('div')
     this.debugDiv.classList.add('gsots3d-debug')
     this.debugDiv.style.padding = '15px'
     this.hud.addHUDItem(this.debugDiv)
-
-    // TODO: Left for reference related to flat shading
-    // const epv = gl.getExtension('WEBGL_provoking_vertex')
-    // if (epv) {
-    //   epv.provokingVertexWEBGL(epv.FIRST_VERTEX_CONVENTION_WEBGL)
-    // }
 
     log.info(`👑 GSOTS-3D context created, v${version}`)
   }
@@ -132,15 +120,18 @@ export class Context {
     // Load shaders and build map of programs
     try {
       const phongProg = createProgramInfo(gl, [vertShaderPhong, fragShaderPhong])
-      ctx.programs.set(ShaderProgram.PHONG, phongProg)
+      ctx.programs.set(RenderMode.PHONG, phongProg)
 
       const flatProg = createProgramInfo(gl, [vertShaderFlat, fragShaderFlat])
-      ctx.programs.set(ShaderProgram.FLAT, flatProg)
+      ctx.programs.set(RenderMode.FLAT, flatProg)
 
+      // Special program for billboards, which are rendered differently
       const billboardProg = createProgramInfo(gl, [vertShaderBill, fragShaderBill])
-      ctx.programs.set(ShaderProgram.BILLBOARD, billboardProg)
 
-      log.info('🎨 Loaded all shaders & programs, GL is ready')
+      ctx.billboardProgInfo = billboardProg
+      ctx.mainProgInfo = phongProg
+
+      log.info(`🎨 Loaded all shaders & programs, GL is ready`)
     } catch (err) {
       log.error(err)
       throw err
@@ -161,6 +152,10 @@ export class Context {
    */
   private async render(now: number) {
     if (!this.gl) return
+    if (!this.mainProgInfo || !this.billboardProgInfo) {
+      log.error('💥 Missing program info, this is really bad!')
+      return
+    }
 
     now *= 0.001
     const deltaTime = now - this.prevTime // Get smoothed time difference
@@ -169,12 +164,6 @@ export class Context {
 
     // Call the external update function
     this.update(deltaTime)
-
-    if (this.resizeable) {
-      resizeCanvasToDisplaySize(<HTMLCanvasElement>this.gl.canvas)
-      this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height)
-      this.aspectRatio = this.gl.canvas.width / this.gl.canvas.height
-    }
 
     // Do this in every frame since camera can move
     const camMatrix = this.camera.matrix
@@ -188,19 +177,16 @@ export class Context {
       u_camPos: this.camera.position,
     } as UniformSet
 
-    let shaderProg = this.programs.get(this.shaderProgram)
-    if (shaderProg === undefined) {
-      throw new Error(`💥Shader program ${this.shaderProgram} is not valid!`)
-    }
-
-    // Apply global light to the program
-    this.gl.useProgram(shaderProg.program)
-    this.globalLight.apply(shaderProg, 'Global')
+    // Apply global light to the two programs
+    this.gl.useProgram(this.billboardProgInfo.program)
+    this.globalLight.apply(this.billboardProgInfo, 'Global')
+    this.gl.useProgram(this.mainProgInfo.program)
+    this.globalLight.apply(this.mainProgInfo, 'Global')
 
     // Add the rest of u_lights is the closest lights up to MAX_LIGHTS
     let lightCount = 0
     for (const light of this.lights) {
-      if (lightCount > 16) break
+      if (lightCount >= MAX_LIGHTS) break
       uniforms[`u_lightsPos[${lightCount++}]`] = light.uniforms
     }
 
@@ -209,14 +195,10 @@ export class Context {
     // Draw all instances
     for (const instance of this.instances) {
       if (instance.billboard) {
-        shaderProg = this.programs.get(ShaderProgram.BILLBOARD)
+        instance.render(this.gl, uniforms, this.billboardProgInfo)
       } else {
-        shaderProg = this.programs.get(this.shaderProgram)
+        instance.render(this.gl, uniforms, this.mainProgInfo)
       }
-
-      if (!shaderProg) continue
-      this.gl.useProgram(shaderProg.program)
-      instance.render(this.gl, uniforms, shaderProg)
     }
 
     // Draw the debug HUD
@@ -251,6 +233,18 @@ export class Context {
   }
 
   /**
+   * Change the render mode, e.g. Phong or Flat
+   * @param mode - Set the render mode to one of the available sets
+   */
+  setRenderMode(mode: RenderMode) {
+    if (!this.programs.has(mode)) {
+      throw new Error(`💥 Render mode '${mode}' is not valid`)
+    }
+
+    this.mainProgInfo = this.programs.get(mode)
+  }
+
+  /**
    * Create a new model instance, which should have been previously loaded into the cache
    * @param modelName - Name of the model previously loaded into the cache
    */
@@ -262,6 +256,12 @@ export class Context {
     this.instances.push(instance)
 
     return instance
+  }
+
+  resize() {
+    resizeCanvasToDisplaySize(<HTMLCanvasElement>this.gl.canvas)
+    this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height)
+    this.aspectRatio = this.gl.canvas.width / this.gl.canvas.height
   }
 
   /**
@@ -330,8 +330,14 @@ export class Context {
     return instance
   }
 
+  /**
+   * Create an instance of a billboard/sprite in the scene
+   * @param texturePath - Path to the texture image file to use for the billboard
+   * @param width - Width of the billboard (default: 5)
+   * @param height - Height of the billboard (default: 5)
+   * @param type - Type of billboard to create (default: CYLINDRICAL)
+   */
   createBillboardInstance(texturePath: string, width = 5, height = 5, type = BillboardType.CYLINDRICAL) {
-    log.debug(`🚧 Creating billboard instance ${width}, ${height}`)
     const billboard = new Billboard(this.gl, width, height)
 
     billboard.material = Material.createBasicTexture(texturePath)
@@ -340,7 +346,7 @@ export class Context {
     instance.billboard = type
     this.instances.push(instance)
 
-    log.debug(`🚧 Created billboard instance`)
+    log.debug(`🚧 Created billboard instance with texture: ${texturePath}`)
 
     return instance
   }

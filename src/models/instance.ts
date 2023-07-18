@@ -7,7 +7,6 @@ import { mat4 } from 'gl-matrix'
 import { ProgramInfo } from 'twgl.js'
 import { Renderable, UniformSet } from '../core/types.ts'
 import { Material } from '../render/material.ts'
-import { Billboard } from './billboard.ts'
 
 /** Billboarding modes, most things will ue NONE */
 export enum BillboardType {
@@ -93,8 +92,10 @@ export class Instance {
     if (!this.renderable) return
     if (!gl) return
 
+    // Not a big fan of having this set per instance, but will billboarding we need to
+    gl.useProgram(programInfo.program)
+
     // Local instance transforms are applied in this order to form the world matrix
-    // let world = mat4.create()
     const scale = mat4.create()
     const rotate = mat4.create()
     const translate = mat4.create()
@@ -144,10 +145,10 @@ export class Instance {
     // Finally populate u_worldViewProjection used for rendering
     mat4.multiply(<mat4>uniforms.u_worldViewProjection, <mat4>uniforms.u_proj, worldView)
 
-    // if renderable is a billboard, we need to chnage program
-    if (this.renderable instanceof Billboard) {
-      gl.useProgram(programInfo.program)
-    }
+    // // if renderable is a billboard, we need to chnage program
+    // if (this.renderable instanceof Billboard) {
+    //   gl.useProgram(programInfo.program)
+    // }
 
     // Render the renderable thing wrapped by this instance
     this.renderable.render(gl, uniforms, programInfo, this.material)

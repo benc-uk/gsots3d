@@ -163,6 +163,8 @@ export class Material {
       [`u_mat${uniformSuffix}`]: this.uniforms,
     }
 
+    // console.log('programInfo', programInfo)
+
     setUniforms(programInfo, uni)
   }
 

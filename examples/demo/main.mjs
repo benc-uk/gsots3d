@@ -1,17 +1,8 @@
-import {
-  Model,
-  Context,
-  setLogLevel,
-  Material,
-  LightPoint,
-  BLACK,
-  rgbColourHex,
-  BillboardType,
-} from '../../dist-bundle/gsots3d.js'
+import { Model, Context, Material, LightPoint, BLACK, rgbColourHex, BillboardType } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init('canvas')
+window.addEventListener('resize', () => ctx.resize())
 ctx.debug = true
-setLogLevel('debug')
 
 // Setup scene
 {
