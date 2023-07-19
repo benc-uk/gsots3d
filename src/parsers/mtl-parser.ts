@@ -49,6 +49,7 @@ export function parseMTL(mtlFile: string): Map<string, MtlMaterial> {
     Ks(parts: string[]) {
       material.ks = <[number, number, number]>parts.map(parseFloat)
     },
+    // This is a non-standard addition, but semi-official
     Ke(parts: string[]) {
       material.ke = <[number, number, number]>parts.map(parseFloat)
     },

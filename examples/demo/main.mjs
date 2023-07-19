@@ -1,4 +1,4 @@
-import { Model, Context, Material, rgbColourHex, BillboardType, Colours } from '../../dist-bundle/gsots3d.js'
+import { Model, Context, Material, BillboardType, Colours } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init('canvas')
 window.addEventListener('resize', () => ctx.resize())
@@ -38,19 +38,6 @@ ctx.debug = true
   const floor = ctx.createPlaneInstance(floorMat, 260, 260, 10, 10, 6)
   floor.position = [0, 0, 0]
 
-  const matWhite = Material.createSolidColour(1.0, 1.0, 1.0)
-  matWhite.specular = [1.0, 1.0, 1.0]
-  matWhite.shininess = 100
-  const sphereWhite = ctx.createSphereInstance(matWhite, 3, 16, 8)
-  sphereWhite.position = [12, 20.5, -8]
-
-  const matBlue = Material.createSolidColour(0.1, 0.1, 0.8)
-  matBlue.diffuse = rgbColourHex('#518287')
-  // matBlue.specular = [0.4, 0.4, 0.8]
-  // matBlue.shininess = 18
-  const cylinder = ctx.createCylinderInstance(matBlue, 2.3, 6, 16, 8)
-  cylinder.position = [10, 20, -20]
-
   const mellonTx = Material.createBasicTexture('../_textures/mellon.jpg')
   const mellon = ctx.createSphereInstance(mellonTx, 4, 32, 16)
   mellonTx.diffuse = [0.7, 1.4, 0.7]
@@ -85,10 +72,30 @@ ctx.debug = true
   ico.rotateXDeg(20)
   ico.scale = [6.5, 6.5, 6.5]
 
+  const magMat = Material.createSolidColour(1.0, 0.0, 1.0)
+  magMat.emissive = [1, 0.2, 0.8]
+  magMat.diffuse = [0, 0, 0]
+  const magentaBall = ctx.createSphereInstance(magMat, 3, 16, 8)
+  magentaBall.position = [10, 12, 60]
+
   const bottle = ctx.createModelInstance('wine')
   bottle.position = [-14, 11, -14]
   bottle.rotateXDeg(-90)
   bottle.scale = [0.6, 0.6, 0.6]
+
+  const matGlass = Material.createSolidColour(0.6, 0.6, 0.6)
+  matGlass.specular = [1.0, 1.0, 1.0]
+  matGlass.shininess = 100
+  matGlass.opacity = 0.3
+  const sphereWhite = ctx.createSphereInstance(matGlass, 3, 16, 8)
+  sphereWhite.position = [12, 20.5, -8]
+
+  const matBlue = Material.createSolidColour(0.2, 0.3, 1.0)
+  matBlue.specular = [0.8, 0.8, 0.8]
+  matBlue.shininess = 50
+  matBlue.opacity = 0.5
+  const cylinder = ctx.createCylinderInstance(matBlue, 2.3, 6, 16, 8)
+  cylinder.position = [10, 20, -20]
 }
 
 // Camera

@@ -11,7 +11,9 @@ struct Material {
   vec3 ambient;
   vec3 diffuse;
   vec3 specular;
+  vec3 emissive;
   float shininess;
+  float opacity;
   sampler2D diffuseTex;
   sampler2D specularTex;
 };
@@ -31,7 +33,7 @@ uniform Material u_mat;
 uniform LightDir u_lightDirGlobal;
 
 // Output colour of this pixel/fragment
-out vec3 outColour;
+out vec4 outColour;
 
 void main() {
   vec4 texel = texture(u_mat.diffuseTex, v_texCoord);
@@ -41,5 +43,5 @@ void main() {
     discard;
   }
 
-  outColour = texel.rgb * u_mat.diffuse * u_lightDirGlobal.colour;
+  outColour = vec4(texel.rgb * u_mat.diffuse * u_lightDirGlobal.colour, 1.0);
 }

@@ -139,7 +139,11 @@ export class Context {
 
     gl.enable(gl.DEPTH_TEST)
     gl.enable(gl.CULL_FACE)
+    // for transparent objects
+    gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
+    // Set the clear colour
 
     // bind to the render function
     ctx.render = ctx.render.bind(ctx)

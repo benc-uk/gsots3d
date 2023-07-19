@@ -11,7 +11,9 @@ struct Material {
   vec3 ambient;
   vec3 diffuse;
   vec3 specular;
+  vec3 emissive;
   float shininess;
+  float opacity;
   sampler2D diffuseTex;
   sampler2D specularTex;
 };
@@ -31,5 +33,5 @@ void main() {
   // But texture mapping + Gouraud shading, it looks terrible
   vec3 objectColour = vec3(texture(u_mat.diffuseTex, v_texCoord)) * u_mat.diffuse;
 
-  outColour = objectColour * v_lightingDiffuse + v_lightingSpecular;
+  outColour = objectColour * v_lightingDiffuse + v_lightingSpecular + u_mat.emissive;
 }
