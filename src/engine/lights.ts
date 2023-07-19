@@ -4,8 +4,8 @@
 // ============================================================================
 
 import { ProgramInfo, setUniforms } from 'twgl.js'
-import { RGB, UniformSet, XYZ } from '../core/types.ts'
-import { Colours, normalize3Tuple } from '../utils/tuples.ts'
+import { UniformSet } from '../core/gl.ts'
+import { Colours, normalize3Tuple, XYZ, RGB } from './tuples.ts'
 
 /**
  * A directional light source, typically global with the context having only a single instance
@@ -130,8 +130,6 @@ export class LightPoint {
     this.constant = 0.5
     this.linear = 0.018
     this.quad = 0.0003
-
-    console.log(`Created point light at ${this}`)
   }
 
   /**

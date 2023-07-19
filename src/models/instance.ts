@@ -5,8 +5,9 @@
 
 import { mat4 } from 'gl-matrix'
 import { ProgramInfo } from 'twgl.js'
-import { Renderable, UniformSet } from '../core/types.ts'
-import { Material } from '../render/material.ts'
+import { UniformSet } from '../core/gl.ts'
+import { Renderable } from './types.ts'
+import { Material } from '../engine/material.ts'
 
 /** Billboarding modes, most things will ue NONE */
 export enum BillboardType {

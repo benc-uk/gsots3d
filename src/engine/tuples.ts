@@ -1,4 +1,11 @@
-import { RGB, RGBA, XYZ } from '../core/types.ts'
+/** A simple 3D position or vector tuple */
+export type XYZ = [number, number, number]
+
+/** A simple RGB colour tuple */
+export type RGB = [number, number, number]
+
+/** A simple RGBA colour tuple */
+export type RGBA = [number, number, number, number]
 
 /**
  * Normalizes a 3-tuple to a unit vector.

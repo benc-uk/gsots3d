@@ -259,10 +259,26 @@ var require_loglevel = __commonJS({
   }
 });
 
-// src/core/logging.ts
+// src/core/gl.ts
 var import_loglevel = __toESM(require_loglevel(), 1);
+var glContext;
+function getGl(aa = true, selector = "canvas") {
+  if (glContext) {
+    return glContext;
+  }
+  import_loglevel.default.info(`\u{1F58C}\uFE0F Creating WebGL2 context in ${selector}`);
+  const canvas = document.querySelector(selector);
+  glContext = canvas.getContext("webgl2", { antialias: aa }) ?? void 0;
+  if (!glContext) {
+    import_loglevel.default.error("\u{1F4A5} Unable to create WebGL2 context!");
+  }
+  return glContext;
+}
+
+// src/core/logging.ts
+var import_loglevel2 = __toESM(require_loglevel(), 1);
 function setLogLevel(level) {
-  import_loglevel.default.setLevel(level);
+  import_loglevel2.default.setLevel(level);
 }
 
 // package.json
@@ -5903,23 +5919,7 @@ var forEach = function() {
 // src/core/context.ts
 var import_loglevel4 = __toESM(require_loglevel(), 1);
 
-// src/core/gl.ts
-var import_loglevel2 = __toESM(require_loglevel(), 1);
-var glContext;
-function getGl(aa = true, selector = "canvas") {
-  if (glContext) {
-    return glContext;
-  }
-  import_loglevel2.default.info(`\u{1F58C}\uFE0F Creating WebGL2 context in ${selector}`);
-  const canvas = document.querySelector(selector);
-  glContext = canvas.getContext("webgl2", { antialias: aa }) ?? void 0;
-  if (!glContext) {
-    import_loglevel2.default.error("\u{1F4A5} Unable to create WebGL2 context!");
-  }
-  return glContext;
-}
-
-// src/models/cache.ts
+// src/core/cache.ts
 var import_loglevel3 = __toESM(require_loglevel(), 1);
 var ModelCache = class {
   constructor() {
@@ -5944,7 +5944,7 @@ var ModelCache = class {
   }
 };
 
-// src/utils/tuples.ts
+// src/engine/tuples.ts
 function normalize3Tuple(tuple) {
   const [x, y, z] = tuple;
   const len2 = Math.sqrt(x * x + y * y + z * z);
@@ -5978,7 +5978,7 @@ Colours.MAGENTA = [1, 0, 1];
 Colours.BLACK = [0, 0, 0];
 Colours.WHITE = [1, 1, 1];
 
-// src/render/lights.ts
+// src/engine/lights.ts
 var LightDirectional = class {
   /** Create a default directional light, pointing downward */
   constructor() {
@@ -6032,7 +6032,6 @@ var LightPoint = class {
     this.constant = 0.5;
     this.linear = 0.018;
     this.quad = 3e-4;
-    console.log(`Created point light at ${this}`);
   }
   /**
    * Applies the light to the given program as uniform struct
@@ -6058,7 +6057,7 @@ var LightPoint = class {
   }
 };
 
-// src/render/camera.ts
+// src/engine/camera.ts
 var CameraType = /* @__PURE__ */ ((CameraType2) => {
   CameraType2[CameraType2["PERSPECTIVE"] = 1] = "PERSPECTIVE";
   CameraType2[CameraType2["ORTHOGRAPHIC"] = 2] = "ORTHOGRAPHIC";
@@ -6105,7 +6104,7 @@ var Camera = class {
   }
 };
 
-// src/render/material.ts
+// src/engine/material.ts
 var Material = class _Material {
   /**
    * Create a new material with default diffuse colour
@@ -6687,6 +6686,7 @@ var Context = class _Context {
     light.linear /= intensity;
     light.quad /= intensity;
     this.lights.push(light);
+    import_loglevel4.default.debug(`\u{1F506} Created point light, pos:${position} col:${colour} int:${intensity}`);
     return light;
   }
 };
@@ -6872,7 +6872,7 @@ function parseOBJ(objFile) {
   };
 }
 
-// src/utils/files.ts
+// src/core/files.ts
 async function fetchFile(filePath) {
   const resp = await fetch(filePath);
   if (!resp.ok) {
@@ -6972,7 +6972,6 @@ export {
   Instance,
   LightDirectional,
   LightPoint,
-  MAX_LIGHTS,
   Material,
   Model,
   ModelCache,
@@ -6982,6 +6981,7 @@ export {
   PrimitivePlane,
   PrimitiveSphere,
   RenderMode,
+  getGl,
   normalize3Tuple,
   rgbColour255,
   rgbColourHex,

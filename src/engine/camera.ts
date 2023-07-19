@@ -4,7 +4,7 @@
 // ============================================================================
 
 import { mat4 } from 'gl-matrix'
-import { XYZ } from '../core/types.ts'
+import { XYZ } from './tuples.ts'
 
 export enum CameraType {
   PERSPECTIVE = 1,

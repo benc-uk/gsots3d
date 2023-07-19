@@ -3,7 +3,11 @@
 // Ben Coleman, 2023
 // ======================================================================
 
+import { mat4 } from 'gl-matrix'
 import log from 'loglevel'
+
+/** A map of uniforms that can be used when WebGL rendering, typically applied with twlg.setUniforms() */
+export type UniformSet = { [key: string]: number | number[] | mat4 | WebGLTexture | null }
 
 // Memoized global WebGL2 context
 let glContext: WebGL2RenderingContext | undefined

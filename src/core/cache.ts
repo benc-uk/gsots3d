@@ -4,7 +4,7 @@
 // ============================================================================
 
 import log from 'loglevel'
-import { Model } from './model.ts'
+import { Model } from '../models/model.ts'
 
 /**
  * A simple cache for models, indexed by name

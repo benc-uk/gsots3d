@@ -14,12 +14,12 @@ import {
 } from 'twgl.js'
 import log from 'loglevel'
 
-import { Material } from '../render/material.ts'
+import { Material } from '../engine/material.ts'
 import { parseMTL } from '../parsers/mtl-parser.ts'
 import { parseOBJ } from '../parsers/obj-parser.ts'
-import { fetchFile } from '../utils/files.ts'
-import { getGl } from '../core/gl.ts'
-import { Renderable, UniformSet } from '../core/types.ts'
+import { fetchFile } from '../core/files.ts'
+import { getGl, UniformSet } from '../core/gl.ts'
+import { Renderable } from './types.ts'
 
 /**
  * Holds a 3D model, as a list of parts, each with a material

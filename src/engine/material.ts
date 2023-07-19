@@ -4,9 +4,9 @@
 // ============================================================================
 
 import { ProgramInfo, createTexture, setUniforms } from 'twgl.js'
-import { RGB, UniformSet } from '../core/types.ts'
+import { RGB } from './tuples.ts'
 import { MtlMaterial } from '../parsers/mtl-parser.ts'
-import { getGl } from '../core/gl.ts'
+import { getGl, UniformSet } from '../core/gl.ts'
 
 export class Material {
   /**

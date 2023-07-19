@@ -8,12 +8,12 @@ import { ProgramInfo, createProgramInfo, resizeCanvasToDisplaySize } from 'twgl.
 import { mat4, vec3 } from 'gl-matrix'
 import log from 'loglevel'
 
-import { getGl } from './gl.ts'
-import { RGB, UniformSet, XYZ } from './types.ts'
-import { ModelCache } from '../models/cache.ts'
-import { LightDirectional, LightPoint } from '../render/lights.ts'
-import { Camera, CameraType } from '../render/camera.ts'
-import { Material } from '../render/material.ts'
+import { getGl, UniformSet } from './gl.ts'
+import { RGB, XYZ } from '../engine/tuples.ts'
+import { ModelCache } from './cache.ts'
+import { LightDirectional, LightPoint } from '../engine/lights.ts'
+import { Camera, CameraType } from '../engine/camera.ts'
+import { Material } from '../engine/material.ts'
 import { BillboardType, Instance } from '../models/instance.ts'
 import { Billboard } from '../models/billboard.ts'
 import { HUD } from './hud.ts'
@@ -374,6 +374,8 @@ export class Context {
     light.quad /= intensity
 
     this.lights.push(light)
+
+    log.debug(`🔆 Created point light, pos:${position} col:${colour} int:${intensity}`)
 
     return light
   }
