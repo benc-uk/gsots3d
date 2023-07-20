@@ -1,12 +1,17 @@
 canvas {
-  width: 100%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* image-rendering: pixelated; */
+  /* object-fit: cover; */
 }
 
 body {
   margin: 0;
   width: 100%;
   height: 100%;
-  background-color: rgb(41, 41, 41);
+  background-color: rgb(16, 16, 19);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #e6e6e6;
   overflow: hidden;
@@ -19,6 +24,13 @@ a {
 
 main {
   padding: 20px;
+}
+
+body > div {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 li a {
@@ -35,7 +47,6 @@ li a {
   border-radius: 5px;
   padding: 1rem 2rem;
   width: 50%;
-  /* height: 200px; */
   box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);
   font-size: 1.2rem;
   cursor: unset;

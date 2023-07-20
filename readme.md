@@ -14,6 +14,8 @@ Features
 - Lights: directional (global) and multiple point lights
 - Primitives: sphere, cube, plane
 - Rendering: Phong and flat-Gouraud shading modes
+- Transparency: With limitations
+- Billboarding for 2D/3D sprites
 - Camera: Perspective and orthographic
 
 ## 🕹️ Demos & Samples
@@ -78,6 +80,13 @@ import { Context } from 'https://cdn.jsdelivr.net/gh/benc-uk/gsots3d@main/dist-b
 ```
 
 If you want to reference a specific released version you can do so by changing `benc-uk/gsots3d@main` for example `benc-uk/gsots3d@0.0.1`
+
+## 🤔 Known Issues
+
+- Transparency
+  - Is a bit of a hack and instances/objects are not sorted
+  - Only really works on primitives, you can override a model's material with a transparent one, but results might not what you expect
+
 
 ## 📝 Documentation
 

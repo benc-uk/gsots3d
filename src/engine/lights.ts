@@ -29,11 +29,18 @@ export class LightDirectional {
    */
   public ambient: RGB
 
+  /**
+   * Is this light enabled
+   * @default true
+   */
+  public enabled: boolean
+
   /** Create a default directional light, pointing downward */
   constructor() {
     this._direction = [0, -1, 0]
     this.colour = Colours.WHITE
     this.ambient = Colours.BLACK
+    this.enabled = true
   }
 
   /**
@@ -121,12 +128,18 @@ export class LightPoint {
    */
   public quad: number
 
+  /**
+   * Is this light enabled
+   * @default true
+   */
+  public enabled: boolean
+
   constructor(position: XYZ, colour: RGB) {
     this.position = position
-
     this.colour = colour
-    this.ambient = Colours.BLACK
 
+    this.enabled = true
+    this.ambient = Colours.BLACK
     this.constant = 0.5
     this.linear = 0.018
     this.quad = 0.0003
@@ -148,6 +161,7 @@ export class LightPoint {
    */
   public get uniforms(): UniformSet {
     return {
+      enabled: this.enabled,
       quad: this.quad,
       position: this.position,
       colour: this.colour,

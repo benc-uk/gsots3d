@@ -9,6 +9,7 @@ const keywordRE = /(\w*)(?: )*(.*)/
 export type ParseResult = {
   matLibNames: string[]
   geometries: Geometry[]
+  triangles: number
 }
 
 /**
@@ -39,6 +40,8 @@ export function parseOBJ(objFile: string): ParseResult {
   // same order as `f` indices
   const objVertexData = [objPositions, objTexcoords, objNormals]
 
+  let triangles = 0
+
   // same order as `f` indices
   let webglVertexData = [
     [], // position
@@ -66,6 +69,7 @@ export function parseOBJ(objFile: string): ParseResult {
     },
 
     f(parts: string[]) {
+      triangles++
       setGeometry()
       const numTriangles = parts.length - 2
       for (let tri = 0; tri < numTriangles; ++tri) {
@@ -187,5 +191,6 @@ export function parseOBJ(objFile: string): ParseResult {
   return {
     matLibNames: materialLibs,
     geometries: geometries,
+    triangles,
   } as ParseResult
 }

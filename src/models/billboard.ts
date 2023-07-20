@@ -9,6 +9,7 @@ import { UniformSet } from '../core/gl.ts'
 import { Renderable } from './types.ts'
 import { Material } from '../engine/material.ts'
 import { mat4 } from 'gl-matrix'
+import { stats } from '../core/stats.ts'
 
 export class Billboard implements Renderable {
   protected bufferInfo: BufferInfo | undefined
@@ -42,5 +43,6 @@ export class Billboard implements Renderable {
     setUniforms(programInfo, uniforms)
 
     drawBufferInfo(gl, this.bufferInfo)
+    stats.drawCallsPerFrame++
   }
 }

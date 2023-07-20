@@ -108,4 +108,77 @@ export class Camera {
     const pos = this.position.map((p) => Math.round(p * 100) / 100)
     return `position: [${pos}]`
   }
+
+  mouseclicked = false
+
+  enableFPSControls() {
+    window.addEventListener('mousedown', () => {
+      this.mouseclicked = true
+    })
+
+    window.addEventListener('mouseup', () => {
+      this.mouseclicked = false
+    })
+
+    window.addEventListener('mousemove', (e) => {
+      if (!this.mouseclicked) return
+      // FPS mouse controls, rotate lookat around camera
+      const newLookatX = this.lookAt[0] - this.position[0]
+      const newLookatZ = this.lookAt[2] - this.position[2]
+      // const newLookatY = this.lookAt[1] - this.position[1]
+
+      // Rotate around Y axis
+      const cosY = Math.cos(e.movementX * 0.002)
+      const sinY = Math.sin(e.movementX * 0.002)
+      const newX = newLookatX * cosY - newLookatZ * sinY
+      const newZ = newLookatX * sinY + newLookatZ * cosY
+
+      this.lookAt[0] = this.position[0] + newX
+      this.lookAt[2] = this.position[2] + newZ
+
+      // Look up and down, rotate around X axis
+      // const cosX = Math.cos(e.movementY * -0.002)
+      // const sinX = Math.sin(e.movementY * -0.002)
+      // const newY = newLookatY * cosX - newLookatZ * sinX
+      // const newZ2 = newLookatY * sinX + newLookatZ * cosX
+
+      // this.lookAt[1] = this.position[1] + newY
+      // this.lookAt[2] = this.position[2] + newZ2
+    })
+
+    window.addEventListener('keydown', (e) => {
+      const dX = (this.lookAt[0] - this.position[0]) * 0.02
+      const dZ = (this.lookAt[2] - this.position[2]) * 0.02
+
+      switch (e.key) {
+        case 'w':
+          this.position[0] += dX
+          this.position[2] += dZ
+          this.lookAt[0] += dX
+          this.lookAt[2] += dZ
+          break
+
+        case 's':
+          this.position[0] -= dX
+          this.position[2] -= dZ
+          this.lookAt[0] -= dX
+          this.lookAt[2] -= dZ
+          break
+
+        case 'a':
+          this.position[0] += dZ
+          this.position[2] -= dX
+          this.lookAt[0] += dZ
+          this.lookAt[2] -= dX
+          break
+        case 'd':
+          // move right
+          this.position[0] -= dZ
+          this.position[2] += dX
+          this.lookAt[0] -= dZ
+          this.lookAt[2] += dX
+          break
+      }
+    })
+  }
 }

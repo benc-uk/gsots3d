@@ -39,9 +39,9 @@ void main() {
   vec4 texel = texture(u_mat.diffuseTex, v_texCoord);
 
   // Magic to make transparent sprites work, without blending
-  if (texel.a < 0.5) {
+  if (texel.a < 0.8) {
     discard;
   }
 
-  outColour = vec4(texel.rgb * u_mat.diffuse * u_lightDirGlobal.colour, 1.0);
+  outColour = vec4(texel.rgb * u_mat.diffuse * u_lightDirGlobal.colour, u_mat.opacity);
 }

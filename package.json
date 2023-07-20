@@ -41,7 +41,7 @@
     "watch-bundle": "tsc && npm run build-bundle && run-when-changed --watch 'src/**/*.ts' --watch 'shaders/**/glsl.frag' --watch 'shaders/**/glsl.vert' --exec 'npm run build-bundle'",
     "clean": "rm -rf dist",
     "docs": "typedoc --out docs --gitRevision main ./src/",
-    "examples": "vite --host --port 3000 --open /examples ./examples/"
+    "examples": "vite --port 3000 ./examples/"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.60.1",

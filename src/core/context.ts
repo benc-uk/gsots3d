@@ -26,6 +26,7 @@ import fragShaderFlat from '../../shaders/gouraud-flat/glsl.frag'
 import vertShaderFlat from '../../shaders/gouraud-flat/glsl.vert'
 import fragShaderBill from '../../shaders/billboard/glsl.frag'
 import vertShaderBill from '../../shaders/billboard/glsl.vert'
+import { stats } from './stats.ts'
 
 /**
  * The set of supported rendering modes
@@ -47,8 +48,9 @@ export class Context {
   private programs: Map<string, ProgramInfo> = new Map()
   private started = false
   private instances: Instance[] = []
-  private prevTime: number
-  private totalTime: number
+  private instancesTrans: Instance[] = []
+  // private prevTime: number
+  // private totalTime: number
   private debugDiv: HTMLDivElement
   private billboardProgInfo?: ProgramInfo
   private mainProgInfo?: ProgramInfo
@@ -81,8 +83,8 @@ export class Context {
   private constructor(gl: WebGL2RenderingContext) {
     this.gl = gl
     this.models = new ModelCache()
-    this.prevTime = 0
-    this.totalTime = 0
+    // this.prevTime = 0
+    // this.totalTime = 0
 
     // Main global light
     this.globalLight = new LightDirectional()
@@ -104,7 +106,7 @@ export class Context {
    * Create & initialize a new Context which will render into provided canvas selector
    */
   static async init(canvasSelector: string, backgroundColour = '#000'): Promise<Context> {
-    const gl = getGl(true, canvasSelector)
+    const gl = getGl(false, canvasSelector)
 
     if (!gl) {
       log.error('💥 Failed to get WebGL context')
@@ -139,11 +141,9 @@ export class Context {
 
     gl.enable(gl.DEPTH_TEST)
     gl.enable(gl.CULL_FACE)
-    // for transparent objects
+
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-
-    // Set the clear colour
 
     // bind to the render function
     ctx.render = ctx.render.bind(ctx)
@@ -161,13 +161,10 @@ export class Context {
       return
     }
 
-    now *= 0.001
-    const deltaTime = now - this.prevTime // Get smoothed time difference
-    this.prevTime = now
-    this.totalTime += deltaTime
+    stats.updateTime(now * 0.001)
 
     // Call the external update function
-    this.update(deltaTime)
+    this.update(stats.deltaTime)
 
     // Do this in every frame since camera can move
     const camMatrix = this.camera.matrix
@@ -201,13 +198,27 @@ export class Context {
     let lightCount = 0
     for (const light of this.lights) {
       if (lightCount >= MAX_LIGHTS) break
+      if (!light.enabled) continue
+
       uniforms[`u_lightsPos[${lightCount++}]`] = light.uniforms
     }
 
     uniforms.u_lightsPosCount = lightCount
 
-    // MAIN LOOP - Draw all instances
+    // TODO: Make less lame. Having two lists of instances
+    // This is a poor way of pseudo "sorting" the instances so transparent ones are rendered last
+
+    // MAIN LOOP - Draw all opaque instances
     for (const instance of this.instances) {
+      if (instance.billboard) {
+        instance.render(this.gl, uniforms, this.billboardProgInfo)
+      } else {
+        instance.render(this.gl, uniforms, this.mainProgInfo)
+      }
+    }
+
+    // MAIN LOOP - Draw all transparent instances
+    for (const instance of this.instancesTrans) {
       if (instance.billboard) {
         instance.render(this.gl, uniforms, this.billboardProgInfo)
       } else {
@@ -220,8 +231,10 @@ export class Context {
       this.debugDiv.innerHTML = `
         <b>GSOTS-3D v${version}</b><br><br>
         <b>Camera: </b>${this.camera.toString()}<br>
-        <b>Instances: </b>${this.instances.length}<br>
-        <b>Render: </b>FPS: ${Math.round(1 / deltaTime)} / ${Math.round(this.totalTime)}s<br>
+        <b>Instances: </b>${stats.instances}<br>
+        <b>Draw calls: </b>${stats.drawCallsPerFrame}<br>
+        <b>Triangles: </b>${stats.triangles}<br>
+        <b>Render: </b>FPS: ${stats.FPS} / ${stats.totalTimeRound}s<br>
       `
     } else {
       this.debugDiv.innerHTML = ''
@@ -229,6 +242,9 @@ export class Context {
 
     // Loop forever or stop if not started
     if (this.started) requestAnimationFrame(this.render)
+
+    // Reset stats for next frame
+    stats.resetPerFrame()
   }
 
   /**
@@ -259,6 +275,22 @@ export class Context {
     this.mainProgInfo = this.programs.get(mode)
   }
 
+  resize() {
+    resizeCanvasToDisplaySize(<HTMLCanvasElement>this.gl.canvas)
+    this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height)
+    this.aspectRatio = this.gl.canvas.width / this.gl.canvas.height
+  }
+
+  private addInstance(instance: Instance, material: Material) {
+    if (material.opacity !== undefined && material.opacity < 1) {
+      this.instancesTrans.push(instance)
+    } else {
+      this.instances.push(instance)
+    }
+  }
+
+  // ==================================================================================================================
+
   /**
    * Create a new model instance, which should have been previously loaded into the cache
    * @param modelName - Name of the model previously loaded into the cache
@@ -269,14 +301,10 @@ export class Context {
 
     const instance = new Instance(model)
     this.instances.push(instance)
+    stats.triangles += model.triangleCount
+    stats.instances++
 
     return instance
-  }
-
-  resize() {
-    resizeCanvasToDisplaySize(<HTMLCanvasElement>this.gl.canvas)
-    this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height)
-    this.aspectRatio = this.gl.canvas.width / this.gl.canvas.height
   }
 
   /**
@@ -287,7 +315,9 @@ export class Context {
     sphere.material = material
 
     const instance = new Instance(sphere)
-    this.instances.push(instance)
+    this.addInstance(instance, material)
+    stats.triangles += sphere.triangleCount
+    stats.instances++
 
     log.debug(`🟢 Created sphere instance, r:${radius}`)
 
@@ -308,7 +338,9 @@ export class Context {
     plane.material = material
 
     const instance = new Instance(plane)
-    this.instances.push(instance)
+    this.addInstance(instance, material)
+    stats.triangles += plane.triangleCount
+    stats.instances++
 
     log.debug(`🟨 Created plane instance, w:${width} h:${height}`)
 
@@ -323,7 +355,9 @@ export class Context {
     cube.material = material
 
     const instance = new Instance(cube)
-    this.instances.push(instance)
+    this.addInstance(instance, material)
+    stats.triangles += cube.triangleCount
+    stats.instances++
 
     log.debug(`📦 Created cube instance, size:${size}`)
 
@@ -334,11 +368,13 @@ export class Context {
    * Create an instance of a primitive cylinder
    */
   createCylinderInstance(material: Material, r = 2, h = 5, subdivisionsR = 16, subdivisionsH = 1, caps = true) {
-    const cube = new PrimitiveCylinder(this.gl, r, h, subdivisionsR, subdivisionsH, caps)
-    cube.material = material
+    const cyl = new PrimitiveCylinder(this.gl, r, h, subdivisionsR, subdivisionsH, caps)
+    cyl.material = material
 
-    const instance = new Instance(cube)
-    this.instances.push(instance)
+    const instance = new Instance(cyl)
+    this.addInstance(instance, material)
+    stats.triangles += cyl.triangleCount
+    stats.instances++
 
     log.debug(`🛢️ Created cylinder instance, r:${r}`)
 
@@ -347,25 +383,36 @@ export class Context {
 
   /**
    * Create an instance of a billboard/sprite in the scene
-   * @param texturePath - Path to the texture image file to use for the billboard
+   * @param textureUrl - Path to the texture image file to use for the billboard
    * @param width - Width of the billboard (default: 5)
    * @param height - Height of the billboard (default: 5)
    * @param type - Type of billboard to create (default: CYLINDRICAL)
    */
-  createBillboardInstance(texturePath: string, width = 5, height = 5, type = BillboardType.CYLINDRICAL) {
+  createBillboardInstance(material: Material, width = 5, height = 5, type = BillboardType.CYLINDRICAL) {
     const billboard = new Billboard(this.gl, width, height)
 
-    billboard.material = Material.createBasicTexture(texturePath)
+    billboard.material = material
 
     const instance = new Instance(billboard)
     instance.billboard = type
-    this.instances.push(instance)
 
-    log.debug(`🚧 Created billboard instance with texture: ${texturePath}`)
+    this.addInstance(instance, material)
+
+    stats.triangles += 2
+    stats.instances++
+
+    // log.debug(`🚧 Created billboard instance with texture: ${textureUrl}`)
 
     return instance
   }
 
+  /**
+   * Create a new point light in the scene
+   * @param position - Position of the light
+   * @param colour - Colour of the light, defaults to white
+   * @param intensity - Intensity of the light
+   * @returns The new light object
+   */
   createPointLight(position: XYZ, colour: RGB = [1, 1, 1], intensity = 1) {
     const light = new LightPoint(position, colour)
     light.position = position

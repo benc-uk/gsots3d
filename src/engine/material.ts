@@ -41,7 +41,7 @@ export class Material {
    * Opacity, 0.0 to 1.0
    * @default 1.0
    */
-  public opacity = 1.0
+  public opacity: number
 
   /**
    * Diffuse texture map
@@ -65,6 +65,7 @@ export class Material {
     this.emissive = [0, 0, 0]
 
     this.shininess = 0
+    this.opacity = 1.0
 
     const gl = getGl()
     if (!gl) return

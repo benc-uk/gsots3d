@@ -16,6 +16,7 @@ import {
 import { UniformSet } from '../core/gl.ts'
 import { Renderable } from './types.ts'
 import { Material } from '../engine/material.ts'
+import { stats } from '../core/stats.ts'
 
 /**
  * A simple primitive 3D object, like a sphere or cube
@@ -24,9 +25,15 @@ export abstract class Primitive implements Renderable {
   protected bufferInfo: BufferInfo | undefined
   public material: Material
   public tex: WebGLTexture | undefined
+  protected triangles: number
 
   constructor() {
     this.material = new Material()
+    this.triangles = 0
+  }
+
+  get triangleCount(): number {
+    return this.triangles
   }
 
   render(
@@ -47,6 +54,7 @@ export abstract class Primitive implements Renderable {
     setUniforms(programInfo, uniforms)
 
     drawBufferInfo(gl, this.bufferInfo)
+    stats.drawCallsPerFrame++
   }
 }
 
@@ -55,6 +63,8 @@ export class PrimitiveSphere extends Primitive {
     super()
 
     this.bufferInfo = primitives.createSphereBufferInfo(gl, radius, subdivisionsH, subdivisionsV)
+    // count triangles
+    this.triangles += this.bufferInfo.numElements / 3
   }
 }
 
@@ -63,6 +73,7 @@ export class PrimitiveCube extends Primitive {
     super()
 
     this.bufferInfo = primitives.createCubeBufferInfo(gl, size)
+    this.triangles += this.bufferInfo.numElements / 3
   }
 }
 
@@ -84,6 +95,7 @@ export class PrimitivePlane extends Primitive {
     }
 
     this.bufferInfo = createBufferInfoFromArrays(gl, planeVerts)
+    this.triangles += this.bufferInfo.numElements / 3
   }
 }
 
@@ -99,5 +111,6 @@ export class PrimitiveCylinder extends Primitive {
     super()
 
     this.bufferInfo = primitives.createCylinderBufferInfo(gl, radius, height, subdivisionsR, subdivisionsV, caps, caps)
+    this.triangles += this.bufferInfo.numElements / 3
   }
 }

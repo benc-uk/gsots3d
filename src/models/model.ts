@@ -20,6 +20,7 @@ import { parseOBJ } from '../parsers/obj-parser.ts'
 import { fetchFile } from '../core/files.ts'
 import { getGl, UniformSet } from '../core/gl.ts'
 import { Renderable } from './types.ts'
+import { stats } from '../core/stats.ts'
 
 /**
  * Holds a 3D model, as a list of parts, each with a material
@@ -29,12 +30,14 @@ export class Model implements Renderable {
   public readonly name: string
   public readonly parts = [] as ModelPart[]
   public readonly materials = {} as Record<string, Material>
+  private triangles: number
 
   /**
    * Constructor is private, use static `parse()` method instead
    */
   private constructor(name: string) {
     this.name = name
+    this.triangles = 0
   }
 
   render(
@@ -57,7 +60,12 @@ export class Model implements Renderable {
       setUniforms(programInfo, uniforms)
 
       drawBufferInfo(gl, bufferInfo)
+      stats.drawCallsPerFrame++
     }
+  }
+
+  get triangleCount(): number {
+    return this.triangles
   }
 
   /**
@@ -121,6 +129,7 @@ export class Model implements Renderable {
       } materials`
     )
 
+    model.triangles = objData.triangles
     return model
   }
 }

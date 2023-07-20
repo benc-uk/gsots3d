@@ -22,6 +22,7 @@ struct LightPos {
   float constant;
   float linear;
   float quad;
+  bool enabled;
 };
 
 struct Material {
@@ -70,6 +71,7 @@ vec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {
   vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;
   vec3 specular = light.colour * spec * specularCol;
 
+  // Return a vec4 to support transparency, note specular is not affected by opacity
   return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);
 }
 
@@ -86,7 +88,7 @@ vec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {
   float diff = dot(N, L);
   float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;
 
-  // attenuation
+  // Light attenuation, see: https://learnopengl.com/Lighting/Light-casters
   float dist = length(light.position - v_position.xyz);
   float attenuation = 1.0 / (light.constant + light.linear * dist + light.quad * (dist * dist));
 
@@ -94,6 +96,7 @@ vec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {
   vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * attenuation;
   vec3 specular = light.colour * spec * specularCol * attenuation;
 
+  // Return a vec4 to support transparency, note specular is not affected by opacity
   return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);
 }
 
@@ -106,7 +109,9 @@ void main() {
     outColorPart += shadePosLight(u_lightsPos[i], u_mat, normalize(v_normal), V);
   }
 
-  outColorPart += vec4(u_mat.emissive, length(u_mat.emissive) > 0.0 ? 1.0 : 0.0);
+  // Add emissive component
+  float emissiveAlpha = u_mat.emissive.r + u_mat.emissive.g + u_mat.emissive.b > 0.0 ? 1.0 : 0.0;
+  outColorPart += vec4(u_mat.emissive, emissiveAlpha);
 
   outColour = outColorPart;
 }

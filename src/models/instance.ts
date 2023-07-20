@@ -24,6 +24,7 @@ export class Instance {
   public position: [number, number, number] | undefined
   public scale: [number, number, number] | undefined
   public rotate: [number, number, number] | undefined
+  public enabled = true
 
   /**
    * If this instance is to be drawn as a billboard, and what type
@@ -90,6 +91,7 @@ export class Instance {
    * @param {ProgramInfo} programInfo - Shader program info
    */
   render(gl: WebGL2RenderingContext, uniforms: UniformSet, programInfo: ProgramInfo) {
+    if (!this.enabled) return
     if (!this.renderable) return
     if (!gl) return
 
