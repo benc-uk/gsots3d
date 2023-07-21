@@ -1,22 +1,45 @@
 import { Model, Context, Material, BillboardType, Colours } from '../../dist-bundle/gsots3d.js'
 
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 const ctx = await Context.init('canvas')
 ctx.debug = true
-// ctx.camera.enableFPSControls()
+
+// Setup controls
+if (!isMobile) ctx.camera.enableFPControls(0, -0.2)
 
 // Setup scene
 try {
   ctx.models.add(await Model.parse('../_objects', 'table.obj'))
-  ctx.models.add(await Model.parse('../_objects', 'treasure_chest.obj'))
+  ctx.models.add(await Model.parse('../_objects/chest', 'chest.obj'))
+  ctx.models.add(await Model.parse('../_objects/door', 'door.obj'))
   ctx.models.add(await Model.parse('../_objects', 'icosahedron.obj'))
   ctx.models.add(await Model.parse('../_objects', 'teapot.obj'))
   ctx.models.add(await Model.parse('../_objects', 'wine.obj'))
+
+  const door = ctx.createModelInstance('door')
+  door.scale = [3.5, 3.5, 3.5]
+  door.position = [130, 0, 50]
+  door.rotateYDeg(-90)
+  const door2 = ctx.createModelInstance('door')
+  door2.scale = [3.5, 3.5, 3.5]
+  door2.position = [-130, 0, -50]
+  door2.rotateYDeg(-90)
 
   const table = ctx.createModelInstance('table')
   table.position = [16, 0, -15]
   table.rotateXDeg(-90)
   table.rotateZDeg(-12)
   table.scale = [0.2, 0.3, 0.5]
+
+  const chest1 = ctx.createModelInstance('chest')
+  chest1.scale = [3.5, 3.5, 3.5]
+  chest1.position = [-21, 0, 2]
+  chest1.rotateYDeg(-10)
+
+  const chest2 = ctx.createModelInstance('chest')
+  chest2.scale = [3.5, 3.5, 3.5]
+  chest2.position = [17, 0, 6]
+  chest2.rotateYDeg(-90)
 
   const matGlass = Material.createSolidColour(0.6, 0.6, 0.6)
   matGlass.specular = [1.0, 1.0, 1.0]
@@ -94,22 +117,6 @@ try {
   ico.rotateXDeg(20)
   ico.scale = [6.5, 6.5, 6.5]
 
-  const magMat = Material.createSolidColour(1.0, 0.0, 1.0)
-  magMat.emissive = [1, 0.2, 0.8]
-  magMat.diffuse = [0, 0, 0]
-  const magentaBall = ctx.createSphereInstance(magMat, 3, 16, 8)
-  magentaBall.position = [10, 12, 60]
-
-  const chest2 = ctx.createModelInstance('treasure_chest')
-  chest2.scale = [1.4, 1.4, 1.4]
-  chest2.position = [13, 0, 6]
-  chest2.rotateXDeg(-90)
-
-  const chest1 = ctx.createModelInstance('treasure_chest')
-  chest1.position = [-23, 0, 2]
-  chest1.rotateXDeg(-90)
-  chest1.rotateZDeg(66)
-
   const bottle = ctx.createModelInstance('wine')
   bottle.position = [-14, 11, -14]
   bottle.rotateXDeg(-90)
@@ -119,8 +126,7 @@ try {
 }
 
 // Camera
-let camHeight = 35
-ctx.camera.position = [0, camHeight, 30]
+ctx.camera.position = [0, 25, 50]
 ctx.camera.lookAt = [0, 10, 0]
 ctx.camera.far = 500
 
@@ -129,43 +135,38 @@ ctx.globalLight.setAsPosition(4, 3, 1.5)
 ctx.globalLight.colour = [0.7, 0.7, 0.7]
 ctx.globalLight.ambient = [0.01, 0.01, 0.01]
 const lightGreen = ctx.createPointLight([-30, 19, -60], Colours.GREEN)
-const pinkLight = ctx.createPointLight([10, 30, 60], [0.9, 0.1, 0.4], 2.4)
+const lightPink = ctx.createPointLight([10, 30, 60], [0.9, 0.1, 0.4], 2.4)
 
 let angle = 1.1
-let radius = 50
+const radius = 50
 
-window.onkeydown = (e) => {
-  autoRotate = false
-  // rotate camera
-  if (e.key === 'ArrowLeft') {
-    angle += 0.03
-  }
-
-  if (e.key === 'ArrowRight') {
-    angle -= 0.03
-  }
-
-  // move camera up & down
-  if (e.key === 'ArrowUp') {
-    radius = Math.max(radius - 1, 1)
-  }
-
-  if (e.key === 'ArrowDown') {
-    radius = Math.min(radius + 1, 100)
-  }
-
+window.addEventListener('keydown', (e) => {
   // change height
-  if (e.key === 'PageUp') {
-    camHeight = Math.min(camHeight + 1, 100)
+  if (e.key === 'q') {
+    let h = ctx.camera.position[1]
+    h = Math.min(h + 1, 200)
+    ctx.camera.position[1] = h
   }
 
-  if (e.key === 'PageDown') {
-    camHeight = Math.max(camHeight - 1, 1)
+  if (e.key === 'e') {
+    let h = ctx.camera.position[1]
+    h = Math.max(h - 1, 1)
+    ctx.camera.position[1] = h
   }
 
   // debug
-  if (e.key === 'd') {
+  if (e.key === '0') {
     ctx.debug = !ctx.debug
+  }
+
+  if (e.key === '9') {
+    if (ctx.camera.fpModeEnabled) {
+      ctx.camera.disableFPControls()
+      console.log('FPS mode disabled')
+    } else {
+      ctx.camera.enableFPControls()
+      console.log('FPS mode enabled')
+    }
   }
 
   // fov
@@ -174,27 +175,29 @@ window.onkeydown = (e) => {
   }
 
   if (e.key === 'g') {
-    ctx.camera.fov = Math.min(ctx.camera.fov + 1, 179)
+    ctx.camera.fov = Math.min(ctx.camera.fov + 1, 120)
   }
 
   if (e.key === '2') {
-    pinkLight.enabled = !pinkLight.enabled
+    lightPink.enabled = !lightPink.enabled
   }
   if (e.key === '1') {
     lightGreen.enabled = !lightGreen.enabled
   }
-}
+})
 
-let autoRotate = true
+const autoRotate = isMobile
 
 // Update loop
 ctx.update = (delta) => {
   if (autoRotate) {
     angle += delta * 0.4
+
+    const x = Math.cos(angle) * radius
+    const z = Math.sin(angle) * radius
+    ctx.camera.position = [x, 25, z]
   }
-  const x = Math.cos(angle) * radius
-  const z = Math.sin(angle) * radius
-  ctx.camera.position = [x, camHeight, z]
 }
 
 ctx.start()
+// document.querySelector('.dialog').style.display = 'block'

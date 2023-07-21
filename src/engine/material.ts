@@ -97,15 +97,26 @@ export class Material {
     m.shininess = rawMtl.ns ? rawMtl.ns : 0
     m.opacity = rawMtl.d ? rawMtl.d : 1.0
 
-    if (rawMtl.texDiffuse) {
-      const gl = getGl()
-      if (!gl) return m
+    const gl = getGl()
+    if (!gl) return m
 
+    // filter = false
+    if (rawMtl.texDiffuse) {
       gl.LINEAR_MIPMAP_LINEAR
       m.diffuseTex = createTexture(gl, {
         min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
         mag: filter ? gl.LINEAR : gl.NEAREST,
         src: `${path}/${rawMtl.texDiffuse}`,
+        flipY: flipY ? 1 : 0,
+      })
+    }
+
+    if (rawMtl.texSpecular) {
+      gl.LINEAR_MIPMAP_LINEAR
+      m.specularTex = createTexture(gl, {
+        min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
+        mag: filter ? gl.LINEAR : gl.NEAREST,
+        src: `${path}/${rawMtl.texSpecular}`,
         flipY: flipY ? 1 : 0,
       })
     }

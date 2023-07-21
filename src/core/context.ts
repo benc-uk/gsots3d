@@ -50,6 +50,7 @@ export class Context {
   private instances: Instance[] = []
   private instancesTrans: Instance[] = []
   private debugDiv: HTMLDivElement
+  private loadingDiv: HTMLDivElement
   private billboardProgInfo?: ProgramInfo
   private mainProgInfo?: ProgramInfo
 
@@ -93,6 +94,16 @@ export class Context {
     this.debugDiv = document.createElement('div')
     this.debugDiv.classList.add('gsots3d-debug')
     this.hud.addHUDItem(this.debugDiv)
+
+    this.loadingDiv = document.createElement('div')
+    this.loadingDiv.classList.add('gsots3d-loading')
+    this.loadingDiv.innerHTML = '💾 Loading...'
+    this.loadingDiv.style.fontSize = '4vw'
+    this.loadingDiv.style.position = 'absolute'
+    this.loadingDiv.style.top = '50%'
+    this.loadingDiv.style.left = '50%'
+    this.loadingDiv.style.transform = 'translate(-50%, -50%)'
+    this.hud.addHUDItem(this.loadingDiv)
 
     log.info(`👑 GSOTS-3D context created, v${version}`)
   }
@@ -246,6 +257,7 @@ export class Context {
    * Start the rendering loop
    */
   start() {
+    this.loadingDiv.style.display = 'none'
     this.started = true
     // Restart the render loop
     requestAnimationFrame(this.render)

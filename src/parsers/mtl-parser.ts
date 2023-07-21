@@ -62,9 +62,11 @@ export function parseMTL(mtlFile: string): Map<string, MtlMaterial> {
     illum(parts: string[]) {
       material.illum = parseInt(parts[0])
     },
-
     map_Kd(_: string[], unparsedArgs: string) {
       material.texDiffuse = unparsedArgs
+    },
+    map_Ks(_: string[], unparsedArgs: string) {
+      material.texSpecular = unparsedArgs
     },
   } as Record<string, (parts: string[], unparsedArgs: string) => void>
 

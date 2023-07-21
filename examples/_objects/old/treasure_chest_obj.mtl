@@ -1,0 +1,18 @@
+# Blender MTL File: 'treasure_chest_blender.blend'
+# Material Count: 1
+
+newmtl Material
+Ns 0
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0 0 0
+illum 2
+map_Kd chest_diffuse.png
+
+newmtl Material2
+Ns 20
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 1 1 1
+illum 2
+map_Kd chest_diffuse.png

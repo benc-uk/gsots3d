@@ -75,7 +75,9 @@ export class Model implements Renderable {
    * @param {string} objFilename - The name of the OBJ file
    * @returns {Promise<Model>}
    */
-  static async parse(path = '.', objFilename: string, filterTextures = false, flipTextureY = true) {
+  static async parse(path = '.', objFilename: string, filterTextures = true, flipTextureY = true) {
+    const startTime = performance.now()
+
     // Create a new model with the name of the file
     const name = objFilename.split('.')[0]
     const model = new Model(name)
@@ -126,7 +128,7 @@ export class Model implements Renderable {
     log.debug(
       `♟️ Model '${objFilename}' loaded with ${model.parts.length} parts, ${
         Object.keys(model.materials).length
-      } materials`
+      } materials in ${((performance.now() - startTime) / 1000).toFixed(2)}s`
     )
 
     model.triangles = objData.triangles

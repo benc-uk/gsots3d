@@ -6062,14 +6062,13 @@ var LightPoint = class {
 
 // src/engine/camera.ts
 var CameraType = /* @__PURE__ */ ((CameraType2) => {
-  CameraType2[CameraType2["PERSPECTIVE"] = 1] = "PERSPECTIVE";
-  CameraType2[CameraType2["ORTHOGRAPHIC"] = 2] = "ORTHOGRAPHIC";
+  CameraType2[CameraType2["PERSPECTIVE"] = 0] = "PERSPECTIVE";
+  CameraType2[CameraType2["ORTHOGRAPHIC"] = 1] = "ORTHOGRAPHIC";
   return CameraType2;
 })(CameraType || {});
 var Camera = class {
   /** Create a new default camera */
-  constructor(type = 1 /* PERSPECTIVE */) {
-    this.mouseclicked = false;
+  constructor(type = 0 /* PERSPECTIVE */) {
     this.position = [0, 0, 30];
     this.lookAt = [0, 0, 0];
     this.up = [0, 1, 0];
@@ -6078,15 +6077,27 @@ var Camera = class {
     this.fov = 45;
     this.type = type;
     this.orthoZoom = 20;
+    this.fpMode = false;
+    this.fpAngleY = 0;
+    this.fpAngleX = 0;
+    this.fpTurnSpeed = 3e-3;
+    this.fpMoveSpeed = 3.5;
   }
-  /** Get the view matrix for this camera */
+  /** Get the view matrix for the camera */
   get matrix() {
-    const camView = mat4_exports.targetTo(mat4_exports.create(), this.position, this.lookAt, this.up);
+    if (!this.fpMode) {
+      const camView2 = mat4_exports.targetTo(mat4_exports.create(), this.position, this.lookAt, this.up);
+      return camView2;
+    }
+    const camView = mat4_exports.targetTo(mat4_exports.create(), [0, 0, 0], [0, 0, -1], this.up);
+    mat4_exports.translate(camView, camView, this.position);
+    mat4_exports.rotateY(camView, camView, this.fpAngleY);
+    mat4_exports.rotateX(camView, camView, this.fpAngleX);
     return camView;
   }
   /** Get the projection matrix for this camera */
   projectionMatrix(aspectRatio) {
-    if (this.type === 2 /* ORTHOGRAPHIC */) {
+    if (this.type === 1 /* ORTHOGRAPHIC */) {
       const camProj = mat4_exports.ortho(
         mat4_exports.create(),
         -aspectRatio * this.orthoZoom,
@@ -6102,59 +6113,83 @@ var Camera = class {
       return camProj;
     }
   }
+  /** Get the camera position as a string for debugging */
   toString() {
     const pos = this.position.map((p) => Math.round(p * 100) / 100);
     return `position: [${pos}]`;
   }
-  enableFPSControls() {
-    window.addEventListener("mousedown", () => {
-      this.mouseclicked = true;
-    });
-    window.addEventListener("mouseup", () => {
-      this.mouseclicked = false;
-    });
-    window.addEventListener("mousemove", (e) => {
-      if (!this.mouseclicked)
-        return;
-      const newLookatX = this.lookAt[0] - this.position[0];
-      const newLookatZ = this.lookAt[2] - this.position[2];
-      const cosY = Math.cos(e.movementX * 2e-3);
-      const sinY = Math.sin(e.movementX * 2e-3);
-      const newX = newLookatX * cosY - newLookatZ * sinY;
-      const newZ = newLookatX * sinY + newLookatZ * cosY;
-      this.lookAt[0] = this.position[0] + newX;
-      this.lookAt[2] = this.position[2] + newZ;
-    });
-    window.addEventListener("keydown", (e) => {
-      const dX = (this.lookAt[0] - this.position[0]) * 0.02;
-      const dZ = (this.lookAt[2] - this.position[2]) * 0.02;
-      switch (e.key) {
-        case "w":
-          this.position[0] += dX;
-          this.position[2] += dZ;
-          this.lookAt[0] += dX;
-          this.lookAt[2] += dZ;
-          break;
-        case "s":
-          this.position[0] -= dX;
-          this.position[2] -= dZ;
-          this.lookAt[0] -= dX;
-          this.lookAt[2] -= dZ;
-          break;
-        case "a":
-          this.position[0] += dZ;
-          this.position[2] -= dX;
-          this.lookAt[0] += dZ;
-          this.lookAt[2] -= dX;
-          break;
-        case "d":
-          this.position[0] -= dZ;
-          this.position[2] += dX;
-          this.lookAt[0] -= dZ;
-          this.lookAt[2] += dX;
-          break;
-      }
-    });
+  /**
+   * Switches the camera to FPS mode, this is a special mode where the camera is
+   * controlled by the mouse and keyboard. The mouse moves the camera around and
+   * the keyboard moves the camera forward/backward and left/right
+   * @param angleY Starting look up/down angle in radians
+   * @param angleX Starting look left/right angle in radians
+   * @param turnSpeed Speed of looking in radians
+   * @param moveSpeed Speed of moving in units
+   * @returns
+   */
+  enableFPControls(angleY = 0, angleX = 0, turnSpeed = 3e-3, moveSpeed = 3.5) {
+    if (this.fpMode)
+      return;
+    this.fpMode = true;
+    this.fpAngleY = angleY;
+    this.fpAngleX = angleX;
+    this.fpTurnSpeed = turnSpeed;
+    this.fpMoveSpeed = moveSpeed;
+    window.addEventListener("mousemove", this._fpEventMouseMove.bind(this));
+    window.addEventListener("keydown", this._fpEventKeyDown.bind(this));
+  }
+  /** Disable FPS mode */
+  disableFPControls() {
+    this.fpMode = false;
+  }
+  /** Get FPS mode enabled state */
+  get fpModeEnabled() {
+    return this.fpMode;
+  }
+  /** Private event handlers for FPS mode */
+  _fpEventMouseMove(e) {
+    if (!this.fpMode)
+      return;
+    this.fpAngleY += e.movementX * -this.fpTurnSpeed;
+    this.fpAngleX += e.movementY * -this.fpTurnSpeed;
+  }
+  /** Private event handlers for FPS mode */
+  _fpEventKeyDown(e) {
+    if (!this.fpMode)
+      return;
+    const dZ = -Math.cos(this.fpAngleY) * this.fpMoveSpeed;
+    const dX = -Math.sin(this.fpAngleY) * this.fpMoveSpeed;
+    switch (e.key) {
+      case "ArrowUp":
+      case "w":
+        this.position[0] += dX;
+        this.position[2] += dZ;
+        this.lookAt[0] += dX;
+        this.lookAt[2] += dZ;
+        break;
+      case "ArrowDown":
+      case "s":
+        this.position[0] -= dX;
+        this.position[2] -= dZ;
+        this.lookAt[0] -= dX;
+        this.lookAt[2] -= dZ;
+        break;
+      case "ArrowLeft":
+      case "a":
+        this.position[0] += dZ;
+        this.position[2] -= dX;
+        this.lookAt[0] += dZ;
+        this.lookAt[2] -= dX;
+        break;
+      case "ArrowRight":
+      case "d":
+        this.position[0] -= dZ;
+        this.position[2] += dX;
+        this.lookAt[0] -= dZ;
+        this.lookAt[2] += dX;
+        break;
+    }
   }
 };
 
@@ -6296,15 +6331,24 @@ var Material = class _Material {
     m.emissive = rawMtl.ke ? rawMtl.ke : [0, 0, 0];
     m.shininess = rawMtl.ns ? rawMtl.ns : 0;
     m.opacity = rawMtl.d ? rawMtl.d : 1;
+    const gl = getGl();
+    if (!gl)
+      return m;
     if (rawMtl.texDiffuse) {
-      const gl = getGl();
-      if (!gl)
-        return m;
       gl.LINEAR_MIPMAP_LINEAR;
       m.diffuseTex = createTexture(gl, {
         min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
         mag: filter ? gl.LINEAR : gl.NEAREST,
         src: `${path}/${rawMtl.texDiffuse}`,
+        flipY: flipY ? 1 : 0
+      });
+    }
+    if (rawMtl.texSpecular) {
+      gl.LINEAR_MIPMAP_LINEAR;
+      m.specularTex = createTexture(gl, {
+        min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
+        mag: filter ? gl.LINEAR : gl.NEAREST,
+        src: `${path}/${rawMtl.texSpecular}`,
         flipY: flipY ? 1 : 0
       });
     }
@@ -6464,6 +6508,8 @@ var HUD = class {
     this.hud.style.position = canvasStyles.getPropertyValue("position");
     this.hud.style.top = canvasStyles.getPropertyValue("top");
     this.hud.style.left = canvasStyles.getPropertyValue("left");
+    this.hud.style.width = canvasStyles.getPropertyValue("width");
+    this.hud.style.height = canvasStyles.getPropertyValue("height");
     this.hud.style.transform = canvasStyles.getPropertyValue("transform");
   }
   addHUDItem(item) {
@@ -6577,11 +6623,20 @@ var Context = class _Context {
     this.models = new ModelCache();
     this.globalLight = new LightDirectional();
     this.globalLight.setAsPosition(20, 50, 30);
-    this.camera = new Camera(1 /* PERSPECTIVE */);
+    this.camera = new Camera(0 /* PERSPECTIVE */);
     this.hud = new HUD(gl.canvas);
     this.debugDiv = document.createElement("div");
     this.debugDiv.classList.add("gsots3d-debug");
     this.hud.addHUDItem(this.debugDiv);
+    this.loadingDiv = document.createElement("div");
+    this.loadingDiv.classList.add("gsots3d-loading");
+    this.loadingDiv.innerHTML = "\u{1F4BE} Loading...";
+    this.loadingDiv.style.fontSize = "4vw";
+    this.loadingDiv.style.position = "absolute";
+    this.loadingDiv.style.top = "50%";
+    this.loadingDiv.style.left = "50%";
+    this.loadingDiv.style.transform = "translate(-50%, -50%)";
+    this.hud.addHUDItem(this.loadingDiv);
     import_loglevel4.default.info(`\u{1F451} GSOTS-3D context created, v${version}`);
   }
   /**
@@ -6693,6 +6748,7 @@ var Context = class _Context {
    * Start the rendering loop
    */
   start() {
+    this.loadingDiv.style.display = "none";
     this.started = true;
     requestAnimationFrame(this.render);
   }
@@ -6873,6 +6929,9 @@ function parseMTL(mtlFile) {
     },
     map_Kd(_, unparsedArgs) {
       material.texDiffuse = unparsedArgs;
+    },
+    map_Ks(_, unparsedArgs) {
+      material.texSpecular = unparsedArgs;
     }
   };
   const keywordRE2 = /(\w*)(?: )*(.*)/;
@@ -7065,7 +7124,8 @@ var Model = class _Model {
    * @param {string} objFilename - The name of the OBJ file
    * @returns {Promise<Model>}
    */
-  static async parse(path = ".", objFilename, filterTextures = false, flipTextureY = true) {
+  static async parse(path = ".", objFilename, filterTextures = true, flipTextureY = true) {
+    const startTime = performance.now();
     const name = objFilename.split(".")[0];
     const model = new _Model(name);
     let objFile;
@@ -7099,7 +7159,7 @@ var Model = class _Model {
       model.parts.push(new ModelPart(bufferInfo, g.material));
     }
     import_loglevel5.default.debug(
-      `\u265F\uFE0F Model '${objFilename}' loaded with ${model.parts.length} parts, ${Object.keys(model.materials).length} materials`
+      `\u265F\uFE0F Model '${objFilename}' loaded with ${model.parts.length} parts, ${Object.keys(model.materials).length} materials in ${((performance.now() - startTime) / 1e3).toFixed(2)}s`
     );
     model.triangles = objData.triangles;
     return model;

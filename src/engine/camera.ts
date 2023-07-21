@@ -7,7 +7,7 @@ import { mat4 } from 'gl-matrix'
 import { XYZ } from './tuples.ts'
 
 export enum CameraType {
-  PERSPECTIVE = 1,
+  PERSPECTIVE,
   ORTHOGRAPHIC,
 }
 
@@ -46,7 +46,7 @@ export class Camera {
    * Camera up vector
    * @default [0, 1, 0]
    */
-  public readonly up: XYZ
+  public up: XYZ
 
   /**
    * Change camera projection, default perspective
@@ -61,6 +61,12 @@ export class Camera {
    */
   public orthoZoom: number
 
+  private fpAngleY: number
+  private fpAngleX: number
+  private fpMode: boolean
+  private fpTurnSpeed: number
+  private fpMoveSpeed: number
+
   /** Create a new default camera */
   constructor(type = CameraType.PERSPECTIVE) {
     this.position = [0, 0, 30]
@@ -74,11 +80,27 @@ export class Camera {
 
     this.type = type
     this.orthoZoom = 20
+
+    this.fpMode = false
+    this.fpAngleY = 0
+    this.fpAngleX = 0
+    this.fpTurnSpeed = 0.003
+    this.fpMoveSpeed = 3.5
   }
 
-  /** Get the view matrix for this camera */
+  /** Get the view matrix for the camera */
   get matrix() {
-    const camView = mat4.targetTo(mat4.create(), this.position, this.lookAt, this.up)
+    // Standard view matrix with position and lookAt for non-FPS camera
+    if (!this.fpMode) {
+      const camView = mat4.targetTo(mat4.create(), this.position, this.lookAt, this.up)
+      return camView
+    }
+
+    // FPS camera is handled different, we need to rotate the camera around the Y axis
+    const camView = mat4.targetTo(mat4.create(), [0, 0, 0], [0, 0, -1], this.up)
+    mat4.translate(camView, camView, this.position)
+    mat4.rotateY(camView, camView, this.fpAngleY)
+    mat4.rotateX(camView, camView, this.fpAngleX)
     return camView
   }
 
@@ -98,87 +120,100 @@ export class Camera {
       return camProj
     } else {
       const camProj = mat4.perspective(mat4.create(), this.fov * (Math.PI / 180), aspectRatio, this.near, this.far)
-
       return camProj
     }
   }
 
+  /** Get the camera position as a string for debugging */
   toString() {
     // round down position to 2 decimal places
     const pos = this.position.map((p) => Math.round(p * 100) / 100)
     return `position: [${pos}]`
   }
 
-  mouseclicked = false
+  /**
+   * Switches the camera to FPS mode, this is a special mode where the camera is
+   * controlled by the mouse and keyboard. The mouse moves the camera around and
+   * the keyboard moves the camera forward/backward and left/right
+   * @param angleY Starting look up/down angle in radians
+   * @param angleX Starting look left/right angle in radians
+   * @param turnSpeed Speed of looking in radians
+   * @param moveSpeed Speed of moving in units
+   * @returns
+   */
+  enableFPControls(angleY = 0, angleX = 0, turnSpeed = 0.003, moveSpeed = 3.5) {
+    if (this.fpMode) return // prevent multiple event listeners
 
-  enableFPSControls() {
-    window.addEventListener('mousedown', () => {
-      this.mouseclicked = true
-    })
+    this.fpMode = true
 
-    window.addEventListener('mouseup', () => {
-      this.mouseclicked = false
-    })
+    this.fpAngleY = angleY
+    this.fpAngleX = angleX
+    this.fpTurnSpeed = turnSpeed
+    this.fpMoveSpeed = moveSpeed
 
-    window.addEventListener('mousemove', (e) => {
-      if (!this.mouseclicked) return
-      // FPS mouse controls, rotate lookat around camera
-      const newLookatX = this.lookAt[0] - this.position[0]
-      const newLookatZ = this.lookAt[2] - this.position[2]
-      // const newLookatY = this.lookAt[1] - this.position[1]
+    window.addEventListener('mousemove', this._fpEventMouseMove.bind(this))
+    window.addEventListener('keydown', this._fpEventKeyDown.bind(this))
+  }
 
-      // Rotate around Y axis
-      const cosY = Math.cos(e.movementX * 0.002)
-      const sinY = Math.sin(e.movementX * 0.002)
-      const newX = newLookatX * cosY - newLookatZ * sinY
-      const newZ = newLookatX * sinY + newLookatZ * cosY
+  /** Disable FPS mode */
+  disableFPControls() {
+    this.fpMode = false
+  }
 
-      this.lookAt[0] = this.position[0] + newX
-      this.lookAt[2] = this.position[2] + newZ
+  /** Get FPS mode enabled state */
+  get fpModeEnabled() {
+    return this.fpMode
+  }
 
-      // Look up and down, rotate around X axis
-      // const cosX = Math.cos(e.movementY * -0.002)
-      // const sinX = Math.sin(e.movementY * -0.002)
-      // const newY = newLookatY * cosX - newLookatZ * sinX
-      // const newZ2 = newLookatY * sinX + newLookatZ * cosX
+  /** Private event handlers for FPS mode */
+  private _fpEventMouseMove(e: MouseEvent) {
+    if (!this.fpMode) return
 
-      // this.lookAt[1] = this.position[1] + newY
-      // this.lookAt[2] = this.position[2] + newZ2
-    })
+    this.fpAngleY += e.movementX * -this.fpTurnSpeed
+    this.fpAngleX += e.movementY * -this.fpTurnSpeed
+  }
 
-    window.addEventListener('keydown', (e) => {
-      const dX = (this.lookAt[0] - this.position[0]) * 0.02
-      const dZ = (this.lookAt[2] - this.position[2]) * 0.02
+  /** Private event handlers for FPS mode */
+  private _fpEventKeyDown(e: KeyboardEvent) {
+    if (!this.fpMode) return
 
-      switch (e.key) {
-        case 'w':
-          this.position[0] += dX
-          this.position[2] += dZ
-          this.lookAt[0] += dX
-          this.lookAt[2] += dZ
-          break
+    // use fpAngleY to calculate the direction we are facing
+    const dZ = -Math.cos(this.fpAngleY) * this.fpMoveSpeed
+    const dX = -Math.sin(this.fpAngleY) * this.fpMoveSpeed
 
-        case 's':
-          this.position[0] -= dX
-          this.position[2] -= dZ
-          this.lookAt[0] -= dX
-          this.lookAt[2] -= dZ
-          break
+    switch (e.key) {
+      case 'ArrowUp':
+      case 'w':
+        this.position[0] += dX
+        this.position[2] += dZ
+        this.lookAt[0] += dX
+        this.lookAt[2] += dZ
+        break
 
-        case 'a':
-          this.position[0] += dZ
-          this.position[2] -= dX
-          this.lookAt[0] += dZ
-          this.lookAt[2] -= dX
-          break
-        case 'd':
-          // move right
-          this.position[0] -= dZ
-          this.position[2] += dX
-          this.lookAt[0] -= dZ
-          this.lookAt[2] += dX
-          break
-      }
-    })
+      case 'ArrowDown':
+      case 's':
+        this.position[0] -= dX
+        this.position[2] -= dZ
+        this.lookAt[0] -= dX
+        this.lookAt[2] -= dZ
+        break
+
+      case 'ArrowLeft':
+      case 'a':
+        this.position[0] += dZ
+        this.position[2] -= dX
+        this.lookAt[0] += dZ
+        this.lookAt[2] -= dX
+        break
+
+      case 'ArrowRight':
+      case 'd':
+        // move right
+        this.position[0] -= dZ
+        this.position[2] += dX
+        this.lookAt[0] -= dZ
+        this.lookAt[2] += dX
+        break
+    }
   }
 }

@@ -23,6 +23,8 @@ export class HUD {
     this.hud.style.position = canvasStyles.getPropertyValue('position')
     this.hud.style.top = canvasStyles.getPropertyValue('top')
     this.hud.style.left = canvasStyles.getPropertyValue('left')
+    this.hud.style.width = canvasStyles.getPropertyValue('width')
+    this.hud.style.height = canvasStyles.getPropertyValue('height')
     this.hud.style.transform = canvasStyles.getPropertyValue('transform')
   }
 
