@@ -49,8 +49,6 @@ export class Context {
   private started = false
   private instances: Instance[] = []
   private instancesTrans: Instance[] = []
-  // private prevTime: number
-  // private totalTime: number
   private debugDiv: HTMLDivElement
   private billboardProgInfo?: ProgramInfo
   private mainProgInfo?: ProgramInfo
@@ -83,8 +81,6 @@ export class Context {
   private constructor(gl: WebGL2RenderingContext) {
     this.gl = gl
     this.models = new ModelCache()
-    // this.prevTime = 0
-    // this.totalTime = 0
 
     // Main global light
     this.globalLight = new LightDirectional()

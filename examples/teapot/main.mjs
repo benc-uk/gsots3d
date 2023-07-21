@@ -1,7 +1,7 @@
 import { Context, Material, Model } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init()
-// window.addEventListener('resize', () => ctx.resize())
+window.addEventListener('resize', () => ctx.resize())
 ctx.debug = true
 
 ctx.camera.position = [0, 7, 20]
@@ -10,7 +10,7 @@ ctx.globalLight.ambient = [0.1, 0.1, 0.1]
 
 const matBlue = Material.BLUE
 matBlue.specular = [1.0, 1.0, 1.0]
-matBlue.shininess = 200
+matBlue.shininess = 100
 matBlue.diffuse = [0.1, 0.26, 0.9]
 
 ctx.models.add(await Model.parse('../_objects', 'teapot.obj'))

@@ -9,11 +9,15 @@ window.onresize = function () {
   resizeCanvas()
 }
 
+window.onload = function () {
+  resizeCanvas()
+}
+
 window.ondblclick = function () {
   if (document.fullscreenElement) {
     document.exitFullscreen()
   } else {
-    canvas.requestFullscreen()
+    canvas.parentElement.requestFullscreen()
   }
 }
 

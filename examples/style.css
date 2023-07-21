@@ -3,8 +3,12 @@ canvas {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  /* image-rendering: pixelated; */
-  /* object-fit: cover; */
+}
+
+.gsots3d-debug {
+  font-size: min(1.5vw, 18px);
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 2px 2px 2px black;
 }
 
 body {
@@ -24,13 +28,6 @@ a {
 
 main {
   padding: 20px;
-}
-
-body > div {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
 }
 
 li a {

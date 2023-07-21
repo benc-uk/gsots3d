@@ -101,7 +101,7 @@ bottle.scale = [0.6, 0.6, 0.6]
 // Camera
 let camHeight = 35
 ctx.camera.position = [0, camHeight, 30]
-ctx.camera.lookAt = [0, 20, 0]
+ctx.camera.lookAt = [0, 10, 0]
 ctx.camera.far = 500
 
 // Lights

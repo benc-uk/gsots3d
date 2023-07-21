@@ -60,14 +60,14 @@ void main() {
 
   vec3 V = normalize(u_camPos - worldPos);
   vec3 N = normalize(worldNormal);
-  float fudge = 1.0;
+  float fudge = 1.5;
 
   // Add point lights to lighting output
   for (int i = 0; i < u_lightsPosCount; i++) {
     LightPos light = u_lightsPos[i];
     vec3 L = normalize(light.position - worldPos.xyz);
 
-    float diffuse = dot(N, L);
+    float diffuse = max(dot(N, L), 0.0);
 
     // Distance attenuation
     float distance = length(light.position - worldPos.xyz);

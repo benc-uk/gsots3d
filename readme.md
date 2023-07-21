@@ -5,18 +5,18 @@
 A library for _Getting S\*\*t On The Screen in 3D_  
 So you can get cool looking 3D stuff happening in your browser, if that's your thing.
 
-This library is an opinionated set of abstractions and wrappers around WebGL & twgl. GSOTS takes the pain out of the process of loading models, defining a camera, rendering a scene, lighting etc.
+This library is an opinionated set of abstractions and wrappers around WebGL & twgl. GSOTS takes the pain out of the process of loading models, defining a camera, rendering a scene, lighting etc. It is based on the classic Blinn-Phong shading model, rather than the more modern PBR based shaders.
 
 Features
 
-- Models: Meshes with loading & parsing of OBJ & MTL
-- Materials with texture mapping, specular maps
-- Lights: directional (global) and multiple point lights
-- Primitives: sphere, cube, plane
-- Rendering: Phong and flat-Gouraud shading modes
-- Transparency: With limitations
-- Billboarding for 2D/3D sprites
-- Camera: Perspective and orthographic
+- Models: Meshes with loading & parsing of OBJ & MTL.
+- Materials with diffuse texture mapping, specular maps.
+- Lights: directional (global) and dynamic point lights.
+- Primitives: sphere, cube, plane.
+- Rendering: Phong and flat-Gouraud shading modes.
+- Transparency: With limitations.
+- Billboarding for adding 2D sprites into a 3D scene.
+- Camera: Perspective and orthographic.
 
 ## 🕹️ Demos & Samples
 
@@ -85,8 +85,8 @@ If you want to reference a specific released version you can do so by changing `
 
 - Transparency
   - Is a bit of a hack and instances/objects are not sorted
-  - Only really works on primitives, you can override a model's material with a transparent one, but results might not what you expect
-
+  - Works OK with primitives, you can override a OBJ model material with a transparent one, but results might not be great.
+- Billboards: Shading on spherical billboards might not be correct
 
 ## 📝 Documentation
 
