@@ -6451,16 +6451,20 @@ var HUD = class {
     const parent = canvas.parentElement;
     if (!parent)
       throw new Error("\u{1F4A5} Canvas must have a parent element");
+    this.canvas = canvas;
     this.hud = document.createElement("div");
-    this.hud.style.position = "absolute";
-    this.hud.style.top = "0";
-    this.hud.style.left = "0";
-    this.hud.style.width = "100%";
-    this.hud.style.height = "100%";
-    this.hud.style.color = "#fff";
-    this.hud.style.pointerEvents = "none";
     this.hud.classList.add("gsots3d-hud");
+    this.update = this.update.bind(this);
+    window.addEventListener("resize", this.update);
     parent.appendChild(this.hud);
+    this.update();
+  }
+  update() {
+    const canvasStyles = window.getComputedStyle(this.canvas, null);
+    this.hud.style.position = canvasStyles.getPropertyValue("position");
+    this.hud.style.top = canvasStyles.getPropertyValue("top");
+    this.hud.style.left = canvasStyles.getPropertyValue("left");
+    this.hud.style.transform = canvasStyles.getPropertyValue("transform");
   }
   addHUDItem(item) {
     this.hud.appendChild(item);
@@ -6577,7 +6581,6 @@ var Context = class _Context {
     this.hud = new HUD(gl.canvas);
     this.debugDiv = document.createElement("div");
     this.debugDiv.classList.add("gsots3d-debug");
-    this.debugDiv.style.padding = "15px";
     this.hud.addHUDItem(this.debugDiv);
     import_loglevel4.default.info(`\u{1F451} GSOTS-3D context created, v${version}`);
   }

@@ -7,8 +7,9 @@ canvas {
 
 .gsots3d-debug {
   font-size: min(1.5vw, 18px);
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.7) !important;
   text-shadow: 2px 2px 2px black;
+  padding: 1vw;
 }
 
 body {
@@ -45,6 +46,6 @@ li a {
   padding: 1rem 2rem;
   width: 50%;
   box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);
-  font-size: 1.2rem;
+  font-size: min(1.5vw, 18px);
   cursor: unset;
 }

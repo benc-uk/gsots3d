@@ -92,7 +92,6 @@ export class Context {
 
     this.debugDiv = document.createElement('div')
     this.debugDiv.classList.add('gsots3d-debug')
-    this.debugDiv.style.padding = '15px'
     this.hud.addHUDItem(this.debugDiv)
 
     log.info(`👑 GSOTS-3D context created, v${version}`)
