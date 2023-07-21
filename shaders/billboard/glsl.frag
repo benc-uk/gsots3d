@@ -7,6 +7,8 @@
 
 precision highp float;
 
+const int MAX_LIGHTS = 16;
+
 struct Material {
   vec3 ambient;
   vec3 diffuse;
@@ -18,19 +20,12 @@ struct Material {
   sampler2D specularTex;
 };
 
-struct LightDir {
-  vec3 direction;
-  vec3 colour;
-  vec3 ambient;
-};
-
 // From vertex shader
 in vec2 v_texCoord;
-in vec4 v_position;
+in vec3 v_lighting;
 
-// Uniforms
+// Main lights and material uniforms
 uniform Material u_mat;
-uniform LightDir u_lightDirGlobal;
 
 // Output colour of this pixel/fragment
 out vec4 outColour;
@@ -43,5 +38,5 @@ void main() {
     discard;
   }
 
-  outColour = vec4(texel.rgb * u_mat.diffuse * u_lightDirGlobal.colour, u_mat.opacity);
+  outColour = vec4(texel.rgb * u_mat.diffuse * v_lighting, u_mat.opacity);
 }

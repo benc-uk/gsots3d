@@ -42,7 +42,6 @@ in vec2 v_texCoord;
 in vec4 v_position;
 
 // Some global uniforms
-uniform mat4 u_world;
 uniform vec3 u_camPos;
 
 // Main lights and material uniforms

@@ -2,7 +2,7 @@ import { Model, Context, Material, BillboardType, Colours } from '../../dist-bun
 
 const ctx = await Context.init('canvas')
 ctx.debug = true
-ctx.camera.enableFPSControls()
+// ctx.camera.enableFPSControls()
 
 // Setup scene
 
@@ -99,82 +99,82 @@ bottle.rotateXDeg(-90)
 bottle.scale = [0.6, 0.6, 0.6]
 
 // Camera
-const camHeight = 40
+let camHeight = 35
 ctx.camera.position = [0, camHeight, 30]
-ctx.camera.lookAt = [0, 10, 0]
+ctx.camera.lookAt = [0, 20, 0]
 ctx.camera.far = 500
 
 // Lights
 ctx.globalLight.setAsPosition(4, 3, 1.5)
 ctx.globalLight.colour = [0.7, 0.7, 0.7]
 ctx.globalLight.ambient = [0.01, 0.01, 0.01]
-ctx.createPointLight([-30, 19, -60], Colours.GREEN)
-ctx.createPointLight([10, 30, 60], [0.9, 0.1, 0.4], 2.4)
+const lightGreen = ctx.createPointLight([-30, 19, -60], Colours.GREEN)
+const pinkLight = ctx.createPointLight([10, 30, 60], [0.9, 0.1, 0.4], 2.4)
 
-// const angle = 1.1
-// const radius = 50
+let angle = 1.1
+let radius = 50
 
-// // window.onkeydown = (e) => {
-// //   autoRotate = false
-// //   // rotate camera
-// //   if (e.key === 'ArrowLeft') {
-// //     angle += 0.03
-// //   }
+window.onkeydown = (e) => {
+  autoRotate = false
+  // rotate camera
+  if (e.key === 'ArrowLeft') {
+    angle += 0.03
+  }
 
-// //   if (e.key === 'ArrowRight') {
-// //     angle -= 0.03
-// //   }
+  if (e.key === 'ArrowRight') {
+    angle -= 0.03
+  }
 
-// //   // move camera up & down
-// //   if (e.key === 'ArrowUp') {
-// //     radius = Math.max(radius - 1, 1)
-// //   }
+  // move camera up & down
+  if (e.key === 'ArrowUp') {
+    radius = Math.max(radius - 1, 1)
+  }
 
-// //   if (e.key === 'ArrowDown') {
-// //     radius = Math.min(radius + 1, 100)
-// //   }
+  if (e.key === 'ArrowDown') {
+    radius = Math.min(radius + 1, 100)
+  }
 
-// //   // change height
-// //   if (e.key === 'PageUp') {
-// //     camHeight = Math.min(camHeight + 1, 100)
-// //   }
+  // change height
+  if (e.key === 'PageUp') {
+    camHeight = Math.min(camHeight + 1, 100)
+  }
 
-// //   if (e.key === 'PageDown') {
-// //     camHeight = Math.max(camHeight - 1, 1)
-// //   }
+  if (e.key === 'PageDown') {
+    camHeight = Math.max(camHeight - 1, 1)
+  }
 
-// //   // debug
-// //   if (e.key === 'd') {
-// //     ctx.debug = !ctx.debug
-// //   }
+  // debug
+  if (e.key === 'd') {
+    ctx.debug = !ctx.debug
+  }
 
-// //   // fov
-// //   if (e.key === 'f') {
-// //     ctx.camera.fov = Math.max(ctx.camera.fov - 1, 1)
-// //   }
+  // fov
+  if (e.key === 'f') {
+    ctx.camera.fov = Math.max(ctx.camera.fov - 1, 1)
+  }
 
-// //   if (e.key === 'g') {
-// //     ctx.camera.fov = Math.min(ctx.camera.fov + 1, 179)
-// //   }
+  if (e.key === 'g') {
+    ctx.camera.fov = Math.min(ctx.camera.fov + 1, 179)
+  }
 
-// //   if (e.key === '2') {
-// //     pinkLight.enabled = !pinkLight.enabled
-// //   }
-// //   if (e.key === '1') {
-// //     lightGreen.enabled = !lightGreen.enabled
-// //   }
-// // }
+  if (e.key === '2') {
+    pinkLight.enabled = !pinkLight.enabled
+  }
+  if (e.key === '1') {
+    lightGreen.enabled = !lightGreen.enabled
+  }
+}
 
-// const autoRotate = false
+let autoRotate = true
 
-// // Update loop
-// ctx.update = (delta) => {
-//   // if (autoRotate) {
-//   //   angle += delta * 0.4
-//   // }
-//   // const x = Math.cos(angle) * radius
-//   // const z = Math.sin(angle) * radius
-//   // ctx.camera.position = [x, camHeight, z]
-// }
+// Update loop
+ctx.update = (delta) => {
+  if (autoRotate) {
+    angle += delta * 0.4
+  }
+  const x = Math.cos(angle) * radius
+  const z = Math.sin(angle) * radius
+  ctx.camera.position = [x, camHeight, z]
+}
 
 ctx.start()
