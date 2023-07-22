@@ -1,5 +1,5 @@
-// ===== models/model.ts ======================================================
-// Instance class, holds a model and position, rotation, scale etc
+// ===== instance.ts ==========================================================
+// Instance class, holds position, rotation, scale etc for a renderable
 // Ben Coleman, 2023
 // ============================================================================
 

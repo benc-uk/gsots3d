@@ -43,6 +43,7 @@ in vec4 v_position;
 
 // Some global uniforms
 uniform vec3 u_camPos;
+uniform float u_gamma;
 
 // Main lights and material uniforms
 uniform Material u_mat;
@@ -111,6 +112,9 @@ void main() {
   // Add emissive component
   float emissiveAlpha = u_mat.emissive.r + u_mat.emissive.g + u_mat.emissive.b > 0.0 ? 1.0 : 0.0;
   outColorPart += vec4(u_mat.emissive, emissiveAlpha);
+
+  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL
+  outColorPart.rgb = pow(outColorPart.rgb, vec3(1.0 / u_gamma));
 
   outColour = outColorPart;
 }

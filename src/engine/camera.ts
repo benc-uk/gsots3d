@@ -5,6 +5,9 @@
 
 import { mat4 } from 'gl-matrix'
 import { XYZ } from './tuples.ts'
+import { getGl } from '../core/gl.ts'
+
+import log from 'loglevel'
 
 export enum CameraType {
   PERSPECTIVE,
@@ -12,83 +15,71 @@ export enum CameraType {
 }
 
 export class Camera {
-  /**
-   * Camera position
-   * @default [0, 0, 30]
-   */
+  /** Camera position */
   public position: XYZ
 
-  /**
-   * Camera look at point
-   * @default [0, 0, 0]
-   */
+  /**  Camera look at point, default [0, 0, 0] */
   public lookAt: XYZ
 
-  /**
-   * Field of view in degrees, default 45
-   * @default 45
-   */
+  /** Field of view in degrees, default 45 */
   public fov: number
 
-  /**
-   * Near clipping plane, default 0.1
-   * @default 0.1
-   */
+  /** Near clipping plane, default 0.1 */
   public near: number
 
-  /**
-   * Far clipping plane, default 100
-   * @default 100
-   */
+  /** Far clipping plane, default 100 */
   public far: number
 
-  /**
-   * Camera up vector
-   * @default [0, 1, 0]
-   */
+  /** Camera up vector, default [0, 1, 0] */
   public up: XYZ
 
-  /**
-   * Change camera projection, default perspective
-   * @default perspective
-   * @see CameraType
-   */
+  /** Change camera projection, default CameraType.PERSPECTIVE */
   public type: CameraType
 
-  /**
-   * Orthographic zoom level, only used when type is orthographic
-   * @default 20
-   */
+  /** Orthographic zoom level, only used when type is orthographic, default 20 */
   public orthoZoom: number
 
+  // Used for first person mode
   private fpAngleY: number
   private fpAngleX: number
   private fpMode: boolean
   private fpTurnSpeed: number
   private fpMoveSpeed: number
 
-  /** Create a new default camera */
+  // Used to clamp up/down angle
+  private maxAngleUp: number = Math.PI / 2 - 0.01
+  private maxAngleDown: number = -Math.PI / 2 + 0.01
+
+  // Used to track keys pressed in FP mode for better movement
+  private keysDown: Set<string>
+
+  /**
+   * Create a new default camera
+   */
   constructor(type = CameraType.PERSPECTIVE) {
+    this.type = type
+
     this.position = [0, 0, 30]
     this.lookAt = [0, 0, 0]
     this.up = [0, 1, 0]
-
     this.near = 0.1
     this.far = 100
-
     this.fov = 45
 
-    this.type = type
     this.orthoZoom = 20
 
     this.fpMode = false
     this.fpAngleY = 0
     this.fpAngleX = 0
-    this.fpTurnSpeed = 0.003
-    this.fpMoveSpeed = 3.5
+    this.fpTurnSpeed = 0.001
+    this.fpMoveSpeed = 1.0
+
+    this.keysDown = new Set()
   }
 
-  /** Get the view matrix for the camera */
+  /**
+   * Get the current view matrix for the camera
+   */
   get matrix() {
     // Standard view matrix with position and lookAt for non-FPS camera
     if (!this.fpMode) {
@@ -104,7 +95,10 @@ export class Camera {
     return camView
   }
 
-  /** Get the projection matrix for this camera */
+  /**
+   * Get the projection matrix for this camera
+   * @param aspectRatio Aspect ratio of the canvas
+   */
   projectionMatrix(aspectRatio: number) {
     if (this.type === CameraType.ORTHOGRAPHIC) {
       const camProj = mat4.ortho(
@@ -124,10 +118,11 @@ export class Camera {
     }
   }
 
-  /** Get the camera position as a string for debugging */
+  /**
+   * Get the camera position as a string for debugging
+   */
   toString() {
-    // round down position to 2 decimal places
-    const pos = this.position.map((p) => Math.round(p * 100) / 100)
+    const pos = this.position.map((p) => p.toFixed(2))
     return `position: [${pos}]`
   }
 
@@ -139,9 +134,8 @@ export class Camera {
    * @param angleX Starting look left/right angle in radians
    * @param turnSpeed Speed of looking in radians
    * @param moveSpeed Speed of moving in units
-   * @returns
    */
-  enableFPControls(angleY = 0, angleX = 0, turnSpeed = 0.003, moveSpeed = 3.5) {
+  enableFPControls(angleY = 0, angleX = 0, turnSpeed = 0.001, moveSpeed = 1.0) {
     if (this.fpMode) return // prevent multiple event listeners
 
     this.fpMode = true
@@ -151,69 +145,105 @@ export class Camera {
     this.fpTurnSpeed = turnSpeed
     this.fpMoveSpeed = moveSpeed
 
-    window.addEventListener('mousemove', this._fpEventMouseMove.bind(this))
-    window.addEventListener('keydown', this._fpEventKeyDown.bind(this))
+    // Handle enable/disable for pointer lock on main canvas
+    const gl = getGl()
+    gl?.canvas.addEventListener('click', async () => {
+      if (document.pointerLockElement) {
+        document.exitPointerLock()
+      } else {
+        await (<HTMLCanvasElement>gl?.canvas).requestPointerLock()
+      }
+    })
+
+    window.addEventListener('mousemove', (e) => {
+      if (!document.pointerLockElement) {
+        return
+      }
+
+      if (!this.fpMode) return
+      this.fpAngleY += e.movementX * -this.fpTurnSpeed
+      this.fpAngleX += e.movementY * -this.fpTurnSpeed
+
+      // Clamp up/down angle
+      if (this.fpAngleX > this.maxAngleUp) this.fpAngleX = this.maxAngleUp
+      if (this.fpAngleX < this.maxAngleDown) this.fpAngleX = this.maxAngleDown
+    })
+
+    window.addEventListener('keydown', (e) => {
+      if (!this.fpMode) return
+      this.keysDown.add(e.key)
+    })
+
+    window.addEventListener('keyup', (e) => {
+      if (!this.fpMode) return
+      this.keysDown.delete(e.key)
+    })
+
+    log.info('🎥 Camera: FPS mode enabled')
   }
 
-  /** Disable FPS mode */
+  /**
+   * Disable FP mode
+   */
   disableFPControls() {
     this.fpMode = false
+    log.info('🎥 Camera: FPS mode disabled')
   }
 
-  /** Get FPS mode enabled state */
+  /**
+   * Get FP mode state
+   */
   get fpModeEnabled() {
     return this.fpMode
   }
 
-  /** Private event handlers for FPS mode */
-  private _fpEventMouseMove(e: MouseEvent) {
+  /**
+   * Called every frame to update the camera, currently only used for movement in FP mode
+   */
+  update() {
     if (!this.fpMode) return
-
-    this.fpAngleY += e.movementX * -this.fpTurnSpeed
-    this.fpAngleX += e.movementY * -this.fpTurnSpeed
-  }
-
-  /** Private event handlers for FPS mode */
-  private _fpEventKeyDown(e: KeyboardEvent) {
-    if (!this.fpMode) return
+    if (this.keysDown.size === 0) return
 
     // use fpAngleY to calculate the direction we are facing
     const dZ = -Math.cos(this.fpAngleY) * this.fpMoveSpeed
     const dX = -Math.sin(this.fpAngleY) * this.fpMoveSpeed
 
-    switch (e.key) {
-      case 'ArrowUp':
-      case 'w':
-        this.position[0] += dX
-        this.position[2] += dZ
-        this.lookAt[0] += dX
-        this.lookAt[2] += dZ
-        break
+    // use keysDown to move the camera
+    for (const key of this.keysDown.values()) {
+      switch (key) {
+        case 'ArrowUp':
+        case 'w':
+          this.position[0] += dX
+          this.position[2] += dZ
+          this.lookAt[0] += dX
+          this.lookAt[2] += dZ
+          break
 
-      case 'ArrowDown':
-      case 's':
-        this.position[0] -= dX
-        this.position[2] -= dZ
-        this.lookAt[0] -= dX
-        this.lookAt[2] -= dZ
-        break
+        case 'ArrowDown':
+        case 's':
+          this.position[0] -= dX
+          this.position[2] -= dZ
+          this.lookAt[0] -= dX
+          this.lookAt[2] -= dZ
+          break
 
-      case 'ArrowLeft':
-      case 'a':
-        this.position[0] += dZ
-        this.position[2] -= dX
-        this.lookAt[0] += dZ
-        this.lookAt[2] -= dX
-        break
+        case 'ArrowLeft':
+        case 'a':
+          this.position[0] += dZ
+          this.position[2] -= dX
+          this.lookAt[0] += dZ
+          this.lookAt[2] -= dX
+          break
 
-      case 'ArrowRight':
-      case 'd':
-        // move right
-        this.position[0] -= dZ
-        this.position[2] += dX
-        this.lookAt[0] -= dZ
-        this.lookAt[2] += dX
-        break
+        case 'ArrowRight':
+        case 'd':
+          // move right
+          this.position[0] -= dZ
+          this.position[2] += dX
+          this.lookAt[0] -= dZ
+          this.lookAt[2] += dX
+          break
+      }
     }
   }
 }

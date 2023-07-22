@@ -1,4 +1,4 @@
-// ===== models/model.ts ======================================================
+// ===== model.ts =============================================================
 // Main model class, holds a list of parts, each with a material
 // Models are parsed from OBJ files
 // Ben Coleman, 2023
@@ -50,7 +50,13 @@ export class Model implements Renderable {
       const bufferInfo = part.bufferInfo
 
       if (materialOverride === undefined) {
-        const material = this.materials[part.materialName]
+        let material = this.materials[part.materialName]
+
+        // Fall back to default material if not found
+        if (!material) {
+          material = this.materials['__default']
+        }
+
         material.apply(programInfo)
       } else {
         materialOverride.apply(programInfo)
@@ -107,12 +113,13 @@ export class Model implements Renderable {
           model.materials[matName] = Material.fromMtl(matRaw, path, filterTextures, flipTextureY)
         }
       } catch (err) {
-        console.warn(`Unable to load material library ${objData.matLibNames[0]}`)
+        log.warn(`💥 Unable to load material library ${objData.matLibNames[0]}`)
       }
     }
 
     // Fall back default material
     model.materials['__default'] = new Material()
+    model.materials['__default'].diffuse = [0.1, 0.6, 0.9]
 
     const gl = getGl()
 

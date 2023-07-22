@@ -76,6 +76,9 @@ export class Context {
   /** A HUD you can use to render HTML elements over the canvas */
   public readonly hud: HUD
 
+  /** Gamma correction value, default 1.0 */
+  public gamma: number
+
   /**
    * Constructor is private, use init() to create a new context
    */
@@ -87,7 +90,10 @@ export class Context {
     this.globalLight = new LightDirectional()
     this.globalLight.setAsPosition(20, 50, 30)
 
+    // Single global camera
     this.camera = new Camera(CameraType.PERSPECTIVE)
+
+    this.gamma = 1.0
 
     this.hud = new HUD(<HTMLCanvasElement>gl.canvas)
 
@@ -112,7 +118,7 @@ export class Context {
    * Create & initialize a new Context which will render into provided canvas selector
    */
   static async init(canvasSelector: string, backgroundColour = '#000'): Promise<Context> {
-    const gl = getGl(false, canvasSelector)
+    const gl = getGl(true, canvasSelector)
 
     if (!gl) {
       log.error('💥 Failed to get WebGL context')
@@ -172,11 +178,15 @@ export class Context {
     // Call the external update function
     this.update(stats.deltaTime)
 
+    // Update the camera
+    this.camera.update()
+
     // Do this in every frame since camera can move
     const camMatrix = this.camera.matrix
 
     // The uniforms that are the same for all instances
     const uniforms = {
+      u_gamma: this.gamma ?? 1.0,
       u_worldInverseTranspose: mat4.create(), // Updated per instance
       u_worldViewProjection: mat4.create(), // Updated per instance
       u_view: mat4.invert(mat4.create(), camMatrix),
@@ -304,7 +314,7 @@ export class Context {
    */
   createModelInstance(modelName: string) {
     const model = this.models.get(modelName)
-    if (!model) throw new Error(`💥 Model ${modelName} not found`)
+    if (!model) throw new Error(`💥 Model '${modelName}' was not found, please load it first`)
 
     const instance = new Instance(model)
     this.instances.push(instance)

@@ -26,6 +26,7 @@ in vec3 v_lighting;
 
 // Main lights and material uniforms
 uniform Material u_mat;
+uniform float u_gamma;
 
 // Output colour of this pixel/fragment
 out vec4 outColour;
@@ -38,5 +39,10 @@ void main() {
     discard;
   }
 
-  outColour = vec4(texel.rgb * u_mat.diffuse * v_lighting, u_mat.opacity);
+  vec3 colour = texel.rgb * u_mat.diffuse * v_lighting;
+
+  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL
+  colour = pow(colour, vec3(1.0 / u_gamma));
+
+  outColour = vec4(colour, u_mat.opacity);
 }

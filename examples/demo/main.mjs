@@ -1,11 +1,18 @@
-import { Model, Context, Material, BillboardType, Colours } from '../../dist-bundle/gsots3d.js'
+import { Model, Context, Material, BillboardType, Colours, setLogLevel } from '../../dist-bundle/gsots3d.js'
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+setLogLevel('debug')
+
 const ctx = await Context.init('canvas')
 ctx.debug = true
 
-// Setup controls
-if (!isMobile) ctx.camera.enableFPControls(0, -0.2)
+// Setup controls, disable FP controls on mobile
+if (!isMobile) {
+  ctx.camera.enableFPControls(0, -0.2, 0.002, 1.0)
+} else {
+  // Mobile looks too dark without gamma correction
+  ctx.gamma = 1.5
+}
 
 // Setup scene
 try {
@@ -15,13 +22,17 @@ try {
   ctx.models.add(await Model.parse('../_objects', 'icosahedron.obj'))
   ctx.models.add(await Model.parse('../_objects', 'teapot.obj'))
   ctx.models.add(await Model.parse('../_objects', 'wine.obj'))
+} catch (e) {
+  console.error(e)
+}
 
+try {
   const door = ctx.createModelInstance('door')
-  door.scale = [3.5, 3.5, 3.5]
+  door.scale = [5, 5, 5]
   door.position = [130, 0, 50]
   door.rotateYDeg(-90)
   const door2 = ctx.createModelInstance('door')
-  door2.scale = [3.5, 3.5, 3.5]
+  door2.scale = [5, 5, 5]
   door2.position = [-130, 0, -50]
   door2.rotateYDeg(-90)
 
@@ -60,21 +71,21 @@ try {
   floor.position = [0, 0, 0]
 
   // wall
-  const wallMat = Material.createBasicTexture('../_textures/stone-wall.png')
-  const wall1 = ctx.createPlaneInstance(wallMat, 260, 260, 10, 10, 6)
+  const wallMat1 = Material.createBasicTexture('../_textures/stone-wall.png')
+  const wall1 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 6)
   wall1.position = [0, 130, -130]
   wall1.rotateXDeg(90)
 
-  const wall2 = ctx.createPlaneInstance(wallMat, 260, 260, 10, 10, 6)
+  const wall2 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 6)
   wall2.position = [0, 130, 130]
   wall2.rotateXDeg(-90)
 
-  const wall3 = ctx.createPlaneInstance(wallMat, 260, 260, 10, 10, 6)
+  const wall3 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 6)
   wall3.position = [130, 130, 0]
   wall3.rotateZDeg(90)
   wall3.rotateXDeg(90)
 
-  const wall4 = ctx.createPlaneInstance(wallMat, 260, 260, 10, 10, 6)
+  const wall4 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 6)
   wall4.position = [-130, 130, 0]
   wall4.rotateZDeg(-90)
   wall4.rotateXDeg(90)
@@ -131,14 +142,11 @@ ctx.camera.lookAt = [0, 10, 0]
 ctx.camera.far = 500
 
 // Lights
-ctx.globalLight.setAsPosition(4, 3, 1.5)
-ctx.globalLight.colour = [0.7, 0.7, 0.7]
-ctx.globalLight.ambient = [0.01, 0.01, 0.01]
+ctx.globalLight.setAsPosition(1, 10, 3)
+ctx.globalLight.colour = [0.8, 0.8, 0.8]
+ctx.globalLight.ambient = [0.05, 0.05, 0.05]
 const lightGreen = ctx.createPointLight([-30, 19, -60], Colours.GREEN)
 const lightPink = ctx.createPointLight([10, 30, 60], [0.9, 0.1, 0.4], 2.4)
-
-let angle = 1.1
-const radius = 50
 
 window.addEventListener('keydown', (e) => {
   // change height
@@ -162,10 +170,8 @@ window.addEventListener('keydown', (e) => {
   if (e.key === '9') {
     if (ctx.camera.fpModeEnabled) {
       ctx.camera.disableFPControls()
-      console.log('FPS mode disabled')
     } else {
-      ctx.camera.enableFPControls()
-      console.log('FPS mode enabled')
+      ctx.camera.enableFPControls(0, -0.2, 0.002, 1.0)
     }
   }
 
@@ -187,6 +193,8 @@ window.addEventListener('keydown', (e) => {
 })
 
 const autoRotate = isMobile
+let angle = 1.1
+const radius = 50
 
 // Update loop
 ctx.update = (delta) => {
@@ -200,4 +208,3 @@ ctx.update = (delta) => {
 }
 
 ctx.start()
-// document.querySelector('.dialog').style.display = 'block'

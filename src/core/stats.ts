@@ -1,3 +1,8 @@
+// ===== stats.ts =======================================================
+// Global singleton for keeping track of stats, timers performance
+// Ben Coleman, 2023
+// ======================================================================
+
 class Stats {
   private prevTime = 0
 

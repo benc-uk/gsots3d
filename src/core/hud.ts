@@ -1,3 +1,8 @@
+// ===== hud.ts =========================================================
+// A HTML based HUD for the game, this is a simple div for now
+// Ben Coleman, 2023
+// ======================================================================
+
 export class HUD {
   private hud: HTMLDivElement
   private canvas: HTMLCanvasElement
@@ -26,6 +31,9 @@ export class HUD {
     this.hud.style.width = canvasStyles.getPropertyValue('width')
     this.hud.style.height = canvasStyles.getPropertyValue('height')
     this.hud.style.transform = canvasStyles.getPropertyValue('transform')
+
+    // IMPORTANT: This is needed to make the canvas clickable for pointer lock
+    this.hud.style.pointerEvents = 'none'
   }
 
   addHUDItem(item: HTMLElement) {

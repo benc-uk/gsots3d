@@ -8,7 +8,7 @@ ctx.camera.position = [0, 200, 700]
 ctx.globalLight.setAsPosition(3, 1, 0)
 ctx.camera.far = 5000
 
-ctx.camera.enableFPSControls()
+// ctx.camera.enableFPControls(0, -0.2, 0.002, 1.0)
 
 const m = Material.createBasicTexture('../_textures/STARG2.png')
 ctx.createPlaneInstance(m, 1000, 1000, 1, 1, 3)

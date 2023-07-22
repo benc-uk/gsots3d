@@ -1,3 +1,8 @@
+// ===== tuples.ts ======================================================
+// Types & helpers for 3-tuples, used for positions, vectors and colours
+// Ben Coleman, 2023
+// ======================================================================
+
 /** A simple 3D position or vector tuple */
 export type XYZ = [number, number, number]
 

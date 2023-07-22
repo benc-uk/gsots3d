@@ -3,10 +3,11 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-import { ProgramInfo, createTexture, setUniforms } from 'twgl.js'
+import { ProgramInfo, setUniforms } from 'twgl.js'
 import { RGB } from './tuples.ts'
 import { MtlMaterial } from '../parsers/mtl-parser.ts'
 import { getGl, UniformSet } from '../core/gl.ts'
+import { textureCache } from '../core/cache.ts'
 
 export class Material {
   /**
@@ -71,23 +72,14 @@ export class Material {
     if (!gl) return
 
     // 1 pixel white texture allows for solid colour materials
-    this.diffuseTex = createTexture(gl, {
-      min: gl.NEAREST,
-      mag: gl.NEAREST,
-      src: [255, 255, 255, 255],
-    })
-
-    this.specularTex = createTexture(gl, {
-      min: gl.NEAREST,
-      mag: gl.NEAREST,
-      src: [255, 255, 255, 255],
-    })
+    this.diffuseTex = textureCache.get('_defaults/white')
+    this.specularTex = textureCache.get('_defaults/white')
   }
 
   /**
    * Create a new material from a raw MTL material
    */
-  public static fromMtl(rawMtl: MtlMaterial, path: string, filter = true, flipY = true) {
+  public static fromMtl(rawMtl: MtlMaterial, basePath: string, filter = true, flipY = true) {
     const m = new Material()
 
     m.ambient = rawMtl.ka ? rawMtl.ka : [1, 1, 1]
@@ -100,25 +92,12 @@ export class Material {
     const gl = getGl()
     if (!gl) return m
 
-    // filter = false
     if (rawMtl.texDiffuse) {
-      gl.LINEAR_MIPMAP_LINEAR
-      m.diffuseTex = createTexture(gl, {
-        min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
-        mag: filter ? gl.LINEAR : gl.NEAREST,
-        src: `${path}/${rawMtl.texDiffuse}`,
-        flipY: flipY ? 1 : 0,
-      })
+      m.diffuseTex = textureCache.getCreate(`${basePath}/${rawMtl.texDiffuse}`, filter, flipY)
     }
 
     if (rawMtl.texSpecular) {
-      gl.LINEAR_MIPMAP_LINEAR
-      m.specularTex = createTexture(gl, {
-        min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
-        mag: filter ? gl.LINEAR : gl.NEAREST,
-        src: `${path}/${rawMtl.texSpecular}`,
-        flipY: flipY ? 1 : 0,
-      })
+      m.specularTex = textureCache.getCreate(`${basePath}/${rawMtl.texSpecular}`, filter, flipY)
     }
 
     return m
@@ -142,13 +121,7 @@ export class Material {
     const gl = getGl()
     if (!gl) return m
 
-    gl.LINEAR_MIPMAP_LINEAR
-    m.diffuseTex = createTexture(gl, {
-      min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
-      mag: filter ? gl.LINEAR : gl.NEAREST,
-      src: url,
-      flipY: flipY ? 1 : 0,
-    })
+    m.diffuseTex = textureCache.getCreate(url, filter, flipY)
 
     return m
   }
@@ -158,15 +131,11 @@ export class Material {
    * @param url
    * @param filter
    */
-  public addSpecularTexture(url: string, filter = true) {
+  public addSpecularTexture(url: string, filter = true, flipY = false) {
     const gl = getGl()
     if (!gl) return
 
-    this.specularTex = createTexture(gl, {
-      min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
-      mag: filter ? gl.LINEAR : gl.NEAREST,
-      src: url,
-    })
+    this.specularTex = textureCache.getCreate(url, filter, flipY)
   }
 
   /** Create a simple RED Material */
