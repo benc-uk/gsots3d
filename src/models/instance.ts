@@ -8,6 +8,7 @@ import { ProgramInfo } from 'twgl.js'
 import { UniformSet } from '../core/gl.ts'
 import { Renderable } from './types.ts'
 import { Material } from '../engine/material.ts'
+import { XYZ } from '../index.ts'
 
 /** Billboarding modes, most things will ue NONE */
 export enum BillboardType {
@@ -21,9 +22,9 @@ export enum BillboardType {
  */
 export class Instance {
   public readonly renderable: Renderable | undefined
-  public position: [number, number, number] | undefined
-  public scale: [number, number, number] | undefined
-  public rotate: [number, number, number] | undefined
+  public position: XYZ | undefined
+  public scale: XYZ | undefined
+  public rotate: XYZ | undefined
   public enabled = true
 
   /**

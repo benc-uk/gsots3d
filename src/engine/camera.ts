@@ -43,6 +43,7 @@ export class Camera {
   private fpAngleY: number
   private fpAngleX: number
   private fpMode: boolean
+  private fpHandlersAdded: boolean
   private fpTurnSpeed: number
   private fpMoveSpeed: number
 
@@ -73,6 +74,7 @@ export class Camera {
     this.fpAngleX = 0
     this.fpTurnSpeed = 0.001
     this.fpMoveSpeed = 1.0
+    this.fpHandlersAdded = false
 
     this.keysDown = new Set()
   }
@@ -127,34 +129,40 @@ export class Camera {
   }
 
   /**
-   * Switches the camera to FPS mode, this is a special mode where the camera is
-   * controlled by the mouse and keyboard. The mouse moves the camera around and
-   * the keyboard moves the camera forward/backward and left/right
-   * @param angleY Starting look up/down angle in radians
-   * @param angleX Starting look left/right angle in radians
-   * @param turnSpeed Speed of looking in radians
-   * @param moveSpeed Speed of moving in units
+   * Switches the camera to first person mode, where the camera is controlled by
+   * the mouse and keyboard. The mouse controls look direction and the keyboard
+   * controls movement.
+   * @param angleY Starting look up/down angle in radians, default 0
+   * @param angleX Starting look left/right angle in radians, default 0
+   * @param turnSpeed Speed of looking in radians, default 0.001
+   * @param moveSpeed Speed of moving in units, default 1.0
    */
   enableFPControls(angleY = 0, angleX = 0, turnSpeed = 0.001, moveSpeed = 1.0) {
-    if (this.fpMode) return // prevent multiple event listeners
-
+    log.info('🎥 Camera: FPS mode enabled')
     this.fpMode = true
-
     this.fpAngleY = angleY
     this.fpAngleX = angleX
     this.fpTurnSpeed = turnSpeed
     this.fpMoveSpeed = moveSpeed
 
+    if (this.fpHandlersAdded) return // prevent multiple event listeners being added
+
     // Handle enable/disable for pointer lock on main canvas
+    // See: https://developer.mozilla.org/en-US/docs/Web/API/Pointer_Lock_API
     const gl = getGl()
     gl?.canvas.addEventListener('click', async () => {
+      if (!this.fpMode) return
+
       if (document.pointerLockElement) {
+        log.info('🎥 Camera: exiting pointer lock')
         document.exitPointerLock()
       } else {
+        log.info('🎥 Camera: enable pointer lock')
         await (<HTMLCanvasElement>gl?.canvas).requestPointerLock()
       }
     })
 
+    // Handle mouse movement for looking around
     window.addEventListener('mousemove', (e) => {
       if (!document.pointerLockElement) {
         return
@@ -169,6 +177,7 @@ export class Camera {
       if (this.fpAngleX < this.maxAngleDown) this.fpAngleX = this.maxAngleDown
     })
 
+    // Track keys pressed for movement
     window.addEventListener('keydown', (e) => {
       if (!this.fpMode) return
       this.keysDown.add(e.key)
@@ -179,7 +188,7 @@ export class Camera {
       this.keysDown.delete(e.key)
     })
 
-    log.info('🎥 Camera: FPS mode enabled')
+    this.fpHandlersAdded = true
   }
 
   /**
@@ -187,6 +196,7 @@ export class Camera {
    */
   disableFPControls() {
     this.fpMode = false
+    document.exitPointerLock()
     log.info('🎥 Camera: FPS mode disabled')
   }
 

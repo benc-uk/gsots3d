@@ -266,12 +266,13 @@ function getGl(aa = true, selector = "canvas") {
   if (glContext) {
     return glContext;
   }
-  import_loglevel.default.info(`\u{1F58C}\uFE0F Creating WebGL2 context in ${selector}`);
+  import_loglevel.default.info(`\u{1F58C}\uFE0F Creating WebGL2 context in element: '${selector}'`);
   const canvas = document.querySelector(selector);
   glContext = canvas.getContext("webgl2", { antialias: aa }) ?? void 0;
   if (!glContext) {
     import_loglevel.default.error("\u{1F4A5} Unable to create WebGL2 context!");
   }
+  import_loglevel.default.info(`\u{1F4D0} Internal: ${canvas.width} x ${canvas.height}, display: ${canvas.clientWidth} x ${canvas.clientHeight}`);
   return glContext;
 }
 
@@ -3623,7 +3624,7 @@ function matAttribSetter(gl, index, typeInfo) {
     const type = b.type || FLOAT;
     const typeInfo2 = typeMap[type];
     const stride = typeInfo2.size * numComponents;
-    const normalize2 = b.normalize || false;
+    const normalize3 = b.normalize || false;
     const offset = b.offset || 0;
     const rowOffset = stride / count;
     for (let i = 0; i < count; ++i) {
@@ -3632,7 +3633,7 @@ function matAttribSetter(gl, index, typeInfo) {
         index + i,
         size,
         type,
-        normalize2,
+        normalize3,
         stride,
         offset + rowOffset * i
       );
@@ -5496,23 +5497,23 @@ function multiplyScalar(out, a, b) {
   out[15] = a[15] * b;
   return out;
 }
-function multiplyScalarAndAdd(out, a, b, scale3) {
-  out[0] = a[0] + b[0] * scale3;
-  out[1] = a[1] + b[1] * scale3;
-  out[2] = a[2] + b[2] * scale3;
-  out[3] = a[3] + b[3] * scale3;
-  out[4] = a[4] + b[4] * scale3;
-  out[5] = a[5] + b[5] * scale3;
-  out[6] = a[6] + b[6] * scale3;
-  out[7] = a[7] + b[7] * scale3;
-  out[8] = a[8] + b[8] * scale3;
-  out[9] = a[9] + b[9] * scale3;
-  out[10] = a[10] + b[10] * scale3;
-  out[11] = a[11] + b[11] * scale3;
-  out[12] = a[12] + b[12] * scale3;
-  out[13] = a[13] + b[13] * scale3;
-  out[14] = a[14] + b[14] * scale3;
-  out[15] = a[15] + b[15] * scale3;
+function multiplyScalarAndAdd(out, a, b, scale4) {
+  out[0] = a[0] + b[0] * scale4;
+  out[1] = a[1] + b[1] * scale4;
+  out[2] = a[2] + b[2] * scale4;
+  out[3] = a[3] + b[3] * scale4;
+  out[4] = a[4] + b[4] * scale4;
+  out[5] = a[5] + b[5] * scale4;
+  out[6] = a[6] + b[6] * scale4;
+  out[7] = a[7] + b[7] * scale4;
+  out[8] = a[8] + b[8] * scale4;
+  out[9] = a[9] + b[9] * scale4;
+  out[10] = a[10] + b[10] * scale4;
+  out[11] = a[11] + b[11] * scale4;
+  out[12] = a[12] + b[12] * scale4;
+  out[13] = a[13] + b[13] * scale4;
+  out[14] = a[14] + b[14] * scale4;
+  out[15] = a[15] + b[15] * scale4;
   return out;
 }
 function exactEquals(a, b) {
@@ -5685,10 +5686,10 @@ function scale2(out, a, b) {
   out[2] = a[2] * b;
   return out;
 }
-function scaleAndAdd(out, a, b, scale3) {
-  out[0] = a[0] + b[0] * scale3;
-  out[1] = a[1] + b[1] * scale3;
-  out[2] = a[2] + b[2] * scale3;
+function scaleAndAdd(out, a, b, scale4) {
+  out[0] = a[0] + b[0] * scale4;
+  out[1] = a[1] + b[1] * scale4;
+  out[2] = a[2] + b[2] * scale4;
   return out;
 }
 function distance(a, b) {
@@ -5778,14 +5779,14 @@ function bezier(out, a, b, c, d, t) {
   out[2] = a[2] * factor1 + b[2] * factor2 + c[2] * factor3 + d[2] * factor4;
   return out;
 }
-function random(out, scale3) {
-  scale3 = scale3 || 1;
+function random(out, scale4) {
+  scale4 = scale4 || 1;
   var r = RANDOM() * 2 * Math.PI;
   var z = RANDOM() * 2 - 1;
-  var zScale = Math.sqrt(1 - z * z) * scale3;
+  var zScale = Math.sqrt(1 - z * z) * scale4;
   out[0] = Math.cos(r) * zScale;
   out[1] = Math.sin(r) * zScale;
-  out[2] = z * scale3;
+  out[2] = z * scale4;
   return out;
 }
 function transformMat4(out, a, m) {
@@ -5917,7 +5918,56 @@ var forEach = function() {
 }();
 
 // src/core/context.ts
-var import_loglevel5 = __toESM(require_loglevel(), 1);
+var import_loglevel6 = __toESM(require_loglevel(), 1);
+
+// src/engine/tuples.ts
+function normalize2(tuple) {
+  const [x, y, z] = tuple;
+  const len2 = Math.sqrt(x * x + y * y + z * z);
+  return tuple.map((v) => v / len2);
+}
+function scale3(tuple, amount) {
+  return tuple.map((v) => v * amount);
+}
+function scaleClamped(colour, amount) {
+  scale3(colour, amount);
+  return colour.map((v) => Math.min(Math.max(v, 0), 1));
+}
+function toVec3(tuple) {
+  return vec3_exports.fromValues(tuple[0], tuple[1], tuple[2]);
+}
+function distance2(a, b) {
+  return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2;
+}
+function rgbColour255(r, g, b) {
+  return [r / 255, g / 255, b / 255];
+}
+function rgbColourHex(hexString) {
+  const hex = hexString.replace("#", "");
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  return rgbColour255(r, g, b);
+}
+var Colours = class {
+};
+Colours.RED = [1, 0, 0];
+Colours.GREEN = [0, 1, 0];
+Colours.BLUE = [0, 0, 1];
+Colours.YELLOW = [1, 1, 0];
+Colours.CYAN = [0, 1, 1];
+Colours.MAGENTA = [1, 0, 1];
+Colours.BLACK = [0, 0, 0];
+Colours.WHITE = [1, 1, 1];
+var Tuples = {
+  normalize: normalize2,
+  scale: scale3,
+  scaleClamped,
+  rgbColour255,
+  rgbColourHex,
+  toVec3,
+  distance: distance2
+};
 
 // src/core/cache.ts
 var import_loglevel3 = __toESM(require_loglevel(), 1);
@@ -5929,15 +5979,15 @@ var ModelCache = class {
    * Return a model from the cache by name
    * @param name
    */
-  get(name) {
-    if (!this.cache.has(name)) {
-      import_loglevel3.default.warn(`Model '${name}' not found in cache`);
+  get(name, warn = true) {
+    if (!this.cache.has(name) && warn) {
+      import_loglevel3.default.warn(`\u26A0\uFE0F Model '${name}' not found, please load it first`);
       return void 0;
     }
     return this.cache.get(name);
   }
   /**
-   * Add a model to the cache
+   * Add a model to the cache, using the model name as key
    */
   add(model) {
     import_loglevel3.default.debug(`\u{1F9F0} Adding model '${model.name}' to cache`);
@@ -5971,7 +6021,8 @@ var TextureCache = class {
    */
   get(key) {
     if (!this.cache.has(key)) {
-      throw new Error(`Texture ${key} not found in cache`);
+      import_loglevel3.default.warn(`\u{1F4A5} Texture ${key} not found in cache`);
+      return void 0;
     }
     import_loglevel3.default.trace(`\u{1F44D} Returning texture '${key}' from cache, nice!`);
     return this.cache.get(key);
@@ -5983,7 +6034,7 @@ var TextureCache = class {
    */
   add(key, texture) {
     if (this.cache.has(key)) {
-      import_loglevel3.default.warn(`Texture '${key}' already in cache, not adding again`);
+      import_loglevel3.default.warn(`\u{1F914} Texture '${key}' already in cache, not adding again`);
       return;
     }
     import_loglevel3.default.info(`\u{1F9F0} Adding texture '${key}' to cache`);
@@ -6013,7 +6064,7 @@ var TextureCache = class {
       },
       (err) => {
         if (err) {
-          import_loglevel3.default.error(`\u{1F4A5} Error loading texture '${src}'`, err);
+          import_loglevel3.default.error("\u{1F4A5} Error loading texture", err);
         }
       }
     );
@@ -6022,40 +6073,6 @@ var TextureCache = class {
   }
 };
 var textureCache = new TextureCache();
-
-// src/engine/tuples.ts
-function normalize3Tuple(tuple) {
-  const [x, y, z] = tuple;
-  const len2 = Math.sqrt(x * x + y * y + z * z);
-  return tuple.map((v) => v / len2);
-}
-function scaleTuple(tuple, scale3) {
-  return tuple.map((v) => v * scale3);
-}
-function scaleTupleClamped(colour, scale3) {
-  scaleTuple(colour, scale3);
-  return colour.map((v) => Math.min(Math.max(v, 0), 1));
-}
-function rgbColour255(r, g, b) {
-  return [r / 255, g / 255, b / 255];
-}
-function rgbColourHex(hexString) {
-  const hex = hexString.replace("#", "");
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  return rgbColour255(r, g, b);
-}
-var Colours = class {
-};
-Colours.RED = [1, 0, 0];
-Colours.GREEN = [0, 1, 0];
-Colours.BLUE = [0, 0, 1];
-Colours.YELLOW = [1, 1, 0];
-Colours.CYAN = [0, 1, 1];
-Colours.MAGENTA = [1, 0, 1];
-Colours.BLACK = [0, 0, 0];
-Colours.WHITE = [1, 1, 1];
 
 // src/engine/lights.ts
 var LightDirectional = class {
@@ -6070,7 +6087,7 @@ var LightDirectional = class {
    * Set the direction of the light ensuring it is normalized
    */
   set direction(d) {
-    this._direction = normalize3Tuple(d);
+    this._direction = Tuples.normalize(d);
   }
   /**
    * Get the direction of the light
@@ -6082,7 +6099,7 @@ var LightDirectional = class {
    * Convenience method allows setting the direction as a point relative to the world origin
    */
   setAsPosition(x, y, z) {
-    this._direction = normalize3Tuple([0 - x, 0 - y, 0 - z]);
+    this._direction = Tuples.normalize([0 - x, 0 - y, 0 - z]);
   }
   /**
    * Applies the light to the given program as uniform struct
@@ -6167,6 +6184,7 @@ var Camera = class {
     this.fpAngleX = 0;
     this.fpTurnSpeed = 1e-3;
     this.fpMoveSpeed = 1;
+    this.fpHandlersAdded = false;
     this.keysDown = /* @__PURE__ */ new Set();
   }
   /**
@@ -6212,27 +6230,32 @@ var Camera = class {
     return `position: [${pos}]`;
   }
   /**
-   * Switches the camera to FPS mode, this is a special mode where the camera is
-   * controlled by the mouse and keyboard. The mouse moves the camera around and
-   * the keyboard moves the camera forward/backward and left/right
-   * @param angleY Starting look up/down angle in radians
-   * @param angleX Starting look left/right angle in radians
-   * @param turnSpeed Speed of looking in radians
-   * @param moveSpeed Speed of moving in units
+   * Switches the camera to first person mode, where the camera is controlled by
+   * the mouse and keyboard. The mouse controls look direction and the keyboard
+   * controls movement.
+   * @param angleY Starting look up/down angle in radians, default 0
+   * @param angleX Starting look left/right angle in radians, default 0
+   * @param turnSpeed Speed of looking in radians, default 0.001
+   * @param moveSpeed Speed of moving in units, default 1.0
    */
   enableFPControls(angleY = 0, angleX = 0, turnSpeed = 1e-3, moveSpeed = 1) {
-    if (this.fpMode)
-      return;
+    import_loglevel4.default.info("\u{1F3A5} Camera: FPS mode enabled");
     this.fpMode = true;
     this.fpAngleY = angleY;
     this.fpAngleX = angleX;
     this.fpTurnSpeed = turnSpeed;
     this.fpMoveSpeed = moveSpeed;
+    if (this.fpHandlersAdded)
+      return;
     const gl = getGl();
     gl?.canvas.addEventListener("click", async () => {
+      if (!this.fpMode)
+        return;
       if (document.pointerLockElement) {
+        import_loglevel4.default.info("\u{1F3A5} Camera: exiting pointer lock");
         document.exitPointerLock();
       } else {
+        import_loglevel4.default.info("\u{1F3A5} Camera: enable pointer lock");
         await (gl?.canvas).requestPointerLock();
       }
     });
@@ -6259,13 +6282,14 @@ var Camera = class {
         return;
       this.keysDown.delete(e.key);
     });
-    import_loglevel4.default.info("\u{1F3A5} Camera: FPS mode enabled");
+    this.fpHandlersAdded = true;
   }
   /**
    * Disable FP mode
    */
   disableFPControls() {
     this.fpMode = false;
+    document.exitPointerLock();
     import_loglevel4.default.info("\u{1F3A5} Camera: FPS mode disabled");
   }
   /**
@@ -6383,11 +6407,11 @@ var Instance = class {
     if (!gl)
       return;
     gl.useProgram(programInfo.program);
-    const scale3 = mat4_exports.create();
+    const scale4 = mat4_exports.create();
     const rotate2 = mat4_exports.create();
     const translate2 = mat4_exports.create();
     if (this.scale)
-      mat4_exports.scale(scale3, scale3, this.scale);
+      mat4_exports.scale(scale4, scale4, this.scale);
     if (this.rotate) {
       mat4_exports.rotateX(rotate2, rotate2, this.rotate[0]);
       mat4_exports.rotateY(rotate2, rotate2, this.rotate[1]);
@@ -6397,7 +6421,7 @@ var Instance = class {
       mat4_exports.translate(translate2, translate2, this.position);
     const world = translate2;
     mat4_exports.multiply(world, world, rotate2);
-    mat4_exports.multiply(world, world, scale3);
+    mat4_exports.multiply(world, world, scale4);
     uniforms.u_world = world;
     mat4_exports.invert(uniforms.u_worldInverseTranspose, world);
     mat4_exports.transpose(uniforms.u_worldInverseTranspose, uniforms.u_worldInverseTranspose);
@@ -6691,307 +6715,8 @@ var glsl_default5 = "#version 300 es\n\n// =====================================
 // shaders/billboard/glsl.vert
 var glsl_default6 = "#version 300 es\n\n// ============================================================================\n// Billboard vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n  bool enabled;\n};\n\n// Input attributes from buffers\nin vec4 position;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_world;\nuniform int u_lightsPosCount;\nuniform vec3 u_camPos;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_lighting;\n\n/*\n * Legacy lighting calc\n * Returns vec2(diffuse, specular)\n */\nvec2 lightCalc(vec3 N, vec3 L, vec3 H, float shininess) {\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), shininess) : 0.0;\n  return vec2(diff, spec);\n}\n\nvoid main() {\n  v_texCoord = texcoord;\n  gl_Position = u_worldViewProjection * position;\n\n  vec3 worldPos = (u_world * position).xyz;\n  // Normal for a billboard always points at camera\n  vec3 worldNormal = normalize(u_camPos - worldPos);\n\n  vec3 V = normalize(u_camPos - worldPos);\n  vec3 N = normalize(worldNormal);\n  float fudge = 1.5;\n\n  // Add point lights to lighting output\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    LightPos light = u_lightsPos[i];\n    vec3 L = normalize(light.position - worldPos.xyz);\n\n    float diffuse = max(dot(N, L), 0.0);\n\n    // Distance attenuation\n    float distance = length(light.position - worldPos.xyz);\n    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quad * (distance * distance));\n\n    // Note small hack here to fudge the light intensity\n    v_lighting += light.colour * fudge * attenuation * diffuse;\n  }\n\n  // Add in global directional light\n  // Approximate by using a fixed direction for the normal pointing up\n  vec3 globalLightL = normalize(-u_lightDirGlobal.direction);\n  float globalDiffuse = dot(vec3(0.0, 1.0, 0.0), globalLightL);\n  v_lighting += u_lightDirGlobal.colour * globalDiffuse;\n}\n";
 
-// src/core/context.ts
-var RenderMode = /* @__PURE__ */ ((RenderMode2) => {
-  RenderMode2["PHONG"] = "phong";
-  RenderMode2["FLAT"] = "flat";
-  return RenderMode2;
-})(RenderMode || {});
-var MAX_LIGHTS = 16;
-var Context = class _Context {
-  /**
-   * Constructor is private, use init() to create a new context
-   */
-  constructor(gl) {
-    this.aspectRatio = 1;
-    this.programs = /* @__PURE__ */ new Map();
-    this.started = false;
-    this.instances = [];
-    this.instancesTrans = [];
-    /** All the dynamic point lights in the scene */
-    this.lights = [];
-    /** Show extra debug details on the canvas */
-    this.debug = false;
-    /** The pre-render update hook function */
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    this.update = () => {
-    };
-    this.gl = gl;
-    this.models = new ModelCache();
-    this.globalLight = new LightDirectional();
-    this.globalLight.setAsPosition(20, 50, 30);
-    this.camera = new Camera(0 /* PERSPECTIVE */);
-    this.gamma = 1;
-    this.hud = new HUD(gl.canvas);
-    this.debugDiv = document.createElement("div");
-    this.debugDiv.classList.add("gsots3d-debug");
-    this.hud.addHUDItem(this.debugDiv);
-    this.loadingDiv = document.createElement("div");
-    this.loadingDiv.classList.add("gsots3d-loading");
-    this.loadingDiv.innerHTML = "\u{1F4BE} Loading...";
-    this.loadingDiv.style.fontSize = "4vw";
-    this.loadingDiv.style.position = "absolute";
-    this.loadingDiv.style.top = "50%";
-    this.loadingDiv.style.left = "50%";
-    this.loadingDiv.style.transform = "translate(-50%, -50%)";
-    this.hud.addHUDItem(this.loadingDiv);
-    import_loglevel5.default.info(`\u{1F451} GSOTS-3D context created, v${version}`);
-  }
-  /**
-   * Create & initialize a new Context which will render into provided canvas selector
-   */
-  static async init(canvasSelector, backgroundColour = "#000") {
-    const gl = getGl(true, canvasSelector);
-    if (!gl) {
-      import_loglevel5.default.error("\u{1F4A5} Failed to get WebGL context");
-      throw new Error("Failed to get WebGL context");
-    }
-    const ctx = new _Context(gl);
-    const canvas = gl.canvas;
-    ctx.aspectRatio = canvas.clientWidth / canvas.clientHeight;
-    canvas.style.backgroundColor = backgroundColour;
-    try {
-      const phongProg = createProgramInfo(gl, [glsl_default2, glsl_default]);
-      ctx.programs.set("phong" /* PHONG */, phongProg);
-      const flatProg = createProgramInfo(gl, [glsl_default4, glsl_default3]);
-      ctx.programs.set("flat" /* FLAT */, flatProg);
-      const billboardProg = createProgramInfo(gl, [glsl_default6, glsl_default5]);
-      ctx.billboardProgInfo = billboardProg;
-      ctx.mainProgInfo = phongProg;
-      import_loglevel5.default.info(`\u{1F3A8} Loaded all shaders & programs, GL is ready`);
-    } catch (err) {
-      import_loglevel5.default.error(err);
-      throw err;
-    }
-    gl.enable(gl.DEPTH_TEST);
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    ctx.render = ctx.render.bind(ctx);
-    return ctx;
-  }
-  /**
-   * Main render loop, called every frame
-   */
-  async render(now) {
-    if (!this.gl)
-      return;
-    if (!this.mainProgInfo || !this.billboardProgInfo) {
-      import_loglevel5.default.error("\u{1F4A5} Missing program info, this is really bad!");
-      return;
-    }
-    stats.updateTime(now * 1e-3);
-    this.update(stats.deltaTime);
-    this.camera.update();
-    const camMatrix = this.camera.matrix;
-    const uniforms = {
-      u_gamma: this.gamma ?? 1,
-      u_worldInverseTranspose: mat4_exports.create(),
-      // Updated per instance
-      u_worldViewProjection: mat4_exports.create(),
-      // Updated per instance
-      u_view: mat4_exports.invert(mat4_exports.create(), camMatrix),
-      u_proj: this.camera.projectionMatrix(this.aspectRatio),
-      u_camPos: this.camera.position
-    };
-    this.gl.useProgram(this.billboardProgInfo.program);
-    this.globalLight.apply(this.billboardProgInfo, "Global");
-    this.gl.useProgram(this.mainProgInfo.program);
-    this.globalLight.apply(this.mainProgInfo, "Global");
-    if (this.lights.length > MAX_LIGHTS) {
-      this.lights.sort((lightA, lightB) => {
-        const ad = vec3_exports.distance(lightA.position, this.camera.position);
-        const bd = vec3_exports.distance(lightB.position, this.camera.position);
-        return ad - bd;
-      });
-    }
-    let lightCount = 0;
-    for (const light of this.lights) {
-      if (lightCount >= MAX_LIGHTS)
-        break;
-      if (!light.enabled)
-        continue;
-      uniforms[`u_lightsPos[${lightCount++}]`] = light.uniforms;
-    }
-    uniforms.u_lightsPosCount = lightCount;
-    for (const instance of this.instances) {
-      if (instance.billboard) {
-        instance.render(this.gl, uniforms, this.billboardProgInfo);
-      } else {
-        instance.render(this.gl, uniforms, this.mainProgInfo);
-      }
-    }
-    for (const instance of this.instancesTrans) {
-      if (instance.billboard) {
-        instance.render(this.gl, uniforms, this.billboardProgInfo);
-      } else {
-        instance.render(this.gl, uniforms, this.mainProgInfo);
-      }
-    }
-    if (this.debug) {
-      this.debugDiv.innerHTML = `
-        <b>GSOTS-3D v${version}</b><br><br>
-        <b>Camera: </b>${this.camera.toString()}<br>
-        <b>Instances: </b>${stats.instances}<br>
-        <b>Draw calls: </b>${stats.drawCallsPerFrame}<br>
-        <b>Triangles: </b>${stats.triangles}<br>
-        <b>Render: </b>FPS: ${stats.FPS} / ${stats.totalTimeRound}s<br>
-      `;
-    } else {
-      this.debugDiv.innerHTML = "";
-    }
-    if (this.started)
-      requestAnimationFrame(this.render);
-    stats.resetPerFrame();
-  }
-  /**
-   * Start the rendering loop
-   */
-  start() {
-    this.loadingDiv.style.display = "none";
-    this.started = true;
-    requestAnimationFrame(this.render);
-  }
-  /**
-   * Stop the rendering loop
-   */
-  stop() {
-    this.started = false;
-  }
-  /**
-   * Change the render mode, e.g. Phong or Flat
-   * @param mode - Set the render mode to one of the available sets
-   */
-  setRenderMode(mode) {
-    if (!this.programs.has(mode)) {
-      throw new Error(`\u{1F4A5} Render mode '${mode}' is not valid, you will have a bad time \u{1F4A9}`);
-    }
-    this.mainProgInfo = this.programs.get(mode);
-  }
-  resize() {
-    resizeCanvasToDisplaySize(this.gl.canvas);
-    this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
-    this.aspectRatio = this.gl.canvas.width / this.gl.canvas.height;
-  }
-  addInstance(instance, material) {
-    if (material.opacity !== void 0 && material.opacity < 1) {
-      this.instancesTrans.push(instance);
-    } else {
-      this.instances.push(instance);
-    }
-  }
-  // ==================================================================================================================
-  /**
-   * Create a new model instance, which should have been previously loaded into the cache
-   * @param modelName - Name of the model previously loaded into the cache
-   */
-  createModelInstance(modelName) {
-    const model = this.models.get(modelName);
-    if (!model)
-      throw new Error(`\u{1F4A5} Model '${modelName}' was not found, please load it first`);
-    const instance = new Instance(model);
-    this.instances.push(instance);
-    stats.triangles += model.triangleCount;
-    stats.instances++;
-    return instance;
-  }
-  /**
-   * Create an instance of a primitive sphere
-   */
-  createSphereInstance(material, radius = 5, subdivisionsH = 16, subdivisionsV = 8) {
-    const sphere = new PrimitiveSphere(this.gl, radius, subdivisionsH, subdivisionsV);
-    sphere.material = material;
-    const instance = new Instance(sphere);
-    this.addInstance(instance, material);
-    stats.triangles += sphere.triangleCount;
-    stats.instances++;
-    import_loglevel5.default.debug(`\u{1F7E2} Created sphere instance, r:${radius}`);
-    return instance;
-  }
-  /**
-   * Create an instance of a primitive plane
-   * @param material - Material to apply to the plane
-   * @param width - Width of the plane
-   * @param height - Height of the plane
-   * @param subdivisionsW - Number of subdivisions along the width
-   * @param subdivisionsH - Number of subdivisions along the height
-   * @param tiling - Number of times to tile the texture over the plane
-   */
-  createPlaneInstance(material, width = 5, height = 5, subdivisionsW = 1, subdivisionsH = 1, tiling = 1) {
-    const plane = new PrimitivePlane(this.gl, width, height, subdivisionsW, subdivisionsH, tiling);
-    plane.material = material;
-    const instance = new Instance(plane);
-    this.addInstance(instance, material);
-    stats.triangles += plane.triangleCount;
-    stats.instances++;
-    import_loglevel5.default.debug(`\u{1F7E8} Created plane instance, w:${width} h:${height}`);
-    return instance;
-  }
-  /**
-   * Create an instance of a primitive cube
-   */
-  createCubeInstance(material, size = 5) {
-    const cube = new PrimitiveCube(this.gl, size);
-    cube.material = material;
-    const instance = new Instance(cube);
-    this.addInstance(instance, material);
-    stats.triangles += cube.triangleCount;
-    stats.instances++;
-    import_loglevel5.default.debug(`\u{1F4E6} Created cube instance, size:${size}`);
-    return instance;
-  }
-  /**
-   * Create an instance of a primitive cylinder
-   */
-  createCylinderInstance(material, r = 2, h = 5, subdivisionsR = 16, subdivisionsH = 1, caps = true) {
-    const cyl = new PrimitiveCylinder(this.gl, r, h, subdivisionsR, subdivisionsH, caps);
-    cyl.material = material;
-    const instance = new Instance(cyl);
-    this.addInstance(instance, material);
-    stats.triangles += cyl.triangleCount;
-    stats.instances++;
-    import_loglevel5.default.debug(`\u{1F6E2}\uFE0F Created cylinder instance, r:${r}`);
-    return instance;
-  }
-  /**
-   * Create an instance of a billboard/sprite in the scene
-   * @param textureUrl - Path to the texture image file to use for the billboard
-   * @param width - Width of the billboard (default: 5)
-   * @param height - Height of the billboard (default: 5)
-   * @param type - Type of billboard to create (default: CYLINDRICAL)
-   */
-  createBillboardInstance(material, width = 5, height = 5, type = 2 /* CYLINDRICAL */) {
-    const billboard = new Billboard(this.gl, width, height);
-    billboard.material = material;
-    const instance = new Instance(billboard);
-    instance.billboard = type;
-    this.addInstance(instance, material);
-    stats.triangles += 2;
-    stats.instances++;
-    return instance;
-  }
-  /**
-   * Create a new point light in the scene
-   * @param position - Position of the light
-   * @param colour - Colour of the light, defaults to white
-   * @param intensity - Intensity of the light
-   * @returns The new light object
-   */
-  createPointLight(position, colour = [1, 1, 1], intensity = 1) {
-    const light = new LightPoint(position, colour);
-    light.position = position;
-    light.colour = colour;
-    light.constant /= intensity;
-    light.linear /= intensity;
-    light.quad /= intensity;
-    this.lights.push(light);
-    import_loglevel5.default.debug(`\u{1F506} Created point light, pos:${position} col:${colour} int:${intensity}`);
-    return light;
-  }
-};
-
 // src/models/model.ts
-var import_loglevel6 = __toESM(require_loglevel(), 1);
+var import_loglevel5 = __toESM(require_loglevel(), 1);
 
 // src/parsers/mtl-parser.ts
 function parseMTL(mtlFile) {
@@ -7235,11 +6960,11 @@ var Model = class _Model {
     try {
       objFile = await fetchFile(`${path}/${objFilename}`);
     } catch (err) {
-      throw new Error(`\u{1F4A5} Unable to load model ${objFilename}`);
+      throw new Error(`\u{1F4A5} Unable to load file '${path}/${objFilename}'`);
     }
     const objData = parseOBJ(objFile);
     if (!objData.geometries || objData.geometries.length === 0) {
-      throw new Error(`\u{1F4A5} Error parsing model ${objFilename}`);
+      throw new Error(`\u{1F4A5} Error parsing '${objFilename}', might not be a OBJ file`);
     }
     if (objData.matLibNames && objData.matLibNames.length > 0) {
       try {
@@ -7249,7 +6974,7 @@ var Model = class _Model {
           model.materials[matName] = Material.fromMtl(matRaw, path, filterTextures, flipTextureY);
         }
       } catch (err) {
-        import_loglevel6.default.warn(`\u{1F4A5} Unable to load material library ${objData.matLibNames[0]}`);
+        import_loglevel5.default.warn(`\u{1F4A5} Unable to load material library ${objData.matLibNames[0]}`);
       }
     }
     model.materials["__default"] = new Material();
@@ -7262,7 +6987,7 @@ var Model = class _Model {
       const bufferInfo = createBufferInfoFromArrays(gl, g.data);
       model.parts.push(new ModelPart(bufferInfo, g.material));
     }
-    import_loglevel6.default.debug(
+    import_loglevel5.default.debug(
       `\u265F\uFE0F Model '${objFilename}' loaded with ${model.parts.length} parts, ${Object.keys(model.materials).length} materials in ${((performance.now() - startTime) / 1e3).toFixed(2)}s`
     );
     model.triangles = objData.triangles;
@@ -7277,6 +7002,341 @@ var ModelPart = class {
   constructor(bufferInfo, materialName) {
     this.bufferInfo = bufferInfo;
     this.materialName = materialName;
+  }
+};
+
+// src/core/context.ts
+var RenderMode = /* @__PURE__ */ ((RenderMode2) => {
+  RenderMode2["PHONG"] = "phong";
+  RenderMode2["FLAT"] = "flat";
+  return RenderMode2;
+})(RenderMode || {});
+var MAX_LIGHTS = 16;
+var Context = class _Context {
+  /**
+   * Constructor is private, use init() to create a new context
+   */
+  constructor(gl) {
+    this.aspectRatio = 1;
+    this.programs = /* @__PURE__ */ new Map();
+    this.started = false;
+    this.instances = [];
+    this.instancesTrans = [];
+    /** All the dynamic point lights in the scene */
+    this.lights = [];
+    /** Show extra debug details on the canvas */
+    this.debug = false;
+    /** The pre-render update hook function */
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    this.update = () => {
+    };
+    this.gl = gl;
+    this.models = new ModelCache();
+    this.globalLight = new LightDirectional();
+    this.globalLight.setAsPosition(20, 50, 30);
+    this.camera = new Camera(0 /* PERSPECTIVE */);
+    this.gamma = 1;
+    this.hud = new HUD(gl.canvas);
+    this.debugDiv = document.createElement("div");
+    this.debugDiv.classList.add("gsots3d-debug");
+    this.hud.addHUDItem(this.debugDiv);
+    this.loadingDiv = document.createElement("div");
+    this.loadingDiv.classList.add("gsots3d-loading");
+    this.loadingDiv.innerHTML = "\u{1F4BE} Loading...";
+    this.loadingDiv.style.fontSize = "4vw";
+    this.loadingDiv.style.position = "absolute";
+    this.loadingDiv.style.top = "50%";
+    this.loadingDiv.style.left = "50%";
+    this.loadingDiv.style.transform = "translate(-50%, -50%)";
+    this.hud.addHUDItem(this.loadingDiv);
+    import_loglevel6.default.info(`\u{1F451} GSOTS-3D context created, v${version}`);
+  }
+  /**
+   * Create & initialize a new Context which will render into provided canvas selector
+   */
+  static async init(canvasSelector) {
+    const gl = getGl(true, canvasSelector);
+    if (!gl) {
+      import_loglevel6.default.error("\u{1F4A5} Failed to get WebGL context");
+      throw new Error("Failed to get WebGL context");
+    }
+    const ctx = new _Context(gl);
+    const canvas = gl.canvas;
+    ctx.aspectRatio = canvas.clientWidth / canvas.clientHeight;
+    try {
+      const phongProg = createProgramInfo(gl, [glsl_default2, glsl_default]);
+      ctx.programs.set("phong" /* PHONG */, phongProg);
+      const flatProg = createProgramInfo(gl, [glsl_default4, glsl_default3]);
+      ctx.programs.set("flat" /* FLAT */, flatProg);
+      const billboardProg = createProgramInfo(gl, [glsl_default6, glsl_default5]);
+      ctx.billboardProgInfo = billboardProg;
+      ctx.mainProgInfo = phongProg;
+      import_loglevel6.default.info(`\u{1F3A8} Loaded all shaders & programs, GL is ready`);
+    } catch (err) {
+      import_loglevel6.default.error(err);
+      throw err;
+    }
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    ctx.render = ctx.render.bind(ctx);
+    return ctx;
+  }
+  /**
+   * Main render loop, called every frame
+   */
+  async render(now) {
+    if (!this.gl)
+      return;
+    if (!this.mainProgInfo || !this.billboardProgInfo) {
+      import_loglevel6.default.error("\u{1F4A5} Missing program info, this is really bad!");
+      return;
+    }
+    stats.updateTime(now * 1e-3);
+    this.update(stats.deltaTime);
+    this.camera.update();
+    const camMatrix = this.camera.matrix;
+    const uniforms = {
+      u_gamma: this.gamma ?? 1,
+      u_worldInverseTranspose: mat4_exports.create(),
+      // Updated per instance
+      u_worldViewProjection: mat4_exports.create(),
+      // Updated per instance
+      u_view: mat4_exports.invert(mat4_exports.create(), camMatrix),
+      u_proj: this.camera.projectionMatrix(this.aspectRatio),
+      u_camPos: this.camera.position
+    };
+    this.gl.useProgram(this.billboardProgInfo.program);
+    this.globalLight.apply(this.billboardProgInfo, "Global");
+    this.gl.useProgram(this.mainProgInfo.program);
+    this.globalLight.apply(this.mainProgInfo, "Global");
+    if (this.lights.length > MAX_LIGHTS) {
+      this.lights.sort((lightA, lightB) => {
+        const ad = vec3_exports.distance(lightA.position, this.camera.position);
+        const bd = vec3_exports.distance(lightB.position, this.camera.position);
+        return ad - bd;
+      });
+    }
+    let lightCount = 0;
+    for (const light of this.lights) {
+      if (lightCount >= MAX_LIGHTS)
+        break;
+      if (!light.enabled)
+        continue;
+      uniforms[`u_lightsPos[${lightCount++}]`] = light.uniforms;
+    }
+    uniforms.u_lightsPosCount = lightCount;
+    this.gl.enable(this.gl.CULL_FACE);
+    for (const instance of this.instances) {
+      if (instance.billboard) {
+        instance.render(this.gl, uniforms, this.billboardProgInfo);
+      } else {
+        instance.render(this.gl, uniforms, this.mainProgInfo);
+      }
+    }
+    this.gl.disable(this.gl.CULL_FACE);
+    this.instancesTrans.sort((a, b) => {
+      const ad = Tuples.distance(a.position ?? [0, 0, 0], this.camera.position);
+      const bd = Tuples.distance(b.position ?? [0, 0, 0], this.camera.position);
+      return bd - ad;
+    });
+    for (const instance of this.instancesTrans) {
+      if (instance.billboard) {
+        instance.render(this.gl, uniforms, this.billboardProgInfo);
+      } else {
+        instance.render(this.gl, uniforms, this.mainProgInfo);
+      }
+    }
+    if (this.debug) {
+      this.debugDiv.innerHTML = `
+        <b>GSOTS-3D v${version}</b><br><br>
+        <b>Camera: </b>${this.camera.toString()}<br>
+        <b>Instances: </b>${stats.instances}<br>
+        <b>Draw calls: </b>${stats.drawCallsPerFrame}<br>
+        <b>Triangles: </b>${stats.triangles}<br>
+        <b>Render: </b>FPS: ${stats.FPS} / ${stats.totalTimeRound}s<br>
+      `;
+    } else {
+      this.debugDiv.innerHTML = "";
+    }
+    if (this.started)
+      requestAnimationFrame(this.render);
+    stats.resetPerFrame();
+  }
+  /**
+   * Start the rendering loop
+   */
+  start() {
+    this.loadingDiv.style.display = "none";
+    this.started = true;
+    requestAnimationFrame(this.render);
+  }
+  /**
+   * Stop the rendering loop
+   */
+  stop() {
+    this.started = false;
+  }
+  /**
+   * Change the render mode, e.g. Phong or Flat
+   * @param mode - Set the render mode to one of the available sets
+   */
+  setRenderMode(mode) {
+    if (!this.programs.has(mode)) {
+      throw new Error(`\u{1F4A5} Render mode '${mode}' is not valid, you will have a bad time \u{1F4A9}`);
+    }
+    this.mainProgInfo = this.programs.get(mode);
+  }
+  /**
+   * Resize the canvas to match the size of the element it's in
+   * @param viewportOnly - Only resize the viewport, not the canvas
+   */
+  resize(viewportOnly = false) {
+    const canvas = this.gl.canvas;
+    if (!viewportOnly)
+      resizeCanvasToDisplaySize(canvas);
+    this.gl.viewport(0, 0, canvas.width, canvas.height);
+    this.aspectRatio = canvas.width / canvas.height;
+    import_loglevel6.default.info(
+      `\u{1F4D0} RESIZE Internal: ${canvas.width} x ${canvas.height}, display: ${canvas.clientWidth} x ${canvas.clientHeight}`
+    );
+  }
+  /**
+   * Internal function to add an instance to the scene
+   */
+  addInstance(instance, material) {
+    if (material.opacity !== void 0 && material.opacity < 1) {
+      this.instancesTrans.push(instance);
+    } else {
+      this.instances.push(instance);
+    }
+  }
+  /**
+   * Model loader, loads a model from a file and adds it to the cache
+   * This is preferred over calling Model.parse() directly
+   * @param path Base path to the model file, e.g. './models/'
+   * @param fileName Name of the model file, e.g 'teapot.obj'
+   */
+  async loadModel(path, fileName, filter = true, flipY = true) {
+    const modelName = fileName.split(".")[0];
+    if (this.models.get(modelName, false)) {
+      import_loglevel6.default.warn(`\u26A0\uFE0F Model '${modelName}' already loaded, skipping`);
+      return;
+    }
+    const model = await Model.parse(path, fileName, filter, flipY);
+    this.models.add(model);
+  }
+  // ==========================================================================
+  // Methods to create new instances of renderable objects & things
+  // ==========================================================================
+  /**
+   * Create a new model instance, which should have been previously loaded into the cache
+   * @param modelName - Name of the model previously loaded into the cache, don't include the file extension
+   */
+  createModelInstance(modelName) {
+    const model = this.models.get(modelName);
+    if (!model) {
+      throw new Error(`\u{1F4A5} Unable to create model instance for ${modelName}`);
+    }
+    const instance = new Instance(model);
+    this.instances.push(instance);
+    stats.triangles += model.triangleCount;
+    stats.instances++;
+    return instance;
+  }
+  /**
+   * Create an instance of a primitive sphere
+   */
+  createSphereInstance(material, radius = 5, subdivisionsH = 16, subdivisionsV = 8) {
+    const sphere = new PrimitiveSphere(this.gl, radius, subdivisionsH, subdivisionsV);
+    sphere.material = material;
+    const instance = new Instance(sphere);
+    this.addInstance(instance, material);
+    stats.triangles += sphere.triangleCount;
+    stats.instances++;
+    import_loglevel6.default.debug(`\u{1F7E2} Created sphere instance, r:${radius}`);
+    return instance;
+  }
+  /**
+   * Create an instance of a primitive plane
+   * @param material - Material to apply to the plane
+   * @param width - Width of the plane
+   * @param height - Height of the plane
+   * @param subdivisionsW - Number of subdivisions along the width
+   * @param subdivisionsH - Number of subdivisions along the height
+   * @param tiling - Number of times to tile the texture over the plane
+   */
+  createPlaneInstance(material, width = 5, height = 5, subdivisionsW = 1, subdivisionsH = 1, tiling = 1) {
+    const plane = new PrimitivePlane(this.gl, width, height, subdivisionsW, subdivisionsH, tiling);
+    plane.material = material;
+    const instance = new Instance(plane);
+    this.addInstance(instance, material);
+    stats.triangles += plane.triangleCount;
+    stats.instances++;
+    import_loglevel6.default.debug(`\u{1F7E8} Created plane instance, w:${width} h:${height}`);
+    return instance;
+  }
+  /**
+   * Create an instance of a primitive cube
+   */
+  createCubeInstance(material, size = 5) {
+    const cube = new PrimitiveCube(this.gl, size);
+    cube.material = material;
+    const instance = new Instance(cube);
+    this.addInstance(instance, material);
+    stats.triangles += cube.triangleCount;
+    stats.instances++;
+    import_loglevel6.default.debug(`\u{1F4E6} Created cube instance, size:${size}`);
+    return instance;
+  }
+  /**
+   * Create an instance of a primitive cylinder
+   */
+  createCylinderInstance(material, r = 2, h = 5, subdivisionsR = 16, subdivisionsH = 1, caps = true) {
+    const cyl = new PrimitiveCylinder(this.gl, r, h, subdivisionsR, subdivisionsH, caps);
+    cyl.material = material;
+    const instance = new Instance(cyl);
+    this.addInstance(instance, material);
+    stats.triangles += cyl.triangleCount;
+    stats.instances++;
+    import_loglevel6.default.debug(`\u{1F6E2}\uFE0F Created cylinder instance, r:${r}`);
+    return instance;
+  }
+  /**
+   * Create an instance of a billboard/sprite in the scene
+   * @param textureUrl - Path to the texture image file to use for the billboard
+   * @param width - Width of the billboard (default: 5)
+   * @param height - Height of the billboard (default: 5)
+   * @param type - Type of billboard to create (default: CYLINDRICAL)
+   */
+  createBillboardInstance(material, width = 5, height = 5, type = 2 /* CYLINDRICAL */) {
+    const billboard = new Billboard(this.gl, width, height);
+    billboard.material = material;
+    const instance = new Instance(billboard);
+    instance.billboard = type;
+    this.addInstance(instance, material);
+    stats.triangles += 2;
+    stats.instances++;
+    return instance;
+  }
+  /**
+   * Create a new point light in the scene
+   * @param position - Position of the light
+   * @param colour - Colour of the light, defaults to white
+   * @param intensity - Intensity of the light
+   * @returns The new light object
+   */
+  createPointLight(position, colour = [1, 1, 1], intensity = 1) {
+    const light = new LightPoint(position, colour);
+    light.position = position;
+    light.colour = colour;
+    light.constant /= intensity;
+    light.linear /= intensity;
+    light.quad /= intensity;
+    this.lights.push(light);
+    import_loglevel6.default.debug(`\u{1F506} Created point light, pos:${position} col:${colour} int:${intensity}`);
+    return light;
   }
 };
 export {
@@ -7298,12 +7358,8 @@ export {
   PrimitivePlane,
   PrimitiveSphere,
   RenderMode,
+  Tuples,
   getGl,
-  normalize3Tuple,
-  rgbColour255,
-  rgbColourHex,
-  scaleTuple,
-  scaleTupleClamped,
   setLogLevel,
   textureCache
 };

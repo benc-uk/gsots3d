@@ -9,7 +9,7 @@ import { createTexture } from 'twgl.js'
 import { getGl } from './gl.ts'
 
 /**
- * A simple cache for models, indexed by name
+ * A simple cache for parsed and loaded models, indexed by name
  */
 export class ModelCache {
   private cache = new Map<string, Model>()
@@ -18,9 +18,9 @@ export class ModelCache {
    * Return a model from the cache by name
    * @param name
    */
-  get(name: string) {
-    if (!this.cache.has(name)) {
-      log.warn(`Model '${name}' not found in cache`)
+  get(name: string, warn = true) {
+    if (!this.cache.has(name) && warn) {
+      log.warn(`⚠️ Model '${name}' not found, please load it first`)
       return undefined
     }
 
@@ -28,7 +28,7 @@ export class ModelCache {
   }
 
   /**
-   * Add a model to the cache
+   * Add a model to the cache, using the model name as key
    */
   add(model: Model) {
     log.debug(`🧰 Adding model '${model.name}' to cache`)
@@ -78,7 +78,8 @@ class TextureCache {
    */
   get(key: string) {
     if (!this.cache.has(key)) {
-      throw new Error(`Texture ${key} not found in cache`)
+      log.warn(`💥 Texture ${key} not found in cache`)
+      return undefined
     }
 
     log.trace(`👍 Returning texture '${key}' from cache, nice!`)
@@ -92,7 +93,7 @@ class TextureCache {
    */
   add(key: string, texture: WebGLTexture) {
     if (this.cache.has(key)) {
-      log.warn(`Texture '${key}' already in cache, not adding again`)
+      log.warn(`🤔 Texture '${key}' already in cache, not adding again`)
       return
     }
 
@@ -130,7 +131,7 @@ class TextureCache {
       (err) => {
         if (err) {
           // There's not much we can do here, but log the error
-          log.error(`💥 Error loading texture '${src}'`, err)
+          log.error('💥 Error loading texture', err)
         }
       }
     )

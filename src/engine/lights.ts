@@ -5,7 +5,7 @@
 
 import { ProgramInfo, setUniforms } from 'twgl.js'
 import { UniformSet } from '../core/gl.ts'
-import { Colours, normalize3Tuple, XYZ, RGB } from './tuples.ts'
+import { Colours, Tuples, XYZ, RGB } from './tuples.ts'
 
 /**
  * A directional light source, typically global with the context having only a single instance
@@ -48,7 +48,7 @@ export class LightDirectional {
    */
   set direction(d: XYZ) {
     // Ensure direction is normalized
-    this._direction = normalize3Tuple(d)
+    this._direction = Tuples.normalize(d)
   }
 
   /**
@@ -62,7 +62,7 @@ export class LightDirectional {
    * Convenience method allows setting the direction as a point relative to the world origin
    */
   setAsPosition(x: number, y: number, z: number) {
-    this._direction = normalize3Tuple([0 - x, 0 - y, 0 - z])
+    this._direction = Tuples.normalize([0 - x, 0 - y, 0 - z])
   }
 
   /**

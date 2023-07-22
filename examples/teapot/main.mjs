@@ -1,4 +1,4 @@
-import { Context, Material, Model } from '../../dist-bundle/gsots3d.js'
+import { Context, Material } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init()
 window.addEventListener('resize', () => ctx.resize())
@@ -13,7 +13,8 @@ matBlue.specular = [1.0, 1.0, 1.0]
 matBlue.shininess = 100
 matBlue.diffuse = [0.1, 0.26, 0.9]
 
-ctx.models.add(await Model.parse('../_objects', 'teapot.obj'))
+await ctx.loadModel('../_objects', 'teapot.obj')
+// await ctx.loadModel('../_objects', 'teapot.obj')
 
 const teapot = ctx.createModelInstance('teapot')
 teapot.scale = [2.5, 2.5, 2.5]

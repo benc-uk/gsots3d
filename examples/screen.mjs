@@ -21,10 +21,12 @@ window.ondblclick = function () {
   }
 }
 
+// Aspect ratio aware resize
 function resizeCanvas() {
   // respect the aspect ratio
   let w = window.innerWidth
   let h = window.innerHeight
+
   // enforce ratios
   if (w / h > ratio) {
     w = h * ratio
@@ -33,11 +35,6 @@ function resizeCanvas() {
   }
   canvas.style.width = `${w}px`
   canvas.style.height = `${h}px`
-
-  // parent div
-  const parent = canvas.parentElement
-  parent.style.width = `${w}px`
-  parent.style.height = `${h}px`
 }
 
 resizeCanvas()

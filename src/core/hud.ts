@@ -23,7 +23,7 @@ export class HUD {
     this.update()
   }
 
-  private update() {
+  update() {
     const canvasStyles = window.getComputedStyle(this.canvas, null)
     this.hud.style.position = canvasStyles.getPropertyValue('position')
     this.hud.style.top = canvasStyles.getPropertyValue('top')

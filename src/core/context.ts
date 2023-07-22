@@ -9,7 +9,7 @@ import { mat4, vec3 } from 'gl-matrix'
 import log from 'loglevel'
 
 import { getGl, UniformSet } from './gl.ts'
-import { RGB, XYZ } from '../engine/tuples.ts'
+import { RGB, XYZ, Tuples } from '../engine/tuples.ts'
 import { ModelCache } from './cache.ts'
 import { LightDirectional, LightPoint } from '../engine/lights.ts'
 import { Camera, CameraType } from '../engine/camera.ts'
@@ -27,6 +27,7 @@ import vertShaderFlat from '../../shaders/gouraud-flat/glsl.vert'
 import fragShaderBill from '../../shaders/billboard/glsl.frag'
 import vertShaderBill from '../../shaders/billboard/glsl.vert'
 import { stats } from './stats.ts'
+import { Model } from '../models/model.ts'
 
 /**
  * The set of supported rendering modes
@@ -53,6 +54,7 @@ export class Context {
   private loadingDiv: HTMLDivElement
   private billboardProgInfo?: ProgramInfo
   private mainProgInfo?: ProgramInfo
+  private models: ModelCache
 
   /** Global directional light */
   public globalLight: LightDirectional
@@ -62,9 +64,6 @@ export class Context {
 
   /** Main camera for this context */
   public readonly camera: Camera
-
-  /** Cache of models, used to create instances */
-  public readonly models: ModelCache
 
   /** Show extra debug details on the canvas */
   public debug = false
@@ -117,7 +116,7 @@ export class Context {
   /**
    * Create & initialize a new Context which will render into provided canvas selector
    */
-  static async init(canvasSelector: string, backgroundColour = '#000'): Promise<Context> {
+  static async init(canvasSelector: string): Promise<Context> {
     const gl = getGl(true, canvasSelector)
 
     if (!gl) {
@@ -129,7 +128,6 @@ export class Context {
 
     const canvas = <HTMLCanvasElement>gl.canvas
     ctx.aspectRatio = canvas.clientWidth / canvas.clientHeight
-    canvas.style.backgroundColor = backgroundColour
 
     // Load shaders and build map of programs
     try {
@@ -225,6 +223,7 @@ export class Context {
     // This is a poor way of pseudo "sorting" the instances so transparent ones are rendered last
 
     // MAIN LOOP - Draw all opaque instances
+    this.gl.enable(this.gl.CULL_FACE)
     for (const instance of this.instances) {
       if (instance.billboard) {
         instance.render(this.gl, uniforms, this.billboardProgInfo)
@@ -234,6 +233,16 @@ export class Context {
     }
 
     // MAIN LOOP - Draw all transparent instances
+    this.gl.disable(this.gl.CULL_FACE)
+
+    // Sort transparent instances by distance to camera
+    // Maybe remove this in scenes with lots of transparent instances?
+    this.instancesTrans.sort((a, b) => {
+      const ad = Tuples.distance(a.position ?? [0, 0, 0], this.camera.position)
+      const bd = Tuples.distance(b.position ?? [0, 0, 0], this.camera.position)
+      return bd - ad
+    })
+
     for (const instance of this.instancesTrans) {
       if (instance.billboard) {
         instance.render(this.gl, uniforms, this.billboardProgInfo)
@@ -292,12 +301,26 @@ export class Context {
     this.mainProgInfo = this.programs.get(mode)
   }
 
-  resize() {
-    resizeCanvasToDisplaySize(<HTMLCanvasElement>this.gl.canvas)
-    this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height)
-    this.aspectRatio = this.gl.canvas.width / this.gl.canvas.height
+  /**
+   * Resize the canvas to match the size of the element it's in
+   * @param viewportOnly - Only resize the viewport, not the canvas
+   */
+  resize(viewportOnly = false) {
+    const canvas = <HTMLCanvasElement>this.gl.canvas
+
+    if (!viewportOnly) resizeCanvasToDisplaySize(canvas)
+
+    this.gl.viewport(0, 0, canvas.width, canvas.height)
+    this.aspectRatio = canvas.width / canvas.height
+
+    log.info(
+      `📐 RESIZE Internal: ${canvas.width} x ${canvas.height}, display: ${canvas.clientWidth} x ${canvas.clientHeight}`
+    )
   }
 
+  /**
+   * Internal function to add an instance to the scene
+   */
   private addInstance(instance: Instance, material: Material) {
     if (material.opacity !== undefined && material.opacity < 1) {
       this.instancesTrans.push(instance)
@@ -306,15 +329,39 @@ export class Context {
     }
   }
 
-  // ==================================================================================================================
+  /**
+   * Model loader, loads a model from a file and adds it to the cache
+   * This is preferred over calling Model.parse() directly
+   * @param path Base path to the model file, e.g. './models/'
+   * @param fileName Name of the model file, e.g 'teapot.obj'
+   */
+  public async loadModel(path: string, fileName: string, filter = true, flipY = true) {
+    const modelName = fileName.split('.')[0]
+
+    // Check if model is already loaded
+    if (this.models.get(modelName, false)) {
+      log.warn(`⚠️ Model '${modelName}' already loaded, skipping`)
+      return
+    }
+
+    const model = await Model.parse(path, fileName, filter, flipY)
+
+    this.models.add(model)
+  }
+
+  // ==========================================================================
+  // Methods to create new instances of renderable objects & things
+  // ==========================================================================
 
   /**
    * Create a new model instance, which should have been previously loaded into the cache
-   * @param modelName - Name of the model previously loaded into the cache
+   * @param modelName - Name of the model previously loaded into the cache, don't include the file extension
    */
   createModelInstance(modelName: string) {
     const model = this.models.get(modelName)
-    if (!model) throw new Error(`💥 Model '${modelName}' was not found, please load it first`)
+    if (!model) {
+      throw new Error(`💥 Unable to create model instance for ${modelName}`)
+    }
 
     const instance = new Instance(model)
     this.instances.push(instance)

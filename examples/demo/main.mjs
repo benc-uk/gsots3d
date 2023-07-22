@@ -1,4 +1,4 @@
-import { Model, Context, Material, BillboardType, Colours, setLogLevel } from '../../dist-bundle/gsots3d.js'
+import { Context, Material, BillboardType, Colours, setLogLevel } from '../../dist-bundle/gsots3d.js'
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 setLogLevel('debug')
@@ -14,18 +14,19 @@ if (!isMobile) {
   ctx.gamma = 1.5
 }
 
-// Setup scene
+// Load models
 try {
-  ctx.models.add(await Model.parse('../_objects', 'table.obj'))
-  ctx.models.add(await Model.parse('../_objects/chest', 'chest.obj'))
-  ctx.models.add(await Model.parse('../_objects/door', 'door.obj'))
-  ctx.models.add(await Model.parse('../_objects', 'icosahedron.obj'))
-  ctx.models.add(await Model.parse('../_objects', 'teapot.obj'))
-  ctx.models.add(await Model.parse('../_objects', 'wine.obj'))
+  await ctx.loadModel('../_objects', 'table.obj')
+  await ctx.loadModel('../_objects/chest', 'chest.obj')
+  await ctx.loadModel('../_objects/door', 'door.obj')
+  await ctx.loadModel('../_objects', 'icosahedron.obj')
+  await ctx.loadModel('../_objects', 'teapot.obj')
+  await ctx.loadModel('../_objects', 'wine.obj')
 } catch (e) {
   console.error(e)
 }
 
+// Build scene
 try {
   const door = ctx.createModelInstance('door')
   door.scale = [5, 5, 5]
@@ -184,6 +185,7 @@ window.addEventListener('keydown', (e) => {
     ctx.camera.fov = Math.min(ctx.camera.fov + 1, 120)
   }
 
+  // lights
   if (e.key === '2') {
     lightPink.enabled = !lightPink.enabled
   }

@@ -93,13 +93,13 @@ export class Model implements Renderable {
     try {
       objFile = await fetchFile(`${path}/${objFilename}`)
     } catch (err) {
-      throw new Error(`💥 Unable to load model ${objFilename}`)
+      throw new Error(`💥 Unable to load file '${path}/${objFilename}'`)
     }
 
     // Try to parse the OBJ file
     const objData = parseOBJ(objFile)
     if (!objData.geometries || objData.geometries.length === 0) {
-      throw new Error(`💥 Error parsing model ${objFilename}`)
+      throw new Error(`💥 Error parsing '${objFilename}', might not be a OBJ file`)
     }
 
     // We assume that the OBJ file has a SINGLE material library

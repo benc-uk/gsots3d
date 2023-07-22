@@ -24,7 +24,7 @@ export function getGl(aa = true, selector = 'canvas') {
     return glContext
   }
 
-  log.info(`🖌️ Creating WebGL2 context in ${selector}`)
+  log.info(`🖌️ Creating WebGL2 context in element: '${selector}'`)
 
   const canvas = document.querySelector(selector) as HTMLCanvasElement
   glContext = canvas.getContext('webgl2', { antialias: aa }) ?? undefined
@@ -32,6 +32,8 @@ export function getGl(aa = true, selector = 'canvas') {
   if (!glContext) {
     log.error('💥 Unable to create WebGL2 context!')
   }
+
+  log.info(`📐 Internal: ${canvas.width} x ${canvas.height}, display: ${canvas.clientWidth} x ${canvas.clientHeight}`)
 
   return glContext
 }
