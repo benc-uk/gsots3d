@@ -18,6 +18,7 @@ export class HUD {
 
     this.update = this.update.bind(this)
     window.addEventListener('resize', this.update)
+    window.addEventListener('load', this.update)
 
     parent.appendChild(this.hud)
     this.update()

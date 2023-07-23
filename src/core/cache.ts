@@ -6,7 +6,6 @@
 import log from 'loglevel'
 import { Model } from '../models/model.ts'
 import { createTexture } from 'twgl.js'
-import { getGl } from './gl.ts'
 
 /**
  * A simple cache for parsed and loaded models, indexed by name
@@ -41,14 +40,17 @@ export class ModelCache {
  * A caching texture manager
  * It is a global singleton, so only one instance can exist
  */
-class TextureCache {
+export class TextureCache {
   private cache: Map<string, WebGLTexture>
+  private gl: WebGL2RenderingContext
 
-  constructor() {
+  private constructor(gl: WebGL2RenderingContext) {
     this.cache = new Map<string, WebGLTexture>()
+    this.gl = gl
+  }
 
-    const gl = getGl()
-    if (!gl) return
+  public static init(gl: WebGL2RenderingContext) {
+    const cache = new TextureCache(gl)
 
     // Add default textures
 
@@ -68,8 +70,10 @@ class TextureCache {
       height: 2,
     })
 
-    this.add('_defaults/white', white1pixel)
-    this.add('_defaults/check', checkerboard)
+    cache.add('_defaults/white', white1pixel)
+    cache.add('_defaults/check', checkerboard)
+
+    return cache
   }
 
   /**
@@ -109,9 +113,6 @@ class TextureCache {
    * @param flipY Flip the texture vertically (default true)
    */
   getCreate(src: string, filter = true, flipY = true) {
-    const gl = getGl()
-    if (!gl) return
-
     // check if texture already exists, if so return it
     if (this.cache.has(src)) {
       log.trace(`👍 Returning texture '${src}' from cache, nice!`)
@@ -121,10 +122,10 @@ class TextureCache {
     // Create texture and add to cache
     // NOTE. Catching errors here is very hard, as twgl.createTexture() doesn't throw errors
     const texture = createTexture(
-      gl,
+      this.gl,
       {
-        min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
-        mag: filter ? gl.LINEAR : gl.NEAREST,
+        min: filter ? this.gl.LINEAR_MIPMAP_LINEAR : this.gl.NEAREST,
+        mag: filter ? this.gl.LINEAR : this.gl.NEAREST,
         src: src,
         flipY: flipY ? 1 : 0,
       },
@@ -140,5 +141,3 @@ class TextureCache {
     return texture
   }
 }
-
-export const textureCache = new TextureCache()

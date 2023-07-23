@@ -84,9 +84,9 @@ If you want to reference a specific released version you can do so by changing `
 ## 🤔 Known Issues
 
 - Transparency
-  - Is a bit of a hack and instances/objects are not sorted
   - Works OK with primitives, you can override a OBJ model material with a transparent one, but results might not be great.
 - Billboards: Shading on spherical billboards might not be correct
+- OBJ & MTL: The parsers are far from comprehensive and may not handle all features
 
 ## 📝 Documentation
 

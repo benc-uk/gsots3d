@@ -6,8 +6,8 @@
 import { ProgramInfo, setUniforms } from 'twgl.js'
 import { RGB } from './tuples.ts'
 import { MtlMaterial } from '../parsers/mtl-parser.ts'
-import { getGl, UniformSet } from '../core/gl.ts'
-import { textureCache } from '../core/cache.ts'
+import { UniformSet } from '../core/gl.ts'
+import { textureCache } from '../core/context.ts'
 
 export class Material {
   /**
@@ -68,9 +68,6 @@ export class Material {
     this.shininess = 0
     this.opacity = 1.0
 
-    const gl = getGl()
-    if (!gl) return
-
     // 1 pixel white texture allows for solid colour materials
     this.diffuseTex = textureCache.get('_defaults/white')
     this.specularTex = textureCache.get('_defaults/white')
@@ -88,9 +85,6 @@ export class Material {
     m.emissive = rawMtl.ke ? rawMtl.ke : [0, 0, 0]
     m.shininess = rawMtl.ns ? rawMtl.ns : 0
     m.opacity = rawMtl.d ? rawMtl.d : 1.0
-
-    const gl = getGl()
-    if (!gl) return m
 
     if (rawMtl.texDiffuse) {
       m.diffuseTex = textureCache.getCreate(`${basePath}/${rawMtl.texDiffuse}`, filter, flipY)
@@ -118,8 +112,6 @@ export class Material {
    */
   public static createBasicTexture(url: string, filter = true, flipY = false) {
     const m = new Material()
-    const gl = getGl()
-    if (!gl) return m
 
     m.diffuseTex = textureCache.getCreate(url, filter, flipY)
 
@@ -132,9 +124,6 @@ export class Material {
    * @param filter
    */
   public addSpecularTexture(url: string, filter = true, flipY = false) {
-    const gl = getGl()
-    if (!gl) return
-
     this.specularTex = textureCache.getCreate(url, filter, flipY)
   }
 

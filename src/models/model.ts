@@ -27,9 +27,16 @@ import { stats } from '../core/stats.ts'
  * Plus map of named materials
  */
 export class Model implements Renderable {
+  /** Name of the model, usually the filename without the extension */
   public readonly name: string
-  public readonly parts = [] as ModelPart[]
-  public readonly materials = {} as Record<string, Material>
+
+  /** Array of model sub-parts */
+  private readonly parts = [] as ModelPart[]
+
+  /** Named map of materials for all parts */
+  private readonly materials = {} as Record<string, Material>
+
+  /** Total number of triangles in the model */
   private triangles: number
 
   /**
@@ -40,16 +47,25 @@ export class Model implements Renderable {
     this.triangles = 0
   }
 
+  /**
+   * Render the model, using the given WebGL context, uniforms and program info
+   * @param gl
+   * @param uniforms
+   * @param programInfo
+   * @param materialOverride
+   */
   render(
     gl: WebGL2RenderingContext,
     uniforms: UniformSet,
     programInfo: ProgramInfo,
     materialOverride?: Material
   ): void {
+    // Render each part of the model
     for (const part of this.parts) {
       const bufferInfo = part.bufferInfo
 
       if (materialOverride === undefined) {
+        // Get the named material for this part
         let material = this.materials[part.materialName]
 
         // Fall back to default material if not found
@@ -70,16 +86,15 @@ export class Model implements Renderable {
     }
   }
 
+  /** Simple getter for the number of triangles in the model */
   get triangleCount(): number {
     return this.triangles
   }
 
   /**
    * Parse an OBJ file & MTL material libraries, returns a new Model
-   *
    * @param {string} path - The path to the OBJ file
    * @param {string} objFilename - The name of the OBJ file
-   * @returns {Promise<Model>}
    */
   static async parse(path = '.', objFilename: string, filterTextures = true, flipTextureY = true) {
     const startTime = performance.now()
@@ -121,6 +136,7 @@ export class Model implements Renderable {
     model.materials['__default'] = new Material()
     model.materials['__default'].diffuse = [0.1, 0.6, 0.9]
 
+    // This really should already been memoized by the context at this point
     const gl = getGl()
 
     if (!gl) {

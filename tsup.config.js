@@ -11,7 +11,7 @@ export default defineConfig({
   entry: ['src/index.ts', 'src/parsers/index.ts'],
 
   bundle: true,
-  splitting: true,
+  splitting: false,
   sourcemap: true,
   dts: true,
   minify: NODE_ENV === 'production',

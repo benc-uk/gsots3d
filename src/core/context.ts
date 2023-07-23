@@ -10,14 +10,16 @@ import log from 'loglevel'
 
 import { getGl, UniformSet } from './gl.ts'
 import { RGB, XYZ, Tuples } from '../engine/tuples.ts'
-import { ModelCache } from './cache.ts'
+import { ModelCache, TextureCache } from './cache.ts'
 import { LightDirectional, LightPoint } from '../engine/lights.ts'
 import { Camera, CameraType } from '../engine/camera.ts'
 import { Material } from '../engine/material.ts'
 import { BillboardType, Instance } from '../models/instance.ts'
 import { Billboard } from '../models/billboard.ts'
-import { HUD } from './hud.ts'
 import { PrimitiveCube, PrimitivePlane, PrimitiveSphere, PrimitiveCylinder } from '../models/primitive.ts'
+import { Model } from '../models/model.ts'
+import { HUD } from './hud.ts'
+import { stats } from './stats.ts'
 
 // Import shaders, tsup will inline these as text strings
 import fragShaderPhong from '../../shaders/phong/glsl.frag'
@@ -26,8 +28,6 @@ import fragShaderFlat from '../../shaders/gouraud-flat/glsl.frag'
 import vertShaderFlat from '../../shaders/gouraud-flat/glsl.vert'
 import fragShaderBill from '../../shaders/billboard/glsl.frag'
 import vertShaderBill from '../../shaders/billboard/glsl.vert'
-import { stats } from './stats.ts'
-import { Model } from '../models/model.ts'
 
 /**
  * The set of supported rendering modes
@@ -37,7 +37,11 @@ export enum RenderMode {
   FLAT = 'flat',
 }
 
+/** @ignore Total max dynamic lights */
 const MAX_LIGHTS = 16
+
+/** @ignore Global singleton texture cache */
+export let textureCache: TextureCache
 
 /**
  * The main rendering context. This is the effectively main entry point for the library.
@@ -68,7 +72,10 @@ export class Context {
   /** Show extra debug details on the canvas */
   public debug = false
 
-  /** The pre-render update hook function */
+  /**
+   * The pre-render update function, called every frame.
+   * Hook in your custom logic and processing here
+   */
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   public update: (delta: number) => void = () => {}
 
@@ -98,12 +105,17 @@ export class Context {
 
     this.debugDiv = document.createElement('div')
     this.debugDiv.classList.add('gsots3d-debug')
+    this.debugDiv.style.fontSize = 'min(1.5vw, 20px)'
+    this.debugDiv.style.fontFamily = 'monospace'
+    this.debugDiv.style.color = 'white'
+    this.debugDiv.style.padding = '1vw'
     this.hud.addHUDItem(this.debugDiv)
 
     this.loadingDiv = document.createElement('div')
     this.loadingDiv.classList.add('gsots3d-loading')
     this.loadingDiv.innerHTML = '💾 Loading...'
-    this.loadingDiv.style.fontSize = '4vw'
+    this.loadingDiv.style.font = 'normal 4vw sans-serif'
+    this.loadingDiv.style.color = 'white'
     this.loadingDiv.style.position = 'absolute'
     this.loadingDiv.style.top = '50%'
     this.loadingDiv.style.left = '50%'
@@ -116,14 +128,15 @@ export class Context {
   /**
    * Create & initialize a new Context which will render into provided canvas selector
    */
-  static async init(canvasSelector: string): Promise<Context> {
-    const gl = getGl(true, canvasSelector)
+  static async init(canvasSelector = 'canvas', antiAlias = true): Promise<Context> {
+    const gl = getGl(antiAlias, canvasSelector)
 
     if (!gl) {
-      log.error('💥 Failed to get WebGL context')
+      log.error('💥 Failed to get WebGL context, this is extremely bad news')
       throw new Error('Failed to get WebGL context')
     }
 
+    // Create the context around the WebGL2 context
     const ctx = new Context(gl)
 
     const canvas = <HTMLCanvasElement>gl.canvas
@@ -157,6 +170,9 @@ export class Context {
 
     // bind to the render function
     ctx.render = ctx.render.bind(ctx)
+
+    // Global texture cache
+    textureCache = TextureCache.init(gl)
 
     return ctx
   }
