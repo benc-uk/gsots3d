@@ -37,6 +37,11 @@ try {
   door2.position = [-130, 0, -50]
   door2.rotateYDeg(-90)
 
+  const door3 = ctx.createModelInstance('door')
+  door3.scale = [5, 5, 5]
+  door3.position = [0, 0, -130]
+  // door3.rotateYDeg(-90)
+
   const table = ctx.createModelInstance('table')
   table.position = [16, 0, -15]
   table.rotateXDeg(-90)
@@ -63,7 +68,7 @@ try {
   const matBlueGlass = Material.createSolidColour(0.2, 0.3, 1.0)
   matBlueGlass.specular = [0.8, 0.8, 0.8]
   matBlueGlass.shininess = 50
-  matBlueGlass.opacity = 0.4
+  matBlueGlass.opacity = 0.25
   const cylinder = ctx.createCylinderInstance(matBlueGlass, 2.3, 6, 16, 8)
   cylinder.position = [10, 20, -20]
 

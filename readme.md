@@ -26,6 +26,8 @@ Features
 
 ## 🖼️ Screenshots
 
+![Some room in a dungeon or something ](https://user-images.githubusercontent.com/14982936/255395017-1f07c46b-f738-48d1-b699-691d6edf1361.png)
+
 ![screenshot of example scene](https://user-images.githubusercontent.com/14982936/253817000-93846b97-35a8-4fa5-bd79-c4a24176b6df.png)
 
 ![screenshot of some teapots!](https://user-images.githubusercontent.com/14982936/253750405-8c9aba84-fa42-4c52-9813-6d5255c3254b.png)
