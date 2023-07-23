@@ -266,11 +266,21 @@ function getGl(aa = true, selector = "canvas") {
   if (glContext) {
     return glContext;
   }
-  import_loglevel.default.info(`\u{1F58C}\uFE0F Creating WebGL2 context in element: '${selector}'`);
-  const canvas = document.querySelector(selector);
+  import_loglevel.default.info(`\u{1F58C}\uFE0F Creating new WebGL2 context for: '${selector}'`);
+  const canvasElement = document.querySelector(selector);
+  if (canvasElement && canvasElement.tagName !== "CANVAS") {
+    import_loglevel.default.error(`\u{1F4A5} FATAL! Element with selector: '${selector}' is not a canvas element`);
+    return void 0;
+  }
+  const canvas = canvasElement;
+  if (!canvas) {
+    import_loglevel.default.error(`\u{1F4A5} FATAL! Unable to find canvas element with selector: '${selector}'`);
+    return void 0;
+  }
   glContext = canvas.getContext("webgl2", { antialias: aa }) ?? void 0;
   if (!glContext) {
-    import_loglevel.default.error("\u{1F4A5} Unable to create WebGL2 context!");
+    import_loglevel.default.error(`\u{1F4A5} Unable to create WebGL2 context, maybe it's not supported on this device`);
+    return void 0;
   }
   import_loglevel.default.info(`\u{1F4D0} Internal: ${canvas.width} x ${canvas.height}, display: ${canvas.clientWidth} x ${canvas.clientHeight}`);
   return glContext;
@@ -283,7 +293,7 @@ function setLogLevel(level) {
 }
 
 // package.json
-var version = "0.0.2";
+var version = "0.0.3-alpha.0";
 
 // node_modules/twgl.js/dist/5.x/twgl-full.module.js
 var VecType = Float32Array;
@@ -5994,12 +6004,13 @@ var ModelCache = class {
     this.cache.set(model.name, model);
   }
 };
-var TextureCache = class {
-  constructor() {
+var TextureCache = class _TextureCache {
+  constructor(gl) {
     this.cache = /* @__PURE__ */ new Map();
-    const gl = getGl();
-    if (!gl)
-      return;
+    this.gl = gl;
+  }
+  static init(gl) {
+    const cache = new _TextureCache(gl);
     const white1pixel = createTexture(gl, {
       min: gl.NEAREST,
       mag: gl.NEAREST,
@@ -6012,8 +6023,9 @@ var TextureCache = class {
       width: 2,
       height: 2
     });
-    this.add("_defaults/white", white1pixel);
-    this.add("_defaults/check", checkerboard);
+    cache.add("_defaults/white", white1pixel);
+    cache.add("_defaults/check", checkerboard);
+    return cache;
   }
   /**
    * Return a texture from the cache by name
@@ -6047,18 +6059,15 @@ var TextureCache = class {
    * @param flipY Flip the texture vertically (default true)
    */
   getCreate(src, filter = true, flipY = true) {
-    const gl = getGl();
-    if (!gl)
-      return;
     if (this.cache.has(src)) {
       import_loglevel3.default.trace(`\u{1F44D} Returning texture '${src}' from cache, nice!`);
       return this.get(src);
     }
     const texture = createTexture(
-      gl,
+      this.gl,
       {
-        min: filter ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST,
-        mag: filter ? gl.LINEAR : gl.NEAREST,
+        min: filter ? this.gl.LINEAR_MIPMAP_LINEAR : this.gl.NEAREST,
+        mag: filter ? this.gl.LINEAR : this.gl.NEAREST,
         src,
         flipY: flipY ? 1 : 0
       },
@@ -6072,7 +6081,6 @@ var TextureCache = class {
     return texture;
   }
 };
-var textureCache = new TextureCache();
 
 // src/engine/lights.ts
 var LightDirectional = class {
@@ -6456,9 +6464,6 @@ var Material = class _Material {
     this.emissive = [0, 0, 0];
     this.shininess = 0;
     this.opacity = 1;
-    const gl = getGl();
-    if (!gl)
-      return;
     this.diffuseTex = textureCache.get("_defaults/white");
     this.specularTex = textureCache.get("_defaults/white");
   }
@@ -6473,9 +6478,6 @@ var Material = class _Material {
     m.emissive = rawMtl.ke ? rawMtl.ke : [0, 0, 0];
     m.shininess = rawMtl.ns ? rawMtl.ns : 0;
     m.opacity = rawMtl.d ? rawMtl.d : 1;
-    const gl = getGl();
-    if (!gl)
-      return m;
     if (rawMtl.texDiffuse) {
       m.diffuseTex = textureCache.getCreate(`${basePath}/${rawMtl.texDiffuse}`, filter, flipY);
     }
@@ -6497,9 +6499,6 @@ var Material = class _Material {
    */
   static createBasicTexture(url, filter = true, flipY = false) {
     const m = new _Material();
-    const gl = getGl();
-    if (!gl)
-      return m;
     m.diffuseTex = textureCache.getCreate(url, filter, flipY);
     return m;
   }
@@ -6509,9 +6508,6 @@ var Material = class _Material {
    * @param filter
    */
   addSpecularTexture(url, filter = true, flipY = false) {
-    const gl = getGl();
-    if (!gl)
-      return;
     this.specularTex = textureCache.getCreate(url, filter, flipY);
   }
   /** Create a simple RED Material */
@@ -6609,38 +6605,6 @@ var Billboard = class {
   }
 };
 
-// src/core/hud.ts
-var HUD = class {
-  constructor(canvas) {
-    const parent = canvas.parentElement;
-    if (!parent)
-      throw new Error("\u{1F4A5} Canvas must have a parent element");
-    this.canvas = canvas;
-    this.hud = document.createElement("div");
-    this.hud.classList.add("gsots3d-hud");
-    this.update = this.update.bind(this);
-    window.addEventListener("resize", this.update);
-    parent.appendChild(this.hud);
-    this.update();
-  }
-  update() {
-    const canvasStyles = window.getComputedStyle(this.canvas, null);
-    this.hud.style.position = canvasStyles.getPropertyValue("position");
-    this.hud.style.top = canvasStyles.getPropertyValue("top");
-    this.hud.style.left = canvasStyles.getPropertyValue("left");
-    this.hud.style.width = canvasStyles.getPropertyValue("width");
-    this.hud.style.height = canvasStyles.getPropertyValue("height");
-    this.hud.style.transform = canvasStyles.getPropertyValue("transform");
-    this.hud.style.pointerEvents = "none";
-  }
-  addHUDItem(item) {
-    this.hud.appendChild(item);
-  }
-  debug(msg) {
-    this.hud.innerHTML = msg;
-  }
-};
-
 // src/models/primitive.ts
 var Primitive = class {
   constructor() {
@@ -6696,24 +6660,6 @@ var PrimitiveCylinder = class extends Primitive {
     this.triangles += this.bufferInfo.numElements / 3;
   }
 };
-
-// shaders/phong/glsl.frag
-var glsl_default = "#version 300 es\n\n// ============================================================================\n// Phong fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n  bool enabled;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// From vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\n\n// Some global uniforms\nuniform vec3 u_camPos;\nuniform float u_gamma;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\n/*\n * Shade a fragment using a directional light source\n */\nvec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(-light.direction);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, v_texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, v_texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;\n  vec3 specular = light.colour * spec * specularCol;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n/*\n * Shade a fragment using a positional light source\n */\nvec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(light.position - v_position.xyz);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, v_texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, v_texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // Light attenuation, see: https://learnopengl.com/Lighting/Light-casters\n  float dist = length(light.position - v_position.xyz);\n  float attenuation = 1.0 / (light.constant + light.linear * dist + light.quad * (dist * dist));\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol * attenuation;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * attenuation;\n  vec3 specular = light.colour * spec * specularCol * attenuation;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\nvoid main() {\n  vec3 V = normalize(u_camPos - v_position.xyz);\n\n  vec4 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, normalize(v_normal), V);\n\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    outColorPart += shadePosLight(u_lightsPos[i], u_mat, normalize(v_normal), V);\n  }\n\n  // Add emissive component\n  float emissiveAlpha = u_mat.emissive.r + u_mat.emissive.g + u_mat.emissive.b > 0.0 ? 1.0 : 0.0;\n  outColorPart += vec4(u_mat.emissive, emissiveAlpha);\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  outColorPart.rgb = pow(outColorPart.rgb, vec3(1.0 / u_gamma));\n\n  outColour = outColorPart;\n}\n";
-
-// shaders/phong/glsl.vert
-var glsl_default2 = "#version 300 es\n\n// ============================================================================\n// Phong vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_normal;\nout vec4 v_position;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  v_position = u_world * position;\n  gl_Position = u_worldViewProjection * position;\n}\n";
-
-// shaders/gouraud-flat/glsl.frag
-var glsl_default3 = "#version 300 es\n\n// ============================================================================\n// Gouraud fragment shader with flat shading\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// From vertex shader, note flat keyword!\nflat in vec3 v_lightingDiffuse;\nflat in vec3 v_lightingSpecular;\nin vec2 v_texCoord;\n\nuniform Material u_mat;\nuniform float u_gamma;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\nvoid main() {\n  // Tried to set the objectColour in the vertex shader, rather than here.aa\n  // But texture mapping + Gouraud shading, it looks terrible\n  vec3 objectColour = vec3(texture(u_mat.diffuseTex, v_texCoord)) * u_mat.diffuse;\n\n  vec3 colour = objectColour * v_lightingDiffuse + v_lightingSpecular;\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  colour.rgb = pow(colour.rgb, vec3(1.0 / u_gamma));\n\n  outColour = vec4(colour, 1.0);\n}\n";
-
-// shaders/gouraud-flat/glsl.vert
-var glsl_default4 = "#version 300 es\n\n// ============================================================================\n// Gouraud vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\n// Some global uniforms\nuniform mat4 u_world;\nuniform vec3 u_camPos;\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\n\n// Main light and material uniforms\nuniform LightDir u_lightDirGlobal;\nuniform Material u_mat;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n\nflat out vec3 v_lightingDiffuse;\nflat out vec3 v_lightingSpecular;\nout vec2 v_texCoord;\n\n/*\n * Legacy lighting calc\n * Returns vec2(diffuse, specular)\n */\nvec2 lightCalc(vec3 N, vec3 L, vec3 H, float shininess) {\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), shininess) : 0.0;\n  return vec2(diff, spec);\n}\n\nvoid main() {\n  LightDir lightGlobal = u_lightDirGlobal;\n  vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  vec3 worldPos = (u_world * position).xyz;\n\n  vec3 V = normalize(u_camPos - worldPos);\n  vec3 N = normalize(worldNormal);\n  vec3 L = normalize(-lightGlobal.direction.xyz);\n  vec3 H = normalize(L + V);\n\n  // Calculate lighting values for global light\n  vec2 lVal = lightCalc(N, L, H, u_mat.shininess);\n\n  // Output lighting values for fragment shader to use, no material color\n  v_lightingDiffuse = lightGlobal.ambient * u_mat.ambient + lightGlobal.colour * max(lVal.x, 0.0);\n  v_lightingSpecular = lightGlobal.colour * u_mat.specular * lVal.y;\n\n  // Add in point lights\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    LightPos lightPos = u_lightsPos[i];\n\n    vec3 L = normalize(lightPos.position - worldPos);\n\n    vec2 lVal = lightCalc(N, L, H, u_mat.shininess);\n\n    v_lightingDiffuse += lightPos.ambient * u_mat.ambient + lightPos.colour * max(lVal.x, 0.0);\n    v_lightingSpecular += max(lightPos.colour * u_mat.specular * lVal.y, 0.0);\n  }\n\n  // Pass through varying texture coordinate, so we can get the colour there\n  v_texCoord = texcoord;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
-
-// shaders/billboard/glsl.frag
-var glsl_default5 = "#version 300 es\n\n// ============================================================================\n// Billboard fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// From vertex shader\nin vec2 v_texCoord;\nin vec3 v_lighting;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform float u_gamma;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\nvoid main() {\n  vec4 texel = texture(u_mat.diffuseTex, v_texCoord);\n\n  // Magic to make transparent sprites work, without blending\n  if (texel.a < 0.8) {\n    discard;\n  }\n\n  vec3 colour = texel.rgb * u_mat.diffuse * v_lighting;\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  colour = pow(colour, vec3(1.0 / u_gamma));\n\n  outColour = vec4(colour, u_mat.opacity);\n}\n";
-
-// shaders/billboard/glsl.vert
-var glsl_default6 = "#version 300 es\n\n// ============================================================================\n// Billboard vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n  bool enabled;\n};\n\n// Input attributes from buffers\nin vec4 position;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_world;\nuniform int u_lightsPosCount;\nuniform vec3 u_camPos;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_lighting;\n\n/*\n * Legacy lighting calc\n * Returns vec2(diffuse, specular)\n */\nvec2 lightCalc(vec3 N, vec3 L, vec3 H, float shininess) {\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), shininess) : 0.0;\n  return vec2(diff, spec);\n}\n\nvoid main() {\n  v_texCoord = texcoord;\n  gl_Position = u_worldViewProjection * position;\n\n  vec3 worldPos = (u_world * position).xyz;\n  // Normal for a billboard always points at camera\n  vec3 worldNormal = normalize(u_camPos - worldPos);\n\n  vec3 V = normalize(u_camPos - worldPos);\n  vec3 N = normalize(worldNormal);\n  float fudge = 1.5;\n\n  // Add point lights to lighting output\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    LightPos light = u_lightsPos[i];\n    vec3 L = normalize(light.position - worldPos.xyz);\n\n    float diffuse = max(dot(N, L), 0.0);\n\n    // Distance attenuation\n    float distance = length(light.position - worldPos.xyz);\n    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quad * (distance * distance));\n\n    // Note small hack here to fudge the light intensity\n    v_lighting += light.colour * fudge * attenuation * diffuse;\n  }\n\n  // Add in global directional light\n  // Approximate by using a fixed direction for the normal pointing up\n  vec3 globalLightL = normalize(-u_lightDirGlobal.direction);\n  float globalDiffuse = dot(vec3(0.0, 1.0, 0.0), globalLightL);\n  v_lighting += u_lightDirGlobal.colour * globalDiffuse;\n}\n";
 
 // src/models/model.ts
 var import_loglevel5 = __toESM(require_loglevel(), 1);
@@ -6919,11 +6865,20 @@ var Model = class _Model {
    * Constructor is private, use static `parse()` method instead
    */
   constructor(name) {
+    /** Array of model sub-parts */
     this.parts = [];
+    /** Named map of materials for all parts */
     this.materials = {};
     this.name = name;
     this.triangles = 0;
   }
+  /**
+   * Render the model, using the given WebGL context, uniforms and program info
+   * @param gl
+   * @param uniforms
+   * @param programInfo
+   * @param materialOverride
+   */
   render(gl, uniforms, programInfo, materialOverride) {
     for (const part of this.parts) {
       const bufferInfo = part.bufferInfo;
@@ -6942,15 +6897,14 @@ var Model = class _Model {
       stats.drawCallsPerFrame++;
     }
   }
+  /** Simple getter for the number of triangles in the model */
   get triangleCount() {
     return this.triangles;
   }
   /**
    * Parse an OBJ file & MTL material libraries, returns a new Model
-   *
    * @param {string} path - The path to the OBJ file
    * @param {string} objFilename - The name of the OBJ file
-   * @returns {Promise<Model>}
    */
   static async parse(path = ".", objFilename, filterTextures = true, flipTextureY = true) {
     const startTime = performance.now();
@@ -7005,6 +6959,57 @@ var ModelPart = class {
   }
 };
 
+// src/core/hud.ts
+var HUD = class {
+  constructor(canvas) {
+    const parent = canvas.parentElement;
+    if (!parent)
+      throw new Error("\u{1F4A5} Canvas must have a parent element");
+    this.canvas = canvas;
+    this.hud = document.createElement("div");
+    this.hud.classList.add("gsots3d-hud");
+    this.update = this.update.bind(this);
+    window.addEventListener("resize", this.update);
+    window.addEventListener("load", this.update);
+    parent.appendChild(this.hud);
+    this.update();
+  }
+  update() {
+    const canvasStyles = window.getComputedStyle(this.canvas, null);
+    this.hud.style.position = canvasStyles.getPropertyValue("position");
+    this.hud.style.top = canvasStyles.getPropertyValue("top");
+    this.hud.style.left = canvasStyles.getPropertyValue("left");
+    this.hud.style.width = canvasStyles.getPropertyValue("width");
+    this.hud.style.height = canvasStyles.getPropertyValue("height");
+    this.hud.style.transform = canvasStyles.getPropertyValue("transform");
+    this.hud.style.pointerEvents = "none";
+  }
+  addHUDItem(item) {
+    this.hud.appendChild(item);
+  }
+  debug(msg) {
+    this.hud.innerHTML = msg;
+  }
+};
+
+// shaders/phong/glsl.frag
+var glsl_default = "#version 300 es\n\n// ============================================================================\n// Phong fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n  bool enabled;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// From vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\n\n// Some global uniforms\nuniform vec3 u_camPos;\nuniform float u_gamma;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\n/*\n * Shade a fragment using a directional light source\n */\nvec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(-light.direction);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, v_texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, v_texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;\n  vec3 specular = light.colour * spec * specularCol;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n/*\n * Shade a fragment using a positional light source\n */\nvec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(light.position - v_position.xyz);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, v_texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, v_texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // Light attenuation, see: https://learnopengl.com/Lighting/Light-casters\n  float dist = length(light.position - v_position.xyz);\n  float attenuation = 1.0 / (light.constant + light.linear * dist + light.quad * (dist * dist));\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol * attenuation;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * attenuation;\n  vec3 specular = light.colour * spec * specularCol * attenuation;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\nvoid main() {\n  vec3 V = normalize(u_camPos - v_position.xyz);\n\n  vec4 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, normalize(v_normal), V);\n\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    outColorPart += shadePosLight(u_lightsPos[i], u_mat, normalize(v_normal), V);\n  }\n\n  // Add emissive component\n  float emissiveAlpha = u_mat.emissive.r + u_mat.emissive.g + u_mat.emissive.b > 0.0 ? 1.0 : 0.0;\n  outColorPart += vec4(u_mat.emissive, emissiveAlpha);\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  outColorPart.rgb = pow(outColorPart.rgb, vec3(1.0 / u_gamma));\n\n  outColour = outColorPart;\n}\n";
+
+// shaders/phong/glsl.vert
+var glsl_default2 = "#version 300 es\n\n// ============================================================================\n// Phong vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_normal;\nout vec4 v_position;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  v_position = u_world * position;\n  gl_Position = u_worldViewProjection * position;\n}\n";
+
+// shaders/gouraud-flat/glsl.frag
+var glsl_default3 = "#version 300 es\n\n// ============================================================================\n// Gouraud fragment shader with flat shading\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// From vertex shader, note flat keyword!\nflat in vec3 v_lightingDiffuse;\nflat in vec3 v_lightingSpecular;\nin vec2 v_texCoord;\n\nuniform Material u_mat;\nuniform float u_gamma;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\nvoid main() {\n  // Tried to set the objectColour in the vertex shader, rather than here.aa\n  // But texture mapping + Gouraud shading, it looks terrible\n  vec3 objectColour = vec3(texture(u_mat.diffuseTex, v_texCoord)) * u_mat.diffuse;\n\n  vec3 colour = objectColour * v_lightingDiffuse + v_lightingSpecular;\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  colour.rgb = pow(colour.rgb, vec3(1.0 / u_gamma));\n\n  outColour = vec4(colour, 1.0);\n}\n";
+
+// shaders/gouraud-flat/glsl.vert
+var glsl_default4 = "#version 300 es\n\n// ============================================================================\n// Gouraud vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\n// Some global uniforms\nuniform mat4 u_world;\nuniform vec3 u_camPos;\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\n\n// Main light and material uniforms\nuniform LightDir u_lightDirGlobal;\nuniform Material u_mat;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n\nflat out vec3 v_lightingDiffuse;\nflat out vec3 v_lightingSpecular;\nout vec2 v_texCoord;\n\n/*\n * Legacy lighting calc\n * Returns vec2(diffuse, specular)\n */\nvec2 lightCalc(vec3 N, vec3 L, vec3 H, float shininess) {\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), shininess) : 0.0;\n  return vec2(diff, spec);\n}\n\nvoid main() {\n  LightDir lightGlobal = u_lightDirGlobal;\n  vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  vec3 worldPos = (u_world * position).xyz;\n\n  vec3 V = normalize(u_camPos - worldPos);\n  vec3 N = normalize(worldNormal);\n  vec3 L = normalize(-lightGlobal.direction.xyz);\n  vec3 H = normalize(L + V);\n\n  // Calculate lighting values for global light\n  vec2 lVal = lightCalc(N, L, H, u_mat.shininess);\n\n  // Output lighting values for fragment shader to use, no material color\n  v_lightingDiffuse = lightGlobal.ambient * u_mat.ambient + lightGlobal.colour * max(lVal.x, 0.0);\n  v_lightingSpecular = lightGlobal.colour * u_mat.specular * lVal.y;\n\n  // Add in point lights\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    LightPos lightPos = u_lightsPos[i];\n\n    vec3 L = normalize(lightPos.position - worldPos);\n\n    vec2 lVal = lightCalc(N, L, H, u_mat.shininess);\n\n    v_lightingDiffuse += lightPos.ambient * u_mat.ambient + lightPos.colour * max(lVal.x, 0.0);\n    v_lightingSpecular += max(lightPos.colour * u_mat.specular * lVal.y, 0.0);\n  }\n\n  // Pass through varying texture coordinate, so we can get the colour there\n  v_texCoord = texcoord;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
+
+// shaders/billboard/glsl.frag
+var glsl_default5 = "#version 300 es\n\n// ============================================================================\n// Billboard fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// From vertex shader\nin vec2 v_texCoord;\nin vec3 v_lighting;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform float u_gamma;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\nvoid main() {\n  vec4 texel = texture(u_mat.diffuseTex, v_texCoord);\n\n  // Magic to make transparent sprites work, without blending\n  if (texel.a < 0.8) {\n    discard;\n  }\n\n  vec3 colour = texel.rgb * u_mat.diffuse * v_lighting;\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  colour = pow(colour, vec3(1.0 / u_gamma));\n\n  outColour = vec4(colour, u_mat.opacity);\n}\n";
+
+// shaders/billboard/glsl.vert
+var glsl_default6 = "#version 300 es\n\n// ============================================================================\n// Billboard vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n  bool enabled;\n};\n\n// Input attributes from buffers\nin vec4 position;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_world;\nuniform int u_lightsPosCount;\nuniform vec3 u_camPos;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_lighting;\n\n/*\n * Legacy lighting calc\n * Returns vec2(diffuse, specular)\n */\nvec2 lightCalc(vec3 N, vec3 L, vec3 H, float shininess) {\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), shininess) : 0.0;\n  return vec2(diff, spec);\n}\n\nvoid main() {\n  v_texCoord = texcoord;\n  gl_Position = u_worldViewProjection * position;\n\n  vec3 worldPos = (u_world * position).xyz;\n  // Normal for a billboard always points at camera\n  vec3 worldNormal = normalize(u_camPos - worldPos);\n\n  vec3 V = normalize(u_camPos - worldPos);\n  vec3 N = normalize(worldNormal);\n  float fudge = 1.5;\n\n  // Add point lights to lighting output\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    LightPos light = u_lightsPos[i];\n    vec3 L = normalize(light.position - worldPos.xyz);\n\n    float diffuse = max(dot(N, L), 0.0);\n\n    // Distance attenuation\n    float distance = length(light.position - worldPos.xyz);\n    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quad * (distance * distance));\n\n    // Note small hack here to fudge the light intensity\n    v_lighting += light.colour * fudge * attenuation * diffuse;\n  }\n\n  // Add in global directional light\n  // Approximate by using a fixed direction for the normal pointing up\n  vec3 globalLightL = normalize(-u_lightDirGlobal.direction);\n  float globalDiffuse = dot(vec3(0.0, 1.0, 0.0), globalLightL);\n  v_lighting += u_lightDirGlobal.colour * globalDiffuse;\n}\n";
+
 // src/core/context.ts
 var RenderMode = /* @__PURE__ */ ((RenderMode2) => {
   RenderMode2["PHONG"] = "phong";
@@ -7012,6 +7017,7 @@ var RenderMode = /* @__PURE__ */ ((RenderMode2) => {
   return RenderMode2;
 })(RenderMode || {});
 var MAX_LIGHTS = 16;
+var textureCache;
 var Context = class _Context {
   /**
    * Constructor is private, use init() to create a new context
@@ -7026,7 +7032,10 @@ var Context = class _Context {
     this.lights = [];
     /** Show extra debug details on the canvas */
     this.debug = false;
-    /** The pre-render update hook function */
+    /**
+     * The pre-render update function, called every frame.
+     * Hook in your custom logic and processing here
+     */
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     this.update = () => {
     };
@@ -7039,11 +7048,16 @@ var Context = class _Context {
     this.hud = new HUD(gl.canvas);
     this.debugDiv = document.createElement("div");
     this.debugDiv.classList.add("gsots3d-debug");
+    this.debugDiv.style.fontSize = "min(1.5vw, 20px)";
+    this.debugDiv.style.fontFamily = "monospace";
+    this.debugDiv.style.color = "white";
+    this.debugDiv.style.padding = "1vw";
     this.hud.addHUDItem(this.debugDiv);
     this.loadingDiv = document.createElement("div");
     this.loadingDiv.classList.add("gsots3d-loading");
     this.loadingDiv.innerHTML = "\u{1F4BE} Loading...";
-    this.loadingDiv.style.fontSize = "4vw";
+    this.loadingDiv.style.font = "normal 4vw sans-serif";
+    this.loadingDiv.style.color = "white";
     this.loadingDiv.style.position = "absolute";
     this.loadingDiv.style.top = "50%";
     this.loadingDiv.style.left = "50%";
@@ -7054,10 +7068,10 @@ var Context = class _Context {
   /**
    * Create & initialize a new Context which will render into provided canvas selector
    */
-  static async init(canvasSelector) {
-    const gl = getGl(true, canvasSelector);
+  static async init(canvasSelector = "canvas", antiAlias = true) {
+    const gl = getGl(antiAlias, canvasSelector);
     if (!gl) {
-      import_loglevel6.default.error("\u{1F4A5} Failed to get WebGL context");
+      import_loglevel6.default.error("\u{1F4A5} Failed to get WebGL context, this is extremely bad news");
       throw new Error("Failed to get WebGL context");
     }
     const ctx = new _Context(gl);
@@ -7081,6 +7095,7 @@ var Context = class _Context {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     ctx.render = ctx.render.bind(ctx);
+    textureCache = TextureCache.init(gl);
     return ctx;
   }
   /**
@@ -7358,6 +7373,7 @@ export {
   PrimitivePlane,
   PrimitiveSphere,
   RenderMode,
+  TextureCache,
   Tuples,
   getGl,
   setLogLevel,
