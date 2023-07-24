@@ -70,8 +70,16 @@ export class TextureCache {
       height: 2,
     })
 
+    // 1 pixel texture used for normal mapping is sort of blue-violet colour
+    const normal1pixel = createTexture(gl, {
+      min: gl.NEAREST,
+      mag: gl.NEAREST,
+      src: [128, 128, 255, 255],
+    })
+
     cache.add('_defaults/white', white1pixel)
     cache.add('_defaults/check', checkerboard)
+    cache.add('_defaults/normal', normal1pixel)
 
     return cache
   }

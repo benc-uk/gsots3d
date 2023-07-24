@@ -57,6 +57,12 @@ export class Material {
   public specularTex?: WebGLTexture
 
   /**
+   * Normal texture map
+   * @default "1 pixel white texture"
+   */
+  public normalTex?: WebGLTexture
+
+  /**
    * Create a new material with default diffuse colour
    */
   constructor() {
@@ -68,9 +74,12 @@ export class Material {
     this.shininess = 0
     this.opacity = 1.0
 
-    // 1 pixel white texture allows for solid colour materials
+    // 1 pixel white texture allows for solid colour & flat materials
     this.diffuseTex = textureCache.get('_defaults/white')
     this.specularTex = textureCache.get('_defaults/white')
+
+    // Normal map with no normals is this special 1 pixel texture
+    this.normalTex = textureCache.get('_defaults/normal')
   }
 
   /**
@@ -94,6 +103,10 @@ export class Material {
       m.specularTex = textureCache.getCreate(`${basePath}/${rawMtl.texSpecular}`, filter, flipY)
     }
 
+    if (rawMtl.texNormal) {
+      m.normalTex = textureCache.getCreate(`${basePath}/${rawMtl.texNormal}`, filter, flipY)
+    }
+
     return m
   }
 
@@ -110,7 +123,7 @@ export class Material {
   /**
    * Create a new Material with a texture map loaded from a URL
    */
-  public static createBasicTexture(url: string, filter = true, flipY = false) {
+  public static createBasicTexture(url: string, filter = true, flipY = true) {
     const m = new Material()
 
     m.diffuseTex = textureCache.getCreate(url, filter, flipY)
@@ -123,8 +136,17 @@ export class Material {
    * @param url
    * @param filter
    */
-  public addSpecularTexture(url: string, filter = true, flipY = false) {
+  public addSpecularTexture(url: string, filter = true, flipY = true) {
     this.specularTex = textureCache.getCreate(url, filter, flipY)
+  }
+
+  /**
+   * Add a normal texture map to existing material, probably created with createBasicTexture
+   * @param url
+   * @param filter
+   */
+  public addNormalTexture(url: string, filter = true, flipY = true) {
+    this.normalTex = textureCache.getCreate(url, filter, flipY)
   }
 
   /** Create a simple RED Material */
@@ -176,6 +198,7 @@ export class Material {
       opacity: this.opacity,
       diffuseTex: this.diffuseTex ? this.diffuseTex : null,
       specularTex: this.specularTex ? this.specularTex : null,
+      normalTex: this.normalTex ? this.normalTex : null,
     } as UniformSet
   }
 }

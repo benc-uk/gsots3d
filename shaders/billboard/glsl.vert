@@ -53,8 +53,8 @@ vec2 lightCalc(vec3 N, vec3 L, vec3 H, float shininess) {
 void main() {
   v_texCoord = texcoord;
   gl_Position = u_worldViewProjection * position;
-
   vec3 worldPos = (u_world * position).xyz;
+
   // Normal for a billboard always points at camera
   vec3 worldNormal = normalize(u_camPos - worldPos);
 

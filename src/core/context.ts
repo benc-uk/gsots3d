@@ -163,7 +163,6 @@ export class Context {
     }
 
     gl.enable(gl.DEPTH_TEST)
-    gl.enable(gl.CULL_FACE)
 
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -469,8 +468,7 @@ export class Context {
    * @param type - Type of billboard to create (default: CYLINDRICAL)
    */
   createBillboardInstance(material: Material, width = 5, height = 5, type = BillboardType.CYLINDRICAL) {
-    const billboard = new Billboard(this.gl, width, height)
-
+    const billboard = new Billboard(this.gl, width)
     billboard.material = material
 
     const instance = new Instance(billboard)
@@ -481,7 +479,7 @@ export class Context {
     stats.triangles += 2
     stats.instances++
 
-    // log.debug(`🚧 Created billboard instance with texture: ${textureUrl}`)
+    log.debug(`🚧 Created billboard instance of type: ${type} ${height}`)
 
     return instance
   }

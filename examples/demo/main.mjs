@@ -1,4 +1,4 @@
-import { Context, Material, BillboardType, Colours, setLogLevel } from '../../dist-bundle/gsots3d.js'
+import { Context, Material, Colours, setLogLevel } from '../../dist-bundle/gsots3d.js'
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 setLogLevel('debug')
@@ -97,8 +97,8 @@ try {
   wall4.rotateXDeg(90)
 
   const impMat = Material.createBasicTexture('../_textures/doom-imp.png')
-  const bb = ctx.createBillboardInstance(impMat, 22, 22, BillboardType.SPHERICAL)
-  bb.position = [-4, 11, -4]
+  const doomImp = ctx.createBillboardInstance(impMat, 30)
+  doomImp.position = [-35, 0, -25]
 
   const mellonTx = Material.createBasicTexture('../_textures/mellon.jpg')
   const mellon = ctx.createSphereInstance(mellonTx, 4, 32, 16)

@@ -18,6 +18,7 @@ export type MtlMaterial = {
   illum?: number
   texDiffuse?: string
   texSpecular?: string
+  texNormal?: string
 }
 
 /**
@@ -67,6 +68,9 @@ export function parseMTL(mtlFile: string): Map<string, MtlMaterial> {
     },
     map_Ks(_: string[], unparsedArgs: string) {
       material.texSpecular = unparsedArgs
+    },
+    map_bump(_: string[], unparsedArgs: string) {
+      material.texNormal = unparsedArgs
     },
   } as Record<string, (parts: string[], unparsedArgs: string) => void>
 

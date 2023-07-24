@@ -2,36 +2,44 @@ import { Colours, Context, Material } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init()
 // window.addEventListener('resize', () => ctx.resize())
-ctx.debug = true
+// ctx.debug = true
 
-ctx.camera.position = [0, 200, 700]
-ctx.globalLight.setAsPosition(3, 1, 0)
+ctx.camera.position = [0, 20, 70]
+ctx.globalLight.setAsPosition(1, 1, 5)
+ctx.globalLight.colour = Colours.BLACK
+ctx.globalLight.ambient = [0.3, 0.3, 0.3]
 ctx.camera.far = 5000
 
-// ctx.camera.enableFPControls(0, -0.2, 0.002, 1.0)
+ctx.camera.enableFPControls(0, -0.2, 0.002, 2.0)
 
-const m = Material.createBasicTexture('../_textures/STARG2.png')
-ctx.createPlaneInstance(m, 1000, 1000, 1, 1, 3)
+const wallMat = Material.createBasicTexture('../_textures/brickwall.jpg')
+wallMat.addNormalTexture('../_textures/brickwall_normal.jpg')
+wallMat.specular = [0.9, 0.7, 0.4]
+wallMat.shininess = 300
 
-const redLight = ctx.createPointLight([30, 100, 180], Colours.RED, 10)
-ctx.createPointLight([180, 100, 190], Colours.YELLOW, 19)
+const wall = ctx.createPlaneInstance(wallMat, 200, 200, 12, 12, 6)
+wall.rotateX(Math.PI / 2)
+wall.flipTextureY = true
 
-const impMat = Material.createBasicTexture('../_textures/doom-imp.png')
-impMat.diffuse = [1, 1, 1]
-const imp = ctx.createBillboardInstance(impMat, 200, 200)
-imp.position = [0, 100, 100]
+const wall2 = ctx.createPlaneInstance(wallMat, 200, 200, 12, 12, 6)
+wall2.rotateX(-Math.PI / 2)
+wall2.flipTextureY = true
+wall2.position = [0, 0, 100]
 
-let dirX = 1
-let dirZ = 1
-const angle = 0.47
-ctx.update = (delta) => {
-  // bounce the red light around the scene for some reason
-  redLight.position[0] += delta * dirX * 700 * Math.sin(angle)
-  redLight.position[2] += delta * dirZ * 700 * Math.cos(angle)
-  if (redLight.position[0] > 500) dirX = -1
-  if (redLight.position[0] < -500) dirX = 1
-  if (redLight.position[2] > 500) dirZ = -1
-  if (redLight.position[2] < -500) dirZ = 1
-}
+const floor = ctx.createPlaneInstance(wallMat, 200, 200, 12, 12, 6)
+floor.rotateYDeg(90)
+floor.flipTextureY = true
+
+const m2 = Material.createBasicTexture('../_textures/brickwall.jpg')
+const cube = ctx.createCubeInstance(m2, 20)
+cube.position = [5, -5, 20]
+const light = ctx.createPointLight([80, 50, 40], Colours.WHITE, 4)
+
+const ballMat = Material.createSolidColour(Colours.WHITE)
+ballMat.emissive = [1, 1, 1]
+ballMat.diffuse = [1, 1, 1]
+ballMat.shininess = 100
+const ball = ctx.createSphereInstance(ballMat, 5)
+ball.position = light.position
 
 ctx.start()

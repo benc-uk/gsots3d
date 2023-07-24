@@ -11,10 +11,10 @@ Features
 
 - Models: Meshes with loading & parsing of OBJ & MTL.
 - Materials with diffuse texture mapping, specular maps.
-- Lights: directional (global) and dynamic point lights.
+- Lights: global directional and dynamic point lights.
 - Primitives: sphere, cube, plane.
 - Rendering: Phong and flat-Gouraud shading modes.
-- Transparency: With limitations.
+- Transparency: With some limitations.
 - Billboarding for adding 2D sprites into a 3D scene.
 - Camera: Perspective and orthographic.
 
@@ -26,7 +26,7 @@ Features
 
 ## 🖼️ Screenshots
 
-![Some room in a dungeon or something ](https://user-images.githubusercontent.com/14982936/255395017-1f07c46b-f738-48d1-b699-691d6edf1361.png)
+![Some room in a dungeon or something](https://user-images.githubusercontent.com/14982936/255395017-1f07c46b-f738-48d1-b699-691d6edf1361.png)
 
 ![screenshot of example scene](https://user-images.githubusercontent.com/14982936/253817000-93846b97-35a8-4fa5-bd79-c4a24176b6df.png)
 
@@ -61,7 +61,7 @@ The hello world equivalent in GSOTS is putting a simple object on the screen, Th
 </html>
 ```
 
-## Using & Install
+## 💻 Using & Install
 
 #### Import as package
 
@@ -95,3 +95,10 @@ If you want to reference a specific released version you can do so by changing `
 [Full API reference](https://code.benco.io/gsots3d/docs/)
 
 [GitHub Project](https://github.com/benc-uk/gsots3d)
+
+## 📚 Sources & Reading
+
+- https://learnopengl.com/
+- https://twgljs.org/
+- https://webglfundamentals.org/
+- https://github.com/benc-uk/doom-lite

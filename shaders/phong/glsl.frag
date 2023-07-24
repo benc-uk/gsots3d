@@ -34,16 +34,20 @@ struct Material {
   float opacity;
   sampler2D diffuseTex;
   sampler2D specularTex;
+  sampler2D normalTex;
 };
 
 // From vertex shader
 in vec3 v_normal;
 in vec2 v_texCoord;
 in vec4 v_position;
+in mat3 v_TBN;
 
 // Some global uniforms
 uniform vec3 u_camPos;
 uniform float u_gamma;
+uniform bool u_flipTextureX;
+uniform bool u_flipTextureY;
 
 // Main lights and material uniforms
 uniform Material u_mat;
@@ -54,6 +58,9 @@ uniform int u_lightsPosCount;
 // Output colour of this pixel/fragment
 out vec4 outColour;
 
+// Global texture coords shared between functions
+vec2 texCoord;
+
 /*
  * Shade a fragment using a directional light source
  */
@@ -61,8 +68,8 @@ vec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {
   vec3 L = normalize(-light.direction);
   vec3 H = normalize(L + V);
 
-  vec3 diffuseCol = vec3(texture(mat.diffuseTex, v_texCoord)) * mat.diffuse;
-  vec3 specularCol = vec3(texture(mat.specularTex, v_texCoord)) * mat.specular;
+  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;
+  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;
 
   float diff = dot(N, L);
   float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;
@@ -82,8 +89,8 @@ vec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {
   vec3 L = normalize(light.position - v_position.xyz);
   vec3 H = normalize(L + V);
 
-  vec3 diffuseCol = vec3(texture(mat.diffuseTex, v_texCoord)) * mat.diffuse;
-  vec3 specularCol = vec3(texture(mat.specularTex, v_texCoord)) * mat.specular;
+  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;
+  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;
 
   float diff = dot(N, L);
   float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;
@@ -100,13 +107,24 @@ vec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {
   return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);
 }
 
+// ============================================================================
+// Main fragment shader entry point
+// ============================================================================
 void main() {
   vec3 V = normalize(u_camPos - v_position.xyz);
 
-  vec4 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, normalize(v_normal), V);
+  // Flip texture coords if needed
+  texCoord = u_flipTextureY ? vec2(v_texCoord.x, 1.0 - v_texCoord.y) : v_texCoord.xy;
+  texCoord = u_flipTextureX ? vec2(1.0 - texCoord.x, texCoord.y) : texCoord.xy;
+
+  // Normal mapping using TBN matrix
+  vec3 normalMap = normalize(texture(u_mat.normalTex, texCoord).rgb * 2.0 - 1.0);
+  vec3 N = normalize(v_TBN * normalMap);
+
+  vec4 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, N, V);
 
   for (int i = 0; i < u_lightsPosCount; i++) {
-    outColorPart += shadePosLight(u_lightsPos[i], u_mat, normalize(v_normal), V);
+    outColorPart += shadePosLight(u_lightsPos[i], u_mat, N, V);
   }
 
   // Add emissive component
