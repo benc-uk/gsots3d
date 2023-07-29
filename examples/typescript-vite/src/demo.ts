@@ -108,7 +108,7 @@ try {
 
   const impMat = Material.createBasicTexture('textures/doom-imp.png')
   const bb = ctx.createBillboardInstance(impMat, 22, 22, BillboardType.SPHERICAL)
-  bb.position = [-4, 11, -4]
+  bb.position = [-4, 0, -4]
 
   const mellonTx = Material.createBasicTexture('textures/mellon.jpg')
   const mellon = ctx.createSphereInstance(mellonTx, 4, 32, 16)

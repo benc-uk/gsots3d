@@ -1,6 +1,6 @@
 import { Context, Material, Colours, setLogLevel } from '../../dist-bundle/gsots3d.js'
 
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+const isMobile = true ///Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 setLogLevel('debug')
 
 const ctx = await Context.init('canvas')
@@ -57,7 +57,7 @@ try {
 
   const chest2 = ctx.createModelInstance('chest')
   chest2.scale = [3.5, 3.5, 3.5]
-  chest2.position = [17, 0, 6]
+  chest2.position = [21, 0, 6]
   chest2.rotateYDeg(-90)
 
   const matGlass = Material.createSolidColour(0.6, 0.6, 0.6)
@@ -79,8 +79,8 @@ try {
   floorMat.diffuse = [0.7, 0.7, 1]
 
   // wall
-  const wallMat1 = Material.createBasicTexture('../_textures/brickwall.jpg')
-  wallMat1.addNormalTexture('../_textures/brickwall_normal.jpg')
+  const wallMat1 = Material.createBasicTexture('../_textures/brickwall.jpg', true, false)
+  wallMat1.addNormalTexture('../_textures/brickwall_normal.jpg', true, false)
   wallMat1.specular = [0.5, 0.5, 0.5]
   const wall1 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 4)
   wall1.position = [0, 130, -130]
@@ -106,8 +106,8 @@ try {
 
   const impMat = Material.createBasicTexture('../_textures/doom-imp.png')
   const doomImp = ctx.createBillboardInstance(impMat, 30)
-  doomImp.position = [-35, 0, -25]
-
+  doomImp.scale = [0.8, 0.8, 0.8]
+  doomImp.position = [-6, 0, -5]
   const mellonTx = Material.createBasicTexture('../_textures/mellon.jpg')
   const mellon = ctx.createSphereInstance(mellonTx, 4, 32, 16)
   mellonTx.diffuse = [0.7, 1.4, 0.7]
@@ -147,14 +147,14 @@ try {
   bottle.rotateXDeg(-90)
   bottle.scale = [0.6, 0.6, 0.6]
 
-  const scifi = Material.createBasicTexture('../_textures/sci-fi.png')
-  scifi.addNormalTexture('../_textures/sci-fi_normal.png')
+  const scifi = Material.createBasicTexture('../_textures/sci-fi.png', true, false)
+  scifi.addNormalTexture('../_textures/sci-fi_normal.png', true, false)
   scifi.diffuse = [0.5, 0.5, 0.8]
-  scifi.specular = [1, 1, 1]
-  scifi.shininess = 15
-  scifiCube = ctx.createCubeInstance(scifi, 1)
-  scifiCube.position = [45, 7.5, -8]
-  scifiCube.scale = [15.5, 15.5, 15.5]
+  scifi.specular = [2, 2, 2]
+  scifi.shininess = 30
+  scifiCube = ctx.createCubeInstance(scifi, 10)
+  scifiCube.position = [10, 5, 21]
+  scifiCube.rotateYDeg(38)
   scifiCube.flipTextureX = true
 } catch (e) {
   console.error(e)

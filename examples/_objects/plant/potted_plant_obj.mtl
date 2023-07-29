@@ -1,0 +1,18 @@
+# Blender MTL File: 'potted_plant_blender_2.8.blend'
+# Material Count: 2
+
+newmtl leaves_texture
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.000000 0.000000 0.000000
+map_bump leaves_normal.png
+map_Kd leaves_basecolor.png
+
+newmtl pot_texture
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.900000 0.500000 0.500000
+map_bump pot_normal.png
+map_Kd pot_basecolor.png

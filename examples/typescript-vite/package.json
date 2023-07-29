@@ -10,9 +10,9 @@
   },
   "devDependencies": {
     "typescript": "^5.1.6",
-    "vite": "^4.4.6"
+    "vite": "^4.4.7"
   },
   "dependencies": {
-    "@benc-uk/gsots3d": "^0.0.3-alpha.0"
+    "@benc-uk/gsots3d": "^0.0.3-alpha.2"
   }
 }
