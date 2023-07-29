@@ -21,6 +21,7 @@ import { fetchFile } from '../core/files.ts'
 import { getGl, UniformSet } from '../core/gl.ts'
 import { Renderable } from './types.ts'
 import { stats } from '../core/stats.ts'
+import { vec2, vec3 } from 'gl-matrix'
 
 /**
  * Holds a 3D model, as a list of parts, each with a material
@@ -48,11 +49,8 @@ export class Model implements Renderable {
   }
 
   /**
-   * Render the model, using the given WebGL context, uniforms and program info
-   * @param gl
-   * @param uniforms
-   * @param programInfo
-   * @param materialOverride
+   * Render is used draw this model, this is called from the Instance that wraps
+   * this renderable.
    */
   render(
     gl: WebGL2RenderingContext,
@@ -144,6 +142,14 @@ export class Model implements Renderable {
     }
 
     for (const g of objData.geometries) {
+      // TODO: One day fix this
+      if (g.data.texcoord && g.data.normal) {
+        g.data.tangent = generateTangents(g.data.position, g.data.texcoord)
+      } else {
+        // There are no tangents
+        g.data.tangent = [1, 0, 0]
+      }
+
       const bufferInfo = createBufferInfoFromArrays(gl, g.data)
       model.parts.push(new ModelPart(bufferInfo, g.material))
     }
@@ -175,4 +181,46 @@ class ModelPart {
     this.bufferInfo = bufferInfo
     this.materialName = materialName
   }
+}
+
+/* TODO: THIS DOESN'T WORK!!! */
+function generateTangents(pos: number[], texcoord: number[]) {
+  const numFaces = pos.length / 3
+  const tangents = []
+
+  for (let i = 0; i < numFaces; ++i) {
+    const i3 = i * 3
+    const v0 = [pos[i3 + 0], pos[i3 + 1], pos[i3 + 2]] as vec3
+    const v1 = [pos[i3 + 3], pos[i3 + 4], pos[i3 + 5]] as vec3
+    const v2 = [pos[i3 + 6], pos[i3 + 7], pos[i3 + 8]] as vec3
+
+    const uv0 = [texcoord[i3 + 0], texcoord[i3 + 1]] as vec2
+    const uv1 = [texcoord[i3 + 2], texcoord[i3 + 3]] as vec2
+    const uv2 = [texcoord[i3 + 4], texcoord[i3 + 5]] as vec2
+
+    const deltaPos1 = vec3.sub(vec3.create(), v1, v0)
+    const deltaPos2 = vec3.sub(vec3.create(), v2, v0)
+
+    const deltaUV1 = vec2.sub(vec2.create(), uv1, uv0)
+    const deltaUV2 = vec2.sub(vec2.create(), uv2, uv0)
+
+    const r = 1.0 / (deltaUV1[0] * deltaUV2[1] - deltaUV1[1] * deltaUV2[0])
+    let tangent = [1, 0, 0] as vec3
+
+    if (Number.isFinite(r)) {
+      tangent = vec3.scale(
+        vec3.create(),
+        vec3.sub(
+          vec3.create(),
+          vec3.scale(vec3.create(), deltaPos1, deltaUV2[1]),
+          vec3.scale(vec3.create(), deltaPos2, deltaUV1[1])
+        ),
+        r
+      )
+    }
+
+    tangents.push(...tangent, ...tangent, ...tangent)
+  }
+
+  return tangents
 }

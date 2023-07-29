@@ -171,7 +171,7 @@ export class Context {
     ctx.render = ctx.render.bind(ctx)
 
     // Global texture cache
-    textureCache = TextureCache.init(gl)
+    textureCache = new TextureCache(gl)
 
     return ctx
   }
@@ -468,8 +468,7 @@ export class Context {
    * @param type - Type of billboard to create (default: CYLINDRICAL)
    */
   createBillboardInstance(material: Material, width = 5, height = 5, type = BillboardType.CYLINDRICAL) {
-    const billboard = new Billboard(this.gl, width)
-    billboard.material = material
+    const billboard = new Billboard(this.gl, material, width)
 
     const instance = new Instance(billboard)
     instance.billboard = type

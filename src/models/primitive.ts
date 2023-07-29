@@ -36,6 +36,10 @@ export abstract class Primitive implements Renderable {
     return this.triangles
   }
 
+  /**
+   * Render is used draw this primitive, this is called from the Instance that wraps
+   * this renderable.
+   */
   render(
     gl: WebGL2RenderingContext,
     uniforms: UniformSet,
@@ -63,7 +67,7 @@ export class PrimitiveSphere extends Primitive {
     super()
 
     this.bufferInfo = primitives.createSphereBufferInfo(gl, radius, subdivisionsH, subdivisionsV)
-    // count triangles
+
     this.triangles += this.bufferInfo.numElements / 3
   }
 }
@@ -73,6 +77,7 @@ export class PrimitiveCube extends Primitive {
     super()
 
     this.bufferInfo = primitives.createCubeBufferInfo(gl, size)
+
     this.triangles += this.bufferInfo.numElements / 3
   }
 }

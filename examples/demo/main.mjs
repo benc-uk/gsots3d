@@ -26,6 +26,8 @@ try {
   console.error(e)
 }
 
+let scifiCube
+
 // Build scene
 try {
   const door = ctx.createModelInstance('door')
@@ -73,28 +75,34 @@ try {
   cylinder.position = [10, 20, -20]
 
   const floorMat = Material.createBasicTexture('../_textures/wood-floor.png')
-  const floor = ctx.createPlaneInstance(floorMat, 260, 260, 10, 10, 8)
-  floor.position = [0, 0, 0]
+  ctx.createPlaneInstance(floorMat, 260, 260, 1, 1, 8)
+  floorMat.diffuse = [0.7, 0.7, 1]
 
   // wall
-  const wallMat1 = Material.createBasicTexture('../_textures/stone-wall.png')
-  const wall1 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 6)
+  const wallMat1 = Material.createBasicTexture('../_textures/brickwall.jpg')
+  wallMat1.addNormalTexture('../_textures/brickwall_normal.jpg')
+  wallMat1.specular = [0.5, 0.5, 0.5]
+  const wall1 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 4)
   wall1.position = [0, 130, -130]
   wall1.rotateXDeg(90)
+  wall1.flipTextureX = true
 
-  const wall2 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 6)
+  const wall2 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 4)
   wall2.position = [0, 130, 130]
   wall2.rotateXDeg(-90)
+  wall2.flipTextureX = true
 
-  const wall3 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 6)
+  const wall3 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 4)
   wall3.position = [130, 130, 0]
   wall3.rotateZDeg(90)
   wall3.rotateXDeg(90)
+  wall3.flipTextureX = true
 
-  const wall4 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 6)
+  const wall4 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 4)
   wall4.position = [-130, 130, 0]
   wall4.rotateZDeg(-90)
   wall4.rotateXDeg(90)
+  wall4.flipTextureX = true
 
   const impMat = Material.createBasicTexture('../_textures/doom-imp.png')
   const doomImp = ctx.createBillboardInstance(impMat, 30)
@@ -138,6 +146,16 @@ try {
   bottle.position = [-14, 11, -14]
   bottle.rotateXDeg(-90)
   bottle.scale = [0.6, 0.6, 0.6]
+
+  const scifi = Material.createBasicTexture('../_textures/sci-fi.png')
+  scifi.addNormalTexture('../_textures/sci-fi_normal.png')
+  scifi.diffuse = [0.5, 0.5, 0.8]
+  scifi.specular = [1, 1, 1]
+  scifi.shininess = 15
+  scifiCube = ctx.createCubeInstance(scifi, 1)
+  scifiCube.position = [45, 7.5, -8]
+  scifiCube.scale = [15.5, 15.5, 15.5]
+  scifiCube.flipTextureX = true
 } catch (e) {
   console.error(e)
 }
@@ -151,20 +169,20 @@ ctx.camera.far = 500
 ctx.globalLight.setAsPosition(1, 10, 3)
 ctx.globalLight.colour = [0.8, 0.8, 0.8]
 ctx.globalLight.ambient = [0.05, 0.05, 0.05]
-const lightGreen = ctx.createPointLight([-30, 19, -60], Colours.GREEN)
+const lightGreen = ctx.createPointLight([-59, 19, -60], Colours.GREEN)
 const lightPink = ctx.createPointLight([10, 30, 60], [0.9, 0.1, 0.4], 2.4)
 
 window.addEventListener('keydown', (e) => {
   // change height
   if (e.key === 'q') {
     let h = ctx.camera.position[1]
-    h = Math.min(h + 1, 200)
+    h = Math.min(h + 1.5, 200)
     ctx.camera.position[1] = h
   }
 
   if (e.key === 'e') {
     let h = ctx.camera.position[1]
-    h = Math.max(h - 1, 1)
+    h = Math.max(h - 1.5, 1)
     ctx.camera.position[1] = h
   }
 
@@ -177,7 +195,7 @@ window.addEventListener('keydown', (e) => {
     if (ctx.camera.fpModeEnabled) {
       ctx.camera.disableFPControls()
     } else {
-      ctx.camera.enableFPControls(0, -0.2, 0.002, 1.0)
+      ctx.camera.enableFPControls(0, -0.2, 0.002, 2.0)
     }
   }
 
@@ -197,6 +215,9 @@ window.addEventListener('keydown', (e) => {
   if (e.key === '1') {
     lightGreen.enabled = !lightGreen.enabled
   }
+  if (e.key === '3') {
+    ctx.globalLight.enabled = !ctx.globalLight.enabled
+  }
 })
 
 const autoRotate = isMobile
@@ -212,6 +233,8 @@ ctx.update = (delta) => {
     const z = Math.sin(angle) * radius
     ctx.camera.position = [x, 25, z]
   }
+
+  //scifiCube.rotateYDeg(delta * 20)
 }
 
 ctx.start()

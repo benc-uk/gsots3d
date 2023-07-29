@@ -34,7 +34,7 @@ export class Material {
 
   /**
    * Shininess, for size of specular highlights
-   * @default 0
+   * @default 20
    */
   public shininess: number
 
@@ -71,15 +71,12 @@ export class Material {
     this.specular = [0, 0, 0]
     this.emissive = [0, 0, 0]
 
-    this.shininess = 0
+    this.shininess = 20
     this.opacity = 1.0
 
     // 1 pixel white texture allows for solid colour & flat materials
     this.diffuseTex = textureCache.get('_defaults/white')
     this.specularTex = textureCache.get('_defaults/white')
-
-    // Normal map with no normals is this special 1 pixel texture
-    this.normalTex = textureCache.get('_defaults/normal')
   }
 
   /**
@@ -138,6 +135,8 @@ export class Material {
    */
   public addSpecularTexture(url: string, filter = true, flipY = true) {
     this.specularTex = textureCache.getCreate(url, filter, flipY)
+    this.specular = [1, 1, 1]
+    this.shininess = 20
   }
 
   /**
@@ -199,6 +198,7 @@ export class Material {
       diffuseTex: this.diffuseTex ? this.diffuseTex : null,
       specularTex: this.specularTex ? this.specularTex : null,
       normalTex: this.normalTex ? this.normalTex : null,
+      hasNormalTex: this.normalTex ? true : false,
     } as UniformSet
   }
 }

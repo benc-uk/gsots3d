@@ -38,19 +38,16 @@ export class ModelCache {
 
 /**
  * A caching texture manager
- * It is a global singleton, so only one instance can exist
+ * It is instantiated with a WebGL context and then used to load and cache textures
  */
 export class TextureCache {
   private cache: Map<string, WebGLTexture>
   private gl: WebGL2RenderingContext
 
-  private constructor(gl: WebGL2RenderingContext) {
+  // Create a new texture cache, needs a WebGL context so tricky to make a singleton
+  constructor(gl: WebGL2RenderingContext) {
     this.cache = new Map<string, WebGLTexture>()
     this.gl = gl
-  }
-
-  public static init(gl: WebGL2RenderingContext) {
-    const cache = new TextureCache(gl)
 
     // Add default textures
 
@@ -77,11 +74,9 @@ export class TextureCache {
       src: [128, 128, 255, 255],
     })
 
-    cache.add('_defaults/white', white1pixel)
-    cache.add('_defaults/check', checkerboard)
-    cache.add('_defaults/normal', normal1pixel)
-
-    return cache
+    this.add('_defaults/white', white1pixel)
+    this.add('_defaults/check', checkerboard)
+    this.add('_defaults/normal', normal1pixel)
   }
 
   /**

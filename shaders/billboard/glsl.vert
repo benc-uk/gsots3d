@@ -81,5 +81,7 @@ void main() {
   // Approximate by using a fixed direction for the normal pointing up
   vec3 globalLightL = normalize(-u_lightDirGlobal.direction);
   float globalDiffuse = dot(vec3(0.0, 1.0, 0.0), globalLightL);
+
   v_lighting += u_lightDirGlobal.colour * globalDiffuse;
+  v_lighting += u_lightDirGlobal.ambient;
 }

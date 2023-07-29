@@ -82,8 +82,8 @@ export class LightDirectional {
   public get uniforms(): UniformSet {
     return {
       direction: this.direction,
-      colour: this.colour,
-      ambient: this.ambient,
+      colour: this.enabled ? this.colour : [0, 0, 0],
+      ambient: this.ambient ? this.ambient : [0, 0, 0],
     } as UniformSet
   }
 }

@@ -21,6 +21,7 @@ export type Geometry = {
     position: number[]
     texcoord?: number[]
     normal: number[]
+    tangent?: number[]
   }
 }
 

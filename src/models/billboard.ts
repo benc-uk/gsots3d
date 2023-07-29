@@ -12,7 +12,7 @@ import { stats } from '../core/stats.ts'
 /**
  * A simple 2D billboard, like a tree or grass. These are square by default, but can be scaled XY if needed.
  * Both cylindrical and spherical billboards are supported. You must assign material with a texture
- * to be rendered on the billboard
+ * to be rendered as a sprite on the billboard
  * @see http://www.opengl-tutorial.org/intermediate-tutorials/billboards-particles/billboards/
  */
 export class Billboard implements Renderable {
@@ -21,13 +21,16 @@ export class Billboard implements Renderable {
   public tex: WebGLTexture | undefined
 
   /** Creates a square billboard */
-  constructor(gl: WebGL2RenderingContext, size: number) {
-    this.material = new Material()
+  constructor(gl: WebGL2RenderingContext, material: Material, size: number) {
+    this.material = material
 
     this.bufferInfo = primitives.createXYQuadBufferInfo(gl, size, 0, size / 2)
   }
 
-  /** Render the billboard */
+  /**
+   * Render is used draw this billboard, this is called from the Instance that wraps
+   * this renderable.
+   */
   render(
     gl: WebGL2RenderingContext,
     uniforms: UniformSet,

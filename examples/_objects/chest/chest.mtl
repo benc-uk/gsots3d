@@ -9,3 +9,4 @@ Ks 1 1 1
 d 1.000000
 map_Ks chest_metallic.png
 map_Kd chest_diffuse.png
+map_bump chest_normal.png

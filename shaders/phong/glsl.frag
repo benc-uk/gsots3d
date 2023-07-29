@@ -35,13 +35,14 @@ struct Material {
   sampler2D diffuseTex;
   sampler2D specularTex;
   sampler2D normalTex;
+  bool hasNormalTex;
 };
 
 // From vertex shader
 in vec3 v_normal;
 in vec2 v_texCoord;
 in vec4 v_position;
-in mat3 v_TBN;
+//in vec3 v_tangent;
 
 // Some global uniforms
 uniform vec3 u_camPos;
@@ -117,9 +118,23 @@ void main() {
   texCoord = u_flipTextureY ? vec2(v_texCoord.x, 1.0 - v_texCoord.y) : v_texCoord.xy;
   texCoord = u_flipTextureX ? vec2(1.0 - texCoord.x, texCoord.y) : texCoord.xy;
 
-  // Normal mapping using TBN matrix
-  vec3 normalMap = normalize(texture(u_mat.normalTex, texCoord).rgb * 2.0 - 1.0);
-  vec3 N = normalize(v_TBN * normalMap);
+  vec3 N = normalize(v_normal);
+
+  // Normal mapping, this is expensive so only do it if we have a normal map
+  if (u_mat.hasNormalTex) {
+    vec3 normMap = texture(u_mat.normalTex, texCoord).xyz * 2.0 - 1.0;
+
+    vec3 Q1 = dFdx(v_position.xyz);
+    vec3 Q2 = dFdy(v_position.xyz);
+    vec2 st1 = dFdx(texCoord);
+    vec2 st2 = dFdy(texCoord);
+
+    vec3 T = normalize(Q1 * st2.t - Q2 * st1.t);
+    vec3 B = -normalize(cross(N, T));
+    mat3 TBN = mat3(T, B, N);
+
+    N = normalize(TBN * normMap);
+  }
 
   vec4 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, N, V);
 
