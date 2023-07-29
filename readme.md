@@ -10,12 +10,12 @@ This library is an opinionated set of abstractions and wrappers around WebGL & t
 Features
 
 - Models: Meshes with loading & parsing of OBJ & MTL.
-- Materials with diffuse texture mapping, specular maps.
-- Lights: global directional and dynamic point lights.
-- Primitives: sphere, cube, plane.
+- Materials: With diffuse texture mapping, specular maps & normal/bump mapping.
+- Lights: Global directional and dynamic point lights.
+- Primitives: Sphere, cube, plane.
 - Rendering: Phong and flat-Gouraud shading modes.
 - Transparency: With some limitations.
-- Billboarding for adding 2D sprites into a 3D scene.
+- Billboarding: For adding 'flat' 2D sprites into the 3D scene.
 - Camera: Perspective and orthographic.
 
 ## 🕹️ Demos & Samples

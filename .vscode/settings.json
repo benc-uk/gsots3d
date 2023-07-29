@@ -10,5 +10,8 @@
   },
   // Magical setting that makes all TS problems show up in the Problems tab
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
-
+  // icons for this theme
+  "material-icon-theme.files.associations": {
+    "*.mtl": "proto",
+  }
 }
