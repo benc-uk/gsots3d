@@ -104,7 +104,7 @@ export class TextureCache {
       return
     }
 
-    log.info(`🧰 Adding texture '${key}' to cache`)
+    log.debug(`🧰 Adding texture '${key}' to cache`)
 
     this.cache.set(key, texture)
   }

@@ -1,4 +1,4 @@
-import { Context, Material } from '../../dist-bundle/gsots3d.js'
+import { Context, Material, Camera } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init()
 window.addEventListener('resize', () => ctx.resize())
@@ -8,13 +8,16 @@ ctx.camera.position = [0, 7, 20]
 ctx.globalLight.setAsPosition(18, 20, 25)
 ctx.globalLight.ambient = [0.1, 0.1, 0.1]
 
+const topCam = new Camera()
+topCam.position = [1, 30, 0]
+ctx.addCamera('top', topCam)
+
 const matBlue = Material.BLUE
 matBlue.specular = [1.0, 1.0, 1.0]
 matBlue.shininess = 100
 matBlue.diffuse = [0.1, 0.26, 0.9]
 
 await ctx.loadModel('../_objects', 'teapot.obj')
-// await ctx.loadModel('../_objects', 'teapot.obj')
 
 const teapot = ctx.createModelInstance('teapot')
 teapot.scale = [2.5, 2.5, 2.5]
@@ -46,5 +49,13 @@ ctx.update = () => {
   teapot2.rotateY(-0.015)
   teapot3.rotateY(0.01)
 }
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === '1') {
+    ctx.setActiveCamera('top')
+  } else if (e.key === '2') {
+    ctx.setActiveCamera('default')
+  }
+})
 
 ctx.start()

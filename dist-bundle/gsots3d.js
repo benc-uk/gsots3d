@@ -615,7 +615,7 @@ function getArray$1(array) {
 }
 var texcoordRE = /coord|texture/i;
 var colorRE = /color|colour/i;
-function guessNumComponentsFromName(name, length4) {
+function guessNumComponentsFromName(name, length3) {
   let numComponents;
   if (texcoordRE.test(name)) {
     numComponents = 2;
@@ -624,8 +624,8 @@ function guessNumComponentsFromName(name, length4) {
   } else {
     numComponents = 3;
   }
-  if (length4 % numComponents > 0) {
-    throw new Error(`Can not guess numComponents for attribute '${name}'. Tried ${numComponents} but ${length4} values is not evenly divisible by ${numComponents}. You should specify it.`);
+  if (length3 % numComponents > 0) {
+    throw new Error(`Can not guess numComponents for attribute '${name}'. Tried ${numComponents} but ${length3} values is not evenly divisible by ${numComponents}. You should specify it.`);
   }
   return numComponents;
 }
@@ -764,14 +764,14 @@ function getNumElementsFromNonIndexedArrays(arrays) {
     key = Object.keys(arrays)[0];
   }
   const array = arrays[key];
-  const length4 = getArray$1(array).length;
-  if (length4 === void 0) {
+  const length3 = getArray$1(array).length;
+  if (length3 === void 0) {
     return 1;
   }
   const numComponents = getNumComponents$1(array, key);
-  const numElements = length4 / numComponents;
-  if (length4 % numComponents > 0) {
-    throw new Error(`numComponents ${numComponents} not correct for length ${length4}`);
+  const numElements = length3 / numComponents;
+  if (length3 % numComponents > 0) {
+    throw new Error(`numComponents ${numComponents} not correct for length ${length3}`);
   }
   return numElements;
 }
@@ -913,10 +913,10 @@ function flattenNormals(vertices) {
     let nx = nax + nbx + ncx;
     let ny = nay + nby + ncy;
     let nz = naz + nbz + ncz;
-    const length4 = Math.sqrt(nx * nx + ny * ny + nz * nz);
-    nx /= length4;
-    ny /= length4;
-    nz /= length4;
+    const length3 = Math.sqrt(nx * nx + ny * ny + nz * nz);
+    nx /= length3;
+    ny /= length3;
+    nz /= length3;
     normals[ii + 0] = nx;
     normals[ii + 1] = ny;
     normals[ii + 2] = nz;
@@ -930,9 +930,9 @@ function flattenNormals(vertices) {
   return vertices;
 }
 function applyFuncToV3Array(array, matrix, fn) {
-  const len3 = array.length;
+  const len2 = array.length;
   const tmp = new Float32Array(3);
-  for (let ii = 0; ii < len3; ii += 3) {
+  for (let ii = 0; ii < len2; ii += 3) {
     fn(matrix, [array[ii], array[ii + 1], array[ii + 2]], tmp);
     array[ii] = tmp[0];
     array[ii + 1] = tmp[1];
@@ -1965,7 +1965,7 @@ function createCrescentVertices(verticalRadius, outerRadius, innerRadius, thickn
   const positions = createAugmentedTypedArray(3, numVertices);
   const normals = createAugmentedTypedArray(3, numVertices);
   const texcoords = createAugmentedTypedArray(2, numVertices);
-  function lerp3(a, b, s) {
+  function lerp2(a, b, s) {
     return a + (b - a) * s;
   }
   function createArc(arcRadius, x, normalMult, normalAdd, uMult, uAdd) {
@@ -1973,10 +1973,10 @@ function createCrescentVertices(verticalRadius, outerRadius, innerRadius, thickn
       const uBack = x / (subdivisionsThick - 1);
       const v = z / subdivisionsDown;
       const xBack = (uBack - 0.5) * 2;
-      const angle3 = (startOffset + v * offsetRange) * Math.PI;
-      const s = Math.sin(angle3);
-      const c = Math.cos(angle3);
-      const radius = lerp3(verticalRadius, arcRadius, s);
+      const angle2 = (startOffset + v * offsetRange) * Math.PI;
+      const s = Math.sin(angle2);
+      const c = Math.cos(angle2);
+      const radius = lerp2(verticalRadius, arcRadius, s);
       const px = xBack * thickness;
       const py = c * verticalRadius;
       const pz = s * radius;
@@ -2186,14 +2186,14 @@ var arraySpecPropertyNames = [
 ];
 function copyElements(src, dst, dstNdx, offset) {
   offset = offset || 0;
-  const length4 = src.length;
-  for (let ii = 0; ii < length4; ++ii) {
+  const length3 = src.length;
+  for (let ii = 0; ii < length3; ++ii) {
     dst[dstNdx + ii] = src[ii] + offset;
   }
 }
-function createArrayOfSameType(srcArray, length4) {
+function createArrayOfSameType(srcArray, length3) {
   const arraySrc = getArray(srcArray);
-  const newArray = new arraySrc.constructor(length4);
+  const newArray = new arraySrc.constructor(length3);
   let newArraySpec = newArray;
   if (arraySrc.numComponents && arraySrc.numElements) {
     augmentTypedArray(newArray, arraySrc.numComponents);
@@ -2226,19 +2226,19 @@ function concatVertices(arrayOfArrays) {
     });
   }
   function getLengthOfCombinedArrays(name) {
-    let length4 = 0;
+    let length3 = 0;
     let arraySpec;
     for (let ii = 0; ii < arrayOfArrays.length; ++ii) {
       const arrays = arrayOfArrays[ii];
       const arrayInfo = arrays[name];
       const array = getArray(arrayInfo);
-      length4 += array.length;
+      length3 += array.length;
       if (!arraySpec || arrayInfo.data) {
         arraySpec = arrayInfo;
       }
     }
     return {
-      length: length4,
+      length: length3,
       spec: arraySpec
     };
   }
@@ -3634,7 +3634,7 @@ function matAttribSetter(gl, index, typeInfo) {
     const type = b.type || FLOAT;
     const typeInfo2 = typeMap[type];
     const stride = typeInfo2.size * numComponents;
-    const normalize4 = b.normalize || false;
+    const normalize3 = b.normalize || false;
     const offset = b.offset || 0;
     const rowOffset = stride / count;
     for (let i = 0; i < count; ++i) {
@@ -3643,7 +3643,7 @@ function matAttribSetter(gl, index, typeInfo) {
         index + i,
         size,
         type,
-        normalize4,
+        normalize3,
         stride,
         offset + rowOffset * i
       );
@@ -4231,6 +4231,7 @@ function drawBufferInfo(gl, bufferInfo, type, count, offset, instanceCount) {
     }
   }
 }
+var FRAMEBUFFER = 36160;
 var DEPTH_COMPONENT = 6402;
 var DEPTH_COMPONENT24 = 33190;
 var DEPTH_COMPONENT32F = 36012;
@@ -4264,6 +4265,16 @@ renderbufferFormats[DEPTH_STENCIL] = true;
 renderbufferFormats[DEPTH_COMPONENT16] = true;
 renderbufferFormats[STENCIL_INDEX] = true;
 renderbufferFormats[STENCIL_INDEX8] = true;
+function bindFramebufferInfo(gl, framebufferInfo, target) {
+  target = target || FRAMEBUFFER;
+  if (framebufferInfo) {
+    gl.bindFramebuffer(target, framebufferInfo.framebuffer);
+    gl.viewport(0, 0, framebufferInfo.width, framebufferInfo.height);
+  } else {
+    gl.bindFramebuffer(target, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  }
+}
 function resizeCanvasToDisplaySize(canvas, multiplier) {
   multiplier = multiplier || 1;
   multiplier = Math.max(0, multiplier);
@@ -4684,7 +4695,7 @@ function scale(out, a, v) {
 }
 function rotate(out, a, rad, axis) {
   var x = axis[0], y = axis[1], z = axis[2];
-  var len3 = Math.hypot(x, y, z);
+  var len2 = Math.hypot(x, y, z);
   var s, c, t;
   var a00, a01, a02, a03;
   var a10, a11, a12, a13;
@@ -4692,13 +4703,13 @@ function rotate(out, a, rad, axis) {
   var b00, b01, b02;
   var b10, b11, b12;
   var b20, b21, b22;
-  if (len3 < EPSILON) {
+  if (len2 < EPSILON) {
     return null;
   }
-  len3 = 1 / len3;
-  x *= len3;
-  y *= len3;
-  z *= len3;
+  len2 = 1 / len2;
+  x *= len2;
+  y *= len2;
+  z *= len2;
   s = Math.sin(rad);
   c = Math.cos(rad);
   t = 1 - c;
@@ -4876,15 +4887,15 @@ function fromScaling(out, v) {
 }
 function fromRotation(out, rad, axis) {
   var x = axis[0], y = axis[1], z = axis[2];
-  var len3 = Math.hypot(x, y, z);
+  var len2 = Math.hypot(x, y, z);
   var s, c, t;
-  if (len3 < EPSILON) {
+  if (len2 < EPSILON) {
     return null;
   }
-  len3 = 1 / len3;
-  x *= len3;
-  y *= len3;
-  z *= len3;
+  len2 = 1 / len2;
+  x *= len2;
+  y *= len2;
+  z *= len2;
   s = Math.sin(rad);
   c = Math.cos(rad);
   t = 1 - c;
@@ -5342,7 +5353,7 @@ function orthoZO(out, left, right, bottom, top, near, far) {
   return out;
 }
 function lookAt(out, eye, center, up) {
-  var x0, x1, x2, y0, y1, y2, z0, z1, z2, len3;
+  var x0, x1, x2, y0, y1, y2, z0, z1, z2, len2;
   var eyex = eye[0];
   var eyey = eye[1];
   var eyez = eye[2];
@@ -5358,37 +5369,37 @@ function lookAt(out, eye, center, up) {
   z0 = eyex - centerx;
   z1 = eyey - centery;
   z2 = eyez - centerz;
-  len3 = 1 / Math.hypot(z0, z1, z2);
-  z0 *= len3;
-  z1 *= len3;
-  z2 *= len3;
+  len2 = 1 / Math.hypot(z0, z1, z2);
+  z0 *= len2;
+  z1 *= len2;
+  z2 *= len2;
   x0 = upy * z2 - upz * z1;
   x1 = upz * z0 - upx * z2;
   x2 = upx * z1 - upy * z0;
-  len3 = Math.hypot(x0, x1, x2);
-  if (!len3) {
+  len2 = Math.hypot(x0, x1, x2);
+  if (!len2) {
     x0 = 0;
     x1 = 0;
     x2 = 0;
   } else {
-    len3 = 1 / len3;
-    x0 *= len3;
-    x1 *= len3;
-    x2 *= len3;
+    len2 = 1 / len2;
+    x0 *= len2;
+    x1 *= len2;
+    x2 *= len2;
   }
   y0 = z1 * x2 - z2 * x1;
   y1 = z2 * x0 - z0 * x2;
   y2 = z0 * x1 - z1 * x0;
-  len3 = Math.hypot(y0, y1, y2);
-  if (!len3) {
+  len2 = Math.hypot(y0, y1, y2);
+  if (!len2) {
     y0 = 0;
     y1 = 0;
     y2 = 0;
   } else {
-    len3 = 1 / len3;
-    y0 *= len3;
-    y1 *= len3;
-    y2 *= len3;
+    len2 = 1 / len2;
+    y0 *= len2;
+    y1 *= len2;
+    y2 *= len2;
   }
   out[0] = x0;
   out[1] = y0;
@@ -5411,20 +5422,20 @@ function lookAt(out, eye, center, up) {
 function targetTo(out, eye, target, up) {
   var eyex = eye[0], eyey = eye[1], eyez = eye[2], upx = up[0], upy = up[1], upz = up[2];
   var z0 = eyex - target[0], z1 = eyey - target[1], z2 = eyez - target[2];
-  var len3 = z0 * z0 + z1 * z1 + z2 * z2;
-  if (len3 > 0) {
-    len3 = 1 / Math.sqrt(len3);
-    z0 *= len3;
-    z1 *= len3;
-    z2 *= len3;
+  var len2 = z0 * z0 + z1 * z1 + z2 * z2;
+  if (len2 > 0) {
+    len2 = 1 / Math.sqrt(len2);
+    z0 *= len2;
+    z1 *= len2;
+    z2 *= len2;
   }
   var x0 = upy * z2 - upz * z1, x1 = upz * z0 - upx * z2, x2 = upx * z1 - upy * z0;
-  len3 = x0 * x0 + x1 * x1 + x2 * x2;
-  if (len3 > 0) {
-    len3 = 1 / Math.sqrt(len3);
-    x0 *= len3;
-    x1 *= len3;
-    x2 *= len3;
+  len2 = x0 * x0 + x1 * x1 + x2 * x2;
+  if (len2 > 0) {
+    len2 = 1 / Math.sqrt(len2);
+    x0 *= len2;
+    x1 *= len2;
+    x2 *= len2;
   }
   out[0] = x0;
   out[1] = x1;
@@ -5507,23 +5518,23 @@ function multiplyScalar(out, a, b) {
   out[15] = a[15] * b;
   return out;
 }
-function multiplyScalarAndAdd(out, a, b, scale5) {
-  out[0] = a[0] + b[0] * scale5;
-  out[1] = a[1] + b[1] * scale5;
-  out[2] = a[2] + b[2] * scale5;
-  out[3] = a[3] + b[3] * scale5;
-  out[4] = a[4] + b[4] * scale5;
-  out[5] = a[5] + b[5] * scale5;
-  out[6] = a[6] + b[6] * scale5;
-  out[7] = a[7] + b[7] * scale5;
-  out[8] = a[8] + b[8] * scale5;
-  out[9] = a[9] + b[9] * scale5;
-  out[10] = a[10] + b[10] * scale5;
-  out[11] = a[11] + b[11] * scale5;
-  out[12] = a[12] + b[12] * scale5;
-  out[13] = a[13] + b[13] * scale5;
-  out[14] = a[14] + b[14] * scale5;
-  out[15] = a[15] + b[15] * scale5;
+function multiplyScalarAndAdd(out, a, b, scale4) {
+  out[0] = a[0] + b[0] * scale4;
+  out[1] = a[1] + b[1] * scale4;
+  out[2] = a[2] + b[2] * scale4;
+  out[3] = a[3] + b[3] * scale4;
+  out[4] = a[4] + b[4] * scale4;
+  out[5] = a[5] + b[5] * scale4;
+  out[6] = a[6] + b[6] * scale4;
+  out[7] = a[7] + b[7] * scale4;
+  out[8] = a[8] + b[8] * scale4;
+  out[9] = a[9] + b[9] * scale4;
+  out[10] = a[10] + b[10] * scale4;
+  out[11] = a[11] + b[11] * scale4;
+  out[12] = a[12] + b[12] * scale4;
+  out[13] = a[13] + b[13] * scale4;
+  out[14] = a[14] + b[14] * scale4;
+  out[15] = a[15] + b[15] * scale4;
   return out;
 }
 function exactEquals(a, b) {
@@ -5696,10 +5707,10 @@ function scale2(out, a, b) {
   out[2] = a[2] * b;
   return out;
 }
-function scaleAndAdd(out, a, b, scale5) {
-  out[0] = a[0] + b[0] * scale5;
-  out[1] = a[1] + b[1] * scale5;
-  out[2] = a[2] + b[2] * scale5;
+function scaleAndAdd(out, a, b, scale4) {
+  out[0] = a[0] + b[0] * scale4;
+  out[1] = a[1] + b[1] * scale4;
+  out[2] = a[2] + b[2] * scale4;
   return out;
 }
 function distance(a, b) {
@@ -5736,13 +5747,13 @@ function normalize(out, a) {
   var x = a[0];
   var y = a[1];
   var z = a[2];
-  var len3 = x * x + y * y + z * z;
-  if (len3 > 0) {
-    len3 = 1 / Math.sqrt(len3);
+  var len2 = x * x + y * y + z * z;
+  if (len2 > 0) {
+    len2 = 1 / Math.sqrt(len2);
   }
-  out[0] = a[0] * len3;
-  out[1] = a[1] * len3;
-  out[2] = a[2] * len3;
+  out[0] = a[0] * len2;
+  out[1] = a[1] * len2;
+  out[2] = a[2] * len2;
   return out;
 }
 function dot(a, b) {
@@ -5789,14 +5800,14 @@ function bezier(out, a, b, c, d, t) {
   out[2] = a[2] * factor1 + b[2] * factor2 + c[2] * factor3 + d[2] * factor4;
   return out;
 }
-function random(out, scale5) {
-  scale5 = scale5 || 1;
+function random(out, scale4) {
+  scale4 = scale4 || 1;
   var r = RANDOM() * 2 * Math.PI;
   var z = RANDOM() * 2 - 1;
-  var zScale = Math.sqrt(1 - z * z) * scale5;
+  var zScale = Math.sqrt(1 - z * z) * scale4;
   out[0] = Math.cos(r) * zScale;
   out[1] = Math.sin(r) * zScale;
-  out[2] = z * scale5;
+  out[2] = z * scale4;
   return out;
 }
 function transformMat4(out, a, m) {
@@ -5927,302 +5938,26 @@ var forEach = function() {
   };
 }();
 
-// node_modules/gl-matrix/esm/vec2.js
-var vec2_exports = {};
-__export(vec2_exports, {
-  add: () => add4,
-  angle: () => angle2,
-  ceil: () => ceil2,
-  clone: () => clone3,
-  copy: () => copy3,
-  create: () => create3,
-  cross: () => cross2,
-  dist: () => dist2,
-  distance: () => distance2,
-  div: () => div2,
-  divide: () => divide2,
-  dot: () => dot2,
-  equals: () => equals3,
-  exactEquals: () => exactEquals3,
-  floor: () => floor2,
-  forEach: () => forEach2,
-  fromValues: () => fromValues3,
-  inverse: () => inverse3,
-  len: () => len2,
-  length: () => length3,
-  lerp: () => lerp2,
-  max: () => max2,
-  min: () => min2,
-  mul: () => mul3,
-  multiply: () => multiply3,
-  negate: () => negate2,
-  normalize: () => normalize2,
-  random: () => random2,
-  rotate: () => rotate2,
-  round: () => round2,
-  scale: () => scale3,
-  scaleAndAdd: () => scaleAndAdd2,
-  set: () => set3,
-  sqrDist: () => sqrDist2,
-  sqrLen: () => sqrLen2,
-  squaredDistance: () => squaredDistance2,
-  squaredLength: () => squaredLength2,
-  str: () => str3,
-  sub: () => sub3,
-  subtract: () => subtract3,
-  transformMat2: () => transformMat2,
-  transformMat2d: () => transformMat2d,
-  transformMat3: () => transformMat32,
-  transformMat4: () => transformMat42,
-  zero: () => zero2
-});
-function create3() {
-  var out = new ARRAY_TYPE(2);
-  if (ARRAY_TYPE != Float32Array) {
-    out[0] = 0;
-    out[1] = 0;
-  }
-  return out;
-}
-function clone3(a) {
-  var out = new ARRAY_TYPE(2);
-  out[0] = a[0];
-  out[1] = a[1];
-  return out;
-}
-function fromValues3(x, y) {
-  var out = new ARRAY_TYPE(2);
-  out[0] = x;
-  out[1] = y;
-  return out;
-}
-function copy3(out, a) {
-  out[0] = a[0];
-  out[1] = a[1];
-  return out;
-}
-function set3(out, x, y) {
-  out[0] = x;
-  out[1] = y;
-  return out;
-}
-function add4(out, a, b) {
-  out[0] = a[0] + b[0];
-  out[1] = a[1] + b[1];
-  return out;
-}
-function subtract3(out, a, b) {
-  out[0] = a[0] - b[0];
-  out[1] = a[1] - b[1];
-  return out;
-}
-function multiply3(out, a, b) {
-  out[0] = a[0] * b[0];
-  out[1] = a[1] * b[1];
-  return out;
-}
-function divide2(out, a, b) {
-  out[0] = a[0] / b[0];
-  out[1] = a[1] / b[1];
-  return out;
-}
-function ceil2(out, a) {
-  out[0] = Math.ceil(a[0]);
-  out[1] = Math.ceil(a[1]);
-  return out;
-}
-function floor2(out, a) {
-  out[0] = Math.floor(a[0]);
-  out[1] = Math.floor(a[1]);
-  return out;
-}
-function min2(out, a, b) {
-  out[0] = Math.min(a[0], b[0]);
-  out[1] = Math.min(a[1], b[1]);
-  return out;
-}
-function max2(out, a, b) {
-  out[0] = Math.max(a[0], b[0]);
-  out[1] = Math.max(a[1], b[1]);
-  return out;
-}
-function round2(out, a) {
-  out[0] = Math.round(a[0]);
-  out[1] = Math.round(a[1]);
-  return out;
-}
-function scale3(out, a, b) {
-  out[0] = a[0] * b;
-  out[1] = a[1] * b;
-  return out;
-}
-function scaleAndAdd2(out, a, b, scale5) {
-  out[0] = a[0] + b[0] * scale5;
-  out[1] = a[1] + b[1] * scale5;
-  return out;
-}
-function distance2(a, b) {
-  var x = b[0] - a[0], y = b[1] - a[1];
-  return Math.hypot(x, y);
-}
-function squaredDistance2(a, b) {
-  var x = b[0] - a[0], y = b[1] - a[1];
-  return x * x + y * y;
-}
-function length3(a) {
-  var x = a[0], y = a[1];
-  return Math.hypot(x, y);
-}
-function squaredLength2(a) {
-  var x = a[0], y = a[1];
-  return x * x + y * y;
-}
-function negate2(out, a) {
-  out[0] = -a[0];
-  out[1] = -a[1];
-  return out;
-}
-function inverse3(out, a) {
-  out[0] = 1 / a[0];
-  out[1] = 1 / a[1];
-  return out;
-}
-function normalize2(out, a) {
-  var x = a[0], y = a[1];
-  var len3 = x * x + y * y;
-  if (len3 > 0) {
-    len3 = 1 / Math.sqrt(len3);
-  }
-  out[0] = a[0] * len3;
-  out[1] = a[1] * len3;
-  return out;
-}
-function dot2(a, b) {
-  return a[0] * b[0] + a[1] * b[1];
-}
-function cross2(out, a, b) {
-  var z = a[0] * b[1] - a[1] * b[0];
-  out[0] = out[1] = 0;
-  out[2] = z;
-  return out;
-}
-function lerp2(out, a, b, t) {
-  var ax = a[0], ay = a[1];
-  out[0] = ax + t * (b[0] - ax);
-  out[1] = ay + t * (b[1] - ay);
-  return out;
-}
-function random2(out, scale5) {
-  scale5 = scale5 || 1;
-  var r = RANDOM() * 2 * Math.PI;
-  out[0] = Math.cos(r) * scale5;
-  out[1] = Math.sin(r) * scale5;
-  return out;
-}
-function transformMat2(out, a, m) {
-  var x = a[0], y = a[1];
-  out[0] = m[0] * x + m[2] * y;
-  out[1] = m[1] * x + m[3] * y;
-  return out;
-}
-function transformMat2d(out, a, m) {
-  var x = a[0], y = a[1];
-  out[0] = m[0] * x + m[2] * y + m[4];
-  out[1] = m[1] * x + m[3] * y + m[5];
-  return out;
-}
-function transformMat32(out, a, m) {
-  var x = a[0], y = a[1];
-  out[0] = m[0] * x + m[3] * y + m[6];
-  out[1] = m[1] * x + m[4] * y + m[7];
-  return out;
-}
-function transformMat42(out, a, m) {
-  var x = a[0];
-  var y = a[1];
-  out[0] = m[0] * x + m[4] * y + m[12];
-  out[1] = m[1] * x + m[5] * y + m[13];
-  return out;
-}
-function rotate2(out, a, b, rad) {
-  var p0 = a[0] - b[0], p1 = a[1] - b[1], sinC = Math.sin(rad), cosC = Math.cos(rad);
-  out[0] = p0 * cosC - p1 * sinC + b[0];
-  out[1] = p0 * sinC + p1 * cosC + b[1];
-  return out;
-}
-function angle2(a, b) {
-  var x1 = a[0], y1 = a[1], x2 = b[0], y2 = b[1], mag = Math.sqrt(x1 * x1 + y1 * y1) * Math.sqrt(x2 * x2 + y2 * y2), cosine = mag && (x1 * x2 + y1 * y2) / mag;
-  return Math.acos(Math.min(Math.max(cosine, -1), 1));
-}
-function zero2(out) {
-  out[0] = 0;
-  out[1] = 0;
-  return out;
-}
-function str3(a) {
-  return "vec2(" + a[0] + ", " + a[1] + ")";
-}
-function exactEquals3(a, b) {
-  return a[0] === b[0] && a[1] === b[1];
-}
-function equals3(a, b) {
-  var a0 = a[0], a1 = a[1];
-  var b0 = b[0], b1 = b[1];
-  return Math.abs(a0 - b0) <= EPSILON * Math.max(1, Math.abs(a0), Math.abs(b0)) && Math.abs(a1 - b1) <= EPSILON * Math.max(1, Math.abs(a1), Math.abs(b1));
-}
-var len2 = length3;
-var sub3 = subtract3;
-var mul3 = multiply3;
-var div2 = divide2;
-var dist2 = distance2;
-var sqrDist2 = squaredDistance2;
-var sqrLen2 = squaredLength2;
-var forEach2 = function() {
-  var vec = create3();
-  return function(a, stride, offset, count, fn, arg) {
-    var i, l;
-    if (!stride) {
-      stride = 2;
-    }
-    if (!offset) {
-      offset = 0;
-    }
-    if (count) {
-      l = Math.min(count * stride + offset, a.length);
-    } else {
-      l = a.length;
-    }
-    for (i = offset; i < l; i += stride) {
-      vec[0] = a[i];
-      vec[1] = a[i + 1];
-      fn(vec, vec, arg);
-      a[i] = vec[0];
-      a[i + 1] = vec[1];
-    }
-    return a;
-  };
-}();
-
 // src/core/context.ts
 var import_loglevel6 = __toESM(require_loglevel(), 1);
 
 // src/engine/tuples.ts
-function normalize3(tuple) {
+function normalize2(tuple) {
   const [x, y, z] = tuple;
-  const len3 = Math.sqrt(x * x + y * y + z * z);
-  return tuple.map((v) => v / len3);
+  const len2 = Math.sqrt(x * x + y * y + z * z);
+  return tuple.map((v) => v / len2);
 }
-function scale4(tuple, amount) {
+function scale3(tuple, amount) {
   return tuple.map((v) => v * amount);
 }
 function scaleClamped(colour, amount) {
-  scale4(colour, amount);
+  scale3(colour, amount);
   return colour.map((v) => Math.min(Math.max(v, 0), 1));
 }
 function toVec3(tuple) {
   return vec3_exports.fromValues(tuple[0], tuple[1], tuple[2]);
 }
-function distance3(a, b) {
+function distance2(a, b) {
   return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2;
 }
 function rgbColour255(r, g, b) {
@@ -6246,13 +5981,13 @@ Colours.MAGENTA = [1, 0, 1];
 Colours.BLACK = [0, 0, 0];
 Colours.WHITE = [1, 1, 1];
 var Tuples = {
-  normalize: normalize3,
-  scale: scale4,
+  normalize: normalize2,
+  scale: scale3,
   scaleClamped,
   rgbColour255,
   rgbColourHex,
   toVec3,
-  distance: distance3
+  distance: distance2
 };
 
 // src/core/cache.ts
@@ -6328,7 +6063,7 @@ var TextureCache = class {
       import_loglevel3.default.warn(`\u{1F914} Texture '${key}' already in cache, not adding again`);
       return;
     }
-    import_loglevel3.default.info(`\u{1F9F0} Adding texture '${key}' to cache`);
+    import_loglevel3.default.debug(`\u{1F9F0} Adding texture '${key}' to cache`);
     this.cache.set(key, texture);
   }
   /**
@@ -6459,6 +6194,7 @@ var Camera = class {
     this.maxAngleUp = Math.PI / 2 - 0.01;
     this.maxAngleDown = -Math.PI / 2 + 0.01;
     this.type = type;
+    this.active = true;
     this.position = [0, 0, 30];
     this.lookAt = [0, 0, 0];
     this.up = [0, 1, 0];
@@ -6536,7 +6272,7 @@ var Camera = class {
       return;
     const gl = getGl();
     gl?.canvas.addEventListener("click", async () => {
-      if (!this.fpMode)
+      if (!this.fpMode || !this.active)
         return;
       if (document.pointerLockElement) {
         import_loglevel4.default.info("\u{1F3A5} Camera: exiting pointer lock");
@@ -6550,7 +6286,7 @@ var Camera = class {
       if (!document.pointerLockElement) {
         return;
       }
-      if (!this.fpMode)
+      if (!this.fpMode || !this.active)
         return;
       this.fpAngleY += e.movementX * -this.fpTurnSpeed;
       this.fpAngleX += e.movementY * -this.fpTurnSpeed;
@@ -6560,12 +6296,12 @@ var Camera = class {
         this.fpAngleX = this.maxAngleDown;
     });
     window.addEventListener("keydown", (e) => {
-      if (!this.fpMode)
+      if (!this.fpMode || !this.active)
         return;
       this.keysDown.add(e.key);
     });
     window.addEventListener("keyup", (e) => {
-      if (!this.fpMode)
+      if (!this.fpMode || !this.active)
         return;
       this.keysDown.delete(e.key);
     });
@@ -6589,7 +6325,7 @@ var Camera = class {
    * Called every frame to update the camera, currently only used for movement in FP mode
    */
   update() {
-    if (!this.fpMode)
+    if (!this.fpMode || !this.active)
       return;
     if (this.keysDown.size === 0)
       return;
@@ -6659,35 +6395,35 @@ var Instance = class {
   /**
    * Rotate this instance around the X axis
    */
-  rotateX(angle3) {
+  rotateX(angle2) {
     if (!this.rotate)
       this.rotate = [0, 0, 0];
-    this.rotate[0] += angle3;
+    this.rotate[0] += angle2;
   }
   /**
    * Rotate this instance around the Y axis
    */
-  rotateY(angle3) {
+  rotateY(angle2) {
     if (!this.rotate)
       this.rotate = [0, 0, 0];
-    this.rotate[1] += angle3;
+    this.rotate[1] += angle2;
   }
   /**
    * Rotate this instance around the Z axis
    */
-  rotateZ(angle3) {
+  rotateZ(angle2) {
     if (!this.rotate)
       this.rotate = [0, 0, 0];
-    this.rotate[2] += angle3;
+    this.rotate[2] += angle2;
   }
-  rotateZDeg(angle3) {
-    this.rotateZ(angle3 * Math.PI / 180);
+  rotateZDeg(angle2) {
+    this.rotateZ(angle2 * Math.PI / 180);
   }
-  rotateYDeg(angle3) {
-    this.rotateY(angle3 * Math.PI / 180);
+  rotateYDeg(angle2) {
+    this.rotateY(angle2 * Math.PI / 180);
   }
-  rotateXDeg(angle3) {
-    this.rotateX(angle3 * Math.PI / 180);
+  rotateXDeg(angle2) {
+    this.rotateX(angle2 * Math.PI / 180);
   }
   /**
    * Render this instance in the world
@@ -6704,36 +6440,36 @@ var Instance = class {
     if (!gl)
       return;
     gl.useProgram(programInfo.program);
-    const scale5 = mat4_exports.create();
-    const rotate3 = mat4_exports.create();
+    const scale4 = mat4_exports.create();
+    const rotate2 = mat4_exports.create();
     const translate2 = mat4_exports.create();
     if (this.scale)
-      mat4_exports.scale(scale5, scale5, this.scale);
+      mat4_exports.scale(scale4, scale4, this.scale);
     if (this.rotate) {
-      mat4_exports.rotateX(rotate3, rotate3, this.rotate[0]);
-      mat4_exports.rotateY(rotate3, rotate3, this.rotate[1]);
-      mat4_exports.rotateZ(rotate3, rotate3, this.rotate[2]);
+      mat4_exports.rotateX(rotate2, rotate2, this.rotate[0]);
+      mat4_exports.rotateY(rotate2, rotate2, this.rotate[1]);
+      mat4_exports.rotateZ(rotate2, rotate2, this.rotate[2]);
     }
     if (this.position)
       mat4_exports.translate(translate2, translate2, this.position);
     const world = translate2;
-    mat4_exports.multiply(world, world, rotate3);
-    mat4_exports.multiply(world, world, scale5);
+    mat4_exports.multiply(world, world, rotate2);
+    mat4_exports.multiply(world, world, scale4);
     uniforms.u_world = world;
     mat4_exports.invert(uniforms.u_worldInverseTranspose, world);
     mat4_exports.transpose(uniforms.u_worldInverseTranspose, uniforms.u_worldInverseTranspose);
     const worldView = mat4_exports.multiply(mat4_exports.create(), uniforms.u_view, world);
     if (this.billboard !== 0 /* NONE */) {
-      const scale6 = mat4_exports.getScaling(vec3_exports.create(), worldView);
-      worldView[0] = scale6[0];
+      const scale5 = mat4_exports.getScaling(vec3_exports.create(), worldView);
+      worldView[0] = scale5[0];
       worldView[1] = 0;
       worldView[2] = 0;
       worldView[8] = 0;
       worldView[9] = 0;
-      worldView[10] = scale6[2];
+      worldView[10] = scale5[2];
       if (this.billboard === 1 /* SPHERICAL */) {
         worldView[4] = 0;
-        worldView[5] = scale6[1];
+        worldView[5] = scale5[1];
         worldView[6] = 0;
       }
     }
@@ -6912,6 +6648,21 @@ var Material = class _Material {
       normalTex: this.normalTex ? this.normalTex : null,
       hasNormalTex: this.normalTex ? true : false
     };
+  }
+};
+var EnvMapMaterial = class extends Material {
+  constructor(gl, isCubeMap = false) {
+    super();
+    this.isCube = isCubeMap;
+    this.camera = new Camera();
+    this.texture = createTexture(gl, {
+      width: 512,
+      height: 512
+    });
+  }
+  render() {
+    console.log("rendering env map", this.camera);
+    return 0;
   }
 };
 
@@ -7252,11 +7003,6 @@ var Model = class _Model {
       throw new Error("Unable to get WebGL context");
     }
     for (const g of objData.geometries) {
-      if (g.data.texcoord && g.data.normal) {
-        g.data.tangent = generateTangents(g.data.position, g.data.texcoord);
-      } else {
-        g.data.tangent = [1, 0, 0];
-      }
       const bufferInfo = createBufferInfoFromArrays(gl, g.data);
       model.parts.push(new ModelPart(bufferInfo, g.material));
     }
@@ -7277,38 +7023,6 @@ var ModelPart = class {
     this.materialName = materialName;
   }
 };
-function generateTangents(pos, texcoord) {
-  const numFaces = pos.length / 3;
-  const tangents = [];
-  for (let i = 0; i < numFaces; ++i) {
-    const i3 = i * 3;
-    const v0 = [pos[i3 + 0], pos[i3 + 1], pos[i3 + 2]];
-    const v1 = [pos[i3 + 3], pos[i3 + 4], pos[i3 + 5]];
-    const v2 = [pos[i3 + 6], pos[i3 + 7], pos[i3 + 8]];
-    const uv0 = [texcoord[i3 + 0], texcoord[i3 + 1]];
-    const uv1 = [texcoord[i3 + 2], texcoord[i3 + 3]];
-    const uv2 = [texcoord[i3 + 4], texcoord[i3 + 5]];
-    const deltaPos1 = vec3_exports.sub(vec3_exports.create(), v1, v0);
-    const deltaPos2 = vec3_exports.sub(vec3_exports.create(), v2, v0);
-    const deltaUV1 = vec2_exports.sub(vec2_exports.create(), uv1, uv0);
-    const deltaUV2 = vec2_exports.sub(vec2_exports.create(), uv2, uv0);
-    const r = 1 / (deltaUV1[0] * deltaUV2[1] - deltaUV1[1] * deltaUV2[0]);
-    let tangent = [1, 0, 0];
-    if (Number.isFinite(r)) {
-      tangent = vec3_exports.scale(
-        vec3_exports.create(),
-        vec3_exports.sub(
-          vec3_exports.create(),
-          vec3_exports.scale(vec3_exports.create(), deltaPos1, deltaUV2[1]),
-          vec3_exports.scale(vec3_exports.create(), deltaPos2, deltaUV1[1])
-        ),
-        r
-      );
-    }
-    tangents.push(...tangent, ...tangent, ...tangent);
-  }
-  return tangents;
-}
 
 // src/core/hud.ts
 var HUD = class {
@@ -7344,10 +7058,10 @@ var HUD = class {
 };
 
 // shaders/phong/glsl.frag
-var glsl_default = "#version 300 es\n\n// ============================================================================\n// Phong fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n  bool enabled;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n  sampler2D normalTex;\n  bool hasNormalTex;\n};\n\n// From vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\n//in vec3 v_tangent;\n\n// Some global uniforms\nuniform vec3 u_camPos;\nuniform float u_gamma;\nuniform bool u_flipTextureX;\nuniform bool u_flipTextureY;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\n// Global texture coords shared between functions\nvec2 texCoord;\n\n/*\n * Shade a fragment using a directional light source\n */\nvec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(-light.direction);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;\n  vec3 specular = light.colour * spec * specularCol;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n/*\n * Shade a fragment using a positional light source\n */\nvec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(light.position - v_position.xyz);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // Light attenuation, see: https://learnopengl.com/Lighting/Light-casters\n  float dist = length(light.position - v_position.xyz);\n  float attenuation = 1.0 / (light.constant + light.linear * dist + light.quad * (dist * dist));\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol * attenuation;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * attenuation;\n  vec3 specular = light.colour * spec * specularCol * attenuation;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n// ============================================================================\n// Main fragment shader entry point\n// ============================================================================\nvoid main() {\n  vec3 V = normalize(u_camPos - v_position.xyz);\n\n  // Flip texture coords if needed\n  texCoord = u_flipTextureY ? vec2(v_texCoord.x, 1.0 - v_texCoord.y) : v_texCoord.xy;\n  texCoord = u_flipTextureX ? vec2(1.0 - texCoord.x, texCoord.y) : texCoord.xy;\n\n  vec3 N = normalize(v_normal);\n\n  // Normal mapping, this is expensive so only do it if we have a normal map\n  if (u_mat.hasNormalTex) {\n    vec3 normMap = texture(u_mat.normalTex, texCoord).xyz * 2.0 - 1.0;\n\n    vec3 Q1 = dFdx(v_position.xyz);\n    vec3 Q2 = dFdy(v_position.xyz);\n    vec2 st1 = dFdx(texCoord);\n    vec2 st2 = dFdy(texCoord);\n\n    vec3 T = normalize(Q1 * st2.t - Q2 * st1.t);\n    vec3 B = normalize(cross(N, T));\n    mat3 TBN = mat3(T, B, N);\n\n    N = normalize(TBN * normMap);\n  }\n\n  vec4 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, N, V);\n\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    outColorPart += shadePosLight(u_lightsPos[i], u_mat, N, V);\n  }\n\n  // Add emissive component\n  float emissiveAlpha = u_mat.emissive.r + u_mat.emissive.g + u_mat.emissive.b > 0.0 ? 1.0 : 0.0;\n  outColorPart += vec4(u_mat.emissive, emissiveAlpha);\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  outColorPart.rgb = pow(outColorPart.rgb, vec3(1.0 / u_gamma));\n\n  outColour = outColorPart;\n}\n";
+var glsl_default = "#version 300 es\n\n// ============================================================================\n// Phong fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n  bool enabled;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n  sampler2D normalTex;\n  bool hasNormalTex;\n};\n\n// From vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\n\n// Some global uniforms\nuniform vec3 u_camPos;\nuniform float u_gamma;\nuniform bool u_flipTextureX;\nuniform bool u_flipTextureY;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\n// Global texture coords shared between functions\nvec2 texCoord;\n\n/*\n * Shade a fragment using a directional light source\n */\nvec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(-light.direction);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;\n  vec3 specular = light.colour * spec * specularCol;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n/*\n * Shade a fragment using a positional light source\n */\nvec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(light.position - v_position.xyz);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // Light attenuation, see: https://learnopengl.com/Lighting/Light-casters\n  float dist = length(light.position - v_position.xyz);\n  float attenuation = 1.0 / (light.constant + light.linear * dist + light.quad * (dist * dist));\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol * attenuation;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * attenuation;\n  vec3 specular = light.colour * spec * specularCol * attenuation;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n// ============================================================================\n// Main fragment shader entry point\n// ============================================================================\nvoid main() {\n  vec3 V = normalize(u_camPos - v_position.xyz);\n\n  // Flip texture coords if needed\n  texCoord = u_flipTextureY ? vec2(v_texCoord.x, 1.0 - v_texCoord.y) : v_texCoord.xy;\n  texCoord = u_flipTextureX ? vec2(1.0 - texCoord.x, texCoord.y) : texCoord.xy;\n\n  vec3 N = normalize(v_normal);\n\n  // Normal mapping, this is expensive so only do it if we have a normal map\n  if (u_mat.hasNormalTex) {\n    vec3 normMap = texture(u_mat.normalTex, texCoord).xyz * 2.0 - 1.0;\n\n    vec3 Q1 = dFdx(v_position.xyz);\n    vec3 Q2 = dFdy(v_position.xyz);\n    vec2 st1 = dFdx(texCoord);\n    vec2 st2 = dFdy(texCoord);\n\n    vec3 T = normalize(Q1 * st2.t - Q2 * st1.t);\n    vec3 B = normalize(cross(N, T));\n    mat3 TBN = mat3(T, B, N);\n\n    N = normalize(TBN * normMap);\n  }\n\n  vec4 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, N, V);\n\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    outColorPart += shadePosLight(u_lightsPos[i], u_mat, N, V);\n  }\n\n  // Add emissive component\n  float emissiveAlpha = u_mat.emissive.r + u_mat.emissive.g + u_mat.emissive.b > 0.0 ? 1.0 : 0.0;\n  outColorPart += vec4(u_mat.emissive, emissiveAlpha);\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  outColorPart.rgb = pow(outColorPart.rgb, vec3(1.0 / u_gamma));\n\n  outColour = outColorPart;\n}\n";
 
 // shaders/phong/glsl.vert
-var glsl_default2 = "#version 300 es\n\n// ============================================================================\n// Phong vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\nin vec3 tangent;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_normal;\nout vec4 v_position;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  v_position = u_world * position;\n  gl_Position = u_worldViewProjection * position;\n}\n";
+var glsl_default2 = "#version 300 es\n\n// ============================================================================\n// Phong vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_normal;\nout vec4 v_position;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  v_position = u_world * position;\n  gl_Position = u_worldViewProjection * position;\n}\n";
 
 // shaders/gouraud-flat/glsl.frag
 var glsl_default3 = "#version 300 es\n\n// ============================================================================\n// Gouraud fragment shader with flat shading\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// From vertex shader, note flat keyword!\nflat in vec3 v_lightingDiffuse;\nflat in vec3 v_lightingSpecular;\nin vec2 v_texCoord;\n\nuniform Material u_mat;\nuniform float u_gamma;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\nvoid main() {\n  // Tried to set the objectColour in the vertex shader, rather than here.aa\n  // But texture mapping + Gouraud shading, it looks terrible\n  vec3 objectColour = vec3(texture(u_mat.diffuseTex, v_texCoord)) * u_mat.diffuse;\n\n  vec3 colour = objectColour * v_lightingDiffuse + v_lightingSpecular;\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  colour.rgb = pow(colour.rgb, vec3(1.0 / u_gamma));\n\n  outColour = vec4(colour, 1.0);\n}\n";
@@ -7379,6 +7093,7 @@ var Context = class _Context {
     this.started = false;
     this.instances = [];
     this.instancesTrans = [];
+    this.cameras = /* @__PURE__ */ new Map();
     /** All the dynamic point lights in the scene */
     this.lights = [];
     /** Show extra debug details on the canvas */
@@ -7394,7 +7109,10 @@ var Context = class _Context {
     this.models = new ModelCache();
     this.globalLight = new LightDirectional();
     this.globalLight.setAsPosition(20, 50, 30);
-    this.camera = new Camera(0 /* PERSPECTIVE */);
+    const defaultCamera = new Camera(0 /* PERSPECTIVE */);
+    this.cameras.set("default", defaultCamera);
+    this._camera = defaultCamera;
+    this.activeCameraName = "default";
     this.gamma = 1;
     this.hud = new HUD(gl.canvas);
     this.debugDiv = document.createElement("div");
@@ -7415,6 +7133,13 @@ var Context = class _Context {
     this.loadingDiv.style.transform = "translate(-50%, -50%)";
     this.hud.addHUDItem(this.loadingDiv);
     import_loglevel6.default.info(`\u{1F451} GSOTS-3D context created, v${version}`);
+  }
+  // ==== Getters =============================================================
+  get camera() {
+    return this._camera;
+  }
+  get cameraName() {
+    return this.activeCameraName;
   }
   /**
    * Create & initialize a new Context which will render into provided canvas selector
@@ -7460,8 +7185,38 @@ var Context = class _Context {
     }
     stats.updateTime(now * 1e-3);
     this.update(stats.deltaTime);
-    this.camera.update();
-    const camMatrix = this.camera.matrix;
+    bindFramebufferInfo(this.gl, null);
+    this.renderWithCamera(this.camera);
+    if (this.debug) {
+      this.debugDiv.innerHTML = `
+        <b>GSOTS-3D v${version}</b><br><br>
+        <b>Camera: </b>${this.camera.toString()}<br>
+        <b>Instances: </b>${stats.instances}<br>
+        <b>Draw calls: </b>${stats.drawCallsPerFrame}<br>
+        <b>Triangles: </b>${stats.triangles}<br>
+        <b>Render: </b>FPS: ${stats.FPS} / ${stats.totalTimeRound}s<br>
+      `;
+    } else {
+      this.debugDiv.innerHTML = "";
+    }
+    if (this.started)
+      requestAnimationFrame(this.render);
+    stats.resetPerFrame();
+  }
+  /**
+   * Render the scene from the given camera
+   * @param camera
+   * @returns
+   */
+  renderWithCamera(camera) {
+    if (!this.gl)
+      return;
+    if (!this.mainProgInfo || !this.billboardProgInfo) {
+      import_loglevel6.default.error("\u{1F4A5} Missing program info, this is really bad!");
+      return;
+    }
+    camera.update();
+    const camMatrix = camera.matrix;
     const uniforms = {
       u_gamma: this.gamma ?? 1,
       u_worldInverseTranspose: mat4_exports.create(),
@@ -7469,8 +7224,8 @@ var Context = class _Context {
       u_worldViewProjection: mat4_exports.create(),
       // Updated per instance
       u_view: mat4_exports.invert(mat4_exports.create(), camMatrix),
-      u_proj: this.camera.projectionMatrix(this.aspectRatio),
-      u_camPos: this.camera.position
+      u_proj: camera.projectionMatrix(this.aspectRatio),
+      u_camPos: camera.position
     };
     this.gl.useProgram(this.billboardProgInfo.program);
     this.globalLight.apply(this.billboardProgInfo, "Global");
@@ -7493,6 +7248,7 @@ var Context = class _Context {
     }
     uniforms.u_lightsPosCount = lightCount;
     this.gl.enable(this.gl.CULL_FACE);
+    uniforms.u_special = 0;
     for (const instance of this.instances) {
       if (instance.billboard) {
         instance.render(this.gl, uniforms, this.billboardProgInfo);
@@ -7513,21 +7269,6 @@ var Context = class _Context {
         instance.render(this.gl, uniforms, this.mainProgInfo);
       }
     }
-    if (this.debug) {
-      this.debugDiv.innerHTML = `
-        <b>GSOTS-3D v${version}</b><br><br>
-        <b>Camera: </b>${this.camera.toString()}<br>
-        <b>Instances: </b>${stats.instances}<br>
-        <b>Draw calls: </b>${stats.drawCallsPerFrame}<br>
-        <b>Triangles: </b>${stats.triangles}<br>
-        <b>Render: </b>FPS: ${stats.FPS} / ${stats.totalTimeRound}s<br>
-      `;
-    } else {
-      this.debugDiv.innerHTML = "";
-    }
-    if (this.started)
-      requestAnimationFrame(this.render);
-    stats.resetPerFrame();
   }
   /**
    * Start the rendering loop
@@ -7591,6 +7332,31 @@ var Context = class _Context {
     }
     const model = await Model.parse(path, fileName, filter, flipY);
     this.models.add(model);
+  }
+  /**
+   * Add a new camera to the scene
+   * @param name Name of the camera
+   * @param camera Camera instance
+   */
+  addCamera(name, camera) {
+    this.cameras.set(name, camera);
+  }
+  getCamera(name) {
+    return this.cameras.get(name);
+  }
+  /**
+   * Set the active camera
+   * @param name Name of the camera to set as active
+   */
+  setActiveCamera(name) {
+    const camera = this.cameras.get(name);
+    if (!camera) {
+      throw new Error(`\u{1F4A5} Unable to set active camera to '${name}', camera not found`);
+    }
+    this.camera.active = false;
+    this._camera = camera;
+    this.camera.active = true;
+    this.activeCameraName = name;
   }
   // ==========================================================================
   // Methods to create new instances of renderable objects & things
@@ -7711,6 +7477,7 @@ export {
   CameraType,
   Colours,
   Context,
+  EnvMapMaterial,
   HUD,
   Instance,
   LightDirectional,

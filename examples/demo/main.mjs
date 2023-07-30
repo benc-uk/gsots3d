@@ -1,4 +1,4 @@
-import { Context, Material, Colours, setLogLevel } from '../../dist-bundle/gsots3d.js'
+import { Context, Material, Colours, setLogLevel, Camera } from '../../dist-bundle/gsots3d.js'
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 setLogLevel('debug')
@@ -165,6 +165,11 @@ ctx.camera.position = [0, 25, 50]
 ctx.camera.lookAt = [0, 10, 0]
 ctx.camera.far = 500
 
+const topCam = new Camera()
+topCam.position = [-23, 80, -20]
+topCam.far = 500
+ctx.addCamera('top', topCam)
+
 // Lights
 ctx.globalLight.setAsPosition(1, 10, 3)
 ctx.globalLight.colour = [0.8, 0.8, 0.8]
@@ -217,6 +222,14 @@ window.addEventListener('keydown', (e) => {
   }
   if (e.key === '3') {
     ctx.globalLight.enabled = !ctx.globalLight.enabled
+  }
+
+  if (e.key === 't') {
+    if (ctx.activeCameraName === 'top') {
+      ctx.setActiveCamera('default')
+    } else {
+      ctx.setActiveCamera('top')
+    }
   }
 })
 

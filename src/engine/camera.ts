@@ -36,6 +36,9 @@ export class Camera {
   /** Change camera projection, default CameraType.PERSPECTIVE */
   public type: CameraType
 
+  /** Is this camera active, default true */
+  public active: boolean
+
   /** Orthographic zoom level, only used when type is orthographic, default 20 */
   public orthoZoom: number
 
@@ -59,6 +62,7 @@ export class Camera {
    */
   constructor(type = CameraType.PERSPECTIVE) {
     this.type = type
+    this.active = true
 
     this.position = [0, 0, 30]
     this.lookAt = [0, 0, 0]
@@ -151,7 +155,7 @@ export class Camera {
     // See: https://developer.mozilla.org/en-US/docs/Web/API/Pointer_Lock_API
     const gl = getGl()
     gl?.canvas.addEventListener('click', async () => {
-      if (!this.fpMode) return
+      if (!this.fpMode || !this.active) return
 
       if (document.pointerLockElement) {
         log.info('🎥 Camera: exiting pointer lock')
@@ -168,7 +172,7 @@ export class Camera {
         return
       }
 
-      if (!this.fpMode) return
+      if (!this.fpMode || !this.active) return
       this.fpAngleY += e.movementX * -this.fpTurnSpeed
       this.fpAngleX += e.movementY * -this.fpTurnSpeed
 
@@ -179,12 +183,12 @@ export class Camera {
 
     // Track keys pressed for movement
     window.addEventListener('keydown', (e) => {
-      if (!this.fpMode) return
+      if (!this.fpMode || !this.active) return
       this.keysDown.add(e.key)
     })
 
     window.addEventListener('keyup', (e) => {
-      if (!this.fpMode) return
+      if (!this.fpMode || !this.active) return
       this.keysDown.delete(e.key)
     })
 
@@ -211,7 +215,7 @@ export class Camera {
    * Called every frame to update the camera, currently only used for movement in FP mode
    */
   update() {
-    if (!this.fpMode) return
+    if (!this.fpMode || !this.active) return
     if (this.keysDown.size === 0) return
 
     // use fpAngleY to calculate the direction we are facing

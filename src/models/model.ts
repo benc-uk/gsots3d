@@ -21,7 +21,6 @@ import { fetchFile } from '../core/files.ts'
 import { getGl, UniformSet } from '../core/gl.ts'
 import { Renderable } from './types.ts'
 import { stats } from '../core/stats.ts'
-import { vec2, vec3 } from 'gl-matrix'
 
 /**
  * Holds a 3D model, as a list of parts, each with a material

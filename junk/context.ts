@@ -4,7 +4,14 @@
 // ============================================================================
 
 import { version } from '../../package.json'
-import { ProgramInfo, bindFramebufferInfo, createProgramInfo, resizeCanvasToDisplaySize } from 'twgl.js'
+import {
+  FramebufferInfo,
+  ProgramInfo,
+  bindFramebufferInfo,
+  createFramebufferInfo,
+  createProgramInfo,
+  resizeCanvasToDisplaySize,
+} from 'twgl.js'
 import { mat4, vec3 } from 'gl-matrix'
 import log from 'loglevel'
 
@@ -28,6 +35,9 @@ import fragShaderFlat from '../../shaders/gouraud-flat/glsl.frag'
 import vertShaderFlat from '../../shaders/gouraud-flat/glsl.vert'
 import fragShaderBill from '../../shaders/billboard/glsl.frag'
 import vertShaderBill from '../../shaders/billboard/glsl.vert'
+
+// HACK: REMOVE THIS
+let fbi: FramebufferInfo
 
 /**
  * The set of supported rendering modes
@@ -188,6 +198,9 @@ export class Context {
     // Global texture cache
     textureCache = new TextureCache(gl)
 
+    // HACK: REMOVE THIS
+    fbi = createFramebufferInfo(gl, [{}], 256, 256)
+
     return ctx
   }
 
@@ -206,9 +219,11 @@ export class Context {
     // Call the external update function
     this.update(stats.deltaTime)
 
-    // Render the scene from active camera into the main framebuffer
-    bindFramebufferInfo(this.gl, null)
+    bindFramebufferInfo(this.gl, fbi)
     this.renderWithCamera(this.camera)
+
+    bindFramebufferInfo(this.gl, null)
+    this.renderWithCamera(this.camera, true)
 
     // Draw the debug HUD
     if (this.debug) {
@@ -231,12 +246,7 @@ export class Context {
     stats.resetPerFrame()
   }
 
-  /**
-   * Render the scene from the given camera
-   * @param camera
-   * @returns
-   */
-  renderWithCamera(camera: Camera) {
+  renderWithCamera(camera: Camera, blah = false) {
     if (!this.gl) return
     if (!this.mainProgInfo || !this.billboardProgInfo) {
       log.error('💥 Missing program info, this is really bad!')
@@ -258,6 +268,13 @@ export class Context {
       u_proj: camera.projectionMatrix(this.aspectRatio),
       u_camPos: camera.position,
     } as UniformSet
+
+    // HACK: REMOVE THIS
+    if (blah) {
+      uniforms.u_fbi = fbi.attachments[0]
+    } else {
+      uniforms.u_fbi = null
+    }
 
     // Apply global light to the two programs
     this.gl.useProgram(this.billboardProgInfo.program)
@@ -293,6 +310,10 @@ export class Context {
       if (instance.billboard) {
         instance.render(this.gl, uniforms, this.billboardProgInfo)
       } else {
+        // HACK: REMOVE THIS
+        if (instance.position && instance.position[0] === 7) {
+          uniforms.u_special = 1
+        }
         instance.render(this.gl, uniforms, this.mainProgInfo)
       }
     }

@@ -11,7 +11,6 @@ precision highp float;
 in vec4 position;
 in vec3 normal;
 in vec2 texcoord;
-in vec3 tangent;
 
 uniform mat4 u_worldViewProjection;
 uniform mat4 u_worldInverseTranspose;

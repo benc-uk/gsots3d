@@ -48,6 +48,8 @@ uniform vec3 u_camPos;
 uniform float u_gamma;
 uniform bool u_flipTextureX;
 uniform bool u_flipTextureY;
+uniform sampler2D u_fbi;
+uniform int u_special;
 
 // Main lights and material uniforms
 uniform Material u_mat;
@@ -147,6 +149,11 @@ void main() {
 
   // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL
   outColorPart.rgb = pow(outColorPart.rgb, vec3(1.0 / u_gamma));
+
+  if (u_special == 1) {
+    //outColorPart = vec4(1.0, 0.3, 0.0, 1.0);
+    outColorPart = vec4(vec3(texture(u_fbi, texCoord)), 1.0);
+  }
 
   outColour = outColorPart;
 }

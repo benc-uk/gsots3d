@@ -3,11 +3,12 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-import { ProgramInfo, setUniforms } from 'twgl.js'
+import { ProgramInfo, createTexture, setUniforms } from 'twgl.js'
 import { RGB } from './tuples.ts'
 import { MtlMaterial } from '../parsers/mtl-parser.ts'
 import { UniformSet } from '../core/gl.ts'
 import { textureCache } from '../core/context.ts'
+import { Camera } from './camera.ts'
 
 export class Material {
   /**
@@ -200,5 +201,35 @@ export class Material {
       normalTex: this.normalTex ? this.normalTex : null,
       hasNormalTex: this.normalTex ? true : false,
     } as UniformSet
+  }
+}
+
+/**
+ * A material that uses a camera to render the environment to a texture
+ * and then that texture can be used as a reflection map
+ *
+ * NOT FINISHED!!
+ */
+export class EnvMapMaterial extends Material {
+  public readonly isCube: boolean
+  public texture: WebGLTexture
+  private camera: Camera
+
+  constructor(gl: WebGL2RenderingContext, isCubeMap = false) {
+    super()
+
+    this.isCube = isCubeMap
+    this.camera = new Camera()
+
+    this.texture = createTexture(gl, {
+      width: 512,
+      height: 512,
+    })
+  }
+
+  render() {
+    console.log('rendering env map', this.camera)
+
+    return 0
   }
 }
