@@ -3,7 +3,7 @@ import { Colours, Context, Material } from '../../dist-bundle/gsots3d.js'
 const ctx = await Context.init()
 ctx.debug = true
 
-ctx.camera.position = [37, 30, 76]
+ctx.camera.position = [37, 40, 76]
 ctx.globalLight.setAsPosition(1, 1, 5)
 ctx.globalLight.colour = Colours.BLACK
 ctx.globalLight.ambient = [0.1, 0.1, 0.1]
@@ -53,6 +53,17 @@ s.scale = [6.2, 6.2, 6.2]
 const p = ctx.createModelInstance('potted_plant_obj')
 p.position = [28, 0, 5]
 p.scale = [0.8, 0.8, 0.8]
+
+const p1 = ctx.createModelInstance('potted_plant_obj')
+p1.position = [48, 0, 12]
+p1.scale = [0.8, 0.8, 0.8]
+
+// 50 random plants
+for (let i = 0; i < 5; i++) {
+  const p = ctx.createModelInstance('potted_plant_obj')
+  p.position = [Math.random() * 50 - 0, 0, Math.random() * 100 - 0]
+  p.scale = [0.8, 0.8, 0.8]
+}
 
 const light = ctx.createPointLight([0, 0, 0], Colours.WHITE, 3)
 
