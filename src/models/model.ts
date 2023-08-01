@@ -21,23 +21,20 @@ import { fetchFile } from '../core/files.ts'
 import { getGl, UniformSet } from '../core/gl.ts'
 import { Renderable } from './types.ts'
 import { stats } from '../core/stats.ts'
+import { ProgramCache } from '../core/cache.ts'
 
 /**
  * Holds a 3D model, as a list of parts, each with a material
  * Plus map of named materials
  */
 export class Model implements Renderable {
+  private programInfo: ProgramInfo
+  private readonly parts = [] as ModelPart[]
+  private readonly materials = {} as Record<string, Material>
+  private triangles: number
+
   /** Name of the model, usually the filename without the extension */
   public readonly name: string
-
-  /** Array of model sub-parts */
-  private readonly parts = [] as ModelPart[]
-
-  /** Named map of materials for all parts */
-  private readonly materials = {} as Record<string, Material>
-
-  /** Total number of triangles in the model */
-  private triangles: number
 
   /**
    * Constructor is private, use static `parse()` method instead
@@ -45,18 +42,16 @@ export class Model implements Renderable {
   private constructor(name: string) {
     this.name = name
     this.triangles = 0
+    this.programInfo = ProgramCache.instance.default
   }
 
   /**
    * Render is used draw this model, this is called from the Instance that wraps
    * this renderable.
    */
-  render(
-    gl: WebGL2RenderingContext,
-    uniforms: UniformSet,
-    programInfo: ProgramInfo,
-    materialOverride?: Material
-  ): void {
+  render(gl: WebGL2RenderingContext, uniforms: UniformSet, materialOverride?: Material): void {
+    gl.useProgram(this.programInfo.program)
+
     // Render each part of the model
     for (const part of this.parts) {
       const bufferInfo = part.bufferInfo
@@ -70,13 +65,13 @@ export class Model implements Renderable {
           material = this.materials['__default']
         }
 
-        material.apply(programInfo)
+        material.apply(this.programInfo)
       } else {
-        materialOverride.apply(programInfo)
+        materialOverride.apply(this.programInfo)
       }
 
-      setBuffersAndAttributes(gl, programInfo, bufferInfo)
-      setUniforms(programInfo, uniforms)
+      setBuffersAndAttributes(gl, this.programInfo, bufferInfo)
+      setUniforms(this.programInfo, uniforms)
 
       drawBufferInfo(gl, bufferInfo)
       stats.drawCallsPerFrame++
@@ -137,7 +132,7 @@ export class Model implements Renderable {
     const gl = getGl()
 
     if (!gl) {
-      throw new Error('Unable to get WebGL context')
+      throw new Error('💥 Unable to get WebGL context')
     }
 
     for (const g of objData.geometries) {
@@ -154,6 +149,38 @@ export class Model implements Renderable {
 
     model.triangles = objData.triangles
     return model
+  }
+
+  /**
+   * Get list of all material names in this model used by all parts
+   * @returns {string[]} - List of material names
+   */
+  get materialNames(): string[] {
+    return Object.keys(this.materials)
+  }
+
+  /**
+   * Get number of parts in this model
+   */
+  get partsCount(): number {
+    return this.parts.length
+  }
+
+  /**
+   * Get list of parts in this model, names are the material names
+   * @returns {string[]} - List of part material names
+   */
+  get partList(): string[] {
+    return this.parts.map((p) => p.materialName)
+  }
+
+  /**
+   * Can modify & override an existing named material
+   * @param {string} name - Name of the material to modify
+   * @param {Material} material - New material to use
+   */
+  setNamedMaterial(name: string, material: Material): void {
+    this.materials[name] = material
   }
 }
 

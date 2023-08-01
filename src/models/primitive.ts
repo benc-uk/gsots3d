@@ -17,12 +17,14 @@ import { UniformSet } from '../core/gl.ts'
 import { Renderable } from './types.ts'
 import { Material } from '../engine/material.ts'
 import { stats } from '../core/stats.ts'
+import { ProgramCache } from '../core/cache.ts'
 
 /**
  * A simple primitive 3D object, like a sphere or cube
  */
 export abstract class Primitive implements Renderable {
   protected bufferInfo: BufferInfo | undefined
+  private programInfo: ProgramInfo
   public material: Material
   public tex: WebGLTexture | undefined
   protected triangles: number
@@ -30,6 +32,7 @@ export abstract class Primitive implements Renderable {
   constructor() {
     this.material = new Material()
     this.triangles = 0
+    this.programInfo = ProgramCache.instance.default
   }
 
   get triangleCount(): number {
@@ -40,22 +43,19 @@ export abstract class Primitive implements Renderable {
    * Render is used draw this primitive, this is called from the Instance that wraps
    * this renderable.
    */
-  render(
-    gl: WebGL2RenderingContext,
-    uniforms: UniformSet,
-    programInfo: ProgramInfo,
-    materialOverride?: Material
-  ): void {
+  render(gl: WebGL2RenderingContext, uniforms: UniformSet, materialOverride?: Material): void {
     if (!this.bufferInfo) return
 
+    gl.useProgram(this.programInfo.program)
+
     if (materialOverride === undefined) {
-      this.material.apply(programInfo)
+      this.material.apply(this.programInfo)
     } else {
-      materialOverride.apply(programInfo)
+      materialOverride.apply(this.programInfo)
     }
 
-    setBuffersAndAttributes(gl, programInfo, this.bufferInfo)
-    setUniforms(programInfo, uniforms)
+    setBuffersAndAttributes(gl, this.programInfo, this.bufferInfo)
+    setUniforms(this.programInfo, uniforms)
 
     drawBufferInfo(gl, this.bufferInfo)
     stats.drawCallsPerFrame++

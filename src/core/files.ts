@@ -18,7 +18,7 @@ export async function fetchFile(filePath: string) {
   const resp = await fetch(filePath)
 
   if (!resp.ok) {
-    throw new Error(`File fetch failed: ${resp.statusText}`)
+    throw new Error(`💥 File fetch failed: ${resp.statusText}`)
   }
 
   const text = await resp.text()
@@ -37,7 +37,7 @@ export async function fetchShaders(vertPath: string, fragPath: string) {
   const fsResp = await fetch(fragPath)
 
   if (!vsResp.ok || !fsResp.ok) {
-    throw new Error(`Fetch failed - vertex: ${vsResp.statusText}, fragment: ${fsResp.statusText}`)
+    throw new Error(`💥 Fetch failed - vertex: ${vsResp.statusText}, fragment: ${fsResp.statusText}`)
   }
 
   const vsText = await vsResp.text()

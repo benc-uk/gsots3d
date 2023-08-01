@@ -3,7 +3,6 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-import { ProgramInfo, setUniforms } from 'twgl.js'
 import { UniformSet } from '../core/gl.ts'
 import { Colours, Tuples, XYZ, RGB } from './tuples.ts'
 
@@ -63,17 +62,6 @@ export class LightDirectional {
    */
   setAsPosition(x: number, y: number, z: number) {
     this._direction = Tuples.normalize([0 - x, 0 - y, 0 - z])
-  }
-
-  /**
-   * Applies the light to the given program as uniform struct
-   */
-  apply(programInfo: ProgramInfo, uniformSuffix = '') {
-    const uni = {
-      [`u_lightDir${uniformSuffix}`]: this.uniforms,
-    }
-
-    setUniforms(programInfo, uni)
   }
 
   /**
@@ -143,17 +131,6 @@ export class LightPoint {
     this.constant = 0.5
     this.linear = 0.018
     this.quad = 0.0003
-  }
-
-  /**
-   * Applies the light to the given program as uniform struct
-   */
-  apply(programInfo: ProgramInfo, uniformSuffix = '') {
-    const uni = {
-      [`u_lightPos${uniformSuffix}`]: this.uniforms,
-    }
-
-    setUniforms(programInfo, uni)
   }
 
   /**

@@ -5,17 +5,37 @@
 
 import log from 'loglevel'
 import { Model } from '../models/model.ts'
-import { createTexture } from 'twgl.js'
+import { ProgramInfo, createTexture } from 'twgl.js'
+
+export const PROG_DEFAULT = 'phong'
+export const PROG_BILLBOARD = 'billboard'
 
 /**
- * A simple cache for parsed and loaded models, indexed by name
+ * A singleton cache for parsed and loaded models, indexed by name
  */
 export class ModelCache {
-  private cache = new Map<string, Model>()
+  private cache: Map<string, Model>
+  private static _instance: ModelCache
+
+  private constructor() {
+    this.cache = new Map<string, Model>()
+  }
+
+  /**
+   * Return the singleton instance of the model cache
+   */
+  static get instance() {
+    if (!ModelCache._instance) {
+      ModelCache._instance = new ModelCache()
+    }
+
+    return ModelCache._instance
+  }
 
   /**
    * Return a model from the cache by name
-   * @param name
+   * @param name Name of model without extension
+   * @param warn If true, log a warning if model not found
    */
   get(name: string, warn = true) {
     if (!this.cache.has(name) && warn) {
@@ -43,11 +63,18 @@ export class ModelCache {
 export class TextureCache {
   private cache: Map<string, WebGLTexture>
   private gl: WebGL2RenderingContext
+  private static _instance: TextureCache
+  private static initialized = false
 
-  // Create a new texture cache, needs a WebGL context so tricky to make a singleton
-  constructor(gl: WebGL2RenderingContext) {
+  private constructor() {
     this.cache = new Map<string, WebGLTexture>()
-    this.gl = gl
+    this.gl = {} as WebGL2RenderingContext
+  }
+
+  // Create a new texture cache
+  static init(gl: WebGL2RenderingContext) {
+    this._instance = new TextureCache()
+    this._instance.gl = gl
 
     // Add default textures
 
@@ -74,9 +101,19 @@ export class TextureCache {
       src: [128, 128, 255, 255],
     })
 
-    this.add('_defaults/white', white1pixel)
-    this.add('_defaults/check', checkerboard)
-    this.add('_defaults/normal', normal1pixel)
+    this._instance.add('_defaults/white', white1pixel)
+    this._instance.add('_defaults/check', checkerboard)
+    this._instance.add('_defaults/normal', normal1pixel)
+
+    TextureCache.initialized = true
+  }
+
+  static get instance() {
+    if (!TextureCache.initialized) {
+      throw new Error('TextureCache not initialized, call TextureCache.init() first')
+    }
+
+    return this._instance
   }
 
   /**
@@ -142,5 +179,80 @@ export class TextureCache {
 
     this.add(src, texture)
     return texture
+  }
+}
+
+/**
+ * Singleton cache for parsed and loaded GL programs, indexed by name
+ */
+export class ProgramCache {
+  private cache: Map<string, ProgramInfo>
+  private _default: ProgramInfo
+  private static _instance: ProgramCache
+  private static initialized = false
+
+  public static PROG_PHONG = 'phong'
+  public static PROG_BILLBOARD = 'billboard'
+
+  /**
+   * Create a new program cache, needs a default program to be set
+   * @param defaultProg The default program that can be used by most things
+   */
+  private constructor() {
+    this.cache = new Map<string, ProgramInfo>()
+    // This is pretty nasty, but we really trust people to call init() first
+    this._default = {} as ProgramInfo
+  }
+
+  /**
+   * Initialise the program cache with a default program.
+   * This MUST be called before using the cache
+   * @param defaultProg The default program that can be used by most things
+   */
+  public static init(defaultProg: ProgramInfo) {
+    if (ProgramCache._instance) {
+      log.warn('🤔 Program cache already initialised, not doing it again')
+      return
+    }
+
+    ProgramCache._instance = new ProgramCache()
+    ProgramCache._instance._default = defaultProg
+    ProgramCache.initialized = true
+  }
+
+  /**
+   * Return the singleton instance of the program cache
+   */
+  static get instance() {
+    if (!ProgramCache.initialized) {
+      throw new Error('💥 Program cache not initialised, call init() first')
+    }
+
+    return ProgramCache._instance
+  }
+
+  /**
+   * Return a program from the cache by name
+   * @param name Name of program
+   */
+  get(name: string): ProgramInfo {
+    const prog = this.cache.get(name)
+
+    if (!prog) {
+      log.warn(`⚠️ Program '${name}' not found, returning default`)
+      return this._default
+    }
+
+    return prog
+  }
+
+  add(name: string, program: ProgramInfo) {
+    log.debug(`🧰 Adding program '${name}' to cache`)
+
+    this.cache.set(name, program)
+  }
+
+  get default() {
+    return this._default
   }
 }

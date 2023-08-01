@@ -7,7 +7,7 @@ import { ProgramInfo, createTexture, setUniforms } from 'twgl.js'
 import { RGB } from './tuples.ts'
 import { MtlMaterial } from '../parsers/mtl-parser.ts'
 import { UniformSet } from '../core/gl.ts'
-import { textureCache } from '../core/context.ts'
+import { TextureCache } from '../core/cache.ts'
 import { Camera } from './camera.ts'
 
 export class Material {
@@ -76,8 +76,8 @@ export class Material {
     this.opacity = 1.0
 
     // 1 pixel white texture allows for solid colour & flat materials
-    this.diffuseTex = textureCache.get('_defaults/white')
-    this.specularTex = textureCache.get('_defaults/white')
+    this.diffuseTex = TextureCache.instance.get('_defaults/white')
+    this.specularTex = TextureCache.instance.get('_defaults/white')
   }
 
   /**
@@ -94,15 +94,15 @@ export class Material {
     m.opacity = rawMtl.d ? rawMtl.d : 1.0
 
     if (rawMtl.texDiffuse) {
-      m.diffuseTex = textureCache.getCreate(`${basePath}/${rawMtl.texDiffuse}`, filter, flipY)
+      m.diffuseTex = TextureCache.instance.getCreate(`${basePath}/${rawMtl.texDiffuse}`, filter, flipY)
     }
 
     if (rawMtl.texSpecular) {
-      m.specularTex = textureCache.getCreate(`${basePath}/${rawMtl.texSpecular}`, filter, flipY)
+      m.specularTex = TextureCache.instance.getCreate(`${basePath}/${rawMtl.texSpecular}`, filter, flipY)
     }
 
     if (rawMtl.texNormal) {
-      m.normalTex = textureCache.getCreate(`${basePath}/${rawMtl.texNormal}`, filter, flipY)
+      m.normalTex = TextureCache.instance.getCreate(`${basePath}/${rawMtl.texNormal}`, filter, flipY)
     }
 
     return m
@@ -124,7 +124,7 @@ export class Material {
   public static createBasicTexture(url: string, filter = true, flipY = true) {
     const m = new Material()
 
-    m.diffuseTex = textureCache.getCreate(url, filter, flipY)
+    m.diffuseTex = TextureCache.instance.getCreate(url, filter, flipY)
 
     return m
   }
@@ -135,7 +135,7 @@ export class Material {
    * @param filter
    */
   public addSpecularTexture(url: string, filter = true, flipY = true) {
-    this.specularTex = textureCache.getCreate(url, filter, flipY)
+    this.specularTex = TextureCache.instance.getCreate(url, filter, flipY)
     this.specular = [1, 1, 1]
     this.shininess = 20
   }
@@ -146,7 +146,7 @@ export class Material {
    * @param filter
    */
   public addNormalTexture(url: string, filter = true, flipY = true) {
-    this.normalTex = textureCache.getCreate(url, filter, flipY)
+    this.normalTex = TextureCache.instance.getCreate(url, filter, flipY)
   }
 
   /** Create a simple RED Material */

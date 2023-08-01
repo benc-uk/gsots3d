@@ -101,6 +101,10 @@ export function parseOBJ(objFile: string): ParseResult {
     g() {
       return
     },
+
+    l() {
+      return
+    },
   } as Record<string, (parts: string[], unparsedArgs: string) => void>
 
   /**

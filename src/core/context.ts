@@ -4,19 +4,19 @@
 // ============================================================================
 
 import { version } from '../../package.json'
-import { ProgramInfo, bindFramebufferInfo, createProgramInfo, resizeCanvasToDisplaySize } from 'twgl.js'
+import { bindFramebufferInfo, createProgramInfo, resizeCanvasToDisplaySize } from 'twgl.js'
 import { mat4, vec3 } from 'gl-matrix'
 import log from 'loglevel'
 
 import { getGl, UniformSet } from './gl.ts'
 import { RGB, XYZ, Tuples } from '../engine/tuples.ts'
-import { ModelCache, TextureCache } from './cache.ts'
+import { ModelCache, ProgramCache, TextureCache } from './cache.ts'
 import { LightDirectional, LightPoint } from '../engine/lights.ts'
 import { Camera, CameraType } from '../engine/camera.ts'
 import { Material } from '../engine/material.ts'
 import { Skybox } from '../engine/skybox.ts'
-import { BillboardType, Instance } from '../models/instance.ts'
-import { Billboard } from '../models/billboard.ts'
+import { Instance } from '../models/instance.ts'
+import { Billboard, BillboardType } from '../models/billboard.ts'
 import { PrimitiveCube, PrimitivePlane, PrimitiveSphere, PrimitiveCylinder } from '../models/primitive.ts'
 import { Model } from '../models/model.ts'
 import { HUD } from './hud.ts'
@@ -25,24 +25,11 @@ import { stats } from './stats.ts'
 // Import shaders, tsup will inline these as text strings
 import fragShaderPhong from '../../shaders/phong/glsl.frag'
 import vertShaderPhong from '../../shaders/phong/glsl.vert'
-import fragShaderFlat from '../../shaders/gouraud-flat/glsl.frag'
-import vertShaderFlat from '../../shaders/gouraud-flat/glsl.vert'
 import fragShaderBill from '../../shaders/billboard/glsl.frag'
 import vertShaderBill from '../../shaders/billboard/glsl.vert'
 
-/**
- * The set of supported rendering modes
- */
-export enum RenderMode {
-  PHONG = 'phong',
-  FLAT = 'flat',
-}
-
 /** @ignore Total max dynamic lights */
 const MAX_LIGHTS = 16
-
-/** @ignore Global singleton texture cache */
-export let textureCache: TextureCache
 
 /**
  * The main rendering context. This is the effectively main entry point for the library.
@@ -51,15 +38,11 @@ export let textureCache: TextureCache
 export class Context {
   private gl: WebGL2RenderingContext
   private aspectRatio = 1
-  private programs: Map<string, ProgramInfo> = new Map()
   private started = false
   private instances: Instance[] = []
   private instancesTrans: Instance[] = []
   private debugDiv: HTMLDivElement
   private loadingDiv: HTMLDivElement
-  private billboardProgInfo?: ProgramInfo
-  private mainProgInfo?: ProgramInfo
-  private models: ModelCache
   private cameras: Map<string, Camera> = new Map()
   private activeCameraName: string
   private skybox?: Skybox
@@ -87,7 +70,7 @@ export class Context {
   public readonly hud: HUD
 
   /** Gamma correction value, default 1.0 */
-  public gamma: number
+  public gamma = 1.0
 
   // ==== Getters =============================================================
 
@@ -104,19 +87,15 @@ export class Context {
    */
   private constructor(gl: WebGL2RenderingContext) {
     this.gl = gl
-    this.models = new ModelCache()
 
     // Main global light
     this.globalLight = new LightDirectional()
     this.globalLight.setAsPosition(20, 50, 30)
 
-    // Default camera, named erm, 'default' :)
     const defaultCamera = new Camera(CameraType.PERSPECTIVE)
     this.cameras.set('default', defaultCamera)
     this._camera = defaultCamera
     this.activeCameraName = 'default'
-
-    this.gamma = 1.0
 
     this.hud = new HUD(<HTMLCanvasElement>gl.canvas)
 
@@ -159,36 +138,22 @@ export class Context {
     const canvas = <HTMLCanvasElement>gl.canvas
     ctx.aspectRatio = canvas.clientWidth / canvas.clientHeight
 
-    // Load shaders and build map of programs
-    try {
-      const phongProg = createProgramInfo(gl, [vertShaderPhong, fragShaderPhong])
-      ctx.programs.set(RenderMode.PHONG, phongProg)
-
-      const flatProg = createProgramInfo(gl, [vertShaderFlat, fragShaderFlat])
-      ctx.programs.set(RenderMode.FLAT, flatProg)
-
-      // Special program for billboards, which are rendered differently
-      const billboardProg = createProgramInfo(gl, [vertShaderBill, fragShaderBill])
-
-      ctx.billboardProgInfo = billboardProg
-      ctx.mainProgInfo = phongProg
-
-      log.info(`🎨 Loaded all shaders & programs, GL is ready`)
-    } catch (err) {
-      log.error(err)
-      throw err
-    }
+    // Load shaders and put into global cache
+    const phongProgInfo = createProgramInfo(gl, [vertShaderPhong, fragShaderPhong])
+    ProgramCache.init(phongProgInfo)
+    ProgramCache.instance.add(ProgramCache.PROG_PHONG, phongProgInfo)
+    ProgramCache.instance.add(ProgramCache.PROG_BILLBOARD, createProgramInfo(gl, [vertShaderBill, fragShaderBill]))
+    log.info(`🎨 Loaded all shaders & programs, GL is ready`)
 
     gl.enable(gl.DEPTH_TEST)
-
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
     // bind to the render function
     ctx.render = ctx.render.bind(ctx)
 
-    // Global texture cache
-    textureCache = new TextureCache(gl)
+    // Global texture cache, needs to be initialized after GL context is ready
+    TextureCache.init(gl)
 
     return ctx
   }
@@ -198,10 +163,6 @@ export class Context {
    */
   private async render(now: number) {
     if (!this.gl) return
-    if (!this.mainProgInfo || !this.billboardProgInfo) {
-      log.error('💥 Missing program info, this is really bad!')
-      return
-    }
 
     stats.updateTime(now * 0.001)
 
@@ -240,10 +201,6 @@ export class Context {
    */
   renderWithCamera(camera: Camera) {
     if (!this.gl) return
-    if (!this.mainProgInfo || !this.billboardProgInfo) {
-      log.error('💥 Missing program info, this is really bad!')
-      return
-    }
 
     // Update the camera
     camera.update()
@@ -269,10 +226,7 @@ export class Context {
     // RENDERING - Process lighting
 
     // Apply global light to the two programs
-    this.gl.useProgram(this.billboardProgInfo.program)
-    this.globalLight.apply(this.billboardProgInfo, 'Global')
-    this.gl.useProgram(this.mainProgInfo.program)
-    this.globalLight.apply(this.mainProgInfo, 'Global')
+    uniforms.u_lightDirGlobal = this.globalLight.uniforms
 
     // Only sort lights if we have more than MAX_LIGHTS, it's expensive!
     if (this.lights.length > MAX_LIGHTS) {
@@ -299,11 +253,7 @@ export class Context {
     this.gl.enable(this.gl.CULL_FACE)
     uniforms.u_special = 0
     for (const instance of this.instances) {
-      if (instance.billboard) {
-        instance.render(this.gl, uniforms, this.billboardProgInfo)
-      } else {
-        instance.render(this.gl, uniforms, this.mainProgInfo)
-      }
+      instance.render(this.gl, uniforms)
     }
 
     // RENDERING - Draw all transparent instances
@@ -318,11 +268,7 @@ export class Context {
     })
 
     for (const instance of this.instancesTrans) {
-      if (instance.billboard) {
-        instance.render(this.gl, uniforms, this.billboardProgInfo)
-      } else {
-        instance.render(this.gl, uniforms, this.mainProgInfo)
-      }
+      instance.render(this.gl, uniforms)
     }
   }
 
@@ -341,18 +287,6 @@ export class Context {
    */
   stop() {
     this.started = false
-  }
-
-  /**
-   * Change the render mode, e.g. Phong or Flat
-   * @param mode - Set the render mode to one of the available sets
-   */
-  setRenderMode(mode: RenderMode) {
-    if (!this.programs.has(mode)) {
-      throw new Error(`💥 Render mode '${mode}' is not valid, you will have a bad time 💩`)
-    }
-
-    this.mainProgInfo = this.programs.get(mode)
   }
 
   /**
@@ -393,14 +327,14 @@ export class Context {
     const modelName = fileName.split('.')[0]
 
     // Check if model is already loaded
-    if (this.models.get(modelName, false)) {
+    if (ModelCache.instance.get(modelName, false)) {
       log.warn(`⚠️ Model '${modelName}' already loaded, skipping`)
       return
     }
 
     const model = await Model.parse(path, fileName, filter, flipY)
 
-    this.models.add(model)
+    ModelCache.instance.add(model)
   }
 
   /**
@@ -441,7 +375,7 @@ export class Context {
    * @param modelName - Name of the model previously loaded into the cache, don't include the file extension
    */
   createModelInstance(modelName: string) {
-    const model = this.models.get(modelName)
+    const model = ModelCache.instance.get(modelName)
     if (!model) {
       throw new Error(`💥 Unable to create model instance for ${modelName}`)
     }
@@ -456,6 +390,10 @@ export class Context {
 
   /**
    * Create an instance of a primitive sphere
+   * @param material - Material to apply to the sphere
+   * @param radius - Radius of the sphere
+   * @param subdivisionsH - Number of subdivisions along the horizontal
+   * @param subdivisionsV - Number of subdivisions along the vertical
    */
   createSphereInstance(material: Material, radius = 5, subdivisionsH = 16, subdivisionsV = 8) {
     const sphere = new PrimitiveSphere(this.gl, radius, subdivisionsH, subdivisionsV)
@@ -535,18 +473,17 @@ export class Context {
    * @param height - Height of the billboard (default: 5)
    * @param type - Type of billboard to create (default: CYLINDRICAL)
    */
-  createBillboardInstance(material: Material, width = 5, height = 5, type = BillboardType.CYLINDRICAL) {
-    const billboard = new Billboard(this.gl, material, width)
+  createBillboardInstance(material: Material, size = 5, type = BillboardType.CYLINDRICAL) {
+    const billboard = new Billboard(this.gl, type, material, size)
 
     const instance = new Instance(billboard)
-    instance.billboard = type
 
     this.addInstance(instance, material)
 
     stats.triangles += 2
     stats.instances++
 
-    log.debug(`🚧 Created billboard instance of type: ${type} ${height}`)
+    log.debug(`🚧 Created billboard instance of type: ${type} size: ${size}`)
 
     return instance
   }

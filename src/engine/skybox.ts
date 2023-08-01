@@ -45,7 +45,7 @@ export class Skybox {
     // Create the skybox cube
     this.cube = primitives.createCubeBufferInfo(gl, 1)
 
-    log.info(`🌃 Skybox created!`, textureURLs)
+    log.info(`🌃 Skybox created!`)
 
     // Don't go via the texture cache, as cube maps are a special case
     this.texture = createTexture(gl, {

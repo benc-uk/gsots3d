@@ -5992,13 +5992,25 @@ var Tuples = {
 
 // src/core/cache.ts
 var import_loglevel3 = __toESM(require_loglevel(), 1);
-var ModelCache = class {
+var PROG_DEFAULT = "phong";
+var PROG_BILLBOARD = "billboard";
+var ModelCache = class _ModelCache {
   constructor() {
     this.cache = /* @__PURE__ */ new Map();
   }
   /**
+   * Return the singleton instance of the model cache
+   */
+  static get instance() {
+    if (!_ModelCache._instance) {
+      _ModelCache._instance = new _ModelCache();
+    }
+    return _ModelCache._instance;
+  }
+  /**
    * Return a model from the cache by name
-   * @param name
+   * @param name Name of model without extension
+   * @param warn If true, log a warning if model not found
    */
   get(name, warn = true) {
     if (!this.cache.has(name) && warn) {
@@ -6015,11 +6027,15 @@ var ModelCache = class {
     this.cache.set(model.name, model);
   }
 };
-var TextureCache = class {
-  // Create a new texture cache, needs a WebGL context so tricky to make a singleton
-  constructor(gl) {
+var _TextureCache = class _TextureCache {
+  constructor() {
     this.cache = /* @__PURE__ */ new Map();
-    this.gl = gl;
+    this.gl = {};
+  }
+  // Create a new texture cache
+  static init(gl) {
+    this._instance = new _TextureCache();
+    this._instance.gl = gl;
     const white1pixel = createTexture(gl, {
       min: gl.NEAREST,
       mag: gl.NEAREST,
@@ -6037,9 +6053,16 @@ var TextureCache = class {
       mag: gl.NEAREST,
       src: [128, 128, 255, 255]
     });
-    this.add("_defaults/white", white1pixel);
-    this.add("_defaults/check", checkerboard);
-    this.add("_defaults/normal", normal1pixel);
+    this._instance.add("_defaults/white", white1pixel);
+    this._instance.add("_defaults/check", checkerboard);
+    this._instance.add("_defaults/normal", normal1pixel);
+    _TextureCache.initialized = true;
+  }
+  static get instance() {
+    if (!_TextureCache.initialized) {
+      throw new Error("TextureCache not initialized, call TextureCache.init() first");
+    }
+    return this._instance;
   }
   /**
    * Return a texture from the cache by name
@@ -6095,6 +6118,64 @@ var TextureCache = class {
     return texture;
   }
 };
+_TextureCache.initialized = false;
+var TextureCache = _TextureCache;
+var _ProgramCache = class _ProgramCache {
+  /**
+   * Create a new program cache, needs a default program to be set
+   * @param defaultProg The default program that can be used by most things
+   */
+  constructor() {
+    this.cache = /* @__PURE__ */ new Map();
+    this._default = {};
+  }
+  /**
+   * Initialise the program cache with a default program.
+   * This MUST be called before using the cache
+   * @param defaultProg The default program that can be used by most things
+   */
+  static init(defaultProg) {
+    if (_ProgramCache._instance) {
+      import_loglevel3.default.warn("\u{1F914} Program cache already initialised, not doing it again");
+      return;
+    }
+    _ProgramCache._instance = new _ProgramCache();
+    _ProgramCache._instance._default = defaultProg;
+    _ProgramCache.initialized = true;
+  }
+  /**
+   * Return the singleton instance of the program cache
+   */
+  static get instance() {
+    if (!_ProgramCache.initialized) {
+      throw new Error("\u{1F4A5} Program cache not initialised, call init() first");
+    }
+    return _ProgramCache._instance;
+  }
+  /**
+   * Return a program from the cache by name
+   * @param name Name of program
+   */
+  get(name) {
+    const prog = this.cache.get(name);
+    if (!prog) {
+      import_loglevel3.default.warn(`\u26A0\uFE0F Program '${name}' not found, returning default`);
+      return this._default;
+    }
+    return prog;
+  }
+  add(name, program) {
+    import_loglevel3.default.debug(`\u{1F9F0} Adding program '${name}' to cache`);
+    this.cache.set(name, program);
+  }
+  get default() {
+    return this._default;
+  }
+};
+_ProgramCache.initialized = false;
+_ProgramCache.PROG_PHONG = "phong";
+_ProgramCache.PROG_BILLBOARD = "billboard";
+var ProgramCache = _ProgramCache;
 
 // src/engine/lights.ts
 var LightDirectional = class {
@@ -6124,15 +6205,6 @@ var LightDirectional = class {
     this._direction = Tuples.normalize([0 - x, 0 - y, 0 - z]);
   }
   /**
-   * Applies the light to the given program as uniform struct
-   */
-  apply(programInfo, uniformSuffix = "") {
-    const uni = {
-      [`u_lightDir${uniformSuffix}`]: this.uniforms
-    };
-    setUniforms(programInfo, uni);
-  }
-  /**
    * Return the base set of uniforms for this light
    */
   get uniforms() {
@@ -6152,15 +6224,6 @@ var LightPoint = class {
     this.constant = 0.5;
     this.linear = 0.018;
     this.quad = 3e-4;
-  }
-  /**
-   * Applies the light to the given program as uniform struct
-   */
-  apply(programInfo, uniformSuffix = "") {
-    const uni = {
-      [`u_lightPos${uniformSuffix}`]: this.uniforms
-    };
-    setUniforms(programInfo, uni);
   }
   /**
    * Return the base set of uniforms for this light
@@ -6389,7 +6452,7 @@ var Skybox = class {
     }
     this.programInfo = createProgramInfo(gl, [glsl_default2, glsl_default]);
     this.cube = primitives.createCubeBufferInfo(gl, 1);
-    import_loglevel5.default.info(`\u{1F303} Skybox created!`, textureURLs);
+    import_loglevel5.default.info(`\u{1F303} Skybox created!`);
     this.texture = createTexture(gl, {
       target: gl.TEXTURE_CUBE_MAP,
       src: textureURLs,
@@ -6432,12 +6495,6 @@ var Skybox = class {
 };
 
 // src/models/instance.ts
-var BillboardType = /* @__PURE__ */ ((BillboardType2) => {
-  BillboardType2[BillboardType2["NONE"] = 0] = "NONE";
-  BillboardType2[BillboardType2["SPHERICAL"] = 1] = "SPHERICAL";
-  BillboardType2[BillboardType2["CYLINDRICAL"] = 2] = "CYLINDRICAL";
-  return BillboardType2;
-})(BillboardType || {});
 var Instance = class {
   /**
    * @param {Renderable} renderable - Renderable to use for this instance
@@ -6454,7 +6511,6 @@ var Instance = class {
      * @default false
      */
     this.flipTextureY = false;
-    this.billboard = 0 /* NONE */;
     this.renderable = renderable;
   }
   /**
@@ -6497,14 +6553,13 @@ var Instance = class {
    * @param {mat4} viewProjection - View projection matrix
    * @param {ProgramInfo} programInfo - Shader program info
    */
-  render(gl, uniforms, programInfo) {
+  render(gl, uniforms) {
     if (!this.enabled)
       return;
     if (!this.renderable)
       return;
     if (!gl)
       return;
-    gl.useProgram(programInfo.program);
     const scale4 = mat4_exports.create();
     const rotate2 = mat4_exports.create();
     const translate2 = mat4_exports.create();
@@ -6524,24 +6579,10 @@ var Instance = class {
     mat4_exports.invert(uniforms.u_worldInverseTranspose, world);
     mat4_exports.transpose(uniforms.u_worldInverseTranspose, uniforms.u_worldInverseTranspose);
     const worldView = mat4_exports.multiply(mat4_exports.create(), uniforms.u_view, world);
-    if (this.billboard !== 0 /* NONE */) {
-      const scale5 = mat4_exports.getScaling(vec3_exports.create(), worldView);
-      worldView[0] = scale5[0];
-      worldView[1] = 0;
-      worldView[2] = 0;
-      worldView[8] = 0;
-      worldView[9] = 0;
-      worldView[10] = scale5[2];
-      if (this.billboard === 1 /* SPHERICAL */) {
-        worldView[4] = 0;
-        worldView[5] = scale5[1];
-        worldView[6] = 0;
-      }
-    }
     mat4_exports.multiply(uniforms.u_worldViewProjection, uniforms.u_proj, worldView);
     uniforms.u_flipTextureX = this.flipTextureX;
     uniforms.u_flipTextureY = this.flipTextureY;
-    this.renderable.render(gl, uniforms, programInfo, this.material);
+    this.renderable.render(gl, uniforms, this.material);
   }
 };
 
@@ -6573,26 +6614,47 @@ var Stats = class {
 var stats = new Stats();
 
 // src/models/billboard.ts
+var BillboardType = /* @__PURE__ */ ((BillboardType2) => {
+  BillboardType2[BillboardType2["SPHERICAL"] = 0] = "SPHERICAL";
+  BillboardType2[BillboardType2["CYLINDRICAL"] = 1] = "CYLINDRICAL";
+  return BillboardType2;
+})(BillboardType || {});
 var Billboard = class {
   /** Creates a square billboard */
-  constructor(gl, material, size) {
+  constructor(gl, type, material, size) {
+    this.type = 1 /* CYLINDRICAL */;
     this.material = material;
     this.bufferInfo = primitives.createXYQuadBufferInfo(gl, size, 0, size / 2);
+    this.programInfo = ProgramCache.instance.get(ProgramCache.PROG_BILLBOARD);
+    this.type = type;
   }
   /**
    * Render is used draw this billboard, this is called from the Instance that wraps
-   * this renderable.
+   * this renderable
    */
-  render(gl, uniforms, programInfo, materialOverride) {
-    if (!this.bufferInfo)
-      return;
+  render(gl, uniforms, materialOverride) {
+    gl.useProgram(this.programInfo.program);
     if (materialOverride === void 0) {
-      this.material.apply(programInfo);
+      this.material.apply(this.programInfo);
     } else {
-      materialOverride.apply(programInfo);
+      materialOverride.apply(this.programInfo);
     }
-    setBuffersAndAttributes(gl, programInfo, this.bufferInfo);
-    setUniforms(programInfo, uniforms);
+    const worldView = mat4_exports.multiply(mat4_exports.create(), uniforms.u_view, uniforms.u_world);
+    const scale4 = mat4_exports.getScaling(vec3_exports.create(), worldView);
+    worldView[0] = scale4[0];
+    worldView[1] = 0;
+    worldView[2] = 0;
+    worldView[8] = 0;
+    worldView[9] = 0;
+    worldView[10] = scale4[2];
+    if (this.type == 0 /* SPHERICAL */) {
+      worldView[4] = 0;
+      worldView[5] = scale4[1];
+      worldView[6] = 0;
+    }
+    mat4_exports.multiply(uniforms.u_worldViewProjection, uniforms.u_proj, worldView);
+    setBuffersAndAttributes(gl, this.programInfo, this.bufferInfo);
+    setUniforms(this.programInfo, uniforms);
     drawBufferInfo(gl, this.bufferInfo);
     stats.drawCallsPerFrame++;
   }
@@ -6610,8 +6672,8 @@ var Material = class _Material {
     this.emissive = [0, 0, 0];
     this.shininess = 20;
     this.opacity = 1;
-    this.diffuseTex = textureCache.get("_defaults/white");
-    this.specularTex = textureCache.get("_defaults/white");
+    this.diffuseTex = TextureCache.instance.get("_defaults/white");
+    this.specularTex = TextureCache.instance.get("_defaults/white");
   }
   /**
    * Create a new material from a raw MTL material
@@ -6625,13 +6687,13 @@ var Material = class _Material {
     m.shininess = rawMtl.ns ? rawMtl.ns : 0;
     m.opacity = rawMtl.d ? rawMtl.d : 1;
     if (rawMtl.texDiffuse) {
-      m.diffuseTex = textureCache.getCreate(`${basePath}/${rawMtl.texDiffuse}`, filter, flipY);
+      m.diffuseTex = TextureCache.instance.getCreate(`${basePath}/${rawMtl.texDiffuse}`, filter, flipY);
     }
     if (rawMtl.texSpecular) {
-      m.specularTex = textureCache.getCreate(`${basePath}/${rawMtl.texSpecular}`, filter, flipY);
+      m.specularTex = TextureCache.instance.getCreate(`${basePath}/${rawMtl.texSpecular}`, filter, flipY);
     }
     if (rawMtl.texNormal) {
-      m.normalTex = textureCache.getCreate(`${basePath}/${rawMtl.texNormal}`, filter, flipY);
+      m.normalTex = TextureCache.instance.getCreate(`${basePath}/${rawMtl.texNormal}`, filter, flipY);
     }
     return m;
   }
@@ -6648,7 +6710,7 @@ var Material = class _Material {
    */
   static createBasicTexture(url, filter = true, flipY = true) {
     const m = new _Material();
-    m.diffuseTex = textureCache.getCreate(url, filter, flipY);
+    m.diffuseTex = TextureCache.instance.getCreate(url, filter, flipY);
     return m;
   }
   /**
@@ -6657,7 +6719,7 @@ var Material = class _Material {
    * @param filter
    */
   addSpecularTexture(url, filter = true, flipY = true) {
-    this.specularTex = textureCache.getCreate(url, filter, flipY);
+    this.specularTex = TextureCache.instance.getCreate(url, filter, flipY);
     this.specular = [1, 1, 1];
     this.shininess = 20;
   }
@@ -6667,7 +6729,7 @@ var Material = class _Material {
    * @param filter
    */
   addNormalTexture(url, filter = true, flipY = true) {
-    this.normalTex = textureCache.getCreate(url, filter, flipY);
+    this.normalTex = TextureCache.instance.getCreate(url, filter, flipY);
   }
   /** Create a simple RED Material */
   static get RED() {
@@ -6736,6 +6798,7 @@ var Primitive = class {
   constructor() {
     this.material = new Material();
     this.triangles = 0;
+    this.programInfo = ProgramCache.instance.default;
   }
   get triangleCount() {
     return this.triangles;
@@ -6744,16 +6807,17 @@ var Primitive = class {
    * Render is used draw this primitive, this is called from the Instance that wraps
    * this renderable.
    */
-  render(gl, uniforms, programInfo, materialOverride) {
+  render(gl, uniforms, materialOverride) {
     if (!this.bufferInfo)
       return;
+    gl.useProgram(this.programInfo.program);
     if (materialOverride === void 0) {
-      this.material.apply(programInfo);
+      this.material.apply(this.programInfo);
     } else {
-      materialOverride.apply(programInfo);
+      materialOverride.apply(this.programInfo);
     }
-    setBuffersAndAttributes(gl, programInfo, this.bufferInfo);
-    setUniforms(programInfo, uniforms);
+    setBuffersAndAttributes(gl, this.programInfo, this.bufferInfo);
+    setUniforms(this.programInfo, uniforms);
     drawBufferInfo(gl, this.bufferInfo);
     stats.drawCallsPerFrame++;
   }
@@ -6917,6 +6981,9 @@ function parseOBJ(objFile) {
     },
     g() {
       return;
+    },
+    l() {
+      return;
     }
   };
   function addVertex(vert) {
@@ -6986,7 +7053,7 @@ function parseOBJ(objFile) {
 async function fetchFile(filePath) {
   const resp = await fetch(filePath);
   if (!resp.ok) {
-    throw new Error(`File fetch failed: ${resp.statusText}`);
+    throw new Error(`\u{1F4A5} File fetch failed: ${resp.statusText}`);
   }
   const text = await resp.text();
   return text;
@@ -6998,18 +7065,18 @@ var Model = class _Model {
    * Constructor is private, use static `parse()` method instead
    */
   constructor(name) {
-    /** Array of model sub-parts */
     this.parts = [];
-    /** Named map of materials for all parts */
     this.materials = {};
     this.name = name;
     this.triangles = 0;
+    this.programInfo = ProgramCache.instance.default;
   }
   /**
    * Render is used draw this model, this is called from the Instance that wraps
    * this renderable.
    */
-  render(gl, uniforms, programInfo, materialOverride) {
+  render(gl, uniforms, materialOverride) {
+    gl.useProgram(this.programInfo.program);
     for (const part of this.parts) {
       const bufferInfo = part.bufferInfo;
       if (materialOverride === void 0) {
@@ -7017,12 +7084,12 @@ var Model = class _Model {
         if (!material) {
           material = this.materials["__default"];
         }
-        material.apply(programInfo);
+        material.apply(this.programInfo);
       } else {
-        materialOverride.apply(programInfo);
+        materialOverride.apply(this.programInfo);
       }
-      setBuffersAndAttributes(gl, programInfo, bufferInfo);
-      setUniforms(programInfo, uniforms);
+      setBuffersAndAttributes(gl, this.programInfo, bufferInfo);
+      setUniforms(this.programInfo, uniforms);
       drawBufferInfo(gl, bufferInfo);
       stats.drawCallsPerFrame++;
     }
@@ -7065,7 +7132,7 @@ var Model = class _Model {
     model.materials["__default"].diffuse = [0.1, 0.6, 0.9];
     const gl = getGl();
     if (!gl) {
-      throw new Error("Unable to get WebGL context");
+      throw new Error("\u{1F4A5} Unable to get WebGL context");
     }
     for (const g of objData.geometries) {
       const bufferInfo = createBufferInfoFromArrays(gl, g.data);
@@ -7076,6 +7143,34 @@ var Model = class _Model {
     );
     model.triangles = objData.triangles;
     return model;
+  }
+  /**
+   * Get list of all material names in this model used by all parts
+   * @returns {string[]} - List of material names
+   */
+  get materialNames() {
+    return Object.keys(this.materials);
+  }
+  /**
+   * Get number of parts in this model
+   */
+  get partsCount() {
+    return this.parts.length;
+  }
+  /**
+   * Get list of parts in this model, names are the material names
+   * @returns {string[]} - List of part material names
+   */
+  get partList() {
+    return this.parts.map((p) => p.materialName);
+  }
+  /**
+   * Can modify & override an existing named material
+   * @param {string} name - Name of the material to modify
+   * @param {Material} material - New material to use
+   */
+  setNamedMaterial(name, material) {
+    this.materials[name] = material;
   }
 };
 var ModelPart = class {
@@ -7128,33 +7223,20 @@ var glsl_default3 = "#version 300 es\n\n// =====================================
 // shaders/phong/glsl.vert
 var glsl_default4 = "#version 300 es\n\n// ============================================================================\n// Phong vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_normal;\nout vec4 v_position;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  v_position = u_world * position;\n  gl_Position = u_worldViewProjection * position;\n}\n";
 
-// shaders/gouraud-flat/glsl.frag
-var glsl_default5 = "#version 300 es\n\n// ============================================================================\n// Gouraud fragment shader with flat shading\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// From vertex shader, note flat keyword!\nflat in vec3 v_lightingDiffuse;\nflat in vec3 v_lightingSpecular;\nin vec2 v_texCoord;\n\nuniform Material u_mat;\nuniform float u_gamma;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\nvoid main() {\n  // Tried to set the objectColour in the vertex shader, rather than here.aa\n  // But texture mapping + Gouraud shading, it looks terrible\n  vec3 objectColour = vec3(texture(u_mat.diffuseTex, v_texCoord)) * u_mat.diffuse;\n\n  vec3 colour = objectColour * v_lightingDiffuse + v_lightingSpecular;\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  colour.rgb = pow(colour.rgb, vec3(1.0 / u_gamma));\n\n  outColour = vec4(colour, 1.0);\n}\n";
-
-// shaders/gouraud-flat/glsl.vert
-var glsl_default6 = "#version 300 es\n\n// ============================================================================\n// Gouraud vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\n// Some global uniforms\nuniform mat4 u_world;\nuniform vec3 u_camPos;\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\n\n// Main light and material uniforms\nuniform LightDir u_lightDirGlobal;\nuniform Material u_mat;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n\nflat out vec3 v_lightingDiffuse;\nflat out vec3 v_lightingSpecular;\nout vec2 v_texCoord;\n\n/*\n * Legacy lighting calc\n * Returns vec2(diffuse, specular)\n */\nvec2 lightCalc(vec3 N, vec3 L, vec3 H, float shininess) {\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), shininess) : 0.0;\n  return vec2(diff, spec);\n}\n\nvoid main() {\n  LightDir lightGlobal = u_lightDirGlobal;\n  vec3 worldNormal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  vec3 worldPos = (u_world * position).xyz;\n\n  vec3 V = normalize(u_camPos - worldPos);\n  vec3 N = normalize(worldNormal);\n  vec3 L = normalize(-lightGlobal.direction.xyz);\n  vec3 H = normalize(L + V);\n\n  // Calculate lighting values for global light\n  vec2 lVal = lightCalc(N, L, H, u_mat.shininess);\n\n  // Output lighting values for fragment shader to use, no material color\n  v_lightingDiffuse = lightGlobal.ambient * u_mat.ambient + lightGlobal.colour * max(lVal.x, 0.0);\n  v_lightingSpecular = lightGlobal.colour * u_mat.specular * lVal.y;\n\n  // Add in point lights\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    LightPos lightPos = u_lightsPos[i];\n\n    vec3 L = normalize(lightPos.position - worldPos);\n\n    vec2 lVal = lightCalc(N, L, H, u_mat.shininess);\n\n    v_lightingDiffuse += lightPos.ambient * u_mat.ambient + lightPos.colour * max(lVal.x, 0.0);\n    v_lightingSpecular += max(lightPos.colour * u_mat.specular * lVal.y, 0.0);\n  }\n\n  // Pass through varying texture coordinate, so we can get the colour there\n  v_texCoord = texcoord;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
-
 // shaders/billboard/glsl.frag
-var glsl_default7 = "#version 300 es\n\n// ============================================================================\n// Billboard fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// From vertex shader\nin vec2 v_texCoord;\nin vec3 v_lighting;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform float u_gamma;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\nvoid main() {\n  vec4 texel = texture(u_mat.diffuseTex, v_texCoord);\n\n  // Magic to make transparent sprites work, without blending\n  if (texel.a < 0.75) {\n    discard;\n  }\n\n  vec3 colour = texel.rgb * u_mat.diffuse * v_lighting;\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  colour = pow(colour, vec3(1.0 / u_gamma));\n\n  outColour = vec4(colour, u_mat.opacity);\n}\n";
+var glsl_default5 = "#version 300 es\n\n// ============================================================================\n// Billboard fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n};\n\n// From vertex shader\nin vec2 v_texCoord;\nin vec3 v_lighting;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform float u_gamma;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\nvoid main() {\n  vec4 texel = texture(u_mat.diffuseTex, v_texCoord);\n\n  // Magic to make transparent sprites work, without blending\n  if (texel.a < 0.75) {\n    discard;\n  }\n\n  vec3 colour = texel.rgb * u_mat.diffuse * v_lighting;\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  colour = pow(colour, vec3(1.0 / u_gamma));\n\n  outColour = vec4(colour, u_mat.opacity);\n}\n";
 
 // shaders/billboard/glsl.vert
-var glsl_default8 = "#version 300 es\n\n// ============================================================================\n// Billboard vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n  bool enabled;\n};\n\n// Input attributes from buffers\nin vec4 position;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_world;\nuniform int u_lightsPosCount;\nuniform vec3 u_camPos;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_lighting;\n\n/*\n * Legacy lighting calc\n * Returns vec2(diffuse, specular)\n */\nvec2 lightCalc(vec3 N, vec3 L, vec3 H, float shininess) {\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), shininess) : 0.0;\n  return vec2(diff, spec);\n}\n\nvoid main() {\n  v_texCoord = texcoord;\n  gl_Position = u_worldViewProjection * position;\n  vec3 worldPos = (u_world * position).xyz;\n\n  // Normal for a billboard always points at camera\n  vec3 worldNormal = normalize(u_camPos - worldPos);\n\n  vec3 V = normalize(u_camPos - worldPos);\n  vec3 N = normalize(worldNormal);\n  float fudge = 1.5;\n\n  // Add point lights to lighting output\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    LightPos light = u_lightsPos[i];\n    vec3 L = normalize(light.position - worldPos.xyz);\n\n    float diffuse = max(dot(N, L), 0.0);\n\n    // Distance attenuation\n    float distance = length(light.position - worldPos.xyz);\n    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quad * (distance * distance));\n\n    // Note small hack here to fudge the light intensity\n    v_lighting += light.colour * fudge * attenuation * diffuse;\n  }\n\n  // Add in global directional light\n  // Approximate by using a fixed direction for the normal pointing up\n  vec3 globalLightL = normalize(-u_lightDirGlobal.direction);\n  float globalDiffuse = dot(vec3(0.0, 1.0, 0.0), globalLightL);\n\n  v_lighting += u_lightDirGlobal.colour * globalDiffuse;\n  v_lighting += u_lightDirGlobal.ambient;\n}\n";
+var glsl_default6 = "#version 300 es\n\n// ============================================================================\n// Billboard vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n  bool enabled;\n};\n\n// Input attributes from buffers\nin vec4 position;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_world;\nuniform int u_lightsPosCount;\nuniform vec3 u_camPos;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_lighting;\n\n/*\n * Legacy lighting calc\n * Returns vec2(diffuse, specular)\n */\nvec2 lightCalc(vec3 N, vec3 L, vec3 H, float shininess) {\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), shininess) : 0.0;\n  return vec2(diff, spec);\n}\n\nvoid main() {\n  v_texCoord = texcoord;\n  gl_Position = u_worldViewProjection * position;\n  vec3 worldPos = (u_world * position).xyz;\n\n  // Normal for a billboard always points at camera\n  vec3 worldNormal = normalize(u_camPos - worldPos);\n\n  vec3 V = normalize(u_camPos - worldPos);\n  vec3 N = normalize(worldNormal);\n  float fudge = 1.5;\n\n  // Add point lights to lighting output\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    LightPos light = u_lightsPos[i];\n    vec3 L = normalize(light.position - worldPos.xyz);\n\n    float diffuse = max(dot(N, L), 0.0);\n\n    // Distance attenuation\n    float distance = length(light.position - worldPos.xyz);\n    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quad * (distance * distance));\n\n    // Note small hack here to fudge the light intensity\n    v_lighting += light.colour * fudge * attenuation * diffuse;\n  }\n\n  // Add in global directional light\n  // Approximate by using a fixed direction for the normal pointing up\n  vec3 globalLightL = normalize(-u_lightDirGlobal.direction);\n  float globalDiffuse = dot(vec3(0.0, 1.0, 0.0), globalLightL);\n\n  v_lighting += u_lightDirGlobal.colour * globalDiffuse;\n  v_lighting += u_lightDirGlobal.ambient;\n}\n";
 
 // src/core/context.ts
-var RenderMode = /* @__PURE__ */ ((RenderMode2) => {
-  RenderMode2["PHONG"] = "phong";
-  RenderMode2["FLAT"] = "flat";
-  return RenderMode2;
-})(RenderMode || {});
 var MAX_LIGHTS = 16;
-var textureCache;
 var Context = class _Context {
   /**
    * Constructor is private, use init() to create a new context
    */
   constructor(gl) {
     this.aspectRatio = 1;
-    this.programs = /* @__PURE__ */ new Map();
     this.started = false;
     this.instances = [];
     this.instancesTrans = [];
@@ -7170,15 +7252,15 @@ var Context = class _Context {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     this.update = () => {
     };
+    /** Gamma correction value, default 1.0 */
+    this.gamma = 1;
     this.gl = gl;
-    this.models = new ModelCache();
     this.globalLight = new LightDirectional();
     this.globalLight.setAsPosition(20, 50, 30);
     const defaultCamera = new Camera(0 /* PERSPECTIVE */);
     this.cameras.set("default", defaultCamera);
     this._camera = defaultCamera;
     this.activeCameraName = "default";
-    this.gamma = 1;
     this.hud = new HUD(gl.canvas);
     this.debugDiv = document.createElement("div");
     this.debugDiv.classList.add("gsots3d-debug");
@@ -7218,24 +7300,16 @@ var Context = class _Context {
     const ctx = new _Context(gl);
     const canvas = gl.canvas;
     ctx.aspectRatio = canvas.clientWidth / canvas.clientHeight;
-    try {
-      const phongProg = createProgramInfo(gl, [glsl_default4, glsl_default3]);
-      ctx.programs.set("phong" /* PHONG */, phongProg);
-      const flatProg = createProgramInfo(gl, [glsl_default6, glsl_default5]);
-      ctx.programs.set("flat" /* FLAT */, flatProg);
-      const billboardProg = createProgramInfo(gl, [glsl_default8, glsl_default7]);
-      ctx.billboardProgInfo = billboardProg;
-      ctx.mainProgInfo = phongProg;
-      import_loglevel7.default.info(`\u{1F3A8} Loaded all shaders & programs, GL is ready`);
-    } catch (err) {
-      import_loglevel7.default.error(err);
-      throw err;
-    }
+    const phongProgInfo = createProgramInfo(gl, [glsl_default4, glsl_default3]);
+    ProgramCache.init(phongProgInfo);
+    ProgramCache.instance.add(ProgramCache.PROG_PHONG, phongProgInfo);
+    ProgramCache.instance.add(ProgramCache.PROG_BILLBOARD, createProgramInfo(gl, [glsl_default6, glsl_default5]));
+    import_loglevel7.default.info(`\u{1F3A8} Loaded all shaders & programs, GL is ready`);
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     ctx.render = ctx.render.bind(ctx);
-    textureCache = new TextureCache(gl);
+    TextureCache.init(gl);
     return ctx;
   }
   /**
@@ -7244,10 +7318,6 @@ var Context = class _Context {
   async render(now) {
     if (!this.gl)
       return;
-    if (!this.mainProgInfo || !this.billboardProgInfo) {
-      import_loglevel7.default.error("\u{1F4A5} Missing program info, this is really bad!");
-      return;
-    }
     stats.updateTime(now * 1e-3);
     this.update(stats.deltaTime);
     bindFramebufferInfo(this.gl, null);
@@ -7276,10 +7346,6 @@ var Context = class _Context {
   renderWithCamera(camera) {
     if (!this.gl)
       return;
-    if (!this.mainProgInfo || !this.billboardProgInfo) {
-      import_loglevel7.default.error("\u{1F4A5} Missing program info, this is really bad!");
-      return;
-    }
     camera.update();
     const camMatrix = camera.matrix;
     const uniforms = {
@@ -7295,10 +7361,7 @@ var Context = class _Context {
     if (this.skybox) {
       this.skybox.render(uniforms.u_view, uniforms.u_proj, camera);
     }
-    this.gl.useProgram(this.billboardProgInfo.program);
-    this.globalLight.apply(this.billboardProgInfo, "Global");
-    this.gl.useProgram(this.mainProgInfo.program);
-    this.globalLight.apply(this.mainProgInfo, "Global");
+    uniforms.u_lightDirGlobal = this.globalLight.uniforms;
     if (this.lights.length > MAX_LIGHTS) {
       this.lights.sort((lightA, lightB) => {
         const ad = vec3_exports.distance(lightA.position, this.camera.position);
@@ -7318,11 +7381,7 @@ var Context = class _Context {
     this.gl.enable(this.gl.CULL_FACE);
     uniforms.u_special = 0;
     for (const instance of this.instances) {
-      if (instance.billboard) {
-        instance.render(this.gl, uniforms, this.billboardProgInfo);
-      } else {
-        instance.render(this.gl, uniforms, this.mainProgInfo);
-      }
+      instance.render(this.gl, uniforms);
     }
     this.gl.disable(this.gl.CULL_FACE);
     this.instancesTrans.sort((a, b) => {
@@ -7331,11 +7390,7 @@ var Context = class _Context {
       return bd - ad;
     });
     for (const instance of this.instancesTrans) {
-      if (instance.billboard) {
-        instance.render(this.gl, uniforms, this.billboardProgInfo);
-      } else {
-        instance.render(this.gl, uniforms, this.mainProgInfo);
-      }
+      instance.render(this.gl, uniforms);
     }
   }
   /**
@@ -7351,16 +7406,6 @@ var Context = class _Context {
    */
   stop() {
     this.started = false;
-  }
-  /**
-   * Change the render mode, e.g. Phong or Flat
-   * @param mode - Set the render mode to one of the available sets
-   */
-  setRenderMode(mode) {
-    if (!this.programs.has(mode)) {
-      throw new Error(`\u{1F4A5} Render mode '${mode}' is not valid, you will have a bad time \u{1F4A9}`);
-    }
-    this.mainProgInfo = this.programs.get(mode);
   }
   /**
    * Resize the canvas to match the size of the element it's in
@@ -7394,12 +7439,12 @@ var Context = class _Context {
    */
   async loadModel(path, fileName, filter = true, flipY = true) {
     const modelName = fileName.split(".")[0];
-    if (this.models.get(modelName, false)) {
+    if (ModelCache.instance.get(modelName, false)) {
       import_loglevel7.default.warn(`\u26A0\uFE0F Model '${modelName}' already loaded, skipping`);
       return;
     }
     const model = await Model.parse(path, fileName, filter, flipY);
-    this.models.add(model);
+    ModelCache.instance.add(model);
   }
   /**
    * Add a new camera to the scene
@@ -7434,7 +7479,7 @@ var Context = class _Context {
    * @param modelName - Name of the model previously loaded into the cache, don't include the file extension
    */
   createModelInstance(modelName) {
-    const model = this.models.get(modelName);
+    const model = ModelCache.instance.get(modelName);
     if (!model) {
       throw new Error(`\u{1F4A5} Unable to create model instance for ${modelName}`);
     }
@@ -7446,6 +7491,10 @@ var Context = class _Context {
   }
   /**
    * Create an instance of a primitive sphere
+   * @param material - Material to apply to the sphere
+   * @param radius - Radius of the sphere
+   * @param subdivisionsH - Number of subdivisions along the horizontal
+   * @param subdivisionsV - Number of subdivisions along the vertical
    */
   createSphereInstance(material, radius = 5, subdivisionsH = 16, subdivisionsV = 8) {
     const sphere = new PrimitiveSphere(this.gl, radius, subdivisionsH, subdivisionsV);
@@ -7509,14 +7558,13 @@ var Context = class _Context {
    * @param height - Height of the billboard (default: 5)
    * @param type - Type of billboard to create (default: CYLINDRICAL)
    */
-  createBillboardInstance(material, width = 5, height = 5, type = 2 /* CYLINDRICAL */) {
-    const billboard = new Billboard(this.gl, material, width);
+  createBillboardInstance(material, size = 5, type = 1 /* CYLINDRICAL */) {
+    const billboard = new Billboard(this.gl, type, material, size);
     const instance = new Instance(billboard);
-    instance.billboard = type;
     this.addInstance(instance, material);
     stats.triangles += 2;
     stats.instances++;
-    import_loglevel7.default.debug(`\u{1F6A7} Created billboard instance of type: ${type} ${height}`);
+    import_loglevel7.default.debug(`\u{1F6A7} Created billboard instance of type: ${type} size: ${size}`);
     return instance;
   }
   /**
@@ -7566,19 +7614,20 @@ export {
   Material,
   Model,
   ModelCache,
+  PROG_BILLBOARD,
+  PROG_DEFAULT,
   Primitive,
   PrimitiveCube,
   PrimitiveCylinder,
   PrimitivePlane,
   PrimitiveSphere,
-  RenderMode,
+  ProgramCache,
   Skybox,
   TextureCache,
   Tuples,
   getGl,
   setLogLevel,
-  stats,
-  textureCache
+  stats
 };
 /*! Bundled license information:
 

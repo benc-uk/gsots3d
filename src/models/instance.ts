@@ -3,19 +3,11 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-import { mat4, vec3 } from 'gl-matrix'
-import { ProgramInfo } from 'twgl.js'
+import { mat4 } from 'gl-matrix'
 import { UniformSet } from '../core/gl.ts'
 import { Renderable } from './types.ts'
 import { Material } from '../engine/material.ts'
 import { XYZ } from '../engine/tuples.ts'
-
-/** Billboarding modes, most things will ue NONE */
-export enum BillboardType {
-  NONE,
-  SPHERICAL,
-  CYLINDRICAL,
-}
 
 /**
  * An instance of thing in the world to be rendered, with position, rotation, scale etc
@@ -26,13 +18,6 @@ export class Instance {
   public scale: XYZ | undefined
   public rotate: XYZ | undefined
   public enabled = true
-
-  /**
-   * If this instance is to be drawn as a billboard, and what type
-   * @see BillboardType
-   * @default BillboardType.NONE
-   */
-  public billboard: BillboardType | undefined
 
   /**
    * Material to use for this instance, this will override ALL the materials on the model!
@@ -56,7 +41,6 @@ export class Instance {
    * @param {Renderable} renderable - Renderable to use for this instance
    */
   constructor(renderable: Renderable) {
-    this.billboard = BillboardType.NONE
     this.renderable = renderable
   }
 
@@ -103,13 +87,10 @@ export class Instance {
    * @param {mat4} viewProjection - View projection matrix
    * @param {ProgramInfo} programInfo - Shader program info
    */
-  render(gl: WebGL2RenderingContext, uniforms: UniformSet, programInfo: ProgramInfo) {
+  render(gl: WebGL2RenderingContext, uniforms: UniformSet) {
     if (!this.enabled) return
     if (!this.renderable) return
     if (!gl) return
-
-    // Not a big fan of having this set per instance, but will billboarding we need to
-    gl.useProgram(programInfo.program)
 
     // Local instance transforms are applied in this order to form the world matrix
     const scale = mat4.create()
@@ -140,27 +121,6 @@ export class Instance {
     // Create worldView matrix, used for positioning
     const worldView = mat4.multiply(mat4.create(), <mat4>uniforms.u_view, world)
 
-    if (this.billboard !== BillboardType.NONE) {
-      // Extract scale from worldView matrix, before we zap it
-      const scale = mat4.getScaling(vec3.create(), worldView)
-
-      // For CYLINDRICAL billboarding, we need to remove some parts of the worldView matrix
-      // See: https://www.geeks3d.com/20140807/billboarding-vertex-shader-glsl/
-      worldView[0] = scale[0]
-      worldView[1] = 0
-      worldView[2] = 0
-      worldView[8] = 0
-      worldView[9] = 0
-      worldView[10] = scale[2]
-
-      if (this.billboard === BillboardType.SPHERICAL) {
-        // For SPHERICAL billboarding, we remove some more
-        worldView[4] = 0
-        worldView[5] = scale[1]
-        worldView[6] = 0
-      }
-    }
-
     // Finally populate u_worldViewProjection used for rendering
     mat4.multiply(<mat4>uniforms.u_worldViewProjection, <mat4>uniforms.u_proj, worldView)
 
@@ -169,6 +129,6 @@ export class Instance {
     uniforms.u_flipTextureY = this.flipTextureY
 
     // Render the renderable thing wrapped by this instance
-    this.renderable.render(gl, uniforms, programInfo, this.material)
+    this.renderable.render(gl, uniforms, this.material)
   }
 }
