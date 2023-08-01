@@ -5,6 +5,9 @@ window.addEventListener('resize', () => ctx.resize())
 ctx.debug = true
 
 ctx.camera.position = [0, 7, 20]
+ctx.camera.enableFPControls(0, -0.3)
+ctx.camera.far = 200
+
 ctx.globalLight.setAsPosition(18, 20, 25)
 ctx.globalLight.ambient = [0.1, 0.1, 0.1]
 
@@ -44,6 +47,16 @@ teapot3.material = matGreen
 teapot.rotateY(-2.715)
 teapot3.rotateY(-0.615)
 
+// Add skybox
+ctx.setSkybox(
+  '../../_textures/skybox-2/posx.png',
+  '../../_textures/skybox-2/negx.png',
+  '../../_textures/skybox-2/posy.png',
+  '../../_textures/skybox-2/negy.png',
+  '../../_textures/skybox-2/posz.png',
+  '../../_textures/skybox-2/negz.png'
+)
+
 ctx.update = () => {
   teapot.rotateY(0.015)
   teapot2.rotateY(-0.015)
@@ -55,6 +68,10 @@ window.addEventListener('keydown', (e) => {
     ctx.setActiveCamera('top')
   } else if (e.key === '2') {
     ctx.setActiveCamera('default')
+  }
+
+  if (e.key === '3') {
+    ctx.removeSkybox()
   }
 })
 

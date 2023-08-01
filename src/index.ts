@@ -14,6 +14,7 @@ export * from './engine/lights.ts'
 export * from './engine/camera.ts'
 export * from './engine/material.ts'
 export * from './engine/tuples.ts'
+export * from './engine/skybox.ts'
 
 export * from './models/types.ts'
 export * from './models/model.ts'

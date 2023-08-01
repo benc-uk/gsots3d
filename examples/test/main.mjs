@@ -36,7 +36,7 @@ cubeMat.diffuse = [0.4, 0.4, 0.6]
 cubeMat.specular = [0.7, 0.7, 0.7]
 cubeMat.shininess = 50
 const cube = ctx.createCubeInstance(cubeMat, 20)
-cube.position = [-15, 10, 35]
+cube.position = [-25, 10, 35]
 cube.rotateYDeg(33)
 cube.flipTextureX = true
 
@@ -61,10 +61,18 @@ p1.scale = [0.8, 0.8, 0.8]
 // 50 random plants
 for (let i = 0; i < 5; i++) {
   const p = ctx.createModelInstance('potted_plant_obj')
-  p.position = [Math.random() * 50 - 0, 0, Math.random() * 100 - 0]
+  p.position = [Math.random() * 50 - 20, 0, Math.random() * 100 - 0]
   p.scale = [0.8, 0.8, 0.8]
 }
 
+ctx.setSkybox(
+  '../../_textures/skybox/right.jpg',
+  '../../_textures/skybox/left.jpg',
+  '../../_textures/skybox/top.jpg',
+  '../../_textures/skybox/bottom.jpg',
+  '../../_textures/skybox/front.jpg',
+  '../../_textures/skybox/back.jpg'
+)
 const light = ctx.createPointLight([0, 0, 0], Colours.WHITE, 3)
 
 const ballMat = Material.createSolidColour(Colours.WHITE)

@@ -14,6 +14,7 @@ import { ModelCache, TextureCache } from './cache.ts'
 import { LightDirectional, LightPoint } from '../engine/lights.ts'
 import { Camera, CameraType } from '../engine/camera.ts'
 import { Material } from '../engine/material.ts'
+import { Skybox } from '../engine/skybox.ts'
 import { BillboardType, Instance } from '../models/instance.ts'
 import { Billboard } from '../models/billboard.ts'
 import { PrimitiveCube, PrimitivePlane, PrimitiveSphere, PrimitiveCylinder } from '../models/primitive.ts'
@@ -61,6 +62,7 @@ export class Context {
   private models: ModelCache
   private cameras: Map<string, Camera> = new Map()
   private activeCameraName: string
+  private skybox?: Skybox
 
   /** Global directional light */
   public globalLight: LightDirectional
@@ -259,6 +261,13 @@ export class Context {
       u_camPos: camera.position,
     } as UniformSet
 
+    // RENDERING - Draw skybox first
+    if (this.skybox) {
+      this.skybox.render(<mat4>uniforms.u_view, <mat4>uniforms.u_proj, camera)
+    }
+
+    // RENDERING - Process lighting
+
     // Apply global light to the two programs
     this.gl.useProgram(this.billboardProgInfo.program)
     this.globalLight.apply(this.billboardProgInfo, 'Global')
@@ -286,7 +295,7 @@ export class Context {
 
     uniforms.u_lightsPosCount = lightCount
 
-    // MAIN LOOP - Draw all opaque instances
+    // RENDERING - Draw all opaque instances
     this.gl.enable(this.gl.CULL_FACE)
     uniforms.u_special = 0
     for (const instance of this.instances) {
@@ -297,7 +306,7 @@ export class Context {
       }
     }
 
-    // MAIN LOOP - Draw all transparent instances
+    // RENDERING - Draw all transparent instances
     this.gl.disable(this.gl.CULL_FACE)
 
     // Sort transparent instances by distance to camera
@@ -565,5 +574,20 @@ export class Context {
     log.debug(`🔆 Created point light, pos:${position} col:${colour} int:${intensity}`)
 
     return light
+  }
+
+  /**
+   * Set the skybox for the scene, will overwrite any existing skybox
+   * @param textureURLs - Array of 6 texture URLs to use for the skybox, in the order: +X, -X, +Y, -Y, +Z, -Z
+   */
+  setSkybox(...textureURLs: string[]) {
+    this.skybox = new Skybox(this.gl, textureURLs)
+  }
+
+  /**
+   * Remove any current skybox from the scene
+   */
+  removeSkybox() {
+    this.skybox = undefined
   }
 }
