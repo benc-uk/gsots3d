@@ -95,12 +95,12 @@ ctx.update = () => {
 
 ctx.setEnvmap(
   true,
-  '../../_textures/skybox-2/posx.png',
-  '../../_textures/skybox-2/negx.png',
-  '../../_textures/skybox-2/posy.png',
-  '../../_textures/skybox-2/negy.png',
-  '../../_textures/skybox-2/posz.png',
-  '../../_textures/skybox-2/negz.png'
+  '../_textures/skybox-2/posx.png',
+  '../_textures/skybox-2/negx.png',
+  '../_textures/skybox-2/posy.png',
+  '../_textures/skybox-2/negy.png',
+  '../_textures/skybox-2/posz.png',
+  '../_textures/skybox-2/negz.png'
 )
 
 ctx.start()

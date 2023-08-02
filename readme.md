@@ -5,7 +5,7 @@
 A library for _Getting S\*\*t On The Screen in 3D_  
 So you can get cool looking 3D stuff happening in your browser, if that's your thing.
 
-This library is an opinionated set of abstractions and wrappers around WebGL & twgl. GSOTS takes the pain out of the process of loading models, defining a camera, rendering a scene, lighting etc. It is based on the classic Blinn-Phong shading model, rather than the more modern PBR based shaders.
+This library is an opinionated set of abstractions and wrappers around WebGL & twgl. GSOTS takes the pain out of the process of loading models, defining a camera, rendering a scene, lighting etc. It is based on the classic Blinn-Phong shading model, rather than the more modern PBR based shaders because I'm old.
 
 Features
 
