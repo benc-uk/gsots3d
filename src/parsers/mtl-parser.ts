@@ -8,14 +8,17 @@
  * A "raw" material fetched from the MTL parser, don't use this directly
  */
 export type MtlMaterial = {
+  // ni?: number
+  illum?: number
+
   ns?: number
+  d?: number
+
   ka?: [number, number, number]
   kd?: [number, number, number]
   ks?: [number, number, number]
   ke?: [number, number, number]
-  ni?: number
-  d?: number
-  illum?: number
+
   texDiffuse?: string
   texSpecular?: string
   texNormal?: string
@@ -54,8 +57,9 @@ export function parseMTL(mtlFile: string): Map<string, MtlMaterial> {
     Ke(parts: string[]) {
       material.ke = <[number, number, number]>parts.map(parseFloat)
     },
-    Ni(parts: string[]) {
-      material.ni = parseFloat(parts[0])
+    Ni() {
+      // Not used
+      //material.ni = parseFloat(parts[0])
     },
     d(parts: string[]) {
       material.d = parseFloat(parts[0])

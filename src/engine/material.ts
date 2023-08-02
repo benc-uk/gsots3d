@@ -3,12 +3,12 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-import { ProgramInfo, createTexture, setUniforms } from 'twgl.js'
+import { ProgramInfo, setUniforms } from 'twgl.js'
 import { RGB } from './tuples.ts'
 import { MtlMaterial } from '../parsers/mtl-parser.ts'
 import { UniformSet } from '../core/gl.ts'
 import { TextureCache } from '../core/cache.ts'
-import { Camera } from './camera.ts'
+import { EnvironmentMap } from './envmap.ts'
 
 export class Material {
   /**
@@ -46,6 +46,12 @@ export class Material {
   public opacity: number
 
   /**
+   * Reflectivity, 0.0 to 1.0
+   * @default 0.0
+   */
+  public reflectivity: number
+
+  /**
    * Diffuse texture map
    * @default "1 pixel white texture"
    */
@@ -64,6 +70,12 @@ export class Material {
   public normalTex?: WebGLTexture
 
   /**
+   * Reflection texture map
+   * @default undefined
+   */
+  public reflectTex?: WebGLTexture
+
+  /**
    * Create a new material with default diffuse colour
    */
   constructor() {
@@ -74,16 +86,18 @@ export class Material {
 
     this.shininess = 20
     this.opacity = 1.0
+    this.reflectivity = 0.0
 
     // 1 pixel white texture allows for solid colour & flat materials
     this.diffuseTex = TextureCache.instance.get('_defaults/white')
     this.specularTex = TextureCache.instance.get('_defaults/white')
+    //this.reflectTex = TextureCache.instance.get('_defaults/white')
   }
 
   /**
    * Create a new material from a raw MTL material
    */
-  public static fromMtl(rawMtl: MtlMaterial, basePath: string, filter = true, flipY = true) {
+  static fromMtl(rawMtl: MtlMaterial, basePath: string, filter = true, flipY = true) {
     const m = new Material()
 
     m.ambient = rawMtl.ka ? rawMtl.ka : [1, 1, 1]
@@ -105,13 +119,19 @@ export class Material {
       m.normalTex = TextureCache.instance.getCreate(`${basePath}/${rawMtl.texNormal}`, filter, flipY)
     }
 
+    // This is a kludge, a guess; if illum is 3 or more and Ks is set, then we have
+    // a reflective material of some kind
+    if (rawMtl.illum && rawMtl.illum > 2) {
+      m.reflectivity = (m.specular[0] + m.specular[1] + m.specular[2]) / 3
+    }
+
     return m
   }
 
   /**
    * Create a basic Material with a solid diffuse colour
    */
-  public static createSolidColour(r: number, g: number, b: number) {
+  static createSolidColour(r: number, g: number, b: number) {
     const m = new Material()
     m.diffuse = [r, g, b]
 
@@ -121,7 +141,7 @@ export class Material {
   /**
    * Create a new Material with a texture map loaded from a URL
    */
-  public static createBasicTexture(url: string, filter = true, flipY = true) {
+  static createBasicTexture(url: string, filter = true, flipY = true) {
     const m = new Material()
 
     m.diffuseTex = TextureCache.instance.getCreate(url, filter, flipY)
@@ -134,7 +154,7 @@ export class Material {
    * @param url
    * @param filter
    */
-  public addSpecularTexture(url: string, filter = true, flipY = true) {
+  addSpecularTexture(url: string, filter = true, flipY = true) {
     this.specularTex = TextureCache.instance.getCreate(url, filter, flipY)
     this.specular = [1, 1, 1]
     this.shininess = 20
@@ -145,7 +165,7 @@ export class Material {
    * @param url
    * @param filter
    */
-  public addNormalTexture(url: string, filter = true, flipY = true) {
+  addNormalTexture(url: string, filter = true, flipY = true) {
     this.normalTex = TextureCache.instance.getCreate(url, filter, flipY)
   }
 
@@ -188,7 +208,7 @@ export class Material {
   /**
    * Return the base set of uniforms for this material
    */
-  public get uniforms(): UniformSet {
+  get uniforms(): UniformSet {
     return {
       ambient: this.ambient,
       diffuse: this.diffuse,
@@ -196,40 +216,22 @@ export class Material {
       emissive: this.emissive,
       shininess: this.shininess,
       opacity: this.opacity,
+      reflectivity: this.reflectivity,
       diffuseTex: this.diffuseTex ? this.diffuseTex : null,
       specularTex: this.specularTex ? this.specularTex : null,
       normalTex: this.normalTex ? this.normalTex : null,
+      reflectTex: this.reflectTex ? this.reflectTex : null,
       hasNormalTex: this.normalTex ? true : false,
     } as UniformSet
   }
-}
 
-/**
- * A material that uses a camera to render the environment to a texture
- * and then that texture can be used as a reflection map
- *
- * NOT FINISHED!!
- */
-export class EnvMapMaterial extends Material {
-  public readonly isCube: boolean
-  public texture: WebGLTexture
-  private camera: Camera
-
-  constructor(gl: WebGL2RenderingContext, isCubeMap = false) {
-    super()
-
-    this.isCube = isCubeMap
-    this.camera = new Camera()
-
-    this.texture = createTexture(gl, {
-      width: 512,
-      height: 512,
-    })
-  }
-
-  render() {
-    console.log('rendering env map', this.camera)
-
-    return 0
+  /**
+   * Update the material from a EnvironmentMap
+   * @param envMap EnvironmentMap to use and apply to this material
+   */
+  applyEnvMap(envMap?: EnvironmentMap) {
+    if (envMap && this.reflectivity > 0) {
+      this.reflectTex = envMap.texture
+    }
   }
 }

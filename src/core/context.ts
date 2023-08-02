@@ -14,10 +14,10 @@ import { ModelCache, ProgramCache, TextureCache } from './cache.ts'
 import { LightDirectional, LightPoint } from '../engine/lights.ts'
 import { Camera, CameraType } from '../engine/camera.ts'
 import { Material } from '../engine/material.ts'
-import { Skybox } from '../engine/skybox.ts'
+import { EnvironmentMap } from '../engine/envmap.ts'
 import { Instance } from '../models/instance.ts'
 import { Billboard, BillboardType } from '../models/billboard.ts'
-import { PrimitiveCube, PrimitivePlane, PrimitiveSphere, PrimitiveCylinder } from '../models/primitive.ts'
+import { PrimitiveCube, PrimitivePlane, PrimitiveSphere, PrimitiveCylinder, Primitive } from '../models/primitive.ts'
 import { Model } from '../models/model.ts'
 import { HUD } from './hud.ts'
 import { stats } from './stats.ts'
@@ -45,7 +45,7 @@ export class Context {
   private loadingDiv: HTMLDivElement
   private cameras: Map<string, Camera> = new Map()
   private activeCameraName: string
-  private skybox?: Skybox
+  private envmap?: EnvironmentMap
 
   /** Global directional light */
   public globalLight: LightDirectional
@@ -218,9 +218,9 @@ export class Context {
       u_camPos: camera.position,
     } as UniformSet
 
-    // RENDERING - Draw skybox first
-    if (this.skybox) {
-      this.skybox.render(<mat4>uniforms.u_view, <mat4>uniforms.u_proj, camera)
+    // RENDERING - Draw envmap first
+    if (this.envmap) {
+      this.envmap.render(<mat4>uniforms.u_view, <mat4>uniforms.u_proj, camera)
     }
 
     // RENDERING - Process lighting
@@ -399,6 +399,8 @@ export class Context {
     const sphere = new PrimitiveSphere(this.gl, radius, subdivisionsH, subdivisionsV)
     sphere.material = material
 
+    material.applyEnvMap(this.envmap)
+
     const instance = new Instance(sphere)
     this.addInstance(instance, material)
     stats.triangles += sphere.triangleCount
@@ -422,6 +424,8 @@ export class Context {
     const plane = new PrimitivePlane(this.gl, width, height, subdivisionsW, subdivisionsH, tiling)
     plane.material = material
 
+    material.applyEnvMap(this.envmap)
+
     const instance = new Instance(plane)
     this.addInstance(instance, material)
     stats.triangles += plane.triangleCount
@@ -439,6 +443,8 @@ export class Context {
     const cube = new PrimitiveCube(this.gl, size)
     cube.material = material
 
+    material.applyEnvMap(this.envmap)
+
     const instance = new Instance(cube)
     this.addInstance(instance, material)
     stats.triangles += cube.triangleCount
@@ -455,6 +461,8 @@ export class Context {
   createCylinderInstance(material: Material, r = 2, h = 5, subdivisionsR = 16, subdivisionsH = 1, caps = true) {
     const cyl = new PrimitiveCylinder(this.gl, r, h, subdivisionsR, subdivisionsH, caps)
     cyl.material = material
+
+    material.applyEnvMap(this.envmap)
 
     const instance = new Instance(cyl)
     this.addInstance(instance, material)
@@ -514,17 +522,36 @@ export class Context {
   }
 
   /**
-   * Set the skybox for the scene, will overwrite any existing skybox
-   * @param textureURLs - Array of 6 texture URLs to use for the skybox, in the order: +X, -X, +Y, -Y, +Z, -Z
+   * Set the EnvironmentMap for the scene, will overwrite any existing envmap
+   * @param textureURLs - Array of 6 texture URLs to use for the map, in the order: +X, -X, +Y, -Y, +Z, -Z
    */
-  setSkybox(...textureURLs: string[]) {
-    this.skybox = new Skybox(this.gl, textureURLs)
+  setEnvmap(renderAsBackground = false, ...textureURLs: string[]) {
+    this.envmap = new EnvironmentMap(this.gl, textureURLs)
+    this.envmap.renderAsBackground = renderAsBackground
+
+    // Update all the materials in the scene to use the new envmap
+    // A bit mess, but there's not really a better way
+    for (const instance of this.instances) {
+      if (instance.material) instance.material.applyEnvMap(this.envmap)
+
+      // for instances wrapping primitives, update their material too
+      if (instance.renderable instanceof Primitive) {
+        instance.renderable.material.applyEnvMap(this.envmap)
+      }
+    }
   }
 
   /**
-   * Remove any current skybox from the scene
+   * Remove any current EnvironmentMap from the scene
    */
-  removeSkybox() {
-    this.skybox = undefined
+  removeEnvmap() {
+    this.envmap = undefined
+  }
+
+  /**
+   * Get the current EnvironmentMap for the scene
+   */
+  getEnvmap() {
+    return this.envmap
   }
 }

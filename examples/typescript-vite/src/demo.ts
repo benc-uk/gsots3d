@@ -1,7 +1,7 @@
 import './style.css'
 
 import { initResizer, isMobile } from './screen.ts'
-import { Context, Material, BillboardType, Colours, setLogLevel } from '@benc-uk/gsots3d'
+import { Context, Material, Colours, setLogLevel } from '@benc-uk/gsots3d'
 
 // Init the app a bit like React :)
 const appDiv = document.querySelector<HTMLDivElement>('#app')
@@ -107,7 +107,7 @@ try {
   wall4.rotateXDeg(90)
 
   const impMat = Material.createBasicTexture('textures/doom-imp.png')
-  const bb = ctx.createBillboardInstance(impMat, 22, 22, BillboardType.SPHERICAL)
+  const bb = ctx.createBillboardInstance(impMat, 20)
   bb.position = [-4, 0, -4]
 
   const mellonTx = Material.createBasicTexture('textures/mellon.jpg')

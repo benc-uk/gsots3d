@@ -6041,12 +6041,10 @@ var _TextureCache = class _TextureCache {
       mag: gl.NEAREST,
       src: [255, 255, 255, 255]
     });
-    const checkerboard = createTexture(gl, {
+    const black1pixel = createTexture(gl, {
       min: gl.NEAREST,
       mag: gl.NEAREST,
-      src: [255, 255, 255, 255, 128, 128, 128, 255, 128, 128, 128, 255, 255, 255, 255, 255],
-      width: 2,
-      height: 2
+      src: [255, 255, 255, 255]
     });
     const normal1pixel = createTexture(gl, {
       min: gl.NEAREST,
@@ -6054,7 +6052,7 @@ var _TextureCache = class _TextureCache {
       src: [128, 128, 255, 255]
     });
     this._instance.add("_defaults/white", white1pixel);
-    this._instance.add("_defaults/check", checkerboard);
+    this._instance.add("_defaults/black", black1pixel);
     this._instance.add("_defaults/normal", normal1pixel);
     _TextureCache.initialized = true;
   }
@@ -6429,31 +6427,32 @@ var Camera = class {
   }
 };
 
-// src/engine/skybox.ts
+// src/engine/envmap.ts
 var import_loglevel5 = __toESM(require_loglevel(), 1);
 
-// shaders/skybox/glsl.frag
-var glsl_default = "#version 300 es\n\n// ============================================================================\n// Skybox fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec3 v_texCoord;\n\nuniform samplerCube u_skyboxTex;\n\nout vec4 outColour;\n\nvoid main() {\n  // Use the texture cube map as the colour\n  // Note: We don't need to do any lighting calculations here\n  outColour = texture(u_skyboxTex, v_texCoord);\n}\n";
+// shaders/envmap/glsl.frag
+var glsl_default = "#version 300 es\n\n// ============================================================================\n// Environment map fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec3 v_texCoord;\n\nuniform samplerCube u_envMapTex;\n\nout vec4 outColour;\n\nvoid main() {\n  // Use the texture cube map as the colour\n  // Note: We don't need to do any lighting calculations here\n  outColour = texture(u_envMapTex, v_texCoord);\n}\n";
 
-// shaders/skybox/glsl.vert
-var glsl_default2 = "#version 300 es\n\n// ============================================================================\n// Skybox vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec4 position;\n\nuniform mat4 u_worldViewProjection;\n\nout vec3 v_texCoord;\n\nvoid main() {\n  // This essentially is what makes the skybox work, texCoords\n  // are taken from the vertex position\n  v_texCoord = position.xyz;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
+// shaders/envmap/glsl.vert
+var glsl_default2 = "#version 300 es\n\n// ============================================================================\n// Environment map vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec4 position;\n\nuniform mat4 u_worldViewProjection;\n\nout vec3 v_texCoord;\n\nvoid main() {\n  // This essentially is what makes the envmap work, texCoords\n  // are taken from the vertex position\n  v_texCoord = position.xyz;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
 
-// src/engine/skybox.ts
-var Skybox = class {
+// src/engine/envmap.ts
+var EnvironmentMap = class {
   /**
-   * Create a new skybox with 6 textures for each side
+   * Create a new environment map with 6 textures for each side
    * @param gl GL context
    * @param textureURLs Array of 6 texture URLs, in order: +x, -x, +y, -y, +z, -z
    */
   constructor(gl, textureURLs) {
     this.gl = gl;
-    if (textureURLs.length !== 6) {
-      throw new Error("\u{1F4A5} Skybox requires 6 textures");
-    }
     this.programInfo = createProgramInfo(gl, [glsl_default2, glsl_default]);
     this.cube = primitives.createCubeBufferInfo(gl, 1);
-    import_loglevel5.default.info(`\u{1F303} Skybox created!`);
-    this.texture = createTexture(gl, {
+    this.renderAsBackground = true;
+    import_loglevel5.default.info(`\u{1F3D4}\uFE0F EnvironmentMap created!`);
+    if (textureURLs.length !== 6) {
+      throw new Error("\u{1F4A5} Cubemap requires 6 textures");
+    }
+    this._texture = createTexture(gl, {
       target: gl.TEXTURE_CUBE_MAP,
       src: textureURLs,
       min: gl.LINEAR_MIPMAP_LINEAR,
@@ -6470,27 +6469,32 @@ var Skybox = class {
     });
   }
   /**
-   * Render the skybox, using the view & projection matrices around the camera
+   * Render the EnvironmentMap, using the view & projection matrices around the camera
    * @param viewMatrix View matrix
    * @param projMatrix Projection matrix
    * @param camera Camera
    */
   render(viewMatrix, projMatrix, camera) {
+    if (!this.renderAsBackground)
+      return;
     this.gl.useProgram(this.programInfo.program);
     this.gl.disable(this.gl.DEPTH_TEST);
-    const skyUniforms = {
-      u_skyboxTex: this.texture,
+    const uniforms = {
+      u_envMapTex: this._texture,
       u_worldViewProjection: mat4_exports.create()
     };
     const world = mat4_exports.create();
     mat4_exports.translate(world, world, camera.position);
     mat4_exports.scale(world, world, [camera.far, camera.far, camera.far]);
     const worldView = mat4_exports.multiply(mat4_exports.create(), viewMatrix, world);
-    mat4_exports.multiply(skyUniforms.u_worldViewProjection, projMatrix, worldView);
+    mat4_exports.multiply(uniforms.u_worldViewProjection, projMatrix, worldView);
     setBuffersAndAttributes(this.gl, this.programInfo, this.cube);
-    setUniforms(this.programInfo, skyUniforms);
+    setUniforms(this.programInfo, uniforms);
     drawBufferInfo(this.gl, this.cube);
     this.gl.enable(this.gl.DEPTH_TEST);
+  }
+  get texture() {
+    return this._texture;
   }
 };
 
@@ -6672,6 +6676,7 @@ var Material = class _Material {
     this.emissive = [0, 0, 0];
     this.shininess = 20;
     this.opacity = 1;
+    this.reflectivity = 0;
     this.diffuseTex = TextureCache.instance.get("_defaults/white");
     this.specularTex = TextureCache.instance.get("_defaults/white");
   }
@@ -6694,6 +6699,9 @@ var Material = class _Material {
     }
     if (rawMtl.texNormal) {
       m.normalTex = TextureCache.instance.getCreate(`${basePath}/${rawMtl.texNormal}`, filter, flipY);
+    }
+    if (rawMtl.illum && rawMtl.illum > 2) {
+      m.reflectivity = (m.specular[0] + m.specular[1] + m.specular[2]) / 3;
     }
     return m;
   }
@@ -6770,26 +6778,22 @@ var Material = class _Material {
       emissive: this.emissive,
       shininess: this.shininess,
       opacity: this.opacity,
+      reflectivity: this.reflectivity,
       diffuseTex: this.diffuseTex ? this.diffuseTex : null,
       specularTex: this.specularTex ? this.specularTex : null,
       normalTex: this.normalTex ? this.normalTex : null,
+      reflectTex: this.reflectTex ? this.reflectTex : null,
       hasNormalTex: this.normalTex ? true : false
     };
   }
-};
-var EnvMapMaterial = class extends Material {
-  constructor(gl, isCubeMap = false) {
-    super();
-    this.isCube = isCubeMap;
-    this.camera = new Camera();
-    this.texture = createTexture(gl, {
-      width: 512,
-      height: 512
-    });
-  }
-  render() {
-    console.log("rendering env map", this.camera);
-    return 0;
+  /**
+   * Update the material from a EnvironmentMap
+   * @param envMap EnvironmentMap to use and apply to this material
+   */
+  applyEnvMap(envMap) {
+    if (envMap && this.reflectivity > 0) {
+      this.reflectTex = envMap.texture;
+    }
   }
 };
 
@@ -6883,8 +6887,7 @@ function parseMTL(mtlFile) {
     Ke(parts) {
       material.ke = parts.map(parseFloat);
     },
-    Ni(parts) {
-      material.ni = parseFloat(parts[0]);
+    Ni() {
     },
     d(parts) {
       material.d = parseFloat(parts[0]);
@@ -7172,6 +7175,13 @@ var Model = class _Model {
   setNamedMaterial(name, material) {
     this.materials[name] = material;
   }
+  /**
+   * Get a named material
+   * @param {string} name - Name of the material to get
+   */
+  getNamedMaterial(name) {
+    return this.materials[name];
+  }
 };
 var ModelPart = class {
   /**
@@ -7218,7 +7228,7 @@ var HUD = class {
 };
 
 // shaders/phong/glsl.frag
-var glsl_default3 = "#version 300 es\n\n// ============================================================================\n// Phong fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n  bool enabled;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n  sampler2D normalTex;\n  bool hasNormalTex;\n};\n\n// From vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\n\n// Some global uniforms\nuniform vec3 u_camPos;\nuniform float u_gamma;\nuniform bool u_flipTextureX;\nuniform bool u_flipTextureY;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\n// Global texture coords shared between functions\nvec2 texCoord;\n\n/*\n * Shade a fragment using a directional light source\n */\nvec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(-light.direction);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;\n  vec3 specular = light.colour * spec * specularCol;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n/*\n * Shade a fragment using a positional light source\n */\nvec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(light.position - v_position.xyz);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // Light attenuation, see: https://learnopengl.com/Lighting/Light-casters\n  float dist = length(light.position - v_position.xyz);\n  float attenuation = 1.0 / (light.constant + light.linear * dist + light.quad * (dist * dist));\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol * attenuation;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * attenuation;\n  vec3 specular = light.colour * spec * specularCol * attenuation;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n// ============================================================================\n// Main fragment shader entry point\n// ============================================================================\nvoid main() {\n  vec3 V = normalize(u_camPos - v_position.xyz);\n\n  // Flip texture coords if needed\n  texCoord = u_flipTextureY ? vec2(v_texCoord.x, 1.0 - v_texCoord.y) : v_texCoord.xy;\n  texCoord = u_flipTextureX ? vec2(1.0 - texCoord.x, texCoord.y) : texCoord.xy;\n\n  vec3 N = normalize(v_normal);\n\n  // Normal mapping, this is expensive so only do it if we have a normal map\n  if (u_mat.hasNormalTex) {\n    vec3 normMap = texture(u_mat.normalTex, texCoord).xyz * 2.0 - 1.0;\n\n    vec3 Q1 = dFdx(v_position.xyz);\n    vec3 Q2 = dFdy(v_position.xyz);\n    vec2 st1 = dFdx(texCoord);\n    vec2 st2 = dFdy(texCoord);\n\n    vec3 T = normalize(Q1 * st2.t - Q2 * st1.t);\n    vec3 B = normalize(cross(N, T));\n    mat3 TBN = mat3(T, B, N);\n\n    N = normalize(TBN * normMap);\n  }\n\n  vec4 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, N, V);\n\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    outColorPart += shadePosLight(u_lightsPos[i], u_mat, N, V);\n  }\n\n  // Add emissive component\n  float emissiveAlpha = u_mat.emissive.r + u_mat.emissive.g + u_mat.emissive.b > 0.0 ? 1.0 : 0.0;\n  outColorPart += vec4(u_mat.emissive, emissiveAlpha);\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  outColorPart.rgb = pow(outColorPart.rgb, vec3(1.0 / u_gamma));\n\n  outColour = outColorPart;\n}\n";
+var glsl_default3 = "#version 300 es\n\n// ============================================================================\n// Phong fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n  bool enabled;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  float reflectivity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n  sampler2D normalTex;\n  samplerCube reflectTex;\n  bool hasNormalTex;\n};\n\n// From vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\n\n// Some global uniforms\nuniform vec3 u_camPos;\nuniform float u_gamma;\nuniform bool u_flipTextureX;\nuniform bool u_flipTextureY;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\n// Global texture coords shared between functions\nvec2 texCoord;\n\n/*\n * Shade a fragment using a directional light source\n */\nvec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(-light.direction);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n  //diffuseCol += reflectCol;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;\n  vec3 specular = light.colour * spec * specularCol;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n/*\n * Shade a fragment using a positional light source\n */\nvec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(light.position - v_position.xyz);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n  //diffuseCol += reflectCol;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // Light attenuation, see: https://learnopengl.com/Lighting/Light-casters\n  float dist = length(light.position - v_position.xyz);\n  float attenuation = 1.0 / (light.constant + light.linear * dist + light.quad * (dist * dist));\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol * attenuation;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * attenuation;\n  vec3 specular = light.colour * spec * specularCol * attenuation;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\nvec4 mix4(vec4 a, vec4 b, float mix) {\n  return a * (1.0 - mix) + b * mix;\n}\n\n// ============================================================================\n// Main fragment shader entry point\n// ============================================================================\nvoid main() {\n  vec3 V = normalize(u_camPos - v_position.xyz);\n\n  // Flip texture coords if needed\n  texCoord = u_flipTextureY ? vec2(v_texCoord.x, 1.0 - v_texCoord.y) : v_texCoord.xy;\n  texCoord = u_flipTextureX ? vec2(1.0 - texCoord.x, texCoord.y) : texCoord.xy;\n\n  vec3 N = normalize(v_normal);\n\n  // Normal mapping, this is expensive so only do it if we have a normal map\n  if (u_mat.hasNormalTex) {\n    vec3 normMap = texture(u_mat.normalTex, texCoord).xyz * 2.0 - 1.0;\n\n    vec3 Q1 = dFdx(v_position.xyz);\n    vec3 Q2 = dFdy(v_position.xyz);\n    vec2 st1 = dFdx(texCoord);\n    vec2 st2 = dFdy(texCoord);\n\n    vec3 T = normalize(Q1 * st2.t - Q2 * st1.t);\n    vec3 B = normalize(cross(N, T));\n    mat3 TBN = mat3(T, B, N);\n\n    N = normalize(TBN * normMap);\n  }\n\n  // Get reflection vector and sample reflection texture\n  vec3 R = reflect(-V, N);\n  vec4 reflectCol = vec4(texture(u_mat.reflectTex, R).rgb, 1.0);\n\n  vec4 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, N, V);\n\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    outColorPart += shadePosLight(u_lightsPos[i], u_mat, N, V);\n  }\n\n  // Add emissive component\n  float emissiveAlpha = u_mat.emissive.r + u_mat.emissive.g + u_mat.emissive.b > 0.0 ? 1.0 : 0.0;\n  outColorPart += vec4(u_mat.emissive, emissiveAlpha);\n\n  outColorPart = mix4(outColorPart, reflectCol, u_mat.reflectivity);\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  outColorPart.rgb = pow(outColorPart.rgb, vec3(1.0 / u_gamma));\n\n  outColour = outColorPart;\n}\n";
 
 // shaders/phong/glsl.vert
 var glsl_default4 = "#version 300 es\n\n// ============================================================================\n// Phong vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_normal;\nout vec4 v_position;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  v_position = u_world * position;\n  gl_Position = u_worldViewProjection * position;\n}\n";
@@ -7358,8 +7368,8 @@ var Context = class _Context {
       u_proj: camera.projectionMatrix(this.aspectRatio),
       u_camPos: camera.position
     };
-    if (this.skybox) {
-      this.skybox.render(uniforms.u_view, uniforms.u_proj, camera);
+    if (this.envmap) {
+      this.envmap.render(uniforms.u_view, uniforms.u_proj, camera);
     }
     uniforms.u_lightDirGlobal = this.globalLight.uniforms;
     if (this.lights.length > MAX_LIGHTS) {
@@ -7499,6 +7509,7 @@ var Context = class _Context {
   createSphereInstance(material, radius = 5, subdivisionsH = 16, subdivisionsV = 8) {
     const sphere = new PrimitiveSphere(this.gl, radius, subdivisionsH, subdivisionsV);
     sphere.material = material;
+    material.applyEnvMap(this.envmap);
     const instance = new Instance(sphere);
     this.addInstance(instance, material);
     stats.triangles += sphere.triangleCount;
@@ -7518,6 +7529,7 @@ var Context = class _Context {
   createPlaneInstance(material, width = 5, height = 5, subdivisionsW = 1, subdivisionsH = 1, tiling = 1) {
     const plane = new PrimitivePlane(this.gl, width, height, subdivisionsW, subdivisionsH, tiling);
     plane.material = material;
+    material.applyEnvMap(this.envmap);
     const instance = new Instance(plane);
     this.addInstance(instance, material);
     stats.triangles += plane.triangleCount;
@@ -7531,6 +7543,7 @@ var Context = class _Context {
   createCubeInstance(material, size = 5) {
     const cube = new PrimitiveCube(this.gl, size);
     cube.material = material;
+    material.applyEnvMap(this.envmap);
     const instance = new Instance(cube);
     this.addInstance(instance, material);
     stats.triangles += cube.triangleCount;
@@ -7544,6 +7557,7 @@ var Context = class _Context {
   createCylinderInstance(material, r = 2, h = 5, subdivisionsR = 16, subdivisionsH = 1, caps = true) {
     const cyl = new PrimitiveCylinder(this.gl, r, h, subdivisionsR, subdivisionsH, caps);
     cyl.material = material;
+    material.applyEnvMap(this.envmap);
     const instance = new Instance(cyl);
     this.addInstance(instance, material);
     stats.triangles += cyl.triangleCount;
@@ -7586,17 +7600,31 @@ var Context = class _Context {
     return light;
   }
   /**
-   * Set the skybox for the scene, will overwrite any existing skybox
-   * @param textureURLs - Array of 6 texture URLs to use for the skybox, in the order: +X, -X, +Y, -Y, +Z, -Z
+   * Set the EnvironmentMap for the scene, will overwrite any existing envmap
+   * @param textureURLs - Array of 6 texture URLs to use for the map, in the order: +X, -X, +Y, -Y, +Z, -Z
    */
-  setSkybox(...textureURLs) {
-    this.skybox = new Skybox(this.gl, textureURLs);
+  setEnvmap(renderAsBackground = false, ...textureURLs) {
+    this.envmap = new EnvironmentMap(this.gl, textureURLs);
+    this.envmap.renderAsBackground = renderAsBackground;
+    for (const instance of this.instances) {
+      if (instance.material)
+        instance.material.applyEnvMap(this.envmap);
+      if (instance.renderable instanceof Primitive) {
+        instance.renderable.material.applyEnvMap(this.envmap);
+      }
+    }
   }
   /**
-   * Remove any current skybox from the scene
+   * Remove any current EnvironmentMap from the scene
    */
-  removeSkybox() {
-    this.skybox = void 0;
+  removeEnvmap() {
+    this.envmap = void 0;
+  }
+  /**
+   * Get the current EnvironmentMap for the scene
+   */
+  getEnvmap() {
+    return this.envmap;
   }
 };
 export {
@@ -7606,7 +7634,7 @@ export {
   CameraType,
   Colours,
   Context,
-  EnvMapMaterial,
+  EnvironmentMap,
   HUD,
   Instance,
   LightDirectional,
@@ -7622,7 +7650,6 @@ export {
   PrimitivePlane,
   PrimitiveSphere,
   ProgramCache,
-  Skybox,
   TextureCache,
   Tuples,
   getGl,

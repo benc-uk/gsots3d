@@ -32,9 +32,11 @@ struct Material {
   vec3 emissive;
   float shininess;
   float opacity;
+  float reflectivity;
   sampler2D diffuseTex;
   sampler2D specularTex;
   sampler2D normalTex;
+  samplerCube reflectTex;
   bool hasNormalTex;
 };
 
@@ -70,6 +72,7 @@ vec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {
 
   vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;
   vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;
+  //diffuseCol += reflectCol;
 
   float diff = dot(N, L);
   float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;
@@ -91,6 +94,7 @@ vec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {
 
   vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;
   vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;
+  //diffuseCol += reflectCol;
 
   float diff = dot(N, L);
   float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;
@@ -105,6 +109,10 @@ vec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {
 
   // Return a vec4 to support transparency, note specular is not affected by opacity
   return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);
+}
+
+vec4 mix4(vec4 a, vec4 b, float mix) {
+  return a * (1.0 - mix) + b * mix;
 }
 
 // ============================================================================
@@ -135,6 +143,10 @@ void main() {
     N = normalize(TBN * normMap);
   }
 
+  // Get reflection vector and sample reflection texture
+  vec3 R = reflect(-V, N);
+  vec4 reflectCol = vec4(texture(u_mat.reflectTex, R).rgb, 1.0);
+
   vec4 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, N, V);
 
   for (int i = 0; i < u_lightsPosCount; i++) {
@@ -144,6 +156,8 @@ void main() {
   // Add emissive component
   float emissiveAlpha = u_mat.emissive.r + u_mat.emissive.g + u_mat.emissive.b > 0.0 ? 1.0 : 0.0;
   outColorPart += vec4(u_mat.emissive, emissiveAlpha);
+
+  outColorPart = mix4(outColorPart, reflectCol, u_mat.reflectivity);
 
   // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL
   outColorPart.rgb = pow(outColorPart.rgb, vec3(1.0 / u_gamma));

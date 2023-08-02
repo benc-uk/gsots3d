@@ -182,6 +182,14 @@ export class Model implements Renderable {
   setNamedMaterial(name: string, material: Material): void {
     this.materials[name] = material
   }
+
+  /**
+   * Get a named material
+   * @param {string} name - Name of the material to get
+   */
+  getNamedMaterial(name: string): Material {
+    return this.materials[name]
+  }
 }
 
 /**
