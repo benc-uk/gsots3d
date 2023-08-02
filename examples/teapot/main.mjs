@@ -47,14 +47,15 @@ teapot3.material = matGreen
 teapot.rotateY(-2.715)
 teapot3.rotateY(-0.615)
 
-// Add skybox
-ctx.setSkybox(
-  '../../_textures/skybox-2/posx.png',
-  '../../_textures/skybox-2/negx.png',
-  '../../_textures/skybox-2/posy.png',
-  '../../_textures/skybox-2/negy.png',
-  '../../_textures/skybox-2/posz.png',
-  '../../_textures/skybox-2/negz.png'
+// Add map
+ctx.setEnvmap(
+  true,
+  '../_textures/skybox-1/right.jpg',
+  '../_textures/skybox-1/left.jpg',
+  '../_textures/skybox-1/top.jpg',
+  '../_textures/skybox-1/bottom.jpg',
+  '../_textures/skybox-1/front.jpg',
+  '../_textures/skybox-1/back.jpg'
 )
 
 ctx.update = () => {

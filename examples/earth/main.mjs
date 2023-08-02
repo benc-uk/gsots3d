@@ -7,7 +7,7 @@ ctx.camera.far = 1000
 ctx.globalLight.ambient = [0.01, 0.01, 0.1]
 ctx.globalLight.colour = [1.0, 0.9, 0.7]
 
-const mat = Material.createBasicTexture('../_textures/earth.jpg')
+const mat = Material.createBasicTexture('../_textures/earth.jpg', true, false)
 mat.specular = [0.7, 0.7, 0.7]
 mat.shininess = 50
 
