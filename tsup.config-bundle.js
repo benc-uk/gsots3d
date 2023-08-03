@@ -4,9 +4,13 @@
 // ==================================================================================
 
 import { defineConfig } from 'tsup'
+import { glsl } from 'esbuild-plugin-glsl'
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  entryPoints: {
+    // This renames the entry point as we'll output a single file
+    gsots3d: 'src/index.ts',
+  },
 
   bundle: true,
   splitting: false,
@@ -19,11 +23,13 @@ export default defineConfig({
   format: 'esm',
   outDir: 'dist-bundle',
 
-  loader: {
-    '.vert': 'text',
-    '.frag': 'text',
-  },
-
   // This is a trick to get TSUP to bundle the external dependencies
   noExternal: [/./],
+
+  esbuildPlugins: [
+    // This allows us to import GLSL files and have them bundled
+    glsl({
+      minify: true,
+    }),
+  ],
 })

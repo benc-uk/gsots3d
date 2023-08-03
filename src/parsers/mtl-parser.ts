@@ -27,7 +27,6 @@ export type MtlMaterial = {
 /**
  * Parse an MTL file returning a map of materials.
  * The returned {@link typescript!MtlMaterial} should be passed to new Material() to create a material
- *
  * @param {string} mtlFile - The MTL file as a string
  * @returns {Map<string, MtlMaterial>} - A map of materials
  */
@@ -74,6 +73,9 @@ export function parseMTL(mtlFile: string): Map<string, MtlMaterial> {
       material.texSpecular = unparsedArgs
     },
     map_bump(_: string[], unparsedArgs: string) {
+      material.texNormal = unparsedArgs
+    },
+    map_Bump(_: string[], unparsedArgs: string) {
       material.texNormal = unparsedArgs
     },
   } as Record<string, (parts: string[], unparsedArgs: string) => void>

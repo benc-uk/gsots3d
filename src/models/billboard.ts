@@ -3,7 +3,15 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-import { ProgramInfo, drawBufferInfo, setBuffersAndAttributes, setUniforms, primitives, BufferInfo } from 'twgl.js'
+import {
+  ProgramInfo,
+  drawBufferInfo,
+  setBuffersAndAttributes,
+  setUniforms,
+  primitives,
+  BufferInfo,
+  createBufferInfoFromArrays,
+} from 'twgl.js'
 import { UniformSet } from '../core/gl.ts'
 import { Renderable } from './types.ts'
 import { Material } from '../engine/material.ts'
@@ -33,9 +41,20 @@ export class Billboard implements Renderable {
   /** Creates a square billboard */
   constructor(gl: WebGL2RenderingContext, type: BillboardType, material: Material, size: number) {
     this.material = material
-    this.bufferInfo = primitives.createXYQuadBufferInfo(gl, size, 0, size / 2)
-    this.programInfo = ProgramCache.instance.get(ProgramCache.PROG_BILLBOARD)
     this.type = type
+
+    // Create quad vertices
+    const verts = primitives.createXYQuadVertices(size, 0, size / 2)
+
+    // Flip Y axis, so texture is not upside down
+    for (let i = 1; i < verts.texcoord.length; i += 2) {
+      verts.texcoord[i] = 1 - verts.texcoord[i]
+    }
+
+    this.bufferInfo = createBufferInfoFromArrays(gl, verts)
+
+    // Use the billboard shader for this renderable
+    this.programInfo = ProgramCache.instance.get(ProgramCache.PROG_BILLBOARD)
   }
 
   /**

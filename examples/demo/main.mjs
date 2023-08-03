@@ -149,8 +149,8 @@ try {
   scifi.specular = [2, 2, 2]
   scifi.shininess = 30
   scifiCube = ctx.createCubeInstance(scifi, 12)
-  scifiCube.position = [10, 6, 21]
-  scifiCube.rotateYDeg(38)
+  scifiCube.position = [10, 16, 21]
+  scifiCube.rotateYDeg(28)
 } catch (e) {
   console.error(e)
 }

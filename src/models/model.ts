@@ -87,8 +87,11 @@ export class Model implements Renderable {
    * Parse an OBJ file & MTL material libraries, returns a new Model
    * @param {string} path - The path to the OBJ file
    * @param {string} objFilename - The name of the OBJ file
+   * @param {boolean} filterTextures - Apply texture filtering to textures, default: true
+   * @param {boolean} flipTextureY - Flip the Y axis of textures as they are loaded, default: false
+   * @param {boolean} flipUV - Flip the UV coords of the model in the vertex/mesh data, default: true
    */
-  static async parse(path = '.', objFilename: string, filterTextures = true, flipTextureY = true) {
+  static async parse(path = '.', objFilename: string, filterTextures = true, flipTextureY = false, flipUV = true) {
     const startTime = performance.now()
 
     // Create a new model with the name of the file
@@ -104,7 +107,9 @@ export class Model implements Renderable {
     }
 
     // Try to parse the OBJ file
-    const objData = parseOBJ(objFile)
+    // NOTE: We flip texture coords by default, this is because most OBJ files don't work with OpenGL
+    const objData = parseOBJ(objFile, flipUV)
+
     if (!objData.geometries || objData.geometries.length === 0) {
       throw new Error(`💥 Error parsing '${objFilename}', might not be a OBJ file`)
     }

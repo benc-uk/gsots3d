@@ -84,6 +84,16 @@ import { Context } from 'https://cdn.jsdelivr.net/gh/benc-uk/gsots3d@main/dist-b
 
 If you want to reference a specific released version you can do so by changing `benc-uk/gsots3d@main` for example `benc-uk/gsots3d@0.0.1`
 
+## 📦 Supported Models & Textures
+
+OBJ files can be parsed and loaded, MTL files will be loaded and materials parsed when referenced from the OBJ, and and OBJ can consist of multiple materials. When parsing the OBJ the UV texture coordinates are flipped in the Y direction, this makes them consistent with the rest of the rendering internally.
+
+Normal maps will be parsed from any MTL (or can added to a *Material* with `addNormalTexture()`) using the unofficial `map_bump` keyword. 
+
+Normal maps must be in OpenGL format, i.e. Y+ or "green at top", see this [reference image](https://doc.babylonjs.com/img/how_to/Materials/normal_maps1.jpg)
+
+Due to the vast inconsistencies in OBJ & MTL exporting from the 1000s of software packages and tools out there (and the age of the format), it's unlikely any OBJ you download and use will work without some modification, usually to just the MTL file.
+
 ## 🤔 Known Issues
 
 - Transparency

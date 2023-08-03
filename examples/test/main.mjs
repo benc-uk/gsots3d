@@ -19,10 +19,8 @@ wallMat.shininess = 300
 const wall = ctx.createPlaneInstance(wallMat, 200, 200, 12, 12, 6)
 wall.rotateX(Math.PI / 2)
 wall.position = [0, 0, -100]
-wall.flipTextureX = true
 
-const floor = ctx.createPlaneInstance(wallMat, 200, 200, 12, 12, 6)
-floor.flipTextureY = true
+ctx.createPlaneInstance(wallMat, 200, 200, 12, 12, 6)
 
 const cubeMat = Material.createBasicTexture('../_textures/sci-fi.png', true, false)
 cubeMat.addNormalTexture('../_textures/sci-fi_normal.png', true, false)

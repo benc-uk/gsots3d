@@ -3,6 +3,8 @@
 // ==================================================================================
 
 import { defineConfig } from 'tsup'
+import { glsl } from 'esbuild-plugin-glsl'
+
 import process from 'process'
 
 const NODE_ENV = process.env.NODE_ENV || 'development'
@@ -20,8 +22,10 @@ export default defineConfig({
   format: 'esm',
   outDir: 'dist',
 
-  loader: {
-    '.vert': 'text',
-    '.frag': 'text',
-  },
+  esbuildPlugins: [
+    // This allows us to import GLSL files and have them bundled
+    glsl({
+      minify: true,
+    }),
+  ],
 })

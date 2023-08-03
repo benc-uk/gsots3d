@@ -37,7 +37,7 @@
     "check": "tsc",
     "build": "tsc && tsup",
     "watch": "tsc && npm run build && run-when-changed --watch 'src/**' --watch 'shaders/**' --exec 'npm run build'",
-    "build-bundle": "tsc && tsup --config tsup.config-bundle.js && mv dist-bundle/index.js dist-bundle/gsots3d.js",
+    "build-bundle": "tsc && tsup --config tsup.config-bundle.js",
     "watch-bundle": "tsc && npm run build-bundle && run-when-changed --watch 'src/**' --watch 'shaders/**' --exec 'npm run build-bundle'",
     "clean": "rm -rf dist",
     "docs": "typedoc --out docs --gitRevision main ./src/",
@@ -46,6 +46,7 @@
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.60.1",
     "@typescript-eslint/parser": "^5.60.1",
+    "esbuild-plugin-glsl": "^1.2.1",
     "eslint": "^8.44.0",
     "prettier": "^2.8.8",
     "prettier-plugin-glsl": "^0.0.10",

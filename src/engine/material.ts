@@ -76,7 +76,7 @@ export class Material {
   public reflectTex?: WebGLTexture
 
   /**
-   * Create a new material with default diffuse colour
+   * Create a new material with default diffuse white colour
    */
   constructor() {
     this.ambient = [1, 1, 1]
@@ -95,8 +95,12 @@ export class Material {
 
   /**
    * Create a new material from a raw MTL material
+   * @param rawMtl Raw MTL material
+   * @param basePath Base path for locating & loading textures in MTL file
+   * @param filter Apply texture filtering to textures, default: true
+   * @param flipY Flip the Y axis of textures, default: false
    */
-  static fromMtl(rawMtl: MtlMaterial, basePath: string, filter = true, flipY = true) {
+  static fromMtl(rawMtl: MtlMaterial, basePath: string, filter = true, flipY = false) {
     const m = new Material()
 
     m.ambient = rawMtl.ka ? rawMtl.ka : [1, 1, 1]
@@ -140,7 +144,7 @@ export class Material {
   /**
    * Create a new Material with a texture map loaded from a URL
    */
-  static createBasicTexture(url: string, filter = true, flipY = true) {
+  static createBasicTexture(url: string, filter = true, flipY = false) {
     const m = new Material()
 
     m.diffuseTex = TextureCache.instance.getCreate(url, filter, flipY)
@@ -153,7 +157,7 @@ export class Material {
    * @param url
    * @param filter
    */
-  addSpecularTexture(url: string, filter = true, flipY = true) {
+  addSpecularTexture(url: string, filter = true, flipY = false) {
     this.specularTex = TextureCache.instance.getCreate(url, filter, flipY)
     this.specular = [1, 1, 1]
     this.shininess = 20
@@ -164,7 +168,7 @@ export class Material {
    * @param url
    * @param filter
    */
-  addNormalTexture(url: string, filter = true, flipY = true) {
+  addNormalTexture(url: string, filter = true, flipY = false) {
     this.normalTex = TextureCache.instance.getCreate(url, filter, flipY)
   }
 

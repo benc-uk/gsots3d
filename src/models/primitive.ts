@@ -76,14 +76,7 @@ export class PrimitiveSphere extends Primitive {
   constructor(gl: WebGL2RenderingContext, radius: number, subdivisionsH: number, subdivisionsV: number) {
     super()
 
-    const verts = primitives.createSphereVertices(radius, subdivisionsH, subdivisionsV)
-
-    // Flip the texture coords, so they match models loaded from OBJ files
-    for (let i = 0; i < verts.texcoord.length; i += 2) {
-      verts.texcoord[i + 1] = 1 - verts.texcoord[i + 1]
-    }
-
-    this.bufferInfo = createBufferInfoFromArrays(gl, verts)
+    this.bufferInfo = primitives.createSphereBufferInfo(gl, radius, subdivisionsH, subdivisionsV)
 
     this.triangles += this.bufferInfo.numElements / 3
   }
@@ -101,14 +94,7 @@ export class PrimitiveCube extends Primitive {
   constructor(gl: WebGL2RenderingContext, size: number) {
     super()
 
-    const verts = primitives.createCubeVertices(size)
-
-    // Flip the texture coords, so they match models loaded from OBJ files
-    for (let i = 0; i < verts.texcoord.length; i += 2) {
-      verts.texcoord[i + 1] = 1 - verts.texcoord[i + 1]
-    }
-
-    this.bufferInfo = createBufferInfoFromArrays(gl, verts)
+    this.bufferInfo = primitives.createCubeBufferInfo(gl, size)
 
     this.triangles += this.bufferInfo.numElements / 3
   }
@@ -144,11 +130,6 @@ export class PrimitivePlane extends Primitive {
       verts.texcoord[i] = verts.texcoord[i] * tilingFactor
     }
 
-    // Flip the texture coords, so they match models loaded from OBJ files
-    for (let i = 0; i < verts.texcoord.length; i += 2) {
-      verts.texcoord[i + 1] = 1 - verts.texcoord[i + 1]
-    }
-
     this.bufferInfo = createBufferInfoFromArrays(gl, verts)
     this.triangles += this.bufferInfo.numElements / 3
   }
@@ -177,14 +158,7 @@ export class PrimitiveCylinder extends Primitive {
   ) {
     super()
 
-    const verts = primitives.createCylinderVertices(radius, height, subdivisionsR, subdivisionsV, caps)
-
-    // Flip the texture coords, so they match models loaded from OBJ files
-    for (let i = 0; i < verts.texcoord.length; i += 2) {
-      verts.texcoord[i + 1] = 1 - verts.texcoord[i + 1]
-    }
-
-    this.bufferInfo = createBufferInfoFromArrays(gl, verts)
+    this.bufferInfo = primitives.createCylinderBufferInfo(gl, radius, height, subdivisionsR, subdivisionsV, caps, caps)
 
     this.triangles += this.bufferInfo.numElements / 3
   }

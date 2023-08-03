@@ -6,17 +6,29 @@
 
 const keywordRE = /(\w*)(?: )*(.*)/
 
+/**
+ * ParseResult is the result of parsing an OBJ file
+ */
 export type ParseResult = {
+  /** List of material libs (MTL files) */
   matLibNames: string[]
+
+  /** List of geometries, each with a material name and vertex data */
   geometries: Geometry[]
+
+  /** Total number of triangles in the OBJ file */
   triangles: number
 }
 
 /**
- * Used internally by OBJ parser
+ * Each OBJ file is made up of a list of geometries, each with a material name.
+ * These can be thought of as parts of the overall model.
  */
 export type Geometry = {
+  /** Name of the material for this geometry part */
   material: string
+
+  /** Vertex data for this geometry part, ready for turning into an BufferInfo in twgl.js */
   data: {
     position: number[]
     texcoord?: number[]
@@ -27,11 +39,10 @@ export type Geometry = {
 
 /**
  * Parse an OBJ file returning a list of geometries and materials libs
- *
  * @param {string} objFile - The OBJ file as a string
- * @returns {ParseResult} An object containing the geometries and material libs
+ * @param {boolean} flipUV - Flip the V texcoord axis, for OpenGL
  */
-export function parseOBJ(objFile: string): ParseResult {
+export function parseOBJ(objFile: string, flipUV: boolean) {
   const lines = objFile.split('\n')
 
   const objPositions = [[0, 0, 0]]
@@ -66,7 +77,12 @@ export function parseOBJ(objFile: string): ParseResult {
 
     vt(parts: string[]) {
       // Only 2D texcoords supported, so ignore the 3rd if present
-      objTexcoords.push([parseFloat(parts[0]), parseFloat(parts[1])])
+      // Also handle UV flip in the V direction (Y axis) for OpenGL
+      if (flipUV) {
+        objTexcoords.push([parseFloat(parts[0]), 1.0 - parseFloat(parts[1])])
+      } else {
+        objTexcoords.push([parseFloat(parts[0]), parseFloat(parts[1])])
+      }
     },
 
     f(parts: string[]) {
@@ -109,7 +125,6 @@ export function parseOBJ(objFile: string): ParseResult {
 
   /**
    * Updates webglVertexData per vertex
-   *
    * @param {string} vert - String in the form of "v/vt/vn" as per OBJ spec
    */
   function addVertex(vert: string) {
@@ -128,7 +143,7 @@ export function parseOBJ(objFile: string): ParseResult {
   }
 
   /**
-   *
+   * Start a new geometry object
    */
   function newGeometry() {
     // If there is an existing geometry and it's not empty then start a new one.
@@ -138,7 +153,7 @@ export function parseOBJ(objFile: string): ParseResult {
   }
 
   /**
-   *
+   * Set the geometry for the current material/part
    */
   function setGeometry() {
     if (!geometry.material) {
@@ -162,6 +177,7 @@ export function parseOBJ(objFile: string): ParseResult {
     }
   }
 
+  // Parse the OBJ file line by line
   for (let lineNo = 0; lineNo < lines.length; ++lineNo) {
     const line = lines[lineNo].trim()
     if (line === '' || line.startsWith('#')) {
@@ -192,7 +208,7 @@ export function parseOBJ(objFile: string): ParseResult {
     }
   }
 
-  // Return pair of array of geometry & array of material library names
+  // Return the list of geometries and material libs, plus triangle count
   return {
     matLibNames: materialLibs,
     geometries: geometries,

@@ -318,12 +318,14 @@ export class Context {
   }
 
   /**
-   * Model loader, loads a model from a file and adds it to the cache
+   * Model loader, loads an OBJ model from a file via URL or path and adds it to the cache
    * This is preferred over calling Model.parse() directly
    * @param path Base path to the model file, e.g. './models/'
    * @param fileName Name of the model file, e.g 'teapot.obj'
+   * @param filterTextures Apply texture filtering as materials are loaded
+   * @param flipTextureY Flip the Y coordinate of the texture
    */
-  public async loadModel(path: string, fileName: string, filter = true, flipY = true) {
+  public async loadModel(path: string, fileName: string, filterTextures = true, flipY = false) {
     const modelName = fileName.split('.')[0]
 
     // Check if model is already loaded
@@ -332,7 +334,8 @@ export class Context {
       return
     }
 
-    const model = await Model.parse(path, fileName, filter, flipY)
+    // Load the model and always flip the UV
+    const model = await Model.parse(path, fileName, filterTextures, flipY, true)
 
     ModelCache.instance.add(model)
   }

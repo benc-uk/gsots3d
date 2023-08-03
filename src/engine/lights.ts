@@ -8,6 +8,7 @@ import { Colours, Tuples, XYZ, RGB } from './tuples.ts'
 
 /**
  * A directional light source, typically global with the context having only a single instance
+ * Having multiple directional lights is not supported
  */
 export class LightDirectional {
   /**
@@ -44,6 +45,7 @@ export class LightDirectional {
 
   /**
    * Set the direction of the light ensuring it is normalized
+   * @param d - Direction vector
    */
   set direction(d: XYZ) {
     // Ensure direction is normalized
@@ -59,6 +61,10 @@ export class LightDirectional {
 
   /**
    * Convenience method allows setting the direction as a point relative to the world origin
+   * Values are always converted to a normalized unit direction vector
+   * @param x - X position
+   * @param y - Y position
+   * @param z - Z position
    */
   setAsPosition(x: number, y: number, z: number) {
     this._direction = Tuples.normalize([0 - x, 0 - y, 0 - z])
@@ -122,21 +128,30 @@ export class LightPoint {
    */
   public enabled: boolean
 
-  constructor(position: XYZ, colour: RGB) {
+  /**
+   * Create a default point light, positioned at the world origin
+   * @param position - Position of the light in world space
+   * @param colour - Colour of the light
+   * @param constant - Attenuation constant drop off rate, default 0.5
+   * @param linear - Attenuation linear drop off rate, default 0.018
+   * @param quad - Attenuation quadratic drop off rate, default 0.0003
+   */
+  constructor(position: XYZ, colour: RGB, constant = 0.5, linear = 0.018, quad = 0.0003) {
     this.position = position
     this.colour = colour
+    this.constant = constant
+    this.linear = linear
+    this.quad = quad
 
-    this.enabled = true
+    // No ambient contribution by default, this can get messy otherwise
     this.ambient = Colours.BLACK
-    this.constant = 0.5
-    this.linear = 0.018
-    this.quad = 0.0003
+    this.enabled = true
   }
 
   /**
    * Return the base set of uniforms for this light
    */
-  public get uniforms(): UniformSet {
+  public get uniforms() {
     return {
       enabled: this.enabled,
       quad: this.quad,

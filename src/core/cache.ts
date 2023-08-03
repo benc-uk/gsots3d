@@ -142,7 +142,7 @@ export class TextureCache {
    * @param filter Enable texture filtering and mipmaps (default true)
    * @param flipY Flip the texture vertically (default true)
    */
-  getCreate(src: string, filter = true, flipY = true) {
+  getCreate(src: string, filter = true, flipY = false) {
     // check if texture already exists, if so return it
     if (this.cache.has(src)) {
       log.trace(`👍 Returning texture '${src}' from cache, nice!`, flipY)
