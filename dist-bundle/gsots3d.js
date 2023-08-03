@@ -6041,18 +6041,12 @@ var _TextureCache = class _TextureCache {
       mag: gl.NEAREST,
       src: [255, 255, 255, 255]
     });
-    const black1pixel = createTexture(gl, {
-      min: gl.NEAREST,
-      mag: gl.NEAREST,
-      src: [255, 255, 255, 255]
-    });
     const normal1pixel = createTexture(gl, {
       min: gl.NEAREST,
       mag: gl.NEAREST,
       src: [128, 128, 255, 255]
     });
     this._instance.add("_defaults/white", white1pixel);
-    this._instance.add("_defaults/black", black1pixel);
     this._instance.add("_defaults/normal", normal1pixel);
     _TextureCache.initialized = true;
   }
@@ -6095,7 +6089,7 @@ var _TextureCache = class _TextureCache {
    */
   getCreate(src, filter = true, flipY = true) {
     if (this.cache.has(src)) {
-      import_loglevel3.default.trace(`\u{1F44D} Returning texture '${src}' from cache, nice!`);
+      import_loglevel3.default.trace(`\u{1F44D} Returning texture '${src}' from cache, nice!`, flipY);
       return this.get(src);
     }
     const texture = createTexture(
@@ -6827,34 +6821,79 @@ var Primitive = class {
   }
 };
 var PrimitiveSphere = class extends Primitive {
+  /**
+   * Create a new sphere primitive
+   * @param gl WebGL2RenderingContext
+   * @param radius Radius of the sphere
+   * @param subdivisionsH Number of horizontal subdivisions
+   * @param subdivisionsV Number of vertical subdivisions
+   */
   constructor(gl, radius, subdivisionsH, subdivisionsV) {
     super();
-    this.bufferInfo = primitives.createSphereBufferInfo(gl, radius, subdivisionsH, subdivisionsV);
+    const verts = primitives.createSphereVertices(radius, subdivisionsH, subdivisionsV);
+    for (let i = 0; i < verts.texcoord.length; i += 2) {
+      verts.texcoord[i + 1] = 1 - verts.texcoord[i + 1];
+    }
+    this.bufferInfo = createBufferInfoFromArrays(gl, verts);
     this.triangles += this.bufferInfo.numElements / 3;
   }
 };
 var PrimitiveCube = class extends Primitive {
+  /**
+   * Create a new cube primitive
+   * @param gl WebGL2RenderingContext
+   * @param size Size of the cube
+   */
   constructor(gl, size) {
     super();
-    this.bufferInfo = primitives.createCubeBufferInfo(gl, size);
+    const verts = primitives.createCubeVertices(size);
+    for (let i = 0; i < verts.texcoord.length; i += 2) {
+      verts.texcoord[i + 1] = 1 - verts.texcoord[i + 1];
+    }
+    this.bufferInfo = createBufferInfoFromArrays(gl, verts);
     this.triangles += this.bufferInfo.numElements / 3;
   }
 };
 var PrimitivePlane = class extends Primitive {
+  /**
+   * Create a new plane primitive
+   * @param gl WebGL2RenderingContext
+   * @param width Width of the plane
+   * @param height Height of the plane
+   * @param subdivisionsW Number of horizontal subdivisions
+   * @param subdivisionsH Number of vertical subdivisions
+   * @param tilingFactor Number of times to tile the texture across the plane
+   */
   constructor(gl, width, height, subdivisionsW, subdivisionsH, tilingFactor) {
     super();
-    const planeVerts = primitives.createPlaneVertices(width, height, subdivisionsW, subdivisionsH);
-    for (let i = 0; i < planeVerts.texcoord.length; i++) {
-      planeVerts.texcoord[i] = planeVerts.texcoord[i] * tilingFactor;
+    const verts = primitives.createPlaneVertices(width, height, subdivisionsW, subdivisionsH);
+    for (let i = 0; i < verts.texcoord.length; i++) {
+      verts.texcoord[i] = verts.texcoord[i] * tilingFactor;
     }
-    this.bufferInfo = createBufferInfoFromArrays(gl, planeVerts);
+    for (let i = 0; i < verts.texcoord.length; i += 2) {
+      verts.texcoord[i + 1] = 1 - verts.texcoord[i + 1];
+    }
+    this.bufferInfo = createBufferInfoFromArrays(gl, verts);
     this.triangles += this.bufferInfo.numElements / 3;
   }
 };
 var PrimitiveCylinder = class extends Primitive {
+  /**
+   * Create a new cylinder primitive
+   * @param gl WebGL2RenderingContext
+   * @param radius Radius of the cylinder
+   * @param height Height of the cylinder
+   * @param subdivisionsR Subdivisions around the cylinder
+   * @param subdivisionsV Subdivisions vertically
+   * @param caps Should the cylinder have caps
+   */
   constructor(gl, radius, height, subdivisionsR, subdivisionsV, caps) {
     super();
-    this.bufferInfo = primitives.createCylinderBufferInfo(gl, radius, height, subdivisionsR, subdivisionsV, caps, caps);
+    const verts = primitives.createCylinderVertices(radius, height, subdivisionsR, subdivisionsV, caps);
+    for (let i = 0; i < verts.texcoord.length; i += 2) {
+      verts.texcoord[i + 1] = 1 - verts.texcoord[i + 1];
+    }
+    this.bufferInfo = createBufferInfoFromArrays(gl, verts);
     this.triangles += this.bufferInfo.numElements / 3;
   }
 };
@@ -7228,7 +7267,7 @@ var HUD = class {
 };
 
 // shaders/phong/glsl.frag
-var glsl_default3 = "#version 300 es\n\n// ============================================================================\n// Phong fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n  bool enabled;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  float reflectivity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n  sampler2D normalTex;\n  samplerCube reflectTex;\n  bool hasNormalTex;\n};\n\n// From vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\n\n// Some global uniforms\nuniform vec3 u_camPos;\nuniform float u_gamma;\nuniform bool u_flipTextureX;\nuniform bool u_flipTextureY;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\n// Global texture coords shared between functions\nvec2 texCoord;\n\n/*\n * Shade a fragment using a directional light source\n */\nvec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(-light.direction);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n  //diffuseCol += reflectCol;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;\n  vec3 specular = light.colour * spec * specularCol;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n/*\n * Shade a fragment using a positional light source\n */\nvec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(light.position - v_position.xyz);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n  //diffuseCol += reflectCol;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // Light attenuation, see: https://learnopengl.com/Lighting/Light-casters\n  float dist = length(light.position - v_position.xyz);\n  float attenuation = 1.0 / (light.constant + light.linear * dist + light.quad * (dist * dist));\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol * attenuation;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * attenuation;\n  vec3 specular = light.colour * spec * specularCol * attenuation;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\nvec4 mix4(vec4 a, vec4 b, float mix) {\n  return a * (1.0 - mix) + b * mix;\n}\n\n// ============================================================================\n// Main fragment shader entry point\n// ============================================================================\nvoid main() {\n  vec3 V = normalize(u_camPos - v_position.xyz);\n\n  // Flip texture coords if needed\n  texCoord = u_flipTextureY ? vec2(v_texCoord.x, 1.0 - v_texCoord.y) : v_texCoord.xy;\n  texCoord = u_flipTextureX ? vec2(1.0 - texCoord.x, texCoord.y) : texCoord.xy;\n\n  vec3 N = normalize(v_normal);\n\n  // Normal mapping, this is expensive so only do it if we have a normal map\n  if (u_mat.hasNormalTex) {\n    vec3 normMap = texture(u_mat.normalTex, texCoord).xyz * 2.0 - 1.0;\n\n    vec3 Q1 = dFdx(v_position.xyz);\n    vec3 Q2 = dFdy(v_position.xyz);\n    vec2 st1 = dFdx(texCoord);\n    vec2 st2 = dFdy(texCoord);\n\n    vec3 T = normalize(Q1 * st2.t - Q2 * st1.t);\n    vec3 B = normalize(cross(N, T));\n    mat3 TBN = mat3(T, B, N);\n\n    N = normalize(TBN * normMap);\n  }\n\n  // Get reflection vector and sample reflection texture\n  vec3 R = reflect(-V, N);\n  vec4 reflectCol = vec4(texture(u_mat.reflectTex, R).rgb, 1.0);\n\n  vec4 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, N, V);\n\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    outColorPart += shadePosLight(u_lightsPos[i], u_mat, N, V);\n  }\n\n  // Add emissive component\n  float emissiveAlpha = u_mat.emissive.r + u_mat.emissive.g + u_mat.emissive.b > 0.0 ? 1.0 : 0.0;\n  outColorPart += vec4(u_mat.emissive, emissiveAlpha);\n\n  outColorPart = mix4(outColorPart, reflectCol, u_mat.reflectivity);\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  outColorPart.rgb = pow(outColorPart.rgb, vec3(1.0 / u_gamma));\n\n  outColour = outColorPart;\n}\n";
+var glsl_default3 = "#version 300 es\n\n// ============================================================================\n// Phong fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n  bool enabled;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  float reflectivity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n  sampler2D normalTex;\n  samplerCube reflectTex;\n  bool hasNormalTex;\n};\n\n// From vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\n\n// Some global uniforms\nuniform vec3 u_camPos;\nuniform float u_gamma;\nuniform bool u_flipTextureX;\nuniform bool u_flipTextureY;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\n// Global texture coords shared between functions\nvec2 texCoord;\n\n/*\n * Shade a fragment using a directional light source\n */\nvec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(-light.direction);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n  //diffuseCol += reflectCol;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;\n  vec3 specular = light.colour * spec * specularCol;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n/*\n * Shade a fragment using a positional light source\n */\nvec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(light.position - v_position.xyz);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n  //diffuseCol += reflectCol;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // Light attenuation, see: https://learnopengl.com/Lighting/Light-casters\n  float dist = length(light.position - v_position.xyz);\n  float attenuation = 1.0 / (light.constant + light.linear * dist + light.quad * (dist * dist));\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol * attenuation;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * attenuation;\n  vec3 specular = light.colour * spec * specularCol * attenuation;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\nvec4 mix4(vec4 a, vec4 b, float mix) {\n  return a * (1.0 - mix) + b * mix;\n}\n\n// ============================================================================\n// Main fragment shader entry point\n// ============================================================================\nvoid main() {\n  vec3 V = normalize(u_camPos - v_position.xyz);\n\n  // Flip texture coords if needed\n  texCoord = u_flipTextureY ? vec2(v_texCoord.x, 1.0 - v_texCoord.y) : v_texCoord;\n  texCoord = u_flipTextureX ? vec2(1.0 - texCoord.x, texCoord.y) : texCoord;\n\n  vec3 N = normalize(v_normal);\n\n  // Normal mapping, this is expensive so only do it if we have a normal map\n  if (u_mat.hasNormalTex) {\n    vec3 normMap = texture(u_mat.normalTex, texCoord).xyz * 2.0 - 1.0;\n\n    vec3 Q1 = dFdx(v_position.xyz);\n    vec3 Q2 = dFdy(v_position.xyz);\n    vec2 st1 = dFdx(texCoord);\n    vec2 st2 = dFdy(texCoord);\n\n    vec3 T = normalize(Q1 * st2.t - Q2 * st1.t);\n    vec3 B = normalize(cross(N, T));\n    mat3 TBN = mat3(T, B, N);\n\n    N = normalize(TBN * normMap);\n  }\n\n  // Get reflection vector and sample reflection texture\n  vec3 R = reflect(-V, N);\n  vec4 reflectCol = vec4(texture(u_mat.reflectTex, R).rgb, 1.0);\n\n  vec4 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, N, V);\n\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    outColorPart += shadePosLight(u_lightsPos[i], u_mat, N, V);\n  }\n\n  // Add emissive component\n  float emissiveAlpha = u_mat.emissive.r + u_mat.emissive.g + u_mat.emissive.b > 0.0 ? 1.0 : 0.0;\n  outColorPart += vec4(u_mat.emissive, emissiveAlpha);\n\n  outColorPart = mix4(outColorPart, reflectCol, u_mat.reflectivity);\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  outColorPart.rgb = pow(outColorPart.rgb, vec3(1.0 / u_gamma));\n\n  outColour = outColorPart;\n}\n";
 
 // shaders/phong/glsl.vert
 var glsl_default4 = "#version 300 es\n\n// ============================================================================\n// Phong vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_normal;\nout vec4 v_position;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  v_position = u_world * position;\n  gl_Position = u_worldViewProjection * position;\n}\n";

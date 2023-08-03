@@ -91,7 +91,6 @@ export class Material {
     // 1 pixel white texture allows for solid colour & flat materials
     this.diffuseTex = TextureCache.instance.get('_defaults/white')
     this.specularTex = TextureCache.instance.get('_defaults/white')
-    //this.reflectTex = TextureCache.instance.get('_defaults/white')
   }
 
   /**

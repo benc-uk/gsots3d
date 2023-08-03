@@ -9,7 +9,7 @@ ctx.globalLight.colour = Colours.BLACK
 ctx.globalLight.ambient = [0.2, 0.2, 0.2]
 ctx.camera.far = 500
 
-ctx.camera.enableFPControls(0, -0.2, 0.002, 0.7)
+ctx.camera.enableFPControls(0, -0.2, 0.002, 1.7)
 
 const wallMat = Material.createBasicTexture('../_textures/brickwall.jpg', true, false)
 wallMat.addNormalTexture('../_textures/brickwall_normal.jpg', true, false)
@@ -21,13 +21,7 @@ wall.rotateX(Math.PI / 2)
 wall.position = [0, 0, -100]
 wall.flipTextureX = true
 
-const wall2 = ctx.createPlaneInstance(wallMat, 200, 200, 12, 12, 6)
-wall2.rotateX(-Math.PI / 2)
-wall2.position = [0, 0, 100]
-wall2.flipTextureX = true
-
 const floor = ctx.createPlaneInstance(wallMat, 200, 200, 12, 12, 6)
-floor.flipTextureX = false
 floor.flipTextureY = true
 
 const cubeMat = Material.createBasicTexture('../_textures/sci-fi.png', true, false)

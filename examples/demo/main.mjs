@@ -64,14 +64,14 @@ try {
   matGlass.specular = [1.0, 1.0, 1.0]
   matGlass.shininess = 100
   matGlass.opacity = 0.3
-  const crystalBall = ctx.createSphereInstance(matGlass, 3, 16, 8)
-  crystalBall.position = [12, 20.5, -8]
+  const crystalBall = ctx.createSphereInstance(matGlass, 4, 16, 8)
+  crystalBall.position = [12, 22, -8]
 
   const matBlueGlass = Material.createSolidColour(0.2, 0.3, 1.0)
   matBlueGlass.specular = [0.8, 0.8, 0.8]
   matBlueGlass.shininess = 50
   matBlueGlass.opacity = 0.25
-  const cylinder = ctx.createCylinderInstance(matBlueGlass, 2.3, 6, 16, 8)
+  const cylinder = ctx.createCylinderInstance(matBlueGlass, 3, 12, 16, 8)
   cylinder.position = [10, 20, -20]
 
   const floorMat = Material.createBasicTexture('../_textures/wood-floor.png')
@@ -79,30 +79,26 @@ try {
   floorMat.diffuse = [0.7, 0.7, 1]
 
   // wall
-  const wallMat1 = Material.createBasicTexture('../_textures/brickwall.jpg', true, false)
-  wallMat1.addNormalTexture('../_textures/brickwall_normal.jpg', true, false)
+  const wallMat1 = Material.createBasicTexture('../_textures/brickwall.jpg')
+  wallMat1.addNormalTexture('../_textures/brickwall_normal.jpg')
   wallMat1.specular = [0.5, 0.5, 0.5]
   const wall1 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 4)
   wall1.position = [0, 130, -130]
   wall1.rotateXDeg(90)
-  wall1.flipTextureX = true
 
   const wall2 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 4)
   wall2.position = [0, 130, 130]
   wall2.rotateXDeg(-90)
-  wall2.flipTextureX = true
 
   const wall3 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 4)
   wall3.position = [130, 130, 0]
   wall3.rotateZDeg(90)
   wall3.rotateXDeg(90)
-  wall3.flipTextureX = true
 
   const wall4 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 4)
   wall4.position = [-130, 130, 0]
   wall4.rotateZDeg(-90)
   wall4.rotateXDeg(90)
-  wall4.flipTextureX = true
 
   const impMat = Material.createBasicTexture('../_textures/doom-imp.png')
   const doomImp = ctx.createBillboardInstance(impMat, 30)
@@ -113,7 +109,7 @@ try {
   mellonTx.diffuse = [0.7, 1.4, 0.7]
   mellonTx.specular = [1.0, 1.0, 1.0]
   mellonTx.shininess = 25
-  mellon.position = [18, 21, -17]
+  mellon.position = [22, 22, -19]
 
   const crateMat = Material.createBasicTexture('../_textures/crate.png')
   crateMat.addSpecularTexture('../_textures/crate-specular.png')
@@ -147,15 +143,14 @@ try {
   bottle.rotateXDeg(-90)
   bottle.scale = [0.6, 0.6, 0.6]
 
-  const scifi = Material.createBasicTexture('../_textures/sci-fi.png', true, false)
-  scifi.addNormalTexture('../_textures/sci-fi_normal.png', true, false)
+  const scifi = Material.createBasicTexture('../_textures/sci-fi.png')
+  scifi.addNormalTexture('../_textures/sci-fi_normal.png')
   scifi.diffuse = [0.5, 0.5, 0.8]
   scifi.specular = [2, 2, 2]
   scifi.shininess = 30
-  scifiCube = ctx.createCubeInstance(scifi, 10)
-  scifiCube.position = [10, 5, 21]
+  scifiCube = ctx.createCubeInstance(scifi, 12)
+  scifiCube.position = [10, 6, 21]
   scifiCube.rotateYDeg(38)
-  scifiCube.flipTextureX = true
 } catch (e) {
   console.error(e)
 }

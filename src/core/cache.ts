@@ -85,22 +85,6 @@ export class TextureCache {
       src: [255, 255, 255, 255],
     })
 
-    // 1 pixel black texture used as base for materials
-    const black1pixel = createTexture(gl, {
-      min: gl.NEAREST,
-      mag: gl.NEAREST,
-      src: [255, 255, 255, 255],
-    })
-
-    // 2x2 checkerboard texture to be used as error texture
-    // const checkerboard = createTexture(gl, {
-    //   min: gl.NEAREST,
-    //   mag: gl.NEAREST,
-    //   src: [255, 255, 255, 255, 128, 128, 128, 255, 128, 128, 128, 255, 255, 255, 255, 255],
-    //   width: 2,
-    //   height: 2,
-    // })
-
     // 1 pixel texture used for normal mapping is sort of blue-violet colour
     const normal1pixel = createTexture(gl, {
       min: gl.NEAREST,
@@ -109,8 +93,6 @@ export class TextureCache {
     })
 
     this._instance.add('_defaults/white', white1pixel)
-    this._instance.add('_defaults/black', black1pixel)
-    //this._instance.add('_defaults/check', checkerboard)
     this._instance.add('_defaults/normal', normal1pixel)
 
     TextureCache.initialized = true
@@ -163,7 +145,7 @@ export class TextureCache {
   getCreate(src: string, filter = true, flipY = true) {
     // check if texture already exists, if so return it
     if (this.cache.has(src)) {
-      log.trace(`👍 Returning texture '${src}' from cache, nice!`)
+      log.trace(`👍 Returning texture '${src}' from cache, nice!`, flipY)
       return this.get(src)
     }
 
