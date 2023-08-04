@@ -1,5 +1,4 @@
 #version 300 es
-#extension GL_GOOGLE_include_directive : enable
 
 // ============================================================================
 // Phong fragment shader
@@ -8,7 +7,42 @@
 
 precision highp float;
 
-#include "../common.glsl"
+const int MAX_LIGHTS = 16;
+
+vec4 mix4(vec4 a, vec4 b, float mix) {
+  return a * (1.0 - mix) + b * mix;
+}
+
+struct LightDir {
+  vec3 direction;
+  vec3 colour;
+  vec3 ambient;
+};
+
+struct LightPos {
+  vec3 position;
+  vec3 colour;
+  vec3 ambient;
+  float constant;
+  float linear;
+  float quad;
+  bool enabled;
+};
+
+struct Material {
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+  vec3 emissive;
+  float shininess;
+  float opacity;
+  float reflectivity;
+  sampler2D diffuseTex;
+  sampler2D specularTex;
+  sampler2D normalTex;
+  samplerCube reflectTex;
+  bool hasNormalTex;
+};
 
 // From vertex shader
 in vec3 v_normal;

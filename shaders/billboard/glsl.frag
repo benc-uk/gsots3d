@@ -1,5 +1,4 @@
 #version 300 es
-#extension GL_GOOGLE_include_directive : enable
 
 // ============================================================================
 // Billboard fragment shader
@@ -8,7 +7,20 @@
 
 precision highp float;
 
-#include "../common.glsl"
+struct Material {
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+  vec3 emissive;
+  float shininess;
+  float opacity;
+  float reflectivity;
+  sampler2D diffuseTex;
+  sampler2D specularTex;
+  sampler2D normalTex;
+  samplerCube reflectTex;
+  bool hasNormalTex;
+};
 
 // From vertex shader
 in vec2 v_texCoord;

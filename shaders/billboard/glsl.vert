@@ -1,5 +1,4 @@
 #version 300 es
-#extension GL_GOOGLE_include_directive : enable
 
 // ============================================================================
 // Billboard vertex shader
@@ -8,7 +7,23 @@
 
 precision highp float;
 
-#include "../common.glsl"
+const int MAX_LIGHTS = 16;
+
+struct LightDir {
+  vec3 direction;
+  vec3 colour;
+  vec3 ambient;
+};
+
+struct LightPos {
+  vec3 position;
+  vec3 colour;
+  vec3 ambient;
+  float constant;
+  float linear;
+  float quad;
+  bool enabled;
+};
 
 // Input attributes from buffers
 in vec4 position;
