@@ -40,7 +40,6 @@ struct Material {
   sampler2D diffuseTex;
   sampler2D specularTex;
   sampler2D normalTex;
-  samplerCube reflectTex;
   bool hasNormalTex;
 };
 
@@ -60,6 +59,8 @@ uniform Material u_mat;
 uniform LightDir u_lightDirGlobal;
 uniform LightPos u_lightsPos[MAX_LIGHTS];
 uniform int u_lightsPosCount;
+// Note this is handled outside the material struct for complex reasons
+uniform samplerCube u_reflectionMap;
 
 // Output colour of this pixel/fragment
 out vec4 outColour;
@@ -153,7 +154,7 @@ void main() {
 
   // Get reflection vector and sample reflection texture
   vec3 R = reflect(-V, N);
-  vec4 reflectCol = vec4(texture(u_mat.reflectTex, R).rgb, 1.0);
+  vec4 reflectCol = vec4(texture(u_reflectionMap, R).rgb, 1.0);
 
   // Not sure if this is correct, but it looks OK in most cases
   outColorPart = mix4(outColorPart, reflectCol, u_mat.reflectivity);

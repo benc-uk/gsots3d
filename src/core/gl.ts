@@ -27,17 +27,22 @@ export function getGl(aa = true, selector = 'canvas') {
   log.info(`🖌️ Creating new WebGL2 context for: '${selector}'`)
 
   const canvasElement = document.querySelector(selector) as HTMLElement
+  if (!canvasElement) {
+    log.error(`💥 FATAL! Unable to find element with selector: '${selector}'`)
+    return undefined
+  }
+
   if (canvasElement && canvasElement.tagName !== 'CANVAS') {
     log.error(`💥 FATAL! Element with selector: '${selector}' is not a canvas element`)
     return undefined
   }
 
   const canvas = canvasElement as HTMLCanvasElement
-
   if (!canvas) {
     log.error(`💥 FATAL! Unable to find canvas element with selector: '${selector}'`)
     return undefined
   }
+
   glContext = canvas.getContext('webgl2', { antialias: aa }) ?? undefined
 
   if (!glContext) {

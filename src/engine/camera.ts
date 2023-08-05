@@ -18,29 +18,35 @@ export class Camera {
   /** Camera position */
   public position: XYZ
 
-  /**  Camera look at point, default [0, 0, 0] */
+  /**  Camera look at point, default: [0, 0, 0] */
   public lookAt: XYZ
 
-  /** Field of view in degrees, default 45 */
+  /** Field of view in degrees, default: 45 */
   public fov: number
 
-  /** Near clipping plane, default 0.1 */
+  /** Near clipping plane, default: 0.1 */
   public near: number
 
-  /** Far clipping plane, default 100 */
+  /** Far clipping plane, default: 100 */
   public far: number
 
-  /** Camera up vector, default [0, 1, 0] */
+  /** Camera up vector, default: [0, 1, 0] */
   public up: XYZ
 
-  /** Change camera projection, default CameraType.PERSPECTIVE */
+  /** Change camera projection, default: CameraType.PERSPECTIVE */
   public type: CameraType
 
-  /** Is this camera active, default true */
+  /** Is this camera active, default: true */
   public active: boolean
 
-  /** Orthographic zoom level, only used when type is orthographic, default 20 */
+  /** Orthographic zoom level, only used when type is orthographic, default: 20 */
   public orthoZoom: number
+
+  /** Is this camera used for a dynamic environment map, default: false */
+  public usedForEnvMap: boolean
+
+  /** Aspect ratio of the camera, default: 1 */
+  public aspectRatio: number
 
   // Used for first person mode
   private fpAngleY: number
@@ -50,7 +56,7 @@ export class Camera {
   private fpTurnSpeed: number
   private fpMoveSpeed: number
 
-  // Used to clamp up/down angle
+  // Used to clamp first person up/down angle
   private maxAngleUp: number = Math.PI / 2 - 0.01
   private maxAngleDown: number = -Math.PI / 2 + 0.01
 
@@ -60,7 +66,7 @@ export class Camera {
   /**
    * Create a new default camera
    */
-  constructor(type = CameraType.PERSPECTIVE) {
+  constructor(type = CameraType.PERSPECTIVE, aspectRatio = 1) {
     this.type = type
     this.active = true
 
@@ -70,8 +76,9 @@ export class Camera {
     this.near = 0.1
     this.far = 100
     this.fov = 45
-
+    this.aspectRatio = aspectRatio
     this.orthoZoom = 20
+    this.usedForEnvMap = false
 
     this.fpMode = false
     this.fpAngleY = 0
@@ -105,12 +112,12 @@ export class Camera {
    * Get the projection matrix for this camera
    * @param aspectRatio Aspect ratio of the canvas
    */
-  projectionMatrix(aspectRatio: number) {
+  get projectionMatrix() {
     if (this.type === CameraType.ORTHOGRAPHIC) {
       const camProj = mat4.ortho(
         mat4.create(),
-        -aspectRatio * this.orthoZoom,
-        aspectRatio * this.orthoZoom,
+        -this.aspectRatio * this.orthoZoom,
+        this.aspectRatio * this.orthoZoom,
         -this.orthoZoom,
         this.orthoZoom,
         this.near,
@@ -119,7 +126,7 @@ export class Camera {
 
       return camProj
     } else {
-      const camProj = mat4.perspective(mat4.create(), this.fov * (Math.PI / 180), aspectRatio, this.near, this.far)
+      const camProj = mat4.perspective(mat4.create(), this.fov * (Math.PI / 180), this.aspectRatio, this.near, this.far)
       return camProj
     }
   }

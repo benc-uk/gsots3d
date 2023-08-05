@@ -34,6 +34,7 @@ try {
   door.scale = [5, 5, 5]
   door.position = [130, 0, 50]
   door.rotateYDeg(-90)
+
   const door2 = ctx.createModelInstance('door')
   door2.scale = [5, 5, 5]
   door2.position = [-130, 0, -50]
@@ -42,7 +43,6 @@ try {
   const door3 = ctx.createModelInstance('door')
   door3.scale = [5, 5, 5]
   door3.position = [0, 0, -130]
-  // door3.rotateYDeg(-90)
 
   const table = ctx.createModelInstance('table')
   table.position = [16, 0, -15]
@@ -64,7 +64,8 @@ try {
   matGlass.specular = [1.0, 1.0, 1.0]
   matGlass.shininess = 100
   matGlass.opacity = 0.3
-  const crystalBall = ctx.createSphereInstance(matGlass, 4, 16, 8)
+  matGlass.reflectivity = 0.6
+  const crystalBall = ctx.createSphereInstance(matGlass, 4, 24, 12)
   crystalBall.position = [12, 22, -8]
 
   const matBlueGlass = Material.createSolidColour(0.2, 0.3, 1.0)
@@ -78,7 +79,6 @@ try {
   ctx.createPlaneInstance(floorMat, 260, 260, 1, 1, 8)
   floorMat.diffuse = [0.7, 0.7, 1]
 
-  // wall
   const wallMat1 = Material.createBasicTexture('../_textures/brickwall.jpg')
   wallMat1.addNormalTexture('../_textures/brickwall_normal.jpg')
   wallMat1.specular = [0.5, 0.5, 0.5]
@@ -104,8 +104,9 @@ try {
   const doomImp = ctx.createBillboardInstance(impMat, 30)
   doomImp.scale = [0.8, 0.8, 0.8]
   doomImp.position = [-6, 0, -5]
+
   const mellonTx = Material.createBasicTexture('../_textures/mellon.jpg')
-  const mellon = ctx.createSphereInstance(mellonTx, 4, 32, 16)
+  const mellon = ctx.createSphereInstance(mellonTx, 4, 24, 12)
   mellonTx.diffuse = [0.7, 1.4, 0.7]
   mellonTx.specular = [1.0, 1.0, 1.0]
   mellonTx.shininess = 25
@@ -122,6 +123,7 @@ try {
   const tpMat = Material.createSolidColour(1, 0.8, 0.1)
   tpMat.shininess = 70
   tpMat.specular = [0.8, 0.8, 0.8]
+  tpMat.reflectivity = 0.6
   const tp = ctx.createModelInstance('teapot')
   tp.scale = [1.7, 1.8, 1.7]
   tp.position = [22, 17.5, -8]
@@ -133,6 +135,7 @@ try {
   icoMat.specular = [1.0, 1.0, 1.0]
   icoMat.ambient = [1.0, 1.0, 1.0]
   icoMat.shininess = 80
+  icoMat.reflectivity = 0.2
   ico.material = icoMat
   ico.position = [-6, 4.95, 12]
   ico.rotateXDeg(20)
@@ -242,7 +245,9 @@ ctx.update = (delta) => {
     ctx.camera.position = [x, 25, z]
   }
 
-  //scifiCube.rotateYDeg(delta * 20)
+  scifiCube.rotateYDeg(delta * 25)
 }
+
+ctx.setDynamicEnvmap([0, 15, 0], 256)
 
 ctx.start()

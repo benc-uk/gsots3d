@@ -18,7 +18,6 @@ struct Material {
   sampler2D diffuseTex;
   sampler2D specularTex;
   sampler2D normalTex;
-  samplerCube reflectTex;
   bool hasNormalTex;
 };
 

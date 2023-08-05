@@ -268,6 +268,10 @@ function getGl(aa = true, selector = "canvas") {
   }
   import_loglevel.default.info(`\u{1F58C}\uFE0F Creating new WebGL2 context for: '${selector}'`);
   const canvasElement = document.querySelector(selector);
+  if (!canvasElement) {
+    import_loglevel.default.error(`\u{1F4A5} FATAL! Unable to find element with selector: '${selector}'`);
+    return void 0;
+  }
   if (canvasElement && canvasElement.tagName !== "CANVAS") {
     import_loglevel.default.error(`\u{1F4A5} FATAL! Element with selector: '${selector}' is not a canvas element`);
     return void 0;
@@ -564,6 +568,9 @@ function isType(object, type) {
 }
 function isBuffer(gl, t) {
   return typeof WebGLBuffer !== "undefined" && isType(t, "WebGLBuffer");
+}
+function isRenderbuffer(gl, t) {
+  return typeof WebGLRenderbuffer !== "undefined" && isType(t, "WebGLRenderbuffer");
 }
 function isTexture(gl, t) {
   return typeof WebGLTexture !== "undefined" && isType(t, "WebGLTexture");
@@ -4232,7 +4239,11 @@ function drawBufferInfo(gl, bufferInfo, type, count, offset, instanceCount) {
   }
 }
 var FRAMEBUFFER = 36160;
+var RENDERBUFFER = 36161;
+var TEXTURE_2D = 3553;
+var UNSIGNED_BYTE = 5121;
 var DEPTH_COMPONENT = 6402;
+var RGBA = 6408;
 var DEPTH_COMPONENT24 = 33190;
 var DEPTH_COMPONENT32F = 36012;
 var DEPTH24_STENCIL8 = 35056;
@@ -4244,9 +4255,16 @@ var DEPTH_COMPONENT16 = 33189;
 var STENCIL_INDEX = 6401;
 var STENCIL_INDEX8 = 36168;
 var DEPTH_STENCIL = 34041;
+var COLOR_ATTACHMENT0 = 36064;
 var DEPTH_ATTACHMENT = 36096;
 var STENCIL_ATTACHMENT = 36128;
 var DEPTH_STENCIL_ATTACHMENT = 33306;
+var CLAMP_TO_EDGE = 33071;
+var LINEAR = 9729;
+var defaultAttachments = [
+  { format: RGBA, type: UNSIGNED_BYTE, min: LINEAR, wrap: CLAMP_TO_EDGE },
+  { format: DEPTH_STENCIL }
+];
 var attachmentsByFormat = {};
 attachmentsByFormat[DEPTH_STENCIL] = DEPTH_STENCIL_ATTACHMENT;
 attachmentsByFormat[STENCIL_INDEX] = STENCIL_ATTACHMENT;
@@ -4257,6 +4275,9 @@ attachmentsByFormat[DEPTH_COMPONENT24] = DEPTH_ATTACHMENT;
 attachmentsByFormat[DEPTH_COMPONENT32F] = DEPTH_ATTACHMENT;
 attachmentsByFormat[DEPTH24_STENCIL8] = DEPTH_STENCIL_ATTACHMENT;
 attachmentsByFormat[DEPTH32F_STENCIL8] = DEPTH_STENCIL_ATTACHMENT;
+function getAttachmentPointForFormat(format, internalFormat) {
+  return attachmentsByFormat[format] || attachmentsByFormat[internalFormat];
+}
 var renderbufferFormats = {};
 renderbufferFormats[RGBA4] = true;
 renderbufferFormats[RGB5_A1] = true;
@@ -4265,6 +4286,91 @@ renderbufferFormats[DEPTH_STENCIL] = true;
 renderbufferFormats[DEPTH_COMPONENT16] = true;
 renderbufferFormats[STENCIL_INDEX] = true;
 renderbufferFormats[STENCIL_INDEX8] = true;
+function isRenderbufferFormat(format) {
+  return renderbufferFormats[format];
+}
+var MAX_COLOR_ATTACHMENT_POINTS = 32;
+function isColorAttachmentPoint(attachmentPoint) {
+  return attachmentPoint >= COLOR_ATTACHMENT0 && attachmentPoint < COLOR_ATTACHMENT0 + MAX_COLOR_ATTACHMENT_POINTS;
+}
+function createFramebufferInfo(gl, attachments, width, height) {
+  const target = FRAMEBUFFER;
+  const fb = gl.createFramebuffer();
+  gl.bindFramebuffer(target, fb);
+  width = width || gl.drawingBufferWidth;
+  height = height || gl.drawingBufferHeight;
+  attachments = attachments || defaultAttachments;
+  const usedColorAttachmentsPoints = [];
+  const framebufferInfo = {
+    framebuffer: fb,
+    attachments: [],
+    width,
+    height
+  };
+  attachments.forEach(function(attachmentOptions, i) {
+    let attachment = attachmentOptions.attachment;
+    const samples = attachmentOptions.samples;
+    const format = attachmentOptions.format;
+    let attachmentPoint = attachmentOptions.attachmentPoint || getAttachmentPointForFormat(format, attachmentOptions.internalFormat);
+    if (!attachmentPoint) {
+      attachmentPoint = COLOR_ATTACHMENT0 + i;
+    }
+    if (isColorAttachmentPoint(attachmentPoint)) {
+      usedColorAttachmentsPoints.push(attachmentPoint);
+    }
+    if (!attachment) {
+      if (samples !== void 0 || isRenderbufferFormat(format)) {
+        attachment = gl.createRenderbuffer();
+        gl.bindRenderbuffer(RENDERBUFFER, attachment);
+        if (samples > 1) {
+          gl.renderbufferStorageMultisample(RENDERBUFFER, samples, format, width, height);
+        } else {
+          gl.renderbufferStorage(RENDERBUFFER, format, width, height);
+        }
+      } else {
+        const textureOptions = Object.assign({}, attachmentOptions);
+        textureOptions.width = width;
+        textureOptions.height = height;
+        if (textureOptions.auto === void 0) {
+          textureOptions.auto = false;
+          textureOptions.min = textureOptions.min || textureOptions.minMag || LINEAR;
+          textureOptions.mag = textureOptions.mag || textureOptions.minMag || LINEAR;
+          textureOptions.wrapS = textureOptions.wrapS || textureOptions.wrap || CLAMP_TO_EDGE;
+          textureOptions.wrapT = textureOptions.wrapT || textureOptions.wrap || CLAMP_TO_EDGE;
+        }
+        attachment = createTexture(gl, textureOptions);
+      }
+    }
+    if (isRenderbuffer(gl, attachment)) {
+      gl.framebufferRenderbuffer(target, attachmentPoint, RENDERBUFFER, attachment);
+    } else if (isTexture(gl, attachment)) {
+      if (attachmentOptions.layer !== void 0) {
+        gl.framebufferTextureLayer(
+          target,
+          attachmentPoint,
+          attachment,
+          attachmentOptions.level || 0,
+          attachmentOptions.layer
+        );
+      } else {
+        gl.framebufferTexture2D(
+          target,
+          attachmentPoint,
+          attachmentOptions.target || TEXTURE_2D,
+          attachment,
+          attachmentOptions.level || 0
+        );
+      }
+    } else {
+      throw new Error("unknown attachment type");
+    }
+    framebufferInfo.attachments.push(attachment);
+  });
+  if (gl.drawBuffers) {
+    gl.drawBuffers(usedColorAttachmentsPoints);
+  }
+  return framebufferInfo;
+}
 function bindFramebufferInfo(gl, framebufferInfo, target) {
   target = target || FRAMEBUFFER;
   if (framebufferInfo) {
@@ -6257,8 +6363,8 @@ var Camera = class {
   /**
    * Create a new default camera
    */
-  constructor(type = 0 /* PERSPECTIVE */) {
-    // Used to clamp up/down angle
+  constructor(type = 0 /* PERSPECTIVE */, aspectRatio = 1) {
+    // Used to clamp first person up/down angle
     this.maxAngleUp = Math.PI / 2 - 0.01;
     this.maxAngleDown = -Math.PI / 2 + 0.01;
     this.type = type;
@@ -6269,7 +6375,9 @@ var Camera = class {
     this.near = 0.1;
     this.far = 100;
     this.fov = 45;
+    this.aspectRatio = aspectRatio;
     this.orthoZoom = 20;
+    this.usedForEnvMap = false;
     this.fpMode = false;
     this.fpAngleY = 0;
     this.fpAngleX = 0;
@@ -6296,12 +6404,12 @@ var Camera = class {
    * Get the projection matrix for this camera
    * @param aspectRatio Aspect ratio of the canvas
    */
-  projectionMatrix(aspectRatio) {
+  get projectionMatrix() {
     if (this.type === 1 /* ORTHOGRAPHIC */) {
       const camProj = mat4_exports.ortho(
         mat4_exports.create(),
-        -aspectRatio * this.orthoZoom,
-        aspectRatio * this.orthoZoom,
+        -this.aspectRatio * this.orthoZoom,
+        this.aspectRatio * this.orthoZoom,
         -this.orthoZoom,
         this.orthoZoom,
         this.near,
@@ -6309,7 +6417,7 @@ var Camera = class {
       );
       return camProj;
     } else {
-      const camProj = mat4_exports.perspective(mat4_exports.create(), this.fov * (Math.PI / 180), aspectRatio, this.near, this.far);
+      const camProj = mat4_exports.perspective(mat4_exports.create(), this.fov * (Math.PI / 180), this.aspectRatio, this.near, this.far);
       return camProj;
     }
   }
@@ -6476,7 +6584,8 @@ var EnvironmentMap = class {
     });
   }
   /**
-   * Render the EnvironmentMap, using the view & projection matrices around the camera
+   * Render this envmap as a cube in, around the given camera & matrices
+   * This is used for rendering the envmap as a background and skybox around the scene
    * @param viewMatrix View matrix
    * @param projMatrix Projection matrix
    * @param camera Camera
@@ -6504,6 +6613,126 @@ var EnvironmentMap = class {
     return this._texture;
   }
 };
+var DynamicEnvironmentMap = class {
+  /**
+   * Create a new dynamic environment map
+   * @param gl GL context
+   * @param size Size of each face of the cube map
+   * @param position Position of the center of the cube map, reflections will be rendered from here
+   */
+  constructor(gl, size, position, far) {
+    this.facings = [];
+    this._texture = createTexture(gl, {
+      target: gl.TEXTURE_CUBE_MAP,
+      width: size,
+      height: size,
+      minMag: gl.LINEAR,
+      cubeFaceOrder: [
+        gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+        gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+        gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+        gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+        gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+        gl.TEXTURE_CUBE_MAP_NEGATIVE_Z
+      ]
+    });
+    this.facings = [
+      {
+        face: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+        direction: [1, 0, 0],
+        buffer: createFramebufferInfo(
+          gl,
+          [{ attachment: this._texture, target: gl.TEXTURE_CUBE_MAP_POSITIVE_X }, { format: gl.DEPTH_COMPONENT16 }],
+          size,
+          size
+        )
+      },
+      {
+        face: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+        direction: [-1, 0, 0],
+        buffer: createFramebufferInfo(
+          gl,
+          [{ attachment: this._texture, target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X }, { format: gl.DEPTH_COMPONENT16 }],
+          size,
+          size
+        )
+      },
+      {
+        face: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+        direction: [0, 1, 0],
+        buffer: createFramebufferInfo(
+          gl,
+          [{ attachment: this._texture, target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y }, { format: gl.DEPTH_COMPONENT16 }],
+          size,
+          size
+        )
+      },
+      {
+        face: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+        direction: [0, -1, 0],
+        buffer: createFramebufferInfo(
+          gl,
+          [{ attachment: this._texture, target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y }, { format: gl.DEPTH_COMPONENT16 }],
+          size,
+          size
+        )
+      },
+      {
+        face: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+        direction: [0, 0, 1],
+        buffer: createFramebufferInfo(
+          gl,
+          [{ attachment: this._texture, target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z }, { format: gl.DEPTH_COMPONENT16 }],
+          size,
+          size
+        )
+      },
+      {
+        face: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+        direction: [0, 0, -1],
+        buffer: createFramebufferInfo(
+          gl,
+          [{ attachment: this._texture, target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z }, { format: gl.DEPTH_COMPONENT16 }],
+          size,
+          size
+        )
+      }
+    ];
+    this.camera = new Camera(0 /* PERSPECTIVE */);
+    this.camera.position = position;
+    this.position = position;
+    this.camera.fov = 90;
+    this.camera.usedForEnvMap = true;
+    this.camera.far = far;
+  }
+  /** Get the texture of the environment map */
+  get texture() {
+    return this._texture;
+  }
+  /**
+   * Update the environment map, by rendering the scene from the given position
+   * @param ctx GSOTS Context
+   */
+  update(ctx) {
+    const gl = ctx.glContext;
+    for (const facing of this.facings) {
+      this.camera.lookAt = [
+        this.camera.position[0] + facing.direction[0],
+        this.camera.position[1] + facing.direction[1],
+        this.camera.position[2] + facing.direction[2]
+      ];
+      this.camera.up = [0, -1, 0];
+      if (facing.face === gl.TEXTURE_CUBE_MAP_NEGATIVE_Y) {
+        this.camera.up = [0, 0, -1];
+      }
+      if (facing.face === gl.TEXTURE_CUBE_MAP_POSITIVE_Y) {
+        this.camera.up = [0, 0, 1];
+      }
+      bindFramebufferInfo(gl, facing.buffer);
+      ctx.renderWithCamera(this.camera);
+    }
+  }
+};
 
 // src/models/instance.ts
 var Instance = class {
@@ -6512,6 +6741,7 @@ var Instance = class {
    */
   constructor(renderable) {
     this.enabled = true;
+    this.metadata = {};
     /**
      * Per instance texture flip flags, useful for flipping textures on a per instance basis
      * @default false
@@ -6797,18 +7027,8 @@ var Material = class _Material {
       diffuseTex: this.diffuseTex ? this.diffuseTex : null,
       specularTex: this.specularTex ? this.specularTex : null,
       normalTex: this.normalTex ? this.normalTex : null,
-      reflectTex: this.reflectTex ? this.reflectTex : null,
       hasNormalTex: this.normalTex ? true : false
     };
-  }
-  /**
-   * Update the material from a EnvironmentMap
-   * @param envMap EnvironmentMap to use and apply to this material
-   */
-  applyEnvMap(envMap) {
-    if (envMap && this.reflectivity > 0) {
-      this.reflectTex = envMap.texture;
-    }
   }
 };
 
@@ -7283,25 +7503,23 @@ var HUD = class {
 };
 
 // shaders/phong/glsl.frag
-var glsl_default3 = "#version 300 es\n#extension GL_GOOGLE_include_directive : enable\nprecision highp float;const int MAX_LIGHTS=16;struct LightDir{vec3 direction;vec3 colour;vec3 ambient;};struct LightPos{vec3 position;vec3 colour;vec3 ambient;float constant;float linear;float quad;bool enabled;};struct Material{vec3 ambient;vec3 diffuse;vec3 specular;vec3 emissive;float shininess;float opacity;float reflectivity;sampler2D diffuseTex;sampler2D specularTex;sampler2D normalTex;samplerCube reflectTex;bool hasNormalTex;};vec4 mix4(vec4 a,vec4 b,float mix){return a*(1.0-mix)+b*mix;}in vec3 v_normal;in vec2 v_texCoord;in vec4 v_position;uniform vec3 u_camPos;uniform float u_gamma;uniform bool u_flipTextureX;uniform bool u_flipTextureY;uniform Material u_mat;uniform LightDir u_lightDirGlobal;uniform LightPos u_lightsPos[MAX_LIGHTS];uniform int u_lightsPosCount;out vec4 outColour;vec2 texCoord;vec4 shadeDirLight(LightDir light,Material mat,vec3 N,vec3 V){vec3 L=normalize(-light.direction);vec3 H=normalize(L+V);vec3 diffuseCol=vec3(texture(mat.diffuseTex,texCoord))*mat.diffuse;vec3 specularCol=vec3(texture(mat.specularTex,texCoord))*mat.specular;float diff=dot(N,L);float spec=diff>0.0?pow(max(dot(N,H),0.0),mat.shininess):0.0;vec3 ambient=light.ambient*mat.ambient*diffuseCol;vec3 diffuse=light.colour*max(diff,0.0)*diffuseCol;vec3 specular=light.colour*spec*specularCol;return vec4(ambient+diffuse,mat.opacity/float(u_lightsPosCount+1))+vec4(specular,spec);}vec4 shadePosLight(LightPos light,Material mat,vec3 N,vec3 V){vec3 L=normalize(light.position-v_position.xyz);vec3 H=normalize(L+V);vec3 diffuseCol=vec3(texture(mat.diffuseTex,texCoord))*mat.diffuse;vec3 specularCol=vec3(texture(mat.specularTex,texCoord))*mat.specular;float diff=dot(N,L);float spec=diff>0.0?pow(max(dot(N,H),0.0),mat.shininess):0.0;float dist=length(light.position-v_position.xyz);float attenuation=1.0/(light.constant+light.linear*dist+light.quad*(dist*dist));vec3 ambient=light.ambient*mat.ambient*diffuseCol*attenuation;vec3 diffuse=light.colour*max(diff,0.0)*diffuseCol*attenuation;vec3 specular=light.colour*spec*specularCol*attenuation;return vec4(ambient+diffuse,mat.opacity/float(u_lightsPosCount+1))+vec4(specular,spec);}void main(){vec3 V=normalize(u_camPos-v_position.xyz);texCoord=u_flipTextureY?vec2(v_texCoord.x,1.0-v_texCoord.y):v_texCoord;texCoord=u_flipTextureX?vec2(1.0-texCoord.x,texCoord.y):texCoord;vec3 N=normalize(v_normal);if(u_mat.hasNormalTex){vec3 normMap=texture(u_mat.normalTex,texCoord).xyz*2.0-1.0;vec3 Q1=dFdx(v_position.xyz);vec3 Q2=dFdy(v_position.xyz);vec2 st1=dFdx(texCoord);vec2 st2=dFdy(texCoord);vec3 T=-normalize(Q1*st2.t-Q2*st1.t);vec3 B=normalize(cross(N,T));mat3 TBN=mat3(T,B,N);N=normalize(TBN*normMap);}vec4 outColorPart=shadeDirLight(u_lightDirGlobal,u_mat,N,V);for(int i=0;i<u_lightsPosCount;i++){outColorPart+=shadePosLight(u_lightsPos[i],u_mat,N,V);}float emissiveAlpha=u_mat.emissive.r+u_mat.emissive.g+u_mat.emissive.b>0.0?1.0:0.0;outColorPart+=vec4(u_mat.emissive,emissiveAlpha);vec3 R=reflect(-V,N);vec4 reflectCol=vec4(texture(u_mat.reflectTex,R).rgb,1.0);outColorPart=mix4(outColorPart,reflectCol,u_mat.reflectivity);outColorPart.rgb=pow(outColorPart.rgb,vec3(1.0/u_gamma));outColour=outColorPart;}";
+var glsl_default3 = "#version 300 es\nprecision highp float;const int MAX_LIGHTS=16;vec4 mix4(vec4 a,vec4 b,float mix){return a*(1.0-mix)+b*mix;}struct LightDir{vec3 direction;vec3 colour;vec3 ambient;};struct LightPos{vec3 position;vec3 colour;vec3 ambient;float constant;float linear;float quad;bool enabled;};struct Material{vec3 ambient;vec3 diffuse;vec3 specular;vec3 emissive;float shininess;float opacity;float reflectivity;sampler2D diffuseTex;sampler2D specularTex;sampler2D normalTex;bool hasNormalTex;};in vec3 v_normal;in vec2 v_texCoord;in vec4 v_position;uniform vec3 u_camPos;uniform float u_gamma;uniform bool u_flipTextureX;uniform bool u_flipTextureY;uniform Material u_mat;uniform LightDir u_lightDirGlobal;uniform LightPos u_lightsPos[MAX_LIGHTS];uniform int u_lightsPosCount;uniform samplerCube u_reflectionMap;out vec4 outColour;vec2 texCoord;vec4 shadeDirLight(LightDir light,Material mat,vec3 N,vec3 V){vec3 L=normalize(-light.direction);vec3 H=normalize(L+V);vec3 diffuseCol=vec3(texture(mat.diffuseTex,texCoord))*mat.diffuse;vec3 specularCol=vec3(texture(mat.specularTex,texCoord))*mat.specular;float diff=dot(N,L);float spec=diff>0.0?pow(max(dot(N,H),0.0),mat.shininess):0.0;vec3 ambient=light.ambient*mat.ambient*diffuseCol;vec3 diffuse=light.colour*max(diff,0.0)*diffuseCol;vec3 specular=light.colour*spec*specularCol;return vec4(ambient+diffuse,mat.opacity/float(u_lightsPosCount+1))+vec4(specular,spec);}vec4 shadePosLight(LightPos light,Material mat,vec3 N,vec3 V){vec3 L=normalize(light.position-v_position.xyz);vec3 H=normalize(L+V);vec3 diffuseCol=vec3(texture(mat.diffuseTex,texCoord))*mat.diffuse;vec3 specularCol=vec3(texture(mat.specularTex,texCoord))*mat.specular;float diff=dot(N,L);float spec=diff>0.0?pow(max(dot(N,H),0.0),mat.shininess):0.0;float dist=length(light.position-v_position.xyz);float attenuation=1.0/(light.constant+light.linear*dist+light.quad*(dist*dist));vec3 ambient=light.ambient*mat.ambient*diffuseCol*attenuation;vec3 diffuse=light.colour*max(diff,0.0)*diffuseCol*attenuation;vec3 specular=light.colour*spec*specularCol*attenuation;return vec4(ambient+diffuse,mat.opacity/float(u_lightsPosCount+1))+vec4(specular,spec);}void main(){vec3 V=normalize(u_camPos-v_position.xyz);texCoord=u_flipTextureY?vec2(v_texCoord.x,1.0-v_texCoord.y):v_texCoord;texCoord=u_flipTextureX?vec2(1.0-texCoord.x,texCoord.y):texCoord;vec3 N=normalize(v_normal);if(u_mat.hasNormalTex){vec3 normMap=texture(u_mat.normalTex,texCoord).xyz*2.0-1.0;vec3 Q1=dFdx(v_position.xyz);vec3 Q2=dFdy(v_position.xyz);vec2 st1=dFdx(texCoord);vec2 st2=dFdy(texCoord);vec3 T=-normalize(Q1*st2.t-Q2*st1.t);vec3 B=normalize(cross(N,T));mat3 TBN=mat3(T,B,N);N=normalize(TBN*normMap);}vec4 outColorPart=shadeDirLight(u_lightDirGlobal,u_mat,N,V);for(int i=0;i<u_lightsPosCount;i++){outColorPart+=shadePosLight(u_lightsPos[i],u_mat,N,V);}float emissiveAlpha=u_mat.emissive.r+u_mat.emissive.g+u_mat.emissive.b>0.0?1.0:0.0;outColorPart+=vec4(u_mat.emissive,emissiveAlpha);vec3 R=reflect(-V,N);vec4 reflectCol=vec4(texture(u_reflectionMap,R).rgb,1.0);outColorPart=mix4(outColorPart,reflectCol,u_mat.reflectivity);outColorPart.rgb=pow(outColorPart.rgb,vec3(1.0/u_gamma));outColour=outColorPart;}";
 
 // shaders/phong/glsl.vert
 var glsl_default4 = "#version 300 es\nprecision highp float;in vec4 position;in vec3 normal;in vec2 texcoord;uniform mat4 u_worldViewProjection;uniform mat4 u_worldInverseTranspose;uniform mat4 u_world;out vec2 v_texCoord;out vec3 v_normal;out vec4 v_position;void main(){v_texCoord=texcoord;v_normal=(u_worldInverseTranspose*vec4(normal,0)).xyz;v_position=u_world*position;gl_Position=u_worldViewProjection*position;}";
 
 // shaders/billboard/glsl.frag
-var glsl_default5 = "#version 300 es\n#extension GL_GOOGLE_include_directive : enable\nprecision highp float;const int MAX_LIGHTS=16;struct LightDir{vec3 direction;vec3 colour;vec3 ambient;};struct LightPos{vec3 position;vec3 colour;vec3 ambient;float constant;float linear;float quad;bool enabled;};struct Material{vec3 ambient;vec3 diffuse;vec3 specular;vec3 emissive;float shininess;float opacity;float reflectivity;sampler2D diffuseTex;sampler2D specularTex;sampler2D normalTex;samplerCube reflectTex;bool hasNormalTex;};vec4 mix4(vec4 a,vec4 b,float mix){return a*(1.0-mix)+b*mix;}in vec2 v_texCoord;in vec3 v_lighting;uniform Material u_mat;uniform float u_gamma;out vec4 outColour;void main(){vec4 texel=texture(u_mat.diffuseTex,v_texCoord);if(texel.a<0.75){discard;}vec3 colour=texel.rgb*u_mat.diffuse*v_lighting;colour=pow(colour,vec3(1.0/u_gamma));outColour=vec4(colour,u_mat.opacity);}";
+var glsl_default5 = "#version 300 es\nprecision highp float;struct Material{vec3 ambient;vec3 diffuse;vec3 specular;vec3 emissive;float shininess;float opacity;float reflectivity;sampler2D diffuseTex;sampler2D specularTex;sampler2D normalTex;bool hasNormalTex;};in vec2 v_texCoord;in vec3 v_lighting;uniform Material u_mat;uniform float u_gamma;out vec4 outColour;void main(){vec4 texel=texture(u_mat.diffuseTex,v_texCoord);if(texel.a<0.75){discard;}vec3 colour=texel.rgb*u_mat.diffuse*v_lighting;colour=pow(colour,vec3(1.0/u_gamma));outColour=vec4(colour,u_mat.opacity);}";
 
 // shaders/billboard/glsl.vert
-var glsl_default6 = "#version 300 es\n#extension GL_GOOGLE_include_directive : enable\nprecision highp float;const int MAX_LIGHTS=16;struct LightDir{vec3 direction;vec3 colour;vec3 ambient;};struct LightPos{vec3 position;vec3 colour;vec3 ambient;float constant;float linear;float quad;bool enabled;};struct Material{vec3 ambient;vec3 diffuse;vec3 specular;vec3 emissive;float shininess;float opacity;float reflectivity;sampler2D diffuseTex;sampler2D specularTex;sampler2D normalTex;samplerCube reflectTex;bool hasNormalTex;};vec4 mix4(vec4 a,vec4 b,float mix){return a*(1.0-mix)+b*mix;}in vec4 position;in vec2 texcoord;uniform mat4 u_worldViewProjection;uniform mat4 u_world;uniform int u_lightsPosCount;uniform vec3 u_camPos;uniform LightDir u_lightDirGlobal;uniform LightPos u_lightsPos[MAX_LIGHTS];out vec2 v_texCoord;out vec3 v_lighting;vec2 lightCalc(vec3 N,vec3 L,vec3 H,float shininess){float diff=dot(N,L);float spec=diff>0.0?pow(max(dot(N,H),0.0),shininess):0.0;return vec2(diff,spec);}void main(){v_texCoord=texcoord;gl_Position=u_worldViewProjection*position;vec3 worldPos=(u_world*position).xyz;vec3 worldNormal=normalize(u_camPos-worldPos);vec3 V=normalize(u_camPos-worldPos);vec3 N=normalize(worldNormal);float fudge=1.5;for(int i=0;i<u_lightsPosCount;i++){LightPos light=u_lightsPos[i];vec3 L=normalize(light.position-worldPos.xyz);float diffuse=max(dot(N,L),0.0);float distance=length(light.position-worldPos.xyz);float attenuation=1.0/(light.constant+light.linear*distance+light.quad*(distance*distance));v_lighting+=light.colour*fudge*attenuation*diffuse;}vec3 globalLightL=normalize(-u_lightDirGlobal.direction);float globalDiffuse=dot(vec3(0.0,1.0,0.0),globalLightL);v_lighting+=u_lightDirGlobal.colour*globalDiffuse;v_lighting+=u_lightDirGlobal.ambient;}";
+var glsl_default6 = "#version 300 es\nprecision highp float;const int MAX_LIGHTS=16;struct LightDir{vec3 direction;vec3 colour;vec3 ambient;};struct LightPos{vec3 position;vec3 colour;vec3 ambient;float constant;float linear;float quad;bool enabled;};in vec4 position;in vec2 texcoord;uniform mat4 u_worldViewProjection;uniform mat4 u_world;uniform int u_lightsPosCount;uniform vec3 u_camPos;uniform LightDir u_lightDirGlobal;uniform LightPos u_lightsPos[MAX_LIGHTS];out vec2 v_texCoord;out vec3 v_lighting;vec2 lightCalc(vec3 N,vec3 L,vec3 H,float shininess){float diff=dot(N,L);float spec=diff>0.0?pow(max(dot(N,H),0.0),shininess):0.0;return vec2(diff,spec);}void main(){v_texCoord=texcoord;gl_Position=u_worldViewProjection*position;vec3 worldPos=(u_world*position).xyz;vec3 worldNormal=normalize(u_camPos-worldPos);vec3 V=normalize(u_camPos-worldPos);vec3 N=normalize(worldNormal);float fudge=1.5;for(int i=0;i<u_lightsPosCount;i++){LightPos light=u_lightsPos[i];vec3 L=normalize(light.position-worldPos.xyz);float diffuse=max(dot(N,L),0.0);float distance=length(light.position-worldPos.xyz);float attenuation=1.0/(light.constant+light.linear*distance+light.quad*(distance*distance));v_lighting+=light.colour*fudge*attenuation*diffuse;}vec3 globalLightL=normalize(-u_lightDirGlobal.direction);float globalDiffuse=dot(vec3(0.0,1.0,0.0),globalLightL);v_lighting+=u_lightDirGlobal.colour*globalDiffuse;v_lighting+=u_lightDirGlobal.ambient;}";
 
 // src/core/context.ts
 var MAX_LIGHTS = 16;
 var Context = class _Context {
-  /**
-   * Constructor is private, use init() to create a new context
-   */
+  /** Constructor is private, use init() to create a new context */
   constructor(gl) {
-    this.aspectRatio = 1;
+    //private aspectRatio = 1
     this.started = false;
     this.instances = [];
     this.instancesTrans = [];
@@ -7347,24 +7565,28 @@ var Context = class _Context {
     import_loglevel7.default.info(`\u{1F451} GSOTS-3D context created, v${version}`);
   }
   // ==== Getters =============================================================
+  /** Get the active camera */
   get camera() {
     return this._camera;
   }
+  /** Get the name of the active camera */
   get cameraName() {
     return this.activeCameraName;
   }
   /**
-   * Create & initialize a new Context which will render into provided canvas selector
+   * Create & initialize a new Context which will render into provided canvas selector. This is where you start when using the library.
+   * @param canvasSelector CSS selector for canvas element, default is 'canvas'
+   * @param antiAlias Enable anti-aliasing in GL, default is true
    */
   static async init(canvasSelector = "canvas", antiAlias = true) {
     const gl = getGl(antiAlias, canvasSelector);
     if (!gl) {
-      import_loglevel7.default.error("\u{1F4A5} Failed to get WebGL context, this is extremely bad news");
+      import_loglevel7.default.error("\u{1F4A5} Failed to create WebGL context, this is extremely bad news");
       throw new Error("Failed to get WebGL context");
     }
     const ctx = new _Context(gl);
     const canvas = gl.canvas;
-    ctx.aspectRatio = canvas.clientWidth / canvas.clientHeight;
+    ctx.camera.aspectRatio = canvas.clientWidth / canvas.clientHeight;
     const phongProgInfo = createProgramInfo(gl, [glsl_default4, glsl_default3]);
     ProgramCache.init(phongProgInfo);
     ProgramCache.instance.add(ProgramCache.PROG_PHONG, phongProgInfo);
@@ -7379,12 +7601,16 @@ var Context = class _Context {
   }
   /**
    * Main render loop, called every frame
+   * @param now Current time in milliseconds
    */
   async render(now) {
     if (!this.gl)
       return;
     stats.updateTime(now * 1e-3);
     this.update(stats.deltaTime);
+    if (this.dynamicEnvMap) {
+      this.dynamicEnvMap.update(this);
+    }
     bindFramebufferInfo(this.gl, null);
     this.renderWithCamera(this.camera);
     if (this.debug) {
@@ -7411,8 +7637,15 @@ var Context = class _Context {
   renderWithCamera(camera) {
     if (!this.gl)
       return;
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
     camera.update();
     const camMatrix = camera.matrix;
+    let reflectMap = this.envmap?.texture ?? null;
+    if (this.dynamicEnvMap) {
+      if (!camera.usedForEnvMap) {
+        reflectMap = this.dynamicEnvMap.texture;
+      }
+    }
     const uniforms = {
       u_gamma: this.gamma ?? 1,
       u_worldInverseTranspose: mat4_exports.create(),
@@ -7420,8 +7653,9 @@ var Context = class _Context {
       u_worldViewProjection: mat4_exports.create(),
       // Updated per instance
       u_view: mat4_exports.invert(mat4_exports.create(), camMatrix),
-      u_proj: camera.projectionMatrix(this.aspectRatio),
-      u_camPos: camera.position
+      u_proj: camera.projectionMatrix,
+      u_camPos: camera.position,
+      u_reflectionMap: reflectMap
     };
     if (this.envmap) {
       this.envmap.render(uniforms.u_view, uniforms.u_proj, camera);
@@ -7444,7 +7678,6 @@ var Context = class _Context {
     }
     uniforms.u_lightsPosCount = lightCount;
     this.gl.enable(this.gl.CULL_FACE);
-    uniforms.u_special = 0;
     for (const instance of this.instances) {
       instance.render(this.gl, uniforms);
     }
@@ -7472,6 +7705,9 @@ var Context = class _Context {
   stop() {
     this.started = false;
   }
+  get glContext() {
+    return this.gl;
+  }
   /**
    * Resize the canvas to match the size of the element it's in
    * @param viewportOnly - Only resize the viewport, not the canvas
@@ -7481,7 +7717,7 @@ var Context = class _Context {
     if (!viewportOnly)
       resizeCanvasToDisplaySize(canvas);
     this.gl.viewport(0, 0, canvas.width, canvas.height);
-    this.aspectRatio = canvas.width / canvas.height;
+    this.camera.aspectRatio = canvas.width / canvas.height;
     import_loglevel7.default.info(
       `\u{1F4D0} RESIZE Internal: ${canvas.width} x ${canvas.height}, display: ${canvas.clientWidth} x ${canvas.clientHeight}`
     );
@@ -7566,7 +7802,6 @@ var Context = class _Context {
   createSphereInstance(material, radius = 5, subdivisionsH = 16, subdivisionsV = 8) {
     const sphere = new PrimitiveSphere(this.gl, radius, subdivisionsH, subdivisionsV);
     sphere.material = material;
-    material.applyEnvMap(this.envmap);
     const instance = new Instance(sphere);
     this.addInstance(instance, material);
     stats.triangles += sphere.triangleCount;
@@ -7586,7 +7821,6 @@ var Context = class _Context {
   createPlaneInstance(material, width = 5, height = 5, subdivisionsW = 1, subdivisionsH = 1, tiling = 1) {
     const plane = new PrimitivePlane(this.gl, width, height, subdivisionsW, subdivisionsH, tiling);
     plane.material = material;
-    material.applyEnvMap(this.envmap);
     const instance = new Instance(plane);
     this.addInstance(instance, material);
     stats.triangles += plane.triangleCount;
@@ -7600,7 +7834,6 @@ var Context = class _Context {
   createCubeInstance(material, size = 5) {
     const cube = new PrimitiveCube(this.gl, size);
     cube.material = material;
-    material.applyEnvMap(this.envmap);
     const instance = new Instance(cube);
     this.addInstance(instance, material);
     stats.triangles += cube.triangleCount;
@@ -7614,7 +7847,6 @@ var Context = class _Context {
   createCylinderInstance(material, r = 2, h = 5, subdivisionsR = 16, subdivisionsH = 1, caps = true) {
     const cyl = new PrimitiveCylinder(this.gl, r, h, subdivisionsR, subdivisionsH, caps);
     cyl.material = material;
-    material.applyEnvMap(this.envmap);
     const instance = new Instance(cyl);
     this.addInstance(instance, material);
     stats.triangles += cyl.triangleCount;
@@ -7657,19 +7889,13 @@ var Context = class _Context {
     return light;
   }
   /**
-   * Set the EnvironmentMap for the scene, will overwrite any existing envmap
+   * Set the EnvironmentMap for the scene, will overwrite any existing envmap.
+   * This will enable static reflections and create a 'skybox' around the scene
    * @param textureURLs - Array of 6 texture URLs to use for the map, in the order: +X, -X, +Y, -Y, +Z, -Z
    */
   setEnvmap(renderAsBackground = false, ...textureURLs) {
     this.envmap = new EnvironmentMap(this.gl, textureURLs);
     this.envmap.renderAsBackground = renderAsBackground;
-    for (const instance of this.instances) {
-      if (instance.material)
-        instance.material.applyEnvMap(this.envmap);
-      if (instance.renderable instanceof Primitive) {
-        instance.renderable.material.applyEnvMap(this.envmap);
-      }
-    }
   }
   /**
    * Remove any current EnvironmentMap from the scene
@@ -7683,6 +7909,14 @@ var Context = class _Context {
   getEnvmap() {
     return this.envmap;
   }
+  /**
+   * Set and create a dynamic environment map which will enable dynamic/realtime reflections
+   * @param position - Position to render reflections from
+   * @param size - Size of the map to render, note higher sizes will come with a big performance hit
+   */
+  setDynamicEnvmap(position, size = 128, renderDistance = 500) {
+    this.dynamicEnvMap = new DynamicEnvironmentMap(this.gl, size, position, renderDistance);
+  }
 };
 export {
   Billboard,
@@ -7691,6 +7925,7 @@ export {
   CameraType,
   Colours,
   Context,
+  DynamicEnvironmentMap,
   EnvironmentMap,
   HUD,
   Instance,

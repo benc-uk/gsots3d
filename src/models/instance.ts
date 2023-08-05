@@ -18,6 +18,7 @@ export class Instance {
   public scale: XYZ | undefined
   public rotate: XYZ | undefined
   public enabled = true
+  public metadata: Record<string, string | number | boolean> = {}
 
   /**
    * Material to use for this instance, this will override ALL the materials on the model!

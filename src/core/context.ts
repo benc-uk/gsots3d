@@ -14,10 +14,10 @@ import { ModelCache, ProgramCache, TextureCache } from './cache.ts'
 import { LightDirectional, LightPoint } from '../engine/lights.ts'
 import { Camera, CameraType } from '../engine/camera.ts'
 import { Material } from '../engine/material.ts'
-import { EnvironmentMap } from '../engine/envmap.ts'
+import { DynamicEnvironmentMap, EnvironmentMap } from '../engine/envmap.ts'
 import { Instance } from '../models/instance.ts'
 import { Billboard, BillboardType } from '../models/billboard.ts'
-import { PrimitiveCube, PrimitivePlane, PrimitiveSphere, PrimitiveCylinder, Primitive } from '../models/primitive.ts'
+import { PrimitiveCube, PrimitivePlane, PrimitiveSphere, PrimitiveCylinder } from '../models/primitive.ts'
 import { Model } from '../models/model.ts'
 import { HUD } from './hud.ts'
 import { stats } from './stats.ts'
@@ -37,7 +37,7 @@ const MAX_LIGHTS = 16
  */
 export class Context {
   private gl: WebGL2RenderingContext
-  private aspectRatio = 1
+  //private aspectRatio = 1
   private started = false
   private instances: Instance[] = []
   private instancesTrans: Instance[] = []
@@ -46,6 +46,7 @@ export class Context {
   private cameras: Map<string, Camera> = new Map()
   private activeCameraName: string
   private envmap?: EnvironmentMap
+  private dynamicEnvMap?: DynamicEnvironmentMap
 
   /** Global directional light */
   public globalLight: LightDirectional
@@ -74,17 +75,17 @@ export class Context {
 
   // ==== Getters =============================================================
 
+  /** Get the active camera */
   get camera() {
     return this._camera
   }
 
+  /** Get the name of the active camera */
   get cameraName() {
     return this.activeCameraName
   }
 
-  /**
-   * Constructor is private, use init() to create a new context
-   */
+  /** Constructor is private, use init() to create a new context */
   private constructor(gl: WebGL2RenderingContext) {
     this.gl = gl
 
@@ -122,13 +123,15 @@ export class Context {
   }
 
   /**
-   * Create & initialize a new Context which will render into provided canvas selector
+   * Create & initialize a new Context which will render into provided canvas selector. This is where you start when using the library.
+   * @param canvasSelector CSS selector for canvas element, default is 'canvas'
+   * @param antiAlias Enable anti-aliasing in GL, default is true
    */
-  static async init(canvasSelector = 'canvas', antiAlias = true): Promise<Context> {
+  static async init(canvasSelector = 'canvas', antiAlias = true) {
     const gl = getGl(antiAlias, canvasSelector)
 
     if (!gl) {
-      log.error('💥 Failed to get WebGL context, this is extremely bad news')
+      log.error('💥 Failed to create WebGL context, this is extremely bad news')
       throw new Error('Failed to get WebGL context')
     }
 
@@ -136,7 +139,7 @@ export class Context {
     const ctx = new Context(gl)
 
     const canvas = <HTMLCanvasElement>gl.canvas
-    ctx.aspectRatio = canvas.clientWidth / canvas.clientHeight
+    ctx.camera.aspectRatio = canvas.clientWidth / canvas.clientHeight
 
     // Load shaders and put into global cache
     const phongProgInfo = createProgramInfo(gl, [vertShaderPhong, fragShaderPhong])
@@ -149,7 +152,7 @@ export class Context {
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-    // bind to the render function
+    // Bind to the render function
     ctx.render = ctx.render.bind(ctx)
 
     // Global texture cache, needs to be initialized after GL context is ready
@@ -160,6 +163,7 @@ export class Context {
 
   /**
    * Main render loop, called every frame
+   * @param now Current time in milliseconds
    */
   private async render(now: number) {
     if (!this.gl) return
@@ -168,6 +172,12 @@ export class Context {
 
     // Call the external update function
     this.update(stats.deltaTime)
+
+    // Render into the dynamic environment map(s) if any
+    if (this.dynamicEnvMap) {
+      // This is a rare case of passing the context to the object, but it's needed for the dynamic env map
+      this.dynamicEnvMap.update(this)
+    }
 
     // Render the scene from active camera into the main framebuffer
     bindFramebufferInfo(this.gl, null)
@@ -202,11 +212,25 @@ export class Context {
   renderWithCamera(camera: Camera) {
     if (!this.gl) return
 
+    // Clear the framebuffer and depth buffer
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT)
+
     // Update the camera
     camera.update()
 
     // Do this in every frame since camera can move
     const camMatrix = camera.matrix
+
+    // Work out what reflection map to use if any
+    let reflectMap: WebGLTexture | null = this.envmap?.texture ?? null
+
+    // As there is only one dynamic envmap, we can use it across all instances
+    // But ONLY when the camera is rendering into it!
+    if (this.dynamicEnvMap) {
+      if (!camera.usedForEnvMap) {
+        reflectMap = this.dynamicEnvMap.texture
+      }
+    }
 
     // The uniforms that are the same for all instances
     const uniforms = {
@@ -214,11 +238,12 @@ export class Context {
       u_worldInverseTranspose: mat4.create(), // Updated per instance
       u_worldViewProjection: mat4.create(), // Updated per instance
       u_view: mat4.invert(mat4.create(), camMatrix),
-      u_proj: camera.projectionMatrix(this.aspectRatio),
+      u_proj: camera.projectionMatrix,
       u_camPos: camera.position,
+      u_reflectionMap: reflectMap,
     } as UniformSet
 
-    // RENDERING - Draw envmap first
+    // RENDERING - Draw envmap around the scene first
     if (this.envmap) {
       this.envmap.render(<mat4>uniforms.u_view, <mat4>uniforms.u_proj, camera)
     }
@@ -251,7 +276,6 @@ export class Context {
 
     // RENDERING - Draw all opaque instances
     this.gl.enable(this.gl.CULL_FACE)
-    uniforms.u_special = 0
     for (const instance of this.instances) {
       instance.render(this.gl, uniforms)
     }
@@ -289,6 +313,10 @@ export class Context {
     this.started = false
   }
 
+  get glContext() {
+    return this.gl
+  }
+
   /**
    * Resize the canvas to match the size of the element it's in
    * @param viewportOnly - Only resize the viewport, not the canvas
@@ -299,7 +327,7 @@ export class Context {
     if (!viewportOnly) resizeCanvasToDisplaySize(canvas)
 
     this.gl.viewport(0, 0, canvas.width, canvas.height)
-    this.aspectRatio = canvas.width / canvas.height
+    this.camera.aspectRatio = canvas.width / canvas.height
 
     log.info(
       `📐 RESIZE Internal: ${canvas.width} x ${canvas.height}, display: ${canvas.clientWidth} x ${canvas.clientHeight}`
@@ -402,8 +430,6 @@ export class Context {
     const sphere = new PrimitiveSphere(this.gl, radius, subdivisionsH, subdivisionsV)
     sphere.material = material
 
-    material.applyEnvMap(this.envmap)
-
     const instance = new Instance(sphere)
     this.addInstance(instance, material)
     stats.triangles += sphere.triangleCount
@@ -427,8 +453,6 @@ export class Context {
     const plane = new PrimitivePlane(this.gl, width, height, subdivisionsW, subdivisionsH, tiling)
     plane.material = material
 
-    material.applyEnvMap(this.envmap)
-
     const instance = new Instance(plane)
     this.addInstance(instance, material)
     stats.triangles += plane.triangleCount
@@ -446,8 +470,6 @@ export class Context {
     const cube = new PrimitiveCube(this.gl, size)
     cube.material = material
 
-    material.applyEnvMap(this.envmap)
-
     const instance = new Instance(cube)
     this.addInstance(instance, material)
     stats.triangles += cube.triangleCount
@@ -464,8 +486,6 @@ export class Context {
   createCylinderInstance(material: Material, r = 2, h = 5, subdivisionsR = 16, subdivisionsH = 1, caps = true) {
     const cyl = new PrimitiveCylinder(this.gl, r, h, subdivisionsR, subdivisionsH, caps)
     cyl.material = material
-
-    material.applyEnvMap(this.envmap)
 
     const instance = new Instance(cyl)
     this.addInstance(instance, material)
@@ -525,23 +545,13 @@ export class Context {
   }
 
   /**
-   * Set the EnvironmentMap for the scene, will overwrite any existing envmap
+   * Set the EnvironmentMap for the scene, will overwrite any existing envmap.
+   * This will enable static reflections and create a 'skybox' around the scene
    * @param textureURLs - Array of 6 texture URLs to use for the map, in the order: +X, -X, +Y, -Y, +Z, -Z
    */
   setEnvmap(renderAsBackground = false, ...textureURLs: string[]) {
     this.envmap = new EnvironmentMap(this.gl, textureURLs)
     this.envmap.renderAsBackground = renderAsBackground
-
-    // Update all the materials in the scene to use the new envmap
-    // A bit mess, but there's not really a better way
-    for (const instance of this.instances) {
-      if (instance.material) instance.material.applyEnvMap(this.envmap)
-
-      // for instances wrapping primitives, update their material too
-      if (instance.renderable instanceof Primitive) {
-        instance.renderable.material.applyEnvMap(this.envmap)
-      }
-    }
   }
 
   /**
@@ -556,5 +566,14 @@ export class Context {
    */
   getEnvmap() {
     return this.envmap
+  }
+
+  /**
+   * Set and create a dynamic environment map which will enable dynamic/realtime reflections
+   * @param position - Position to render reflections from
+   * @param size - Size of the map to render, note higher sizes will come with a big performance hit
+   */
+  setDynamicEnvmap(position: XYZ, size = 128, renderDistance = 500) {
+    this.dynamicEnvMap = new DynamicEnvironmentMap(this.gl, size, position, renderDistance)
   }
 }

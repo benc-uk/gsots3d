@@ -8,7 +8,6 @@ import { RGB } from './tuples.ts'
 import { MtlMaterial } from '../parsers/mtl-parser.ts'
 import { UniformSet } from '../core/gl.ts'
 import { TextureCache } from '../core/cache.ts'
-import { EnvironmentMap } from './envmap.ts'
 
 export class Material {
   /**
@@ -68,12 +67,6 @@ export class Material {
    * @default "1 pixel white texture"
    */
   public normalTex?: WebGLTexture
-
-  /**
-   * Reflection texture map
-   * @default undefined
-   */
-  public reflectTex?: WebGLTexture
 
   /**
    * Create a new material with default diffuse white colour
@@ -223,18 +216,7 @@ export class Material {
       diffuseTex: this.diffuseTex ? this.diffuseTex : null,
       specularTex: this.specularTex ? this.specularTex : null,
       normalTex: this.normalTex ? this.normalTex : null,
-      reflectTex: this.reflectTex ? this.reflectTex : null,
       hasNormalTex: this.normalTex ? true : false,
     } as UniformSet
-  }
-
-  /**
-   * Update the material from a EnvironmentMap
-   * @param envMap EnvironmentMap to use and apply to this material
-   */
-  applyEnvMap(envMap?: EnvironmentMap) {
-    if (envMap && this.reflectivity > 0) {
-      this.reflectTex = envMap.texture
-    }
   }
 }
