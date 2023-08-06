@@ -297,7 +297,7 @@ function setLogLevel(level) {
 }
 
 // package.json
-var version = "0.0.3";
+var version = "0.0.4-alpha.0";
 
 // node_modules/twgl.js/dist/5.x/twgl-full.module.js
 var VecType = Float32Array;
