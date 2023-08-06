@@ -81,7 +81,8 @@ try {
 
   const wallMat1 = Material.createBasicTexture('../_textures/brickwall.jpg')
   wallMat1.addNormalTexture('../_textures/brickwall_normal.jpg')
-  wallMat1.specular = [0.5, 0.5, 0.5]
+  wallMat1.specular = [0.2, 0.2, 0.2]
+  wallMat1.reflectivity = 0.0
   const wall1 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 4)
   wall1.position = [0, 130, -130]
   wall1.rotateXDeg(90)

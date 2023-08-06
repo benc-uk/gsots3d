@@ -62,6 +62,7 @@ export class Camera {
 
   // Used to track keys pressed in FP mode for better movement
   private keysDown: Set<string>
+  private touches: Touch[] = []
 
   /**
    * Create a new default camera
@@ -197,6 +198,53 @@ export class Camera {
     window.addEventListener('keyup', (e) => {
       if (!this.fpMode || !this.active) return
       this.keysDown.delete(e.key)
+    })
+
+    window.addEventListener('touchstart', (e) => {
+      if (!this.fpMode || !this.active) return
+
+      // If the touch is on the right side of the screen, it's for looking
+      if (e.touches[0].clientX > window.innerWidth / 2) {
+        this.touches[0] = e.touches[0]
+      }
+
+      // If the touch is on the left side of the screen, it's for moving
+      if (e.touches[0].clientX < window.innerWidth / 2) {
+        // top half of screen is forward, bottom half is backward
+        if (e.touches[0].clientY < window.innerHeight / 2) {
+          this.keysDown.add('w')
+        }
+        if (e.touches[0].clientY > window.innerHeight / 2) {
+          this.keysDown.add('s')
+        }
+      }
+    })
+
+    window.addEventListener('touchend', () => {
+      if (!this.fpMode || !this.active) return
+
+      this.touches = []
+      this.keysDown.clear()
+    })
+
+    window.addEventListener('touchmove', (e) => {
+      if (!this.fpMode || !this.active) return
+
+      if (this.touches.length === 0) return
+
+      const touch = e.touches[0]
+
+      const dx = touch.clientX - this.touches[0].clientX
+      const dy = touch.clientY - this.touches[0].clientY
+
+      this.fpAngleY += dx * -this.fpTurnSpeed * touch.force * 4
+      this.fpAngleX += dy * -this.fpTurnSpeed * touch.force * 4
+
+      // Clamp up/down angle
+      if (this.fpAngleX > this.maxAngleUp) this.fpAngleX = this.maxAngleUp
+      if (this.fpAngleX < this.maxAngleDown) this.fpAngleX = this.maxAngleDown
+
+      this.touches[0] = touch
     })
 
     this.fpHandlersAdded = true

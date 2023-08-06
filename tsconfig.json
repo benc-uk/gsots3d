@@ -3,9 +3,6 @@
     // Only use tsc for type checking
     "noEmit": true,
 
-    // Need to be set to true in the future
-
-
     // Sensible defaults
     "strict": true,
     "esModuleInterop": true,

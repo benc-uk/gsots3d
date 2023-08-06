@@ -2,36 +2,34 @@
 
 <img src="https://code.benco.io/gsots3d/icon.png" align="left" width="120px"/>
 
-A library for _Getting S\*\*t On The Screen in 3D_  
+A library for _Getting S\*\*t On The Screen_ in 3D  
 So you can get cool looking 3D stuff happening in your browser, if that's your thing.
 
-This library is an opinionated set of abstractions and wrappers around WebGL & twgl. GSOTS takes the pain out of the process of loading models, defining a camera, rendering a scene, lighting etc. It is based on the classic Blinn-Phong shading model, rather than the more modern PBR based shaders because I'm old.
+This library is an opinionated set of abstractions and wrappers around WebGL & [twgl.js](https://twgljs.org/). GSOTS takes the pain out of the process of loading models, defining a camera, rendering a scene, lighting etc. It is based on the classic Blinn-Phong shading model, rather than the more modern PBR based shaders, because I'm old.
 
-Features
+Feature Set:
 
-- Models: Meshes with loading & parsing of OBJ & MTL.
-- Materials: With diffuse texture mapping, specular maps & normal/bump mapping.
-- Environment mapping: Scene based reflections
-- Lights: Global directional and dynamic point lights.
-- Primitives: Sphere, cube, plane.
-- Rendering: Phong and flat-Gouraud shading modes.
-- Transparency: With some limitations.
-- Billboarding: For adding 'flat' 2D sprites into the 3D scene.
-- Camera: Perspective and orthographic.
+- **🗿 Models**: Meshes with loading & parsing of OBJ & MTL.
+- **✨ Materials**: With diffuse texture mapping, specular maps & normal/bump mapping.
+- **🪩 Environment mapping**: Scene based reflections, skyboxes & dynamic realtime reflections
+- **🔦 Lights**: Global directional and dynamic point lights.
+- **📦 Primitives**: Sphere, cube, plane.
+- **💧 Transparency**: With some limitations.
+- **💖 Reflection**: Both dynamic and static environment mapping.
+- **🪧 Billboarding**: For adding 'flat' 2D sprites into the 3D scene.
+- **🎥 Camera**: Perspective and orthographic modes.
 
 ## 🕹️ Demos & Samples
 
-### [Live demos](./examples/)
-
-### [Example code](https://github.com/benc-uk/gsots3d/tree/main/examples)
+### [Live Demos](./examples/) - These work in your browser!
 
 ## 🖼️ Screenshots
 
-![Some room in a dungeon or something](https://user-images.githubusercontent.com/14982936/255395017-1f07c46b-f738-48d1-b699-691d6edf1361.png)
+![Some room in a dungeon or something](https://user-images.githubusercontent.com/14982936/258633859-f66590d3-0729-47ef-aa2f-ddb3fe1753b6.png)
 
 ![normal mapping and environment mapping](https://user-images.githubusercontent.com/14982936/257891971-aa97557b-a32c-4f45-aa2b-70778b0c8449.png)
 
-![screenshot of some teapots!](https://user-images.githubusercontent.com/14982936/253750405-8c9aba84-fa42-4c52-9813-6d5255c3254b.png)
+![Dynamic reflections](https://user-images.githubusercontent.com/14982936/258633763-38fd07c9-0447-4dd8-b286-cbd7fddd01b5.png)
 
 ![screenshot of treasure chest](https://user-images.githubusercontent.com/14982936/253808708-32c89ca7-ad08-4c26-9de1-2964aa32a0a2.png)
 
@@ -94,18 +92,19 @@ Normal maps must be in OpenGL format, i.e. Y+ or "green at top", see this [refer
 
 Due to the vast inconsistencies in OBJ & MTL exporting from the 1000s of software packages and tools out there (and the age of the format), it's unlikely any OBJ you download and use will work without some modification, usually to just the MTL file.
 
-## 🤔 Known Issues
+## 🤔 Known Limitations & Issues
 
 - Transparency
   - Works OK with primitives, you can override a OBJ model material with a transparent one, but results might not be great.
 - Billboards: Shading on spherical billboards might not be correct
 - OBJ & MTL: The parsers are far from comprehensive and may not handle all features
+- Due to the performance overhead only a single dynamic environment map is supported 
 
-## 📝 Documentation
+## 📝 Documentation & Links
 
-[Full API reference](https://code.benco.io/gsots3d/docs/)
+### [Full API Reference Guide](https://code.benco.io/gsots3d/docs/)
 
-[GitHub Project](https://github.com/benc-uk/gsots3d)
+### [Link to GitHub Project](https://github.com/benc-uk/gsots3d)
 
 ## 📚 Sources & Reading
 

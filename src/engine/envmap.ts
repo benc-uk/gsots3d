@@ -119,12 +119,6 @@ export class EnvironmentMap {
   }
 }
 
-type DynamicEnvMapFace = {
-  face: number
-  direction: XYZ
-  buffer: FramebufferInfo
-}
-
 /**
  * Used for rendering a dynamic environment map, to create realtime reflections
  * For performance reasons, there is only one dynamic envmap per scene context
@@ -135,19 +129,13 @@ export class DynamicEnvironmentMap {
   private camera: Camera
 
   /**
-   * This is used to position the camera for creating the reflection map
-   * @param position Position of the center of the cube map
-   */
-  public position: XYZ
-
-  /**
    * Create a new dynamic environment map
    * @param gl GL context
    * @param size Size of each face of the cube map
    * @param position Position of the center of the cube map, reflections will be rendered from here
    */
   constructor(gl: WebGL2RenderingContext, size: number, position: XYZ, far: number) {
-    // Empty cubemap
+    // The main texture cubemap
     this._texture = createTexture(gl, {
       target: gl.TEXTURE_CUBE_MAP,
       width: size,
@@ -163,6 +151,7 @@ export class DynamicEnvironmentMap {
       ],
     })
 
+    // This array holds the 6 faces of the cube map and the framebuffer info plus direction
     this.facings = [
       {
         face: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
@@ -228,8 +217,7 @@ export class DynamicEnvironmentMap {
 
     this.camera = new Camera(CameraType.PERSPECTIVE)
     this.camera.position = position
-    this.position = position
-    this.camera.fov = 90
+    this.camera.fov = 90 // 90 degree FOV for cubemap to work properly
 
     // IMPORTANT: Mark this as a special camera used for envmaps
     this.camera.usedForEnvMap = true
@@ -237,13 +225,21 @@ export class DynamicEnvironmentMap {
     this.camera.far = far
   }
 
-  /** Get the texture of the environment map */
+  /** Get the texture of the environment cubemap  */
   get texture(): WebGLTexture {
     return this._texture
   }
 
   /**
-   * Update the environment map, by rendering the scene from the given position
+   * This is used to position the camera for creating the reflection map
+   * @param position Position of the center of the cube map
+   */
+  set position(pos: XYZ) {
+    this.camera.position = pos
+  }
+
+  /**
+   * Update the environment map, by rendering the scene from the given position into the cubemap texture
    * @param ctx GSOTS Context
    */
   update(ctx: Context) {
@@ -272,4 +268,13 @@ export class DynamicEnvironmentMap {
       ctx.renderWithCamera(this.camera)
     }
   }
+}
+
+/**
+ * Internal type for storing a dynamic envmap facing info
+ */
+type DynamicEnvMapFace = {
+  face: number
+  direction: XYZ
+  buffer: FramebufferInfo
 }

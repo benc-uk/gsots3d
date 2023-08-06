@@ -6367,6 +6367,7 @@ var Camera = class {
     // Used to clamp first person up/down angle
     this.maxAngleUp = Math.PI / 2 - 0.01;
     this.maxAngleDown = -Math.PI / 2 + 0.01;
+    this.touches = [];
     this.type = type;
     this.active = true;
     this.position = [0, 0, 30];
@@ -6480,6 +6481,43 @@ var Camera = class {
       if (!this.fpMode || !this.active)
         return;
       this.keysDown.delete(e.key);
+    });
+    window.addEventListener("touchstart", (e) => {
+      if (!this.fpMode || !this.active)
+        return;
+      if (e.touches[0].clientX > window.innerWidth / 2) {
+        this.touches[0] = e.touches[0];
+      }
+      if (e.touches[0].clientX < window.innerWidth / 2) {
+        if (e.touches[0].clientY < window.innerHeight / 2) {
+          this.keysDown.add("w");
+        }
+        if (e.touches[0].clientY > window.innerHeight / 2) {
+          this.keysDown.add("s");
+        }
+      }
+    });
+    window.addEventListener("touchend", () => {
+      if (!this.fpMode || !this.active)
+        return;
+      this.touches = [];
+      this.keysDown.clear();
+    });
+    window.addEventListener("touchmove", (e) => {
+      if (!this.fpMode || !this.active)
+        return;
+      if (this.touches.length === 0)
+        return;
+      const touch = e.touches[0];
+      const dx = touch.clientX - this.touches[0].clientX;
+      const dy = touch.clientY - this.touches[0].clientY;
+      this.fpAngleY += dx * -this.fpTurnSpeed * touch.force * 4;
+      this.fpAngleX += dy * -this.fpTurnSpeed * touch.force * 4;
+      if (this.fpAngleX > this.maxAngleUp)
+        this.fpAngleX = this.maxAngleUp;
+      if (this.fpAngleX < this.maxAngleDown)
+        this.fpAngleX = this.maxAngleDown;
+      this.touches[0] = touch;
     });
     this.fpHandlersAdded = true;
   }
@@ -6700,17 +6738,23 @@ var DynamicEnvironmentMap = class {
     ];
     this.camera = new Camera(0 /* PERSPECTIVE */);
     this.camera.position = position;
-    this.position = position;
     this.camera.fov = 90;
     this.camera.usedForEnvMap = true;
     this.camera.far = far;
   }
-  /** Get the texture of the environment map */
+  /** Get the texture of the environment cubemap  */
   get texture() {
     return this._texture;
   }
   /**
-   * Update the environment map, by rendering the scene from the given position
+   * This is used to position the camera for creating the reflection map
+   * @param position Position of the center of the cube map
+   */
+  set position(pos) {
+    this.camera.position = pos;
+  }
+  /**
+   * Update the environment map, by rendering the scene from the given position into the cubemap texture
    * @param ctx GSOTS Context
    */
   update(ctx) {
@@ -7630,9 +7674,8 @@ var Context = class _Context {
     stats.resetPerFrame();
   }
   /**
-   * Render the scene from the given camera
+   * Render the scene from the given camera, used internally
    * @param camera
-   * @returns
    */
   renderWithCamera(camera) {
     if (!this.gl)

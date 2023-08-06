@@ -205,9 +205,8 @@ export class Context {
   }
 
   /**
-   * Render the scene from the given camera
+   * Render the scene from the given camera, used internally
    * @param camera
-   * @returns
    */
   renderWithCamera(camera: Camera) {
     if (!this.gl) return
@@ -221,7 +220,8 @@ export class Context {
     // Do this in every frame since camera can move
     const camMatrix = camera.matrix
 
-    // Work out what reflection map to use if any
+    // Work out what reflection map to use, if any
+    // NOTE: This *not* part of the material because it's too hard to dynamically change
     let reflectMap: WebGLTexture | null = this.envmap?.texture ?? null
 
     // As there is only one dynamic envmap, we can use it across all instances
