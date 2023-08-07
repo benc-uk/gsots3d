@@ -3,19 +3,47 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-import { UniformSet } from '../core/gl.ts'
+import { mat4 } from 'gl-matrix'
+import { FramebufferInfo, ProgramInfo, createFramebufferInfo, createProgramInfo, createTexture } from 'twgl.js'
+
+import { UniformSet, getGl } from '../core/gl.ts'
+import { Camera, CameraType } from './camera.ts'
 import { Colours, Tuples, XYZ, RGB } from './tuples.ts'
+
+import fragShaderShadow from '../../shaders/shadowmap/glsl.frag'
+import vertShaderShadow from '../../shaders/shadowmap/glsl.vert'
+
+/**
+ * Options to configure how shadows are calculated & rendered
+ */
+export type ShadowOptions = {
+  /** Size of the shadow map texture. Default: 512 */
+  mapSize: number
+
+  /**
+   * Zoom level of the shadow map camera, larger will cover more of the scene,
+   * but results in more blocky shadows. Default 120
+   */
+  zoom: number
+
+  /** Far clipping pane of shadow map camera, default 1000 */
+  distance: number
+
+  /** Blur the edges of shadows, higher values them more random, default 0.2 */
+  scatter: number
+}
 
 /**
  * A directional light source, typically global with the context having only a single instance
  * Having multiple directional lights is not supported
  */
 export class LightDirectional {
-  /**
-   * Direction vector (normalized) of the light in world space
-   * @default [0, -1, 0]
-   */
+  /** Direction vector (normalized) of the light in world space */
   private _direction: XYZ
+  private _shadowMapProgram?: ProgramInfo
+  private _shadowMapFB?: FramebufferInfo
+  private _shadowMapTex?: WebGLTexture
+  private _shadowOptions?: ShadowOptions
 
   /**
    * Colour of the light, used for both diffuse and specular
@@ -41,15 +69,22 @@ export class LightDirectional {
     this.colour = Colours.WHITE
     this.ambient = Colours.BLACK
     this.enabled = true
+
+    const gl = getGl()
+    if (!gl) {
+      throw new Error('💥 LightDirectional: Cannot create shadow map shader, no GL context')
+    }
+
+    this._shadowMapProgram = createProgramInfo(gl, [vertShaderShadow, fragShaderShadow], ['shadowProgram'])
   }
 
   /**
    * Set the direction of the light ensuring it is normalized
-   * @param d - Direction vector
+   * @param direction - Direction vector
    */
-  set direction(d: XYZ) {
+  set direction(direction: XYZ) {
     // Ensure direction is normalized
-    this._direction = Tuples.normalize(d)
+    this._direction = Tuples.normalize(direction)
   }
 
   /**
@@ -73,12 +108,109 @@ export class LightDirectional {
   /**
    * Return the base set of uniforms for this light
    */
-  public get uniforms(): UniformSet {
+  get uniforms(): UniformSet {
     return {
       direction: this.direction,
       colour: this.enabled ? this.colour : [0, 0, 0],
       ambient: this.ambient ? this.ambient : [0, 0, 0],
     } as UniformSet
+  }
+
+  enableShadows(options?: ShadowOptions) {
+    this._shadowOptions = options ?? ({} as ShadowOptions)
+    if (!this._shadowOptions.mapSize) {
+      this._shadowOptions.mapSize = 512
+    }
+    if (!this._shadowOptions.zoom) {
+      this._shadowOptions.zoom = 120
+    }
+    if (!this._shadowOptions.distance) {
+      this._shadowOptions.distance = 1000
+    }
+    if (!this._shadowOptions.scatter) {
+      this._shadowOptions.scatter = 0.2
+    }
+
+    const gl = getGl()
+    if (!gl) {
+      throw new Error('💥 LightDirectional: Cannot create shadow map, no GL context')
+    }
+
+    this._shadowMapTex = createTexture(gl, {
+      width: this._shadowOptions.mapSize,
+      height: this._shadowOptions.mapSize,
+      format: gl.DEPTH_COMPONENT,
+      internalFormat: gl.DEPTH_COMPONENT32F,
+      wrap: gl.CLAMP_TO_EDGE,
+    })
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE)
+
+    this._shadowMapFB = createFramebufferInfo(
+      gl,
+      [{ attachment: this._shadowMapTex, attachmentPoint: gl.DEPTH_ATTACHMENT, target: gl.TEXTURE_2D }],
+      this._shadowOptions.mapSize,
+      this._shadowOptions.mapSize
+    )
+  }
+
+  /**
+   * Get a camera that can be used to render a shadow map for this light
+   * @param zoomLevel - Zoom level of the camera, default: 30
+   * @param aspectRatio - Aspect ratio of the camera, default: 1
+   */
+  getShadowCamera() {
+    if (!this._shadowOptions) {
+      return undefined
+    }
+
+    const moveDist = this._shadowOptions.distance * 0.2
+
+    const cam = new Camera(CameraType.ORTHOGRAPHIC, 1.0)
+    cam.orthoZoom = this._shadowOptions.zoom
+    cam.lookAt = [0, 0, 0]
+    cam.position = [-this.direction[0] * moveDist, -this.direction[1] * moveDist, -this.direction[2] * moveDist]
+    cam.usedForShadowMap = true
+    cam.far = this._shadowOptions.distance
+
+    return cam
+  }
+
+  get shadowMatrix() {
+    if (!this._shadowOptions) {
+      return undefined
+    }
+
+    const shadowCam = this.getShadowCamera()
+    if (!shadowCam) {
+      return undefined
+    }
+
+    const camViewMatrix = shadowCam.matrix
+    const shadowMatrix = mat4.multiply(
+      mat4.create(),
+      shadowCam.projectionMatrix,
+      mat4.invert(mat4.create(), camViewMatrix)
+    )
+
+    return shadowMatrix
+  }
+
+  get shadowMapProgram() {
+    return this._shadowMapProgram
+  }
+
+  get shadowMapFrameBufffer() {
+    return this._shadowMapFB
+  }
+
+  get shadowMapTexture() {
+    return this._shadowMapTex
+  }
+
+  get shadowMapOptions() {
+    return this._shadowOptions
   }
 }
 

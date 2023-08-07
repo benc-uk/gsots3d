@@ -7,11 +7,19 @@
 
 precision highp float;
 
+// ===== Constants ============================================================
+
 const int MAX_LIGHTS = 16;
 
-vec4 mix4(vec4 a, vec4 b, float mix) {
-  return a * (1.0 - mix) + b * mix;
-}
+// Got this from http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#poisson-sampling
+vec3 poissonDisk[4] = vec3[](
+  vec3(-0.94201624, -0.39906216, 0.0),
+  vec3(0.94558609, -0.76890725, 0.0),
+  vec3(-0.094184101, -0.9293887, 0.0),
+  vec3(0.34495938, 0.2938776, 0.0)
+);
+
+// ===== Structs ==============================================================
 
 struct LightDir {
   vec3 direction;
@@ -43,10 +51,11 @@ struct Material {
   bool hasNormalTex;
 };
 
-// From vertex shader
+// Inputs from vertex shader
 in vec3 v_normal;
 in vec2 v_texCoord;
 in vec4 v_position;
+in vec4 v_shadowCoord;
 
 // Some global uniforms
 uniform vec3 u_camPos;
@@ -59,18 +68,36 @@ uniform Material u_mat;
 uniform LightDir u_lightDirGlobal;
 uniform LightPos u_lightsPos[MAX_LIGHTS];
 uniform int u_lightsPosCount;
-// Note this is handled outside the material struct for complex reasons
+// Reflection map isn't part of the material struct for complex reasons
 uniform samplerCube u_reflectionMap;
-
-// Output colour of this pixel/fragment
-out vec4 outColour;
+// Shadows
+uniform highp sampler2DShadow u_shadowMap;
+uniform float u_shadowScatter;
 
 // Global texture coords shared between functions
 vec2 texCoord;
 
-/*
- * Shade a fragment using a directional light source
- */
+// Output colour of this pixel/fragment
+out vec4 outColour;
+
+// ===== Helper functions =====================================================
+
+// Simple mixer
+vec4 mix4(vec4 a, vec4 b, float mix) {
+  return a * (1.0 - mix) + b * mix;
+}
+
+// Function to help with get values from the shadow map
+float shadowMapSample(highp sampler2DShadow map, vec3 coord) {
+  // As WebGL 2 does not support GL_CLAMP_TO_BORDER or GL_TEXTURE_BORDER_COLOR, we need to do this :(
+  if (coord.x < 0.0 || coord.x > 1.0 || coord.y < 0.0 || coord.y > 1.0) {
+    return 1.0;
+  }
+
+  return texture(map, coord);
+}
+
+// Shade a fragment using a directional light source
 vec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {
   vec3 L = normalize(-light.direction);
   vec3 H = normalize(L + V);
@@ -81,17 +108,25 @@ vec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {
   float diff = dot(N, L);
   float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;
 
+  // Shadow map lookup
+  vec3 projCoords = v_shadowCoord.xyz / v_shadowCoord.w * 0.5 + 0.5;
+  float shadow = 0.0;
+
+  // Carry out PCF for shadows using 4 samples of a poisson disk
+  for (int i = 0; i < 4; i++) {
+    vec3 offset = poissonDisk[i] * (u_shadowScatter / 100.0);
+    shadow += shadowMapSample(u_shadowMap, projCoords + offset) * 0.25;
+  }
+
   vec3 ambient = light.ambient * mat.ambient * diffuseCol;
-  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol;
-  vec3 specular = light.colour * spec * specularCol;
+  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * shadow;
+  vec3 specular = light.colour * spec * specularCol * shadow;
 
   // Return a vec4 to support transparency, note specular is not affected by opacity
   return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);
 }
 
-/*
- * Shade a fragment using a positional light source
- */
+// Shade a fragment using a positional light source
 vec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {
   vec3 L = normalize(light.position - v_position.xyz);
   vec3 H = normalize(L + V);
@@ -114,9 +149,8 @@ vec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {
   return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);
 }
 
-// ============================================================================
-// Main fragment shader entry point
-// ============================================================================
+// ===== Main shader ==========================================================
+
 void main() {
   vec3 V = normalize(u_camPos - v_position.xyz);
 
@@ -142,8 +176,10 @@ void main() {
     N = normalize(TBN * normMap);
   }
 
+  // Handle the main directional light, only one of these
   vec4 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, N, V);
 
+  // Add positional lights
   for (int i = 0; i < u_lightsPosCount; i++) {
     outColorPart += shadePosLight(u_lightsPos[i], u_mat, N, V);
   }
@@ -156,7 +192,7 @@ void main() {
   vec3 R = reflect(-V, N);
   vec4 reflectCol = vec4(texture(u_reflectionMap, R).rgb, 1.0);
 
-  // Not sure if this is correct, but it looks OK in most cases
+  // Add reflection component, not sure if this is correct, looks ok
   outColorPart = mix4(outColorPart, reflectCol, u_mat.reflectivity);
 
   // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL

@@ -15,6 +15,7 @@ Feature Set:
 - **🔦 Lights**: Global directional and dynamic point lights.
 - **📦 Primitives**: Sphere, cube, plane.
 - **💧 Transparency**: With some limitations.
+- **🌑 Shadows**: Realtime shadows from directional light.
 - **💖 Reflection**: Both dynamic and static environment mapping.
 - **🪧 Billboarding**: For adding 'flat' 2D sprites into the 3D scene.
 - **🎥 Camera**: Perspective and orthographic modes.

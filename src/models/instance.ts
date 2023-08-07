@@ -8,6 +8,7 @@ import { UniformSet } from '../core/gl.ts'
 import { Renderable } from './types.ts'
 import { Material } from '../engine/material.ts'
 import { XYZ } from '../engine/tuples.ts'
+import { ProgramInfo } from 'twgl.js'
 
 /**
  * An instance of thing in the world to be rendered, with position, rotation, scale etc
@@ -19,6 +20,7 @@ export class Instance {
   public rotate: XYZ | undefined
   public enabled = true
   public metadata: Record<string, string | number | boolean> = {}
+  public castShadow = true
 
   /**
    * Material to use for this instance, this will override ALL the materials on the model!
@@ -85,13 +87,17 @@ export class Instance {
    * Render this instance in the world
    * @param {WebGL2RenderingContext} gl - WebGL context to render into
    * @param {UniformSet} uniforms - Map of uniforms to pass to shader
-   * @param {mat4} viewProjection - View projection matrix
-   * @param {ProgramInfo} programInfo - Shader program info
    */
-  render(gl: WebGL2RenderingContext, uniforms: UniformSet) {
+  render(gl: WebGL2RenderingContext, uniforms: UniformSet, programOverride?: ProgramInfo) {
     if (!this.enabled) return
     if (!this.renderable) return
     if (!gl) return
+
+    // HACK: As programOverride is CURRENTLY only used for shadow map rendering
+    // We need a better way to to know if we are rendering a shadow map!!
+    if (programOverride && !this.castShadow) {
+      return
+    }
 
     // Local instance transforms are applied in this order to form the world matrix
     const scale = mat4.create()
@@ -130,6 +136,6 @@ export class Instance {
     uniforms.u_flipTextureY = this.flipTextureY
 
     // Render the renderable thing wrapped by this instance
-    this.renderable.render(gl, uniforms, this.material)
+    this.renderable.render(gl, uniforms, this.material, programOverride)
   }
 }

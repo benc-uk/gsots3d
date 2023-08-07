@@ -242,9 +242,7 @@ export class DynamicEnvironmentMap {
    * Update the environment map, by rendering the scene from the given position into the cubemap texture
    * @param ctx GSOTS Context
    */
-  update(ctx: Context) {
-    const gl = ctx.glContext
-
+  update(gl: WebGL2RenderingContext, ctx: Context) {
     // Render each face of the cubemap into the texture & framebuffer
     // NOTE: This requires SIX calls to renderWithCamera!
     for (const facing of this.facings) {

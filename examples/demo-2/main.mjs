@@ -5,9 +5,14 @@ ctx.debug = false
 
 ctx.camera.position = [37, 40, 76]
 ctx.globalLight.setAsPosition(-0.5, 1, 0)
-ctx.globalLight.colour = Colours.BLACK
+ctx.globalLight.colour = Colours.WHITE
 ctx.globalLight.ambient = [0.2, 0.2, 0.2]
 ctx.camera.far = 500
+ctx.globalLight.enableShadows({
+  mapSize: 1024,
+  cameraZoom: 90,
+  samplingSize: 0.25,
+})
 
 ctx.camera.enableFPControls(0, -0.2, 0.002, 1.7)
 
@@ -72,7 +77,7 @@ mirrorMat.reflectivity = 0.7
 mirrorMat.shininess = 100
 mirrorMat.specular = [1, 1, 1]
 const mirrorBall = ctx.createSphereInstance(mirrorMat, 20, 24, 24)
-mirrorBall.position = [-25, 20, -35]
+mirrorBall.position = [-25, 25, -35]
 mirrorBall.metadata['special'] = 1
 
 const light = ctx.createPointLight([0, 0, 0], Colours.WHITE, 3)

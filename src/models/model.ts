@@ -49,8 +49,14 @@ export class Model implements Renderable {
    * Render is used draw this model, this is called from the Instance that wraps
    * this renderable.
    */
-  render(gl: WebGL2RenderingContext, uniforms: UniformSet, materialOverride?: Material): void {
-    gl.useProgram(this.programInfo.program)
+  render(
+    gl: WebGL2RenderingContext,
+    uniforms: UniformSet,
+    materialOverride?: Material,
+    programOverride?: ProgramInfo
+  ): void {
+    const programInfo = programOverride || this.programInfo
+    gl.useProgram(programInfo.program)
 
     // Render each part of the model
     for (const part of this.parts) {
@@ -65,13 +71,13 @@ export class Model implements Renderable {
           material = this.materials['__default']
         }
 
-        material.apply(this.programInfo)
+        material.apply(programInfo)
       } else {
-        materialOverride.apply(this.programInfo)
+        materialOverride.apply(programInfo)
       }
 
-      setBuffersAndAttributes(gl, this.programInfo, bufferInfo)
-      setUniforms(this.programInfo, uniforms)
+      setBuffersAndAttributes(gl, programInfo, bufferInfo)
+      setUniforms(programInfo, uniforms)
 
       drawBufferInfo(gl, bufferInfo)
       stats.drawCallsPerFrame++

@@ -29,7 +29,7 @@ export default defineConfig({
   esbuildPlugins: [
     // This allows us to import GLSL files and have them bundled
     glsl({
-      minify: true,
+      minify: false,
     }),
   ],
 })

@@ -61,13 +61,16 @@ export class Billboard implements Renderable {
    * Render is used draw this billboard, this is called from the Instance that wraps
    * this renderable
    */
-  render(gl: WebGL2RenderingContext, uniforms: UniformSet, materialOverride?: Material | undefined): void {
-    gl.useProgram(this.programInfo.program)
+  render(gl: WebGL2RenderingContext, uniforms: UniformSet, materialOverride?: Material): void {
+    // We ignore programOverride here, as we always use the billboard shader
+    const programInfo = this.programInfo
+
+    gl.useProgram(programInfo.program)
 
     if (materialOverride === undefined) {
-      this.material.apply(this.programInfo)
+      this.material.apply(programInfo)
     } else {
-      materialOverride.apply(this.programInfo)
+      materialOverride.apply(programInfo)
     }
 
     // We're doubling up on work done in the Instance class here, hard to get around this
@@ -95,8 +98,8 @@ export class Billboard implements Renderable {
     // We're doubling up on work again :/
     mat4.multiply(<mat4>uniforms.u_worldViewProjection, <mat4>uniforms.u_proj, worldView)
 
-    setBuffersAndAttributes(gl, this.programInfo, this.bufferInfo)
-    setUniforms(this.programInfo, uniforms)
+    setBuffersAndAttributes(gl, programInfo, this.bufferInfo)
+    setUniforms(programInfo, uniforms)
 
     drawBufferInfo(gl, this.bufferInfo)
     stats.drawCallsPerFrame++

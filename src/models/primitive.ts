@@ -43,19 +43,25 @@ export abstract class Primitive implements Renderable {
    * Render is used draw this primitive, this is called from the Instance that wraps
    * this renderable.
    */
-  render(gl: WebGL2RenderingContext, uniforms: UniformSet, materialOverride?: Material): void {
+  render(
+    gl: WebGL2RenderingContext,
+    uniforms: UniformSet,
+    materialOverride?: Material,
+    programOverride?: ProgramInfo
+  ): void {
     if (!this.bufferInfo) return
 
-    gl.useProgram(this.programInfo.program)
+    const programInfo = programOverride || this.programInfo
+    gl.useProgram(programInfo.program)
 
     if (materialOverride === undefined) {
-      this.material.apply(this.programInfo)
+      this.material.apply(programInfo)
     } else {
-      materialOverride.apply(this.programInfo)
+      materialOverride.apply(programInfo)
     }
 
-    setBuffersAndAttributes(gl, this.programInfo, this.bufferInfo)
-    setUniforms(this.programInfo, uniforms)
+    setBuffersAndAttributes(gl, programInfo, this.bufferInfo)
+    setUniforms(programInfo, uniforms)
 
     drawBufferInfo(gl, this.bufferInfo)
     stats.drawCallsPerFrame++

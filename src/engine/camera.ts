@@ -45,6 +45,9 @@ export class Camera {
   /** Is this camera used for a dynamic environment map, default: false */
   public usedForEnvMap: boolean
 
+  /** Is this camera used for a shadow map, default: false */
+  public usedForShadowMap: boolean
+
   /** Aspect ratio of the camera, default: 1 */
   public aspectRatio: number
 
@@ -80,6 +83,7 @@ export class Camera {
     this.aspectRatio = aspectRatio
     this.orthoZoom = 20
     this.usedForEnvMap = false
+    this.usedForShadowMap = false
 
     this.fpMode = false
     this.fpAngleY = 0
@@ -89,6 +93,8 @@ export class Camera {
     this.fpHandlersAdded = false
 
     this.keysDown = new Set()
+
+    //log.debug(`🎥 Camera created pos:${this.position} lookAt:${this.lookAt} type:${this.type}`)
   }
 
   /**

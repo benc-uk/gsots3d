@@ -36,6 +36,7 @@ void main() {
   vec4 texel = texture(u_mat.diffuseTex, v_texCoord);
 
   // Magic to make transparent sprites work, without blending
+  // Somehow this also works with the shadow map render pass, which is a bonus
   if (texel.a < 0.75) {
     discard;
   }

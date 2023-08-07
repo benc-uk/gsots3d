@@ -4,7 +4,7 @@
 // ============================================================================
 
 import { version } from '../../package.json'
-import { bindFramebufferInfo, createProgramInfo, resizeCanvasToDisplaySize } from 'twgl.js'
+import { bindFramebufferInfo, createProgramInfo, ProgramInfo, resizeCanvasToDisplaySize } from 'twgl.js'
 import { mat4, vec3 } from 'gl-matrix'
 import log from 'loglevel'
 
@@ -37,8 +37,7 @@ const MAX_LIGHTS = 16
  */
 export class Context {
   private gl: WebGL2RenderingContext
-  //private aspectRatio = 1
-  private started = false
+  private started: boolean
   private instances: Instance[] = []
   private instancesTrans: Instance[] = []
   private debugDiv: HTMLDivElement
@@ -58,7 +57,7 @@ export class Context {
   private _camera: Camera
 
   /** Show extra debug details on the canvas */
-  public debug = false
+  public debug: boolean
 
   /**
    * The pre-render update function, called every frame.
@@ -88,6 +87,8 @@ export class Context {
   /** Constructor is private, use init() to create a new context */
   private constructor(gl: WebGL2RenderingContext) {
     this.gl = gl
+    this.started = false
+    this.debug = false
 
     // Main global light
     this.globalLight = new LightDirectional()
@@ -173,13 +174,28 @@ export class Context {
     // Call the external update function
     this.update(stats.deltaTime)
 
-    // Render into the dynamic environment map(s) if any
+    // RENDERING - Render into the dynamic environment map(s) if any
     if (this.dynamicEnvMap) {
       // This is a rare case of passing the context to the object, but it's needed for the dynamic env map
-      this.dynamicEnvMap.update(this)
+      this.dynamicEnvMap.update(this.gl, this)
     }
 
-    // Render the scene from active camera into the main framebuffer
+    // RENDERING - Render the shadow map from the global light
+    const shadowCam = this.globalLight.getShadowCamera()
+    if (shadowCam) {
+      // Switch to front face culling for shadow map, yeah it's weird but it works!
+      this.gl.cullFace(this.gl.FRONT)
+
+      // Bind the shadow map framebuffer and render the scene from the light's POV
+      // Using the special shadow map program as an override for the whole rendering pass
+      bindFramebufferInfo(this.gl, this.globalLight.shadowMapFrameBufffer)
+      this.renderWithCamera(shadowCam, this.globalLight.shadowMapProgram)
+
+      // Switch back to back face culling
+      this.gl.cullFace(this.gl.BACK)
+    }
+
+    // RENDERING - Render the scene from active camera into the main framebuffer
     bindFramebufferInfo(this.gl, null)
     this.renderWithCamera(this.camera)
 
@@ -208,7 +224,7 @@ export class Context {
    * Render the scene from the given camera, used internally
    * @param camera
    */
-  renderWithCamera(camera: Camera) {
+  renderWithCamera(camera: Camera, programOverride?: ProgramInfo) {
     if (!this.gl) return
 
     // Clear the framebuffer and depth buffer
@@ -224,8 +240,8 @@ export class Context {
     // NOTE: This *not* part of the material because it's too hard to dynamically change
     let reflectMap: WebGLTexture | null = this.envmap?.texture ?? null
 
-    // As there is only one dynamic envmap, we can use it across all instances
-    // But ONLY when the camera is rendering into it!
+    // As there is only one dynamic reflection envmap, we can use it across all instances
+    // But ONLY set this when the camera is NOT rendering into it!
     if (this.dynamicEnvMap) {
       if (!camera.usedForEnvMap) {
         reflectMap = this.dynamicEnvMap.texture
@@ -234,13 +250,19 @@ export class Context {
 
     // The uniforms that are the same for all instances
     const uniforms = {
-      u_gamma: this.gamma ?? 1.0,
+      u_gamma: this.gamma,
+
       u_worldInverseTranspose: mat4.create(), // Updated per instance
       u_worldViewProjection: mat4.create(), // Updated per instance
       u_view: mat4.invert(mat4.create(), camMatrix),
       u_proj: camera.projectionMatrix,
       u_camPos: camera.position,
+
       u_reflectionMap: reflectMap,
+
+      u_shadowMap: this.globalLight.shadowMapTexture,
+      u_shadowMatrix: this.globalLight.shadowMatrix ?? mat4.create(),
+      u_shadowScatter: this.globalLight.shadowMapOptions?.scatter ?? 0.2,
     } as UniformSet
 
     // RENDERING - Draw envmap around the scene first
@@ -277,7 +299,7 @@ export class Context {
     // RENDERING - Draw all opaque instances
     this.gl.enable(this.gl.CULL_FACE)
     for (const instance of this.instances) {
-      instance.render(this.gl, uniforms)
+      instance.render(this.gl, uniforms, programOverride)
     }
 
     // RENDERING - Draw all transparent instances
@@ -292,7 +314,7 @@ export class Context {
     })
 
     for (const instance of this.instancesTrans) {
-      instance.render(this.gl, uniforms)
+      instance.render(this.gl, uniforms, programOverride)
     }
   }
 
@@ -311,10 +333,6 @@ export class Context {
    */
   stop() {
     this.started = false
-  }
-
-  get glContext() {
-    return this.gl
   }
 
   /**

@@ -1,18 +1,13 @@
-import { Context, Material, Colours, setLogLevel, Camera } from '../../dist-bundle/gsots3d.js'
+import { Context, Material, Colours, setLogLevel } from '../../dist-bundle/gsots3d.js'
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 setLogLevel('debug')
 
 const ctx = await Context.init('canvas')
-ctx.debug = true
+ctx.debug = false
 
-// Setup controls, disable FP controls on mobile
-if (!isMobile) {
-  ctx.camera.enableFPControls(0, -0.2, 0.002, 1.0)
-} else {
-  // Mobile looks too dark without gamma correction
-  ctx.gamma = 1.5
-}
+// Mobile looks too dark without gamma correction
+ctx.gamma = isMobile ? 1.5 : 1.0
 
 // Load models
 try {
@@ -86,20 +81,24 @@ try {
   const wall1 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 4)
   wall1.position = [0, 130, -130]
   wall1.rotateXDeg(90)
+  wall1.castShadow = false
 
   const wall2 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 4)
   wall2.position = [0, 130, 130]
   wall2.rotateXDeg(-90)
+  wall2.castShadow = false
 
   const wall3 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 4)
   wall3.position = [130, 130, 0]
   wall3.rotateZDeg(90)
   wall3.rotateXDeg(90)
+  wall3.castShadow = false
 
   const wall4 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 4)
   wall4.position = [-130, 130, 0]
   wall4.rotateZDeg(-90)
   wall4.rotateXDeg(90)
+  wall4.castShadow = false
 
   const impMat = Material.createBasicTexture('../_textures/doom-imp.png')
   const doomImp = ctx.createBillboardInstance(impMat, 30)
@@ -143,7 +142,7 @@ try {
   ico.scale = [6.5, 6.5, 6.5]
 
   const bottle = ctx.createModelInstance('wine')
-  bottle.position = [-14, 11, -14]
+  bottle.position = [-14, 13, -14]
   bottle.rotateXDeg(-90)
   bottle.scale = [0.6, 0.6, 0.6]
 
@@ -163,19 +162,18 @@ try {
 ctx.camera.position = [0, 25, 50]
 ctx.camera.lookAt = [0, 10, 0]
 ctx.camera.far = 500
+ctx.camera.enableFPControls(0, -0.2, 0.002, 1.0)
 
-const topCam = new Camera()
-topCam.position = [-23, 80, -20]
-topCam.far = 500
-ctx.addCamera('top', topCam)
-
-// Lights
-ctx.globalLight.setAsPosition(1, 10, 3)
+// Main light
+const lightPos = [5, 10, 2]
+ctx.globalLight.setAsPosition(lightPos[0], lightPos[1], lightPos[2])
 ctx.globalLight.colour = [0.8, 0.8, 0.8]
 ctx.globalLight.ambient = [0.05, 0.05, 0.05]
+// Point lights
 const lightGreen = ctx.createPointLight([-59, 19, -60], Colours.GREEN)
 const lightPink = ctx.createPointLight([10, 30, 60], [0.9, 0.1, 0.4], 2.4)
 
+// Controls
 window.addEventListener('keydown', (e) => {
   // change height
   if (e.key === 'q') {
@@ -222,33 +220,26 @@ window.addEventListener('keydown', (e) => {
   if (e.key === '3') {
     ctx.globalLight.enabled = !ctx.globalLight.enabled
   }
-
-  if (e.key === 't') {
-    if (ctx.activeCameraName === 'top') {
-      ctx.setActiveCamera('default')
-    } else {
-      ctx.setActiveCamera('top')
-    }
+  if (e.key === '4') {
+    lightPos[0] -= 1
+    ctx.globalLight.setAsPosition(lightPos[0], lightPos[1], lightPos[2])
+  }
+  if (e.key === '5') {
+    lightPos[0] += 1
+    ctx.globalLight.setAsPosition(lightPos[0], lightPos[1], lightPos[2])
   }
 })
 
-const autoRotate = isMobile
-let angle = 1.1
-const radius = 50
-
 // Update loop
 ctx.update = (delta) => {
-  if (autoRotate) {
-    angle += delta * 0.4
-
-    const x = Math.cos(angle) * radius
-    const z = Math.sin(angle) * radius
-    ctx.camera.position = [x, 25, z]
-  }
-
   scifiCube.rotateYDeg(delta * 25)
 }
 
 ctx.setDynamicEnvmap([0, 15, 0], 256)
+ctx.globalLight.enableShadows({
+  mapSize: 1024,
+  zoom: 100,
+  scatter: 0.3,
+})
 
 ctx.start()

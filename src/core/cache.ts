@@ -183,6 +183,7 @@ export class ProgramCache {
 
   public static PROG_PHONG = 'phong'
   public static PROG_BILLBOARD = 'billboard'
+  public static PROG_SHADOWMAP = 'shadowmap'
 
   /**
    * Create a new program cache, needs a default program to be set
