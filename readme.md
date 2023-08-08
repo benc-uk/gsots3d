@@ -9,16 +9,16 @@ This library is an opinionated set of abstractions and wrappers around WebGL & [
 
 Feature Set:
 
-- **🗿 Models**: Meshes with loading & parsing of OBJ & MTL.
+- **🗿 Models**: Loading, parsing & rendering of meshes and multi-part objects from OBJ & MTL files.
 - **✨ Materials**: With diffuse texture mapping, specular maps & normal/bump mapping.
 - **🪩 Environment mapping**: Scene based reflections, skyboxes & dynamic realtime reflections
 - **🔦 Lights**: Global directional and dynamic point lights.
 - **📦 Primitives**: Sphere, cube, plane.
-- **💧 Transparency**: With some limitations.
-- **🌑 Shadows**: Realtime shadows from directional light.
+- **💧 Transparency**: Transparent materials & primitives 
+- **🌑 Shadows**: Realtime shadows from directional light source.
 - **💖 Reflection**: Both dynamic and static environment mapping.
 - **🪧 Billboarding**: For adding 'flat' 2D sprites into the 3D scene.
-- **🎥 Camera**: Perspective and orthographic modes.
+- **🎥 Camera**: Perspective and orthographic projection, and first person mouse & keyboard controls
 
 ## 🕹️ Demos & Samples
 

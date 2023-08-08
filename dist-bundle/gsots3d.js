@@ -2420,6 +2420,8 @@ var TEXTURE_MIN_LOD = 33082;
 var TEXTURE_MAX_LOD = 33083;
 var TEXTURE_BASE_LEVEL = 33084;
 var TEXTURE_MAX_LEVEL = 33085;
+var TEXTURE_COMPARE_MODE = 34892;
+var TEXTURE_COMPARE_FUNC = 34893;
 var UNPACK_ALIGNMENT = 3317;
 var UNPACK_ROW_LENGTH = 3314;
 var UNPACK_IMAGE_HEIGHT = 32878;
@@ -2725,17 +2727,23 @@ function setTextureSamplerParameters(gl, target, parameteriFn, options) {
   if (options.wrapT) {
     parameteriFn.call(gl, target, TEXTURE_WRAP_T, options.wrapT);
   }
-  if (options.minLod) {
+  if (options.minLod !== void 0) {
     parameteriFn.call(gl, target, TEXTURE_MIN_LOD, options.minLod);
   }
-  if (options.maxLod) {
+  if (options.maxLod !== void 0) {
     parameteriFn.call(gl, target, TEXTURE_MAX_LOD, options.maxLod);
   }
-  if (options.baseLevel) {
+  if (options.baseLevel !== void 0) {
     parameteriFn.call(gl, target, TEXTURE_BASE_LEVEL, options.baseLevel);
   }
-  if (options.maxLevel) {
+  if (options.maxLevel !== void 0) {
     parameteriFn.call(gl, target, TEXTURE_MAX_LEVEL, options.maxLevel);
+  }
+  if (options.compareFunc !== void 0) {
+    parameteriFn.call(gl, target, TEXTURE_COMPARE_FUNC, options.compareFunc);
+  }
+  if (options.compareMode !== void 0) {
+    parameteriFn.call(gl, target, TEXTURE_COMPARE_MODE, options.compareMode);
   }
 }
 function setTextureParameters(gl, tex, options) {
@@ -6364,7 +6372,6 @@ var Camera = class {
    * @param moveSpeed Speed of moving in units, default 1.0
    */
   enableFPControls(angleY = 0, angleX = 0, turnSpeed = 1e-3, moveSpeed = 1) {
-    import_loglevel4.default.info("\u{1F3A5} Camera: FPS mode enabled");
     this.fpMode = true;
     this.fpAngleY = angleY;
     this.fpAngleX = angleX;
@@ -6377,10 +6384,8 @@ var Camera = class {
       if (!this.fpMode || !this.active)
         return;
       if (document.pointerLockElement) {
-        import_loglevel4.default.info("\u{1F3A5} Camera: exiting pointer lock");
         document.exitPointerLock();
       } else {
-        import_loglevel4.default.info("\u{1F3A5} Camera: enable pointer lock");
         await (gl?.canvas).requestPointerLock();
       }
     });
@@ -6445,6 +6450,7 @@ var Camera = class {
       this.touches[0] = touch;
     });
     this.fpHandlersAdded = true;
+    import_loglevel4.default.info("\u{1F3A5} Camera: first person mode & controls enabled");
   }
   /**
    * Disable FP mode
@@ -6452,7 +6458,7 @@ var Camera = class {
   disableFPControls() {
     this.fpMode = false;
     document.exitPointerLock();
-    import_loglevel4.default.info("\u{1F3A5} Camera: FPS mode disabled");
+    import_loglevel4.default.debug("\u{1F3A5} Camera: FPS mode disabled");
   }
   /**
    * Get FP mode state
@@ -6558,6 +6564,11 @@ var LightDirectional = class {
       ambient: this.ambient ? this.ambient : [0, 0, 0]
     };
   }
+  /**
+   * Enable shadows for this light, this will create a shadow map texture and framebuffer
+   * There is no way to disabled shadows once enabled
+   * @param options A set of ShadowOptions to configure how shadows are calculated
+   */
   enableShadows(options) {
     this._shadowOptions = options ?? {};
     if (!this._shadowOptions.mapSize) {
@@ -6579,22 +6590,22 @@ var LightDirectional = class {
     this._shadowMapTex = createTexture(gl, {
       width: this._shadowOptions.mapSize,
       height: this._shadowOptions.mapSize,
-      format: gl.DEPTH_COMPONENT,
       internalFormat: gl.DEPTH_COMPONENT32F,
-      wrap: gl.CLAMP_TO_EDGE
+      // Makes this a depth texture
+      compareMode: gl.COMPARE_REF_TO_TEXTURE,
+      // Becomes a shadow map, e.g. sampler2DShadow
+      minMag: gl.LINEAR
+      // Can be linear sampled only if compare mode is set
     });
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);
     this._shadowMapFB = createFramebufferInfo(
       gl,
-      [{ attachment: this._shadowMapTex, attachmentPoint: gl.DEPTH_ATTACHMENT, target: gl.TEXTURE_2D }],
+      [{ attachment: this._shadowMapTex, attachmentPoint: gl.DEPTH_ATTACHMENT }],
       this._shadowOptions.mapSize,
       this._shadowOptions.mapSize
     );
   }
   /**
-   * Get a camera that can be used to render a shadow map for this light
+   * Get a virtual camera that can be used to render a shadow map for this light
    * @param zoomLevel - Zoom level of the camera, default: 30
    * @param aspectRatio - Aspect ratio of the camera, default: 1
    */
@@ -6611,6 +6622,9 @@ var LightDirectional = class {
     cam.far = this._shadowOptions.distance;
     return cam;
   }
+  /**
+   * Get the forward view matrix for the virtual camera used to render the shadow map
+   */
   get shadowMatrix() {
     if (!this._shadowOptions) {
       return void 0;
@@ -8080,6 +8094,7 @@ export {
   Material,
   Model,
   ModelCache,
+  ModelPart,
   PROG_BILLBOARD,
   PROG_DEFAULT,
   Primitive,
@@ -8097,7 +8112,7 @@ export {
 /*! Bundled license information:
 
 twgl.js/dist/5.x/twgl-full.module.js:
-  (* @license twgl.js 5.4.1 Copyright (c) 2015, Gregg Tavares All Rights Reserved.
+  (* @license twgl.js 5.5.1 Copyright (c) 2015, Gregg Tavares All Rights Reserved.
   Available via the MIT license.
   see: http://github.com/greggman/twgl.js for details *)
 */

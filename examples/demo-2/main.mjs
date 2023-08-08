@@ -1,7 +1,13 @@
 import { Colours, Context, Material } from '../../dist-bundle/gsots3d.js'
 
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
 const ctx = await Context.init()
 ctx.debug = false
+
+// Tweaks for mobile
+ctx.gamma = isMobile ? 1.2 : 1.0
+const moveSpeed = isMobile ? 0.5 : 1.2
 
 ctx.camera.position = [37, 40, 76]
 ctx.globalLight.setAsPosition(-0.5, 1, 0)
@@ -14,7 +20,7 @@ ctx.globalLight.enableShadows({
   samplingSize: 0.25,
 })
 
-ctx.camera.enableFPControls(0, -0.2, 0.002, 1.7)
+ctx.camera.enableFPControls(0, -0.2, 0.002, moveSpeed)
 
 const wallMat = Material.createBasicTexture('../_textures/brickwall.jpg')
 wallMat.addNormalTexture('../_textures/brickwall_normal.jpg')

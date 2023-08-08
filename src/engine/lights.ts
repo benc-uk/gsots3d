@@ -38,29 +38,19 @@ export type ShadowOptions = {
  * Having multiple directional lights is not supported
  */
 export class LightDirectional {
-  /** Direction vector (normalized) of the light in world space */
   private _direction: XYZ
   private _shadowMapProgram?: ProgramInfo
   private _shadowMapFB?: FramebufferInfo
   private _shadowMapTex?: WebGLTexture
   private _shadowOptions?: ShadowOptions
 
-  /**
-   * Colour of the light, used for both diffuse and specular
-   * @default [1, 1, 1]
-   */
+  /** Colour of the light, used for both diffuse and specular. Default: [0, 0, 0] */
   public colour: RGB
 
-  /**
-   * Ambient colour of the light
-   * @default [0, 0, 0]
-   */
+  /** Ambient colour of the light. Default: [0, 0, 0] */
   public ambient: RGB
 
-  /**
-   * Is this light enabled
-   * @default true
-   */
+  /** Is this light enabled. Default: true */
   public enabled: boolean
 
   /** Create a default directional light, pointing downward */
@@ -90,7 +80,7 @@ export class LightDirectional {
   /**
    * Get the direction of the light
    */
-  get direction(): XYZ {
+  get direction() {
     return this._direction
   }
 
@@ -108,7 +98,7 @@ export class LightDirectional {
   /**
    * Return the base set of uniforms for this light
    */
-  get uniforms(): UniformSet {
+  get uniforms() {
     return {
       direction: this.direction,
       colour: this.enabled ? this.colour : [0, 0, 0],
@@ -116,6 +106,11 @@ export class LightDirectional {
     } as UniformSet
   }
 
+  /**
+   * Enable shadows for this light, this will create a shadow map texture and framebuffer
+   * There is no way to disabled shadows once enabled
+   * @param options A set of ShadowOptions to configure how shadows are calculated
+   */
   enableShadows(options?: ShadowOptions) {
     this._shadowOptions = options ?? ({} as ShadowOptions)
     if (!this._shadowOptions.mapSize) {
@@ -136,27 +131,26 @@ export class LightDirectional {
       throw new Error('💥 LightDirectional: Cannot create shadow map, no GL context')
     }
 
+    // This is a special type of texture, used for depth comparison and shadow mapping
     this._shadowMapTex = createTexture(gl, {
       width: this._shadowOptions.mapSize,
       height: this._shadowOptions.mapSize,
-      format: gl.DEPTH_COMPONENT,
-      internalFormat: gl.DEPTH_COMPONENT32F,
-      wrap: gl.CLAMP_TO_EDGE,
+      internalFormat: gl.DEPTH_COMPONENT32F, // Makes this a depth texture
+      compareMode: gl.COMPARE_REF_TO_TEXTURE, // Becomes a shadow map, e.g. sampler2DShadow
+      minMag: gl.LINEAR, // Can be linear sampled only if compare mode is set
     })
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE)
 
+    // Framebuffer to render the shadow map into
     this._shadowMapFB = createFramebufferInfo(
       gl,
-      [{ attachment: this._shadowMapTex, attachmentPoint: gl.DEPTH_ATTACHMENT, target: gl.TEXTURE_2D }],
+      [{ attachment: this._shadowMapTex, attachmentPoint: gl.DEPTH_ATTACHMENT }],
       this._shadowOptions.mapSize,
       this._shadowOptions.mapSize
     )
   }
 
   /**
-   * Get a camera that can be used to render a shadow map for this light
+   * Get a virtual camera that can be used to render a shadow map for this light
    * @param zoomLevel - Zoom level of the camera, default: 30
    * @param aspectRatio - Aspect ratio of the camera, default: 1
    */
@@ -177,6 +171,9 @@ export class LightDirectional {
     return cam
   }
 
+  /**
+   * Get the forward view matrix for the virtual camera used to render the shadow map
+   */
   get shadowMatrix() {
     if (!this._shadowOptions) {
       return undefined
@@ -215,7 +212,7 @@ export class LightDirectional {
 }
 
 /*
- * A point light source, typically local to a model or scene
+ * A point light source, doesn't cast shadows but does attenuate with distance
  */
 export class LightPoint {
   /*

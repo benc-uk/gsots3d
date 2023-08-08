@@ -33,5 +33,6 @@ class Stats {
   }
 }
 
-// Global singleton
+// Export a global singleton
+/** @ignore */
 export const stats = new Stats()

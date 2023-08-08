@@ -8,7 +8,6 @@
  * A "raw" material fetched from the MTL parser, don't use this directly
  */
 export type MtlMaterial = {
-  // ni?: number
   illum?: number
 
   ns?: number

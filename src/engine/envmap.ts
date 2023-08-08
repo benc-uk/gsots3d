@@ -271,7 +271,7 @@ export class DynamicEnvironmentMap {
 /**
  * Internal type for storing a dynamic envmap facing info
  */
-type DynamicEnvMapFace = {
+export type DynamicEnvMapFace = {
   face: number
   direction: XYZ
   buffer: FramebufferInfo

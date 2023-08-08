@@ -21,7 +21,6 @@ export type RGBA = [number, number, number, number]
 /**
  * Normalizes a 3-tuple to a unit vector.
  * @param tuple The tuple to normalize
- * @returns The normalized tuple
  */
 function normalize(tuple: XYZ | RGB | number[]) {
   const [x, y, z] = tuple
@@ -34,7 +33,6 @@ function normalize(tuple: XYZ | RGB | number[]) {
  * Scales a 3-tuple by a scalar.
  * @param tuple The tuple to scale
  * @param scale The scalar to scale by
- * @returns The scaled tuple
  */
 function scale(tuple: XYZ | RGB | RGBA | number[], amount: number) {
   return tuple.map((v) => v * amount) as XYZ
@@ -44,7 +42,6 @@ function scale(tuple: XYZ | RGB | RGBA | number[], amount: number) {
  * Scales a 3-tuple by a scalar, clamping the result to 0-1.
  * @param tuple The tuple to scale
  * @param scale The scalar to scale by
- * @returns The scaled tuple
  */
 function scaleClamped(colour: RGB | RGBA, amount: number) {
   scale(colour, amount)
@@ -53,10 +50,19 @@ function scaleClamped(colour: RGB | RGBA, amount: number) {
   return colour.map((v) => Math.min(Math.max(v, 0), 1)) as RGB | RGBA
 }
 
+/**
+ * Converts a 3-tuple to a gl-matrix vec3
+ * @param tuple The tuple to convert
+ */
 function toVec3(tuple: XYZ) {
   return vec3.fromValues(tuple[0], tuple[1], tuple[2])
 }
 
+/**
+ * Calculates the distance between two 3-tuples
+ * @param a First tuple
+ * @param b Second tuple
+ */
 function distance(a: XYZ, b: XYZ) {
   return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2
 }

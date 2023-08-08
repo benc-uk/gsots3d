@@ -1,13 +1,14 @@
 import { Context, Material, Colours, setLogLevel } from '../../dist-bundle/gsots3d.js'
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-setLogLevel('debug')
 
 const ctx = await Context.init('canvas')
 ctx.debug = false
+setLogLevel('info')
 
-// Mobile looks too dark without gamma correction
+// Tweaks for mobile
 ctx.gamma = isMobile ? 1.5 : 1.0
+const moveSpeed = isMobile ? 0.5 : 1.0
 
 // Load models
 try {
@@ -162,7 +163,7 @@ try {
 ctx.camera.position = [0, 25, 50]
 ctx.camera.lookAt = [0, 10, 0]
 ctx.camera.far = 500
-ctx.camera.enableFPControls(0, -0.2, 0.002, 1.0)
+ctx.camera.enableFPControls(0, -0.2, 0.002, moveSpeed)
 
 // Main light
 const lightPos = [5, 10, 2]

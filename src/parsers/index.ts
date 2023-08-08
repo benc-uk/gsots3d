@@ -3,5 +3,5 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-export { parseMTL } from './mtl-parser.ts'
+export { parseMTL, MtlMaterial } from './mtl-parser.ts'
 export { parseOBJ } from './obj-parser.ts'

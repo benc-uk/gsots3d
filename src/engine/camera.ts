@@ -93,8 +93,6 @@ export class Camera {
     this.fpHandlersAdded = false
 
     this.keysDown = new Set()
-
-    //log.debug(`🎥 Camera created pos:${this.position} lookAt:${this.lookAt} type:${this.type}`)
   }
 
   /**
@@ -156,7 +154,6 @@ export class Camera {
    * @param moveSpeed Speed of moving in units, default 1.0
    */
   enableFPControls(angleY = 0, angleX = 0, turnSpeed = 0.001, moveSpeed = 1.0) {
-    log.info('🎥 Camera: FPS mode enabled')
     this.fpMode = true
     this.fpAngleY = angleY
     this.fpAngleX = angleX
@@ -172,10 +169,8 @@ export class Camera {
       if (!this.fpMode || !this.active) return
 
       if (document.pointerLockElement) {
-        log.info('🎥 Camera: exiting pointer lock')
         document.exitPointerLock()
       } else {
-        log.info('🎥 Camera: enable pointer lock')
         await (<HTMLCanvasElement>gl?.canvas).requestPointerLock()
       }
     })
@@ -254,6 +249,7 @@ export class Camera {
     })
 
     this.fpHandlersAdded = true
+    log.info('🎥 Camera: first person mode & controls enabled')
   }
 
   /**
@@ -262,7 +258,7 @@ export class Camera {
   disableFPControls() {
     this.fpMode = false
     document.exitPointerLock()
-    log.info('🎥 Camera: FPS mode disabled')
+    log.debug('🎥 Camera: FPS mode disabled')
   }
 
   /**
