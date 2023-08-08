@@ -22,7 +22,7 @@ Feature Set:
 
 ## 🕹️ Demos & Samples
 
-### [Live Demos](./examples/) - These work in your browser!
+### [Live Demos](https://code.benco.io/gsots3d/examples/) - These work in your browser!
 
 ## 🖼️ Screenshots
 

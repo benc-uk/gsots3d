@@ -69,8 +69,8 @@ jobs:
         run: |
           npm run build-bundle
           npm run build
-          git config --local user.email "github-actions@users.noreply.github.com"
-          git config --local user.name "github-actions"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
           git add dist-bundle
           git commit -m "Automated build of dist-bundle $(date -u)"
 
