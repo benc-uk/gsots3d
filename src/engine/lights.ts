@@ -1,5 +1,5 @@
 // ===== light.ts =============================================================
-// All light types directional and point
+// All light types, including directional and point
 // Ben Coleman, 2023
 // ============================================================================
 
@@ -172,7 +172,8 @@ export class LightDirectional {
   }
 
   /**
-   * Get the forward view matrix for the virtual camera used to render the shadow map
+   * Get the forward view matrix for the virtual camera used to render the shadow map.
+   * Returns undefined if shadows are not enabled
    */
   get shadowMatrix() {
     if (!this._shadowOptions) {
@@ -194,18 +195,37 @@ export class LightDirectional {
     return shadowMatrix
   }
 
+  /**
+   * Are shadows enabled for this light?
+   */
+  get shadowsEnabled() {
+    return this._shadowOptions !== undefined
+  }
+
+  /**
+   * Get the shadow map program, will be undefined if shadows are not enabled
+   */
   get shadowMapProgram() {
     return this._shadowMapProgram
   }
 
+  /**
+   * Get the shadow map framebuffer, will be undefined if shadows are not enabled
+   */
   get shadowMapFrameBufffer() {
     return this._shadowMapFB
   }
 
+  /**
+   * Get the shadow map texture, will be undefined if shadows are not enabled
+   */
   get shadowMapTexture() {
     return this._shadowMapTex
   }
 
+  /**
+   * Get the shadow map options, will be undefined if shadows are not enabled
+   */
   get shadowMapOptions() {
     return this._shadowOptions
   }
@@ -215,46 +235,25 @@ export class LightDirectional {
  * A point light source, doesn't cast shadows but does attenuate with distance
  */
 export class LightPoint {
-  /*
-   * Position of the light in world space
-   * @default [0, 100, 0]
-   */
+  /** Position of the light in world space. */
   public position: XYZ
 
-  /*
-   * Colour of the light
-   * @default [1, 1, 1]
-   */
+  /** Colour of the light. Default: [1, 1, 1] */
   public colour: RGB
 
-  /**
-   * Ambient colour of the light
-   * @default [0, 0, 0]
-   */
+  /** Ambient colour of the light. Normally none for point lights. Default [0, 0, 0] */
   public ambient: RGB
 
-  /*
-   * Attenuation constant drop off rate
-   * @default 1.0
-   */
+  /** Light attenuation parameter for constant drop off rate. Default: 0.5 */
   public constant: number
 
-  /*
-   * Attenuation linear drop off rate
-   * @default 0.07
-   */
+  /** Light attenuation parameter for linear drop off rate. Default: 0.018 */
   public linear: number
 
-  /*
-   * Attenuation quadratic drop off rate
-   * @default 0.017
-   */
+  /** Light attenuation parameter for quadratic drop off rate. Default: 0.0003 */
   public quad: number
 
-  /**
-   * Is this light enabled
-   * @default true
-   */
+  /** Is this light enabled? Default: true */
   public enabled: boolean
 
   /**

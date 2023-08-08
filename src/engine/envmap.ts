@@ -24,7 +24,7 @@ import { Camera, CameraType } from './camera.ts'
 import fragShaderEnvmap from '../../shaders/envmap/glsl.frag'
 import vertShaderEnvmap from '../../shaders/envmap/glsl.vert'
 import { XYZ } from './tuples.ts'
-import { Context } from '../index.ts'
+import { Context, Stats } from '../index.ts'
 
 export class EnvironmentMap {
   private programInfo: ProgramInfo
@@ -110,6 +110,7 @@ export class EnvironmentMap {
     setBuffersAndAttributes(this.gl, this.programInfo, this.cube)
     setUniforms(this.programInfo, uniforms)
     drawBufferInfo(this.gl, this.cube)
+    Stats.drawCallsPerFrame++
 
     this.gl.enable(this.gl.DEPTH_TEST)
   }

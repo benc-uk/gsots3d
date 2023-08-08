@@ -3,36 +3,30 @@
 // Ben Coleman, 2023
 // ======================================================================
 
-class Stats {
-  private prevTime = 0
+export class Stats {
+  public static drawCallsPerFrame = 0
+  public static instances = 0
+  public static triangles = 0
 
-  public drawCallsPerFrame = 0
+  private static prevTime = 0
+  public static deltaTime = 0
+  public static totalTime = 0
 
-  public instances = 0
-  public triangles = 0
-
-  public deltaTime = 0
-  public totalTime = 0
-
-  resetPerFrame() {
-    this.drawCallsPerFrame = 0
+  static resetPerFrame() {
+    Stats.drawCallsPerFrame = 0
   }
 
-  updateTime(now: number) {
-    this.deltaTime = now - this.prevTime // Get smoothed time difference
-    this.prevTime = now
-    this.totalTime += this.deltaTime
+  static updateTime(now: number) {
+    Stats.deltaTime = now - Stats.prevTime // Get smoothed time difference
+    Stats.prevTime = now
+    Stats.totalTime += Stats.deltaTime
   }
 
-  get FPS() {
-    return Math.round(1 / this.deltaTime)
+  static get FPS() {
+    return Math.round(1 / Stats.deltaTime)
   }
 
-  get totalTimeRound() {
-    return Math.round(this.totalTime)
+  static get totalTimeRound() {
+    return Math.round(Stats.totalTime)
   }
 }
-
-// Export a global singleton
-/** @ignore */
-export const stats = new Stats()

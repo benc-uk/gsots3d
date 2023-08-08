@@ -1,12 +1,12 @@
 // ===== context.ts ===========================================================
-// Main rendering context, guts of the library
+// Main rendering context, this is the core of the library
 // Ben Coleman, 2023
 // ============================================================================
 
+import log from 'loglevel'
 import { version } from '../../package.json'
 import { bindFramebufferInfo, createProgramInfo, ProgramInfo, resizeCanvasToDisplaySize } from 'twgl.js'
 import { mat4, vec3 } from 'gl-matrix'
-import log from 'loglevel'
 
 import { getGl, UniformSet } from './gl.ts'
 import { RGB, XYZ, Tuples } from '../engine/tuples.ts'
@@ -20,7 +20,7 @@ import { Billboard, BillboardType } from '../models/billboard.ts'
 import { PrimitiveCube, PrimitivePlane, PrimitiveSphere, PrimitiveCylinder } from '../models/primitive.ts'
 import { Model } from '../models/model.ts'
 import { HUD } from './hud.ts'
-import { stats } from './stats.ts'
+import { Stats } from './stats.ts'
 
 // Import shaders, tsup will inline these as text strings
 import fragShaderPhong from '../../shaders/phong/glsl.frag'
@@ -169,10 +169,10 @@ export class Context {
   private async render(now: number) {
     if (!this.gl) return
 
-    stats.updateTime(now * 0.001)
+    Stats.updateTime(now * 0.001)
 
     // Call the external update function
-    this.update(stats.deltaTime)
+    this.update(Stats.deltaTime)
 
     // RENDERING - Render into the dynamic environment map(s) if any
     if (this.dynamicEnvMap) {
@@ -181,15 +181,15 @@ export class Context {
     }
 
     // RENDERING - Render the shadow map from the global light
-    const shadowCam = this.globalLight.getShadowCamera()
-    if (shadowCam) {
+    if (this.globalLight.shadowsEnabled) {
+      const shadowCam = this.globalLight.getShadowCamera()
       // Switch to front face culling for shadow map, yeah it's weird but it works!
       this.gl.cullFace(this.gl.FRONT)
 
       // Bind the shadow map framebuffer and render the scene from the light's POV
       // Using the special shadow map program as an override for the whole rendering pass
       bindFramebufferInfo(this.gl, this.globalLight.shadowMapFrameBufffer)
-      this.renderWithCamera(shadowCam, this.globalLight.shadowMapProgram)
+      if (shadowCam) this.renderWithCamera(shadowCam, this.globalLight.shadowMapProgram)
 
       // Switch back to back face culling
       this.gl.cullFace(this.gl.BACK)
@@ -204,10 +204,10 @@ export class Context {
       this.debugDiv.innerHTML = `
         <b>GSOTS-3D v${version}</b><br><br>
         <b>Camera: </b>${this.camera.toString()}<br>
-        <b>Instances: </b>${stats.instances}<br>
-        <b>Draw calls: </b>${stats.drawCallsPerFrame}<br>
-        <b>Triangles: </b>${stats.triangles}<br>
-        <b>Render: </b>FPS: ${stats.FPS} / ${stats.totalTimeRound}s<br>
+        <b>Instances: </b>${Stats.instances}<br>
+        <b>Draw calls: </b>${Stats.drawCallsPerFrame}<br>
+        <b>Triangles: </b>${Stats.triangles}<br>
+        <b>Render: </b>FPS: ${Stats.FPS} / ${Stats.totalTimeRound}s<br>
       `
     } else {
       this.debugDiv.innerHTML = ''
@@ -217,7 +217,7 @@ export class Context {
     if (this.started) requestAnimationFrame(this.render)
 
     // Reset stats for next frame
-    stats.resetPerFrame()
+    Stats.resetPerFrame()
   }
 
   /**
@@ -431,8 +431,8 @@ export class Context {
 
     const instance = new Instance(model)
     this.instances.push(instance)
-    stats.triangles += model.triangleCount
-    stats.instances++
+    Stats.triangles += model.triangleCount
+    Stats.instances++
 
     return instance
   }
@@ -450,8 +450,8 @@ export class Context {
 
     const instance = new Instance(sphere)
     this.addInstance(instance, material)
-    stats.triangles += sphere.triangleCount
-    stats.instances++
+    Stats.triangles += sphere.triangleCount
+    Stats.instances++
 
     log.debug(`🟢 Created sphere instance, r:${radius}`)
 
@@ -473,8 +473,8 @@ export class Context {
 
     const instance = new Instance(plane)
     this.addInstance(instance, material)
-    stats.triangles += plane.triangleCount
-    stats.instances++
+    Stats.triangles += plane.triangleCount
+    Stats.instances++
 
     log.debug(`🟨 Created plane instance, w:${width} h:${height}`)
 
@@ -490,8 +490,8 @@ export class Context {
 
     const instance = new Instance(cube)
     this.addInstance(instance, material)
-    stats.triangles += cube.triangleCount
-    stats.instances++
+    Stats.triangles += cube.triangleCount
+    Stats.instances++
 
     log.debug(`📦 Created cube instance, size:${size}`)
 
@@ -507,8 +507,8 @@ export class Context {
 
     const instance = new Instance(cyl)
     this.addInstance(instance, material)
-    stats.triangles += cyl.triangleCount
-    stats.instances++
+    Stats.triangles += cyl.triangleCount
+    Stats.instances++
 
     log.debug(`🛢️ Created cylinder instance, r:${r}`)
 
@@ -529,8 +529,8 @@ export class Context {
 
     this.addInstance(instance, material)
 
-    stats.triangles += 2
-    stats.instances++
+    Stats.triangles += 2
+    Stats.instances++
 
     log.debug(`🚧 Created billboard instance of type: ${type} size: ${size}`)
 

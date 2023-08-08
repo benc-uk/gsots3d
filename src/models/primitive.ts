@@ -16,7 +16,7 @@ import {
 import { UniformSet } from '../core/gl.ts'
 import { Renderable } from './types.ts'
 import { Material } from '../engine/material.ts'
-import { stats } from '../core/stats.ts'
+import { Stats } from '../core/stats.ts'
 import { ProgramCache } from '../core/cache.ts'
 
 /**
@@ -64,7 +64,7 @@ export abstract class Primitive implements Renderable {
     setUniforms(programInfo, uniforms)
 
     drawBufferInfo(gl, this.bufferInfo)
-    stats.drawCallsPerFrame++
+    Stats.drawCallsPerFrame++
   }
 }
 

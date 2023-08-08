@@ -20,7 +20,7 @@ import { parseOBJ } from '../parsers/obj-parser.ts'
 import { fetchFile } from '../core/files.ts'
 import { getGl, UniformSet } from '../core/gl.ts'
 import { Renderable } from './types.ts'
-import { stats } from '../core/stats.ts'
+import { Stats } from '../core/stats.ts'
 import { ProgramCache } from '../core/cache.ts'
 
 /**
@@ -80,7 +80,7 @@ export class Model implements Renderable {
       setUniforms(programInfo, uniforms)
 
       drawBufferInfo(gl, bufferInfo)
-      stats.drawCallsPerFrame++
+      Stats.drawCallsPerFrame++
     }
   }
 
