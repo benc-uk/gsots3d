@@ -14,71 +14,74 @@ import { ProgramInfo } from 'twgl.js'
  * An instance of thing in the world to be rendered, with position, rotation, scale etc
  */
 export class Instance {
+  /** Main renderable thing this instance represents */
   public readonly renderable: Renderable | undefined
+
+  /** Position in world space */
   public position: XYZ | undefined
+
+  /** Scale in world space */
   public scale: XYZ | undefined
-  public rotate: XYZ | undefined
+
+  /** Should this instance be rendered and drawn */
   public enabled = true
-  public metadata: Record<string, string | number | boolean> = {}
+
+  /** Should this instance cast a shadow */
   public castShadow = true
 
-  /**
-   * Material to use for this instance, this will override ALL the materials on the model!
-   * Really only useful for simple untextured models without a MTL file
-   */
-  public material?: Material
-
-  /**
-   * Per instance texture flip flags, useful for flipping textures on a per instance basis
-   * @default false
-   */
+  /** Flip all textures on this instance on the X axis */
   public flipTextureX = false
 
-  /**
-   * Per instance texture flip flags, useful for flipping textures on a per instance basis
-   * @default false
-   */
+  /** Flip all textures on this instance on the Y axis */
   public flipTextureY = false
 
+  /** Material override. This will override the renderable's material.
+   *  This is only useful on simple models that probably consist of one surface */
+  public material?: Material
+
+  /** Metadata for this instance, can be used to store anything */
+  public metadata: Record<string, string | number | boolean> = {}
+
+  /** Rotation in radians around X, Y, Z axis */
+  private rotate: XYZ | undefined
+
   /**
+   * Create a new instace of a renderable thing
    * @param {Renderable} renderable - Renderable to use for this instance
    */
   constructor(renderable: Renderable) {
     this.renderable = renderable
   }
 
-  /**
-   * Rotate this instance around the X axis
-   */
+  /** Rotate this instance around the X axis*/
   rotateX(angle: number) {
     if (!this.rotate) this.rotate = [0, 0, 0]
     this.rotate[0] += angle
   }
 
-  /**
-   * Rotate this instance around the Y axis
-   */
+  /** Rotate this instance around the Y axis*/
   rotateY(angle: number) {
     if (!this.rotate) this.rotate = [0, 0, 0]
     this.rotate[1] += angle
   }
 
-  /**
-   * Rotate this instance around the Z axis
-   */
+  /** Rotate this instance around the Z axis, in radians*/
   rotateZ(angle: number) {
     if (!this.rotate) this.rotate = [0, 0, 0]
     this.rotate[2] += angle
   }
 
+  /** Rotate this instance around the X axis by a given angle in degrees */
   rotateZDeg(angle: number) {
     this.rotateZ((angle * Math.PI) / 180)
   }
 
+  /** Rotate this instance around the Y axis by a given angle in degrees */
   rotateYDeg(angle: number) {
     this.rotateY((angle * Math.PI) / 180)
   }
 
+  /** Rotate this instance around the Z axis by a given angle in degrees */
   rotateXDeg(angle: number) {
     this.rotateX((angle * Math.PI) / 180)
   }

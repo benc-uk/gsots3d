@@ -143,7 +143,7 @@ export class TextureCache {
    * @param flipY Flip the texture vertically (default true)
    */
   getCreate(src: string, filter = true, flipY = false) {
-    // check if texture already exists, if so return it
+    // Check if texture already exists, if so return it
     if (this.cache.has(src)) {
       log.trace(`👍 Returning texture '${src}' from cache, nice!`, flipY)
       return this.get(src)
@@ -156,7 +156,7 @@ export class TextureCache {
       {
         min: filter ? this.gl.LINEAR_MIPMAP_LINEAR : this.gl.NEAREST,
         mag: filter ? this.gl.LINEAR : this.gl.NEAREST,
-        src: src,
+        src,
         flipY: flipY ? 1 : 0,
       },
       (err) => {

@@ -29,7 +29,7 @@ wallMat.shininess = 300
 
 const wall = ctx.createPlaneInstance(wallMat, 200, 200, 12, 12, 6)
 wall.rotateXDeg(90)
-wall.position = [3, -50, -100]
+wall.position = [3, -30, -100]
 
 ctx.createPlaneInstance(wallMat, 200, 200, 12, 12, 6)
 
@@ -61,8 +61,7 @@ laptop.scale = [12.2, 12.2, 12.2]
 const teapot = ctx.createModelInstance('teapot')
 teapot.position = [-15, 20, 35]
 teapot.scale = [6, 6, 6]
-teapot.metadata.special = 1
-const teapotMaterial = Material.createSolidColour(0.7, 0.7, 0.7)
+const teapotMaterial = Material.createSolidColour(0.7, 0.7, 1.0)
 teapotMaterial.specular = [0.7, 0.7, 0.7]
 teapotMaterial.shininess = 50
 teapotMaterial.reflectivity = 0.5
@@ -84,41 +83,36 @@ mirrorMat.shininess = 100
 mirrorMat.specular = [1, 1, 1]
 const mirrorBall = ctx.createSphereInstance(mirrorMat, 20, 24, 24)
 mirrorBall.position = [-25, 25, -35]
-mirrorBall.metadata['special'] = 1
+mirrorBall.metadata.special = 1
 
-const light = ctx.createPointLight([0, 0, 0], Colours.WHITE, 3)
-const lightBallMat = Material.createSolidColour(Colours.WHITE)
-lightBallMat.emissive = [1, 1, 1]
-lightBallMat.diffuse = [1, 1, 1]
-lightBallMat.shininess = 100
-const lightBall = ctx.createSphereInstance(lightBallMat, 0.5, 24, 24)
-
-// red ball
+// Red ball
 const redBallMat = Material.createSolidColour(0.8, 0.2, 0.1)
 redBallMat.specular = [0.7, 0.7, 0.7]
 redBallMat.shininess = 50
 redBallMat.reflectivity = 0.5
 const redBall = ctx.createSphereInstance(redBallMat, 8, 32, 32)
 redBall.position = [25, 8, 20]
-
 let redBallDir = 1
+
+// Lights that follows the camera
+const light = ctx.createPointLight([0, 0, 0], Colours.WHITE, 3)
 
 ctx.update = () => {
   light.position[0] = ctx.camera.position[0] - 40
   light.position[1] = ctx.camera.position[1] + 10
   light.position[2] = ctx.camera.position[2] - 40
-  lightBall.position = light.position
 
   teapot.rotateYDeg(0.6)
   cube2.rotateYDeg(-0.4)
 
-  if (redBall.position[2] > 50) {
-    redBallDir = -1.7
+  if (redBall.position[2] > 80) {
+    redBallDir = -1
   }
-  if (redBall.position[2] < -50) {
-    redBallDir = 1.7
+  if (redBall.position[2] < -80) {
+    redBallDir = 1
   }
-  redBall.position[2] += redBallDir * 0.5
+  redBall.position[2] += redBallDir * 0.65
+  redBall.position[0] += redBallDir * 0.25
 }
 
 ctx.setEnvmap(

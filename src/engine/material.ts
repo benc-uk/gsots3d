@@ -116,7 +116,7 @@ export class Material {
     }
 
     // This is a kludge, a guess; if illum is 3 or more and Ks is set, then we have
-    // a reflective material of some kind
+    // A reflective material of some kind
     if (rawMtl.illum && rawMtl.illum > 2) {
       m.reflectivity = (m.specular[0] + m.specular[1] + m.specular[2]) / 3
     }

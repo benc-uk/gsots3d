@@ -49,16 +49,16 @@ export function parseOBJ(objFile: string, flipUV: boolean) {
   const objTexcoords = [[0, 0]]
   const objNormals = [[0, 0, 0]]
 
-  // same order as `f` indices
+  // Same order as `f` indices
   const objVertexData = [objPositions, objTexcoords, objNormals]
 
   let triangles = 0
 
-  // same order as `f` indices
+  // Same order as `f` indices
   let webglVertexData = [
-    [], // position
-    [], // texcoord
-    [], // normal
+    [], // Position
+    [], // Texcoord
+    [], // Normal
   ] as number[][]
 
   const geometries = Array<Geometry>()
@@ -211,7 +211,7 @@ export function parseOBJ(objFile: string, flipUV: boolean) {
   // Return the list of geometries and material libs, plus triangle count
   return {
     matLibNames: materialLibs,
-    geometries: geometries,
+    geometries,
     triangles,
   } as ParseResult
 }

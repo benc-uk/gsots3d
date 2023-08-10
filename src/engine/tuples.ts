@@ -97,15 +97,15 @@ function rgbColourHex(hexString: string) {
 /**
  * A set of common colours as RGB tuples
  */
-export class Colours {
-  static readonly RED = [1, 0, 0] as RGB
-  static readonly GREEN = [0, 1, 0] as RGB
-  static readonly BLUE = [0, 0, 1] as RGB
-  static readonly YELLOW = [1, 1, 0] as RGB
-  static readonly CYAN = [0, 1, 1] as RGB
-  static readonly MAGENTA = [1, 0, 1] as RGB
-  static readonly BLACK = [0, 0, 0] as RGB
-  static readonly WHITE = [1, 1, 1] as RGB
+export const Colours = {
+  RED: [1, 0, 0] as RGB,
+  GREEN: [0, 1, 0] as RGB,
+  BLUE: [0, 0, 1] as RGB,
+  YELLOW: [1, 1, 0] as RGB,
+  CYAN: [0, 1, 1] as RGB,
+  MAGENTA: [1, 0, 1] as RGB,
+  BLACK: [0, 0, 0] as RGB,
+  WHITE: [1, 1, 1] as RGB,
 }
 
 // ============================================================================

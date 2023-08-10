@@ -68,7 +68,7 @@ export class Model implements Renderable {
 
         // Fall back to default material if not found
         if (!material) {
-          material = this.materials['__default']
+          material = this.materials.__default
         }
 
         material.apply(programInfo)
@@ -136,8 +136,8 @@ export class Model implements Renderable {
     }
 
     // Fall back default material
-    model.materials['__default'] = new Material()
-    model.materials['__default'].diffuse = [0.1, 0.6, 0.9]
+    model.materials.__default = new Material()
+    model.materials.__default.diffuse = [0.1, 0.6, 0.9]
 
     // This really should already been memoized by the context at this point
     const gl = getGl()

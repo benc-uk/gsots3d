@@ -236,7 +236,10 @@ ctx.update = (delta) => {
   scifiCube.rotateYDeg(delta * 25)
 }
 
+// Dynamic reflections, big performance hit
 ctx.setDynamicEnvmap([0, 15, 0], 256)
+
+// Shadows
 ctx.globalLight.enableShadows({
   mapSize: 1024,
   zoom: 100,

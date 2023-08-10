@@ -3,30 +3,30 @@
 // Ben Coleman, 2023
 // ======================================================================
 
-export class Stats {
-  public static drawCallsPerFrame = 0
-  public static instances = 0
-  public static triangles = 0
+export const Stats = {
+  drawCallsPerFrame: 0,
+  instances: 0,
+  triangles: 0,
 
-  private static prevTime = 0
-  public static deltaTime = 0
-  public static totalTime = 0
+  prevTime: 0,
+  deltaTime: 0,
+  totalTime: 0,
 
-  static resetPerFrame() {
+  resetPerFrame() {
     Stats.drawCallsPerFrame = 0
-  }
+  },
 
-  static updateTime(now: number) {
+  updateTime(now: number) {
     Stats.deltaTime = now - Stats.prevTime // Get smoothed time difference
     Stats.prevTime = now
     Stats.totalTime += Stats.deltaTime
-  }
+  },
 
-  static get FPS() {
+  get FPS() {
     return Math.round(1 / Stats.deltaTime)
-  }
+  },
 
-  static get totalTimeRound() {
+  get totalTimeRound() {
     return Math.round(Stats.totalTime)
-  }
+  },
 }

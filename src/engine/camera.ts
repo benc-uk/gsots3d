@@ -160,7 +160,7 @@ export class Camera {
     this.fpTurnSpeed = turnSpeed
     this.fpMoveSpeed = moveSpeed
 
-    if (this.fpHandlersAdded) return // prevent multiple event listeners being added
+    if (this.fpHandlersAdded) return // Prevent multiple event listeners being added
 
     // Handle enable/disable for pointer lock on main canvas
     // See: https://developer.mozilla.org/en-US/docs/Web/API/Pointer_Lock_API
@@ -211,7 +211,7 @@ export class Camera {
 
       // If the touch is on the left side of the screen, it's for moving
       if (e.touches[0].clientX < window.innerWidth / 2) {
-        // top half of screen is forward, bottom half is backward
+        // Top half of screen is forward, bottom half is backward
         if (e.touches[0].clientY < window.innerHeight / 2) {
           this.keysDown.add('w')
         }
@@ -275,11 +275,11 @@ export class Camera {
     if (!this.fpMode || !this.active) return
     if (this.keysDown.size === 0) return
 
-    // use fpAngleY to calculate the direction we are facing
+    // Use fpAngleY to calculate the direction we are facing
     const dZ = -Math.cos(this.fpAngleY) * this.fpMoveSpeed
     const dX = -Math.sin(this.fpAngleY) * this.fpMoveSpeed
 
-    // use keysDown to move the camera
+    // Use keysDown to move the camera
     for (const key of this.keysDown.values()) {
       switch (key) {
         case 'ArrowUp':
@@ -308,7 +308,7 @@ export class Camera {
 
         case 'ArrowRight':
         case 'd':
-          // move right
+          // Move right
           this.position[0] -= dZ
           this.position[2] += dX
           this.lookAt[0] -= dZ

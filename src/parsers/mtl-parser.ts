@@ -57,7 +57,7 @@ export function parseMTL(mtlFile: string): Map<string, MtlMaterial> {
     },
     Ni() {
       // Not used
-      //material.ni = parseFloat(parts[0])
+      // Material.ni = parseFloat(parts[0])
     },
     d(parts: string[]) {
       material.d = parseFloat(parts[0])
@@ -98,7 +98,7 @@ export function parseMTL(mtlFile: string): Map<string, MtlMaterial> {
 
     const handler = keywords[keyword]
     if (!handler) {
-      //console.warn('unhandled keyword:', keyword)
+      // Console.warn('unhandled keyword:', keyword)
       continue
     }
 

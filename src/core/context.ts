@@ -40,8 +40,6 @@ export class Context {
   private started: boolean
   private instances: Instance[] = []
   private instancesTrans: Instance[] = []
-  private debugDiv: HTMLDivElement
-  private loadingDiv: HTMLDivElement
   private cameras: Map<string, Camera> = new Map()
   private activeCameraName: string
   private envmap?: EnvironmentMap
@@ -100,25 +98,6 @@ export class Context {
     this.activeCameraName = 'default'
 
     this.hud = new HUD(<HTMLCanvasElement>gl.canvas)
-
-    this.debugDiv = document.createElement('div')
-    this.debugDiv.classList.add('gsots3d-debug')
-    this.debugDiv.style.fontSize = 'min(1.5vw, 20px)'
-    this.debugDiv.style.fontFamily = 'monospace'
-    this.debugDiv.style.color = 'white'
-    this.debugDiv.style.padding = '1vw'
-    this.hud.addHUDItem(this.debugDiv)
-
-    this.loadingDiv = document.createElement('div')
-    this.loadingDiv.classList.add('gsots3d-loading')
-    this.loadingDiv.innerHTML = '💾 Loading...'
-    this.loadingDiv.style.font = 'normal 4vw sans-serif'
-    this.loadingDiv.style.color = 'white'
-    this.loadingDiv.style.position = 'absolute'
-    this.loadingDiv.style.top = '50%'
-    this.loadingDiv.style.left = '50%'
-    this.loadingDiv.style.transform = 'translate(-50%, -50%)'
-    this.hud.addHUDItem(this.loadingDiv)
 
     log.info(`👑 GSOTS-3D context created, v${version}`)
   }
@@ -199,19 +178,7 @@ export class Context {
     bindFramebufferInfo(this.gl, null)
     this.renderWithCamera(this.camera)
 
-    // Draw the debug HUD
-    if (this.debug) {
-      this.debugDiv.innerHTML = `
-        <b>GSOTS-3D v${version}</b><br><br>
-        <b>Camera: </b>${this.camera.toString()}<br>
-        <b>Instances: </b>${Stats.instances}<br>
-        <b>Draw calls: </b>${Stats.drawCallsPerFrame}<br>
-        <b>Triangles: </b>${Stats.triangles}<br>
-        <b>Render: </b>FPS: ${Stats.FPS} / ${Stats.totalTimeRound}s<br>
-      `
-    } else {
-      this.debugDiv.innerHTML = ''
-    }
+    this.hud.render(this.debug, this.camera)
 
     // Loop forever or stop if not started
     if (this.started) requestAnimationFrame(this.render)
@@ -322,7 +289,7 @@ export class Context {
    * Start the rendering loop
    */
   start() {
-    this.loadingDiv.style.display = 'none'
+    this.hud.hideLoading()
     this.started = true
     // Restart the render loop
     requestAnimationFrame(this.render)

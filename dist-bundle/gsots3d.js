@@ -296,6 +296,9 @@ function setLogLevel(level) {
   import_loglevel2.default.setLevel(level);
 }
 
+// src/core/context.ts
+var import_loglevel7 = __toESM(require_loglevel(), 1);
+
 // package.json
 var version = "0.0.4-alpha.2";
 
@@ -6052,9 +6055,6 @@ var forEach = function() {
   };
 }();
 
-// src/core/context.ts
-var import_loglevel7 = __toESM(require_loglevel(), 1);
-
 // src/engine/tuples.ts
 function normalize2(tuple) {
   const [x, y, z] = tuple;
@@ -6084,16 +6084,16 @@ function rgbColourHex(hexString) {
   const b = parseInt(hex.substring(4, 6), 16);
   return rgbColour255(r, g, b);
 }
-var Colours = class {
+var Colours = {
+  RED: [1, 0, 0],
+  GREEN: [0, 1, 0],
+  BLUE: [0, 0, 1],
+  YELLOW: [1, 1, 0],
+  CYAN: [0, 1, 1],
+  MAGENTA: [1, 0, 1],
+  BLACK: [0, 0, 0],
+  WHITE: [1, 1, 1]
 };
-Colours.RED = [1, 0, 0];
-Colours.GREEN = [0, 1, 0];
-Colours.BLUE = [0, 0, 1];
-Colours.YELLOW = [1, 1, 0];
-Colours.CYAN = [0, 1, 1];
-Colours.MAGENTA = [1, 0, 1];
-Colours.BLACK = [0, 0, 0];
-Colours.WHITE = [1, 1, 1];
 var Tuples = {
   normalize: normalize2,
   scale: scale3,
@@ -6623,7 +6623,8 @@ var LightDirectional = class {
     return cam;
   }
   /**
-   * Get the forward view matrix for the virtual camera used to render the shadow map
+   * Get the forward view matrix for the virtual camera used to render the shadow map.
+   * Returns undefined if shadows are not enabled
    */
   get shadowMatrix() {
     if (!this._shadowOptions) {
@@ -6641,15 +6642,33 @@ var LightDirectional = class {
     );
     return shadowMatrix;
   }
+  /**
+   * Are shadows enabled for this light?
+   */
+  get shadowsEnabled() {
+    return this._shadowOptions !== void 0;
+  }
+  /**
+   * Get the shadow map program, will be undefined if shadows are not enabled
+   */
   get shadowMapProgram() {
     return this._shadowMapProgram;
   }
+  /**
+   * Get the shadow map framebuffer, will be undefined if shadows are not enabled
+   */
   get shadowMapFrameBufffer() {
     return this._shadowMapFB;
   }
+  /**
+   * Get the shadow map texture, will be undefined if shadows are not enabled
+   */
   get shadowMapTexture() {
     return this._shadowMapTex;
   }
+  /**
+   * Get the shadow map options, will be undefined if shadows are not enabled
+   */
   get shadowMapOptions() {
     return this._shadowOptions;
   }
@@ -6753,6 +6772,7 @@ var EnvironmentMap = class {
     setBuffersAndAttributes(this.gl, this.programInfo, this.cube);
     setUniforms(this.programInfo, uniforms);
     drawBufferInfo(this.gl, this.cube);
+    Stats.drawCallsPerFrame++;
     this.gl.enable(this.gl.DEPTH_TEST);
   }
   get texture() {
@@ -6888,54 +6908,49 @@ var DynamicEnvironmentMap = class {
 // src/models/instance.ts
 var Instance = class {
   /**
+   * Create a new instace of a renderable thing
    * @param {Renderable} renderable - Renderable to use for this instance
    */
   constructor(renderable) {
+    /** Should this instance be rendered and drawn */
     this.enabled = true;
-    this.metadata = {};
+    /** Should this instance cast a shadow */
     this.castShadow = true;
-    /**
-     * Per instance texture flip flags, useful for flipping textures on a per instance basis
-     * @default false
-     */
+    /** Flip all textures on this instance on the X axis */
     this.flipTextureX = false;
-    /**
-     * Per instance texture flip flags, useful for flipping textures on a per instance basis
-     * @default false
-     */
+    /** Flip all textures on this instance on the Y axis */
     this.flipTextureY = false;
+    /** Metadata for this instance, can be used to store anything */
+    this.metadata = {};
     this.renderable = renderable;
   }
-  /**
-   * Rotate this instance around the X axis
-   */
+  /** Rotate this instance around the X axis*/
   rotateX(angle2) {
     if (!this.rotate)
       this.rotate = [0, 0, 0];
     this.rotate[0] += angle2;
   }
-  /**
-   * Rotate this instance around the Y axis
-   */
+  /** Rotate this instance around the Y axis*/
   rotateY(angle2) {
     if (!this.rotate)
       this.rotate = [0, 0, 0];
     this.rotate[1] += angle2;
   }
-  /**
-   * Rotate this instance around the Z axis
-   */
+  /** Rotate this instance around the Z axis, in radians*/
   rotateZ(angle2) {
     if (!this.rotate)
       this.rotate = [0, 0, 0];
     this.rotate[2] += angle2;
   }
+  /** Rotate this instance around the X axis by a given angle in degrees */
   rotateZDeg(angle2) {
     this.rotateZ(angle2 * Math.PI / 180);
   }
+  /** Rotate this instance around the Y axis by a given angle in degrees */
   rotateYDeg(angle2) {
     this.rotateY(angle2 * Math.PI / 180);
   }
+  /** Rotate this instance around the Z axis by a given angle in degrees */
   rotateXDeg(angle2) {
     this.rotateX(angle2 * Math.PI / 180);
   }
@@ -6981,31 +6996,28 @@ var Instance = class {
 };
 
 // src/core/stats.ts
-var Stats = class {
-  constructor() {
-    this.prevTime = 0;
-    this.drawCallsPerFrame = 0;
-    this.instances = 0;
-    this.triangles = 0;
-    this.deltaTime = 0;
-    this.totalTime = 0;
-  }
+var Stats = {
+  drawCallsPerFrame: 0,
+  instances: 0,
+  triangles: 0,
+  prevTime: 0,
+  deltaTime: 0,
+  totalTime: 0,
   resetPerFrame() {
-    this.drawCallsPerFrame = 0;
-  }
+    Stats.drawCallsPerFrame = 0;
+  },
   updateTime(now) {
-    this.deltaTime = now - this.prevTime;
-    this.prevTime = now;
-    this.totalTime += this.deltaTime;
-  }
+    Stats.deltaTime = now - Stats.prevTime;
+    Stats.prevTime = now;
+    Stats.totalTime += Stats.deltaTime;
+  },
   get FPS() {
-    return Math.round(1 / this.deltaTime);
-  }
+    return Math.round(1 / Stats.deltaTime);
+  },
   get totalTimeRound() {
-    return Math.round(this.totalTime);
+    return Math.round(Stats.totalTime);
   }
 };
-var stats = new Stats();
 
 // src/models/billboard.ts
 var BillboardType = /* @__PURE__ */ ((BillboardType2) => {
@@ -7055,7 +7067,7 @@ var Billboard = class {
     setBuffersAndAttributes(gl, programInfo, this.bufferInfo);
     setUniforms(programInfo, uniforms);
     drawBufferInfo(gl, this.bufferInfo);
-    stats.drawCallsPerFrame++;
+    Stats.drawCallsPerFrame++;
   }
 };
 
@@ -7213,7 +7225,7 @@ var Primitive = class {
     setBuffersAndAttributes(gl, programInfo, this.bufferInfo);
     setUniforms(programInfo, uniforms);
     drawBufferInfo(gl, this.bufferInfo);
-    stats.drawCallsPerFrame++;
+    Stats.drawCallsPerFrame++;
   }
 };
 var PrimitiveSphere = class extends Primitive {
@@ -7361,11 +7373,11 @@ function parseOBJ(objFile, flipUV) {
   let triangles = 0;
   let webglVertexData = [
     [],
-    // position
+    // Position
     [],
-    // texcoord
+    // Texcoord
     []
-    // normal
+    // Normal
   ];
   const geometries = Array();
   let geometry = {};
@@ -7513,7 +7525,7 @@ var Model = class _Model {
       if (materialOverride === void 0) {
         let material = this.materials[part.materialName];
         if (!material) {
-          material = this.materials["__default"];
+          material = this.materials.__default;
         }
         material.apply(programInfo);
       } else {
@@ -7522,7 +7534,7 @@ var Model = class _Model {
       setBuffersAndAttributes(gl, programInfo, bufferInfo);
       setUniforms(programInfo, uniforms);
       drawBufferInfo(gl, bufferInfo);
-      stats.drawCallsPerFrame++;
+      Stats.drawCallsPerFrame++;
     }
   }
   /** Simple getter for the number of triangles in the model */
@@ -7562,8 +7574,8 @@ var Model = class _Model {
         import_loglevel6.default.warn(`\u{1F4A5} Unable to load material library ${objData.matLibNames[0]}`);
       }
     }
-    model.materials["__default"] = new Material();
-    model.materials["__default"].diffuse = [0.1, 0.6, 0.9];
+    model.materials.__default = new Material();
+    model.materials.__default.diffuse = [0.1, 0.6, 0.9];
     const gl = getGl();
     if (!gl) {
       throw new Error("\u{1F4A5} Unable to get WebGL context");
@@ -7628,19 +7640,40 @@ var ModelPart = class {
 // src/core/hud.ts
 var HUD = class {
   constructor(canvas) {
+    this.debug = false;
     const parent = canvas.parentElement;
     if (!parent)
       throw new Error("\u{1F4A5} Canvas must have a parent element");
     this.canvas = canvas;
     this.hud = document.createElement("div");
     this.hud.classList.add("gsots3d-hud");
-    this.update = this.update.bind(this);
-    window.addEventListener("resize", this.update);
-    window.addEventListener("load", this.update);
+    this.hud.style.pointerEvents = "none";
+    this.updateWithCanvas = this.updateWithCanvas.bind(this);
+    window.addEventListener("resize", this.updateWithCanvas);
+    window.addEventListener("load", this.updateWithCanvas);
+    this.debugDiv = document.createElement("div");
+    this.debugDiv.classList.add("gsots3d-debug");
+    this.debugDiv.style.fontSize = "min(1.5vw, 20px)";
+    this.debugDiv.style.fontFamily = "monospace";
+    this.debugDiv.style.color = "white";
+    this.debugDiv.style.padding = "1vw";
+    this.addHUDItem(this.debugDiv);
+    this.loadingDiv = document.createElement("div");
+    this.loadingDiv.classList.add("gsots3d-loading");
+    this.loadingDiv.innerHTML = `\u{1F4BE} Loading...`;
+    this.loadingDiv.innerHTML += `<br><br><div style='font-size:1.5vw'>GSOTS-3D v${version}</div>`;
+    this.loadingDiv.style.font = "normal 3vw sans-serif";
+    this.loadingDiv.style.color = "#ccc";
+    this.loadingDiv.style.position = "absolute";
+    this.loadingDiv.style.top = "50%";
+    this.loadingDiv.style.left = "50%";
+    this.loadingDiv.style.textAlign = "center";
+    this.loadingDiv.style.transform = "translate(-50%, -50%)";
+    this.addHUDItem(this.loadingDiv);
     parent.appendChild(this.hud);
-    this.update();
+    this.updateWithCanvas();
   }
-  update() {
+  updateWithCanvas() {
     const canvasStyles = window.getComputedStyle(this.canvas, null);
     this.hud.style.position = canvasStyles.getPropertyValue("position");
     this.hud.style.top = canvasStyles.getPropertyValue("top");
@@ -7648,13 +7681,26 @@ var HUD = class {
     this.hud.style.width = canvasStyles.getPropertyValue("width");
     this.hud.style.height = canvasStyles.getPropertyValue("height");
     this.hud.style.transform = canvasStyles.getPropertyValue("transform");
-    this.hud.style.pointerEvents = "none";
   }
   addHUDItem(item) {
     this.hud.appendChild(item);
   }
-  debug(msg) {
-    this.hud.innerHTML = msg;
+  render(debug = false, camera) {
+    if (debug) {
+      this.debugDiv.innerHTML = `
+            <b>GSOTS-3D v${version}</b><br><br>
+            <b>Camera: </b>${camera.toString()}<br>
+            <b>Instances: </b>${Stats.instances}<br>
+            <b>Draw calls: </b>${Stats.drawCallsPerFrame}<br>
+            <b>Triangles: </b>${Stats.triangles}<br>
+            <b>Render: </b>FPS: ${Stats.FPS} / ${Stats.totalTimeRound}s<br>
+          `;
+    } else {
+      this.debugDiv.innerHTML = "";
+    }
+  }
+  hideLoading() {
+    this.loadingDiv.style.display = "none";
   }
 };
 
@@ -7672,7 +7718,7 @@ var glsl_default8 = "#version 300 es\n\n// =====================================
 
 // src/core/context.ts
 var MAX_LIGHTS = 16;
-var Context = class _Context {
+var Context2 = class _Context {
   /** Constructor is private, use init() to create a new context */
   constructor(gl) {
     this.instances = [];
@@ -7699,23 +7745,6 @@ var Context = class _Context {
     this._camera = defaultCamera;
     this.activeCameraName = "default";
     this.hud = new HUD(gl.canvas);
-    this.debugDiv = document.createElement("div");
-    this.debugDiv.classList.add("gsots3d-debug");
-    this.debugDiv.style.fontSize = "min(1.5vw, 20px)";
-    this.debugDiv.style.fontFamily = "monospace";
-    this.debugDiv.style.color = "white";
-    this.debugDiv.style.padding = "1vw";
-    this.hud.addHUDItem(this.debugDiv);
-    this.loadingDiv = document.createElement("div");
-    this.loadingDiv.classList.add("gsots3d-loading");
-    this.loadingDiv.innerHTML = "\u{1F4BE} Loading...";
-    this.loadingDiv.style.font = "normal 4vw sans-serif";
-    this.loadingDiv.style.color = "white";
-    this.loadingDiv.style.position = "absolute";
-    this.loadingDiv.style.top = "50%";
-    this.loadingDiv.style.left = "50%";
-    this.loadingDiv.style.transform = "translate(-50%, -50%)";
-    this.hud.addHUDItem(this.loadingDiv);
     import_loglevel7.default.info(`\u{1F451} GSOTS-3D context created, v${version}`);
   }
   // ==== Getters =============================================================
@@ -7760,35 +7789,25 @@ var Context = class _Context {
   async render(now) {
     if (!this.gl)
       return;
-    stats.updateTime(now * 1e-3);
-    this.update(stats.deltaTime);
+    Stats.updateTime(now * 1e-3);
+    this.update(Stats.deltaTime);
     if (this.dynamicEnvMap) {
       this.dynamicEnvMap.update(this.gl, this);
     }
-    const shadowCam = this.globalLight.getShadowCamera();
-    if (shadowCam) {
+    if (this.globalLight.shadowsEnabled) {
+      const shadowCam = this.globalLight.getShadowCamera();
       this.gl.cullFace(this.gl.FRONT);
       bindFramebufferInfo(this.gl, this.globalLight.shadowMapFrameBufffer);
-      this.renderWithCamera(shadowCam, this.globalLight.shadowMapProgram);
+      if (shadowCam)
+        this.renderWithCamera(shadowCam, this.globalLight.shadowMapProgram);
       this.gl.cullFace(this.gl.BACK);
     }
     bindFramebufferInfo(this.gl, null);
     this.renderWithCamera(this.camera);
-    if (this.debug) {
-      this.debugDiv.innerHTML = `
-        <b>GSOTS-3D v${version}</b><br><br>
-        <b>Camera: </b>${this.camera.toString()}<br>
-        <b>Instances: </b>${stats.instances}<br>
-        <b>Draw calls: </b>${stats.drawCallsPerFrame}<br>
-        <b>Triangles: </b>${stats.triangles}<br>
-        <b>Render: </b>FPS: ${stats.FPS} / ${stats.totalTimeRound}s<br>
-      `;
-    } else {
-      this.debugDiv.innerHTML = "";
-    }
+    this.hud.render(this.debug, this.camera);
     if (this.started)
       requestAnimationFrame(this.render);
-    stats.resetPerFrame();
+    Stats.resetPerFrame();
   }
   /**
    * Render the scene from the given camera, used internally
@@ -7858,7 +7877,7 @@ var Context = class _Context {
    * Start the rendering loop
    */
   start() {
-    this.loadingDiv.style.display = "none";
+    this.hud.hideLoading();
     this.started = true;
     requestAnimationFrame(this.render);
   }
@@ -7948,8 +7967,8 @@ var Context = class _Context {
     }
     const instance = new Instance(model);
     this.instances.push(instance);
-    stats.triangles += model.triangleCount;
-    stats.instances++;
+    Stats.triangles += model.triangleCount;
+    Stats.instances++;
     return instance;
   }
   /**
@@ -7964,8 +7983,8 @@ var Context = class _Context {
     sphere.material = material;
     const instance = new Instance(sphere);
     this.addInstance(instance, material);
-    stats.triangles += sphere.triangleCount;
-    stats.instances++;
+    Stats.triangles += sphere.triangleCount;
+    Stats.instances++;
     import_loglevel7.default.debug(`\u{1F7E2} Created sphere instance, r:${radius}`);
     return instance;
   }
@@ -7983,8 +8002,8 @@ var Context = class _Context {
     plane.material = material;
     const instance = new Instance(plane);
     this.addInstance(instance, material);
-    stats.triangles += plane.triangleCount;
-    stats.instances++;
+    Stats.triangles += plane.triangleCount;
+    Stats.instances++;
     import_loglevel7.default.debug(`\u{1F7E8} Created plane instance, w:${width} h:${height}`);
     return instance;
   }
@@ -7996,8 +8015,8 @@ var Context = class _Context {
     cube.material = material;
     const instance = new Instance(cube);
     this.addInstance(instance, material);
-    stats.triangles += cube.triangleCount;
-    stats.instances++;
+    Stats.triangles += cube.triangleCount;
+    Stats.instances++;
     import_loglevel7.default.debug(`\u{1F4E6} Created cube instance, size:${size}`);
     return instance;
   }
@@ -8009,8 +8028,8 @@ var Context = class _Context {
     cyl.material = material;
     const instance = new Instance(cyl);
     this.addInstance(instance, material);
-    stats.triangles += cyl.triangleCount;
-    stats.instances++;
+    Stats.triangles += cyl.triangleCount;
+    Stats.instances++;
     import_loglevel7.default.debug(`\u{1F6E2}\uFE0F Created cylinder instance, r:${r}`);
     return instance;
   }
@@ -8025,8 +8044,8 @@ var Context = class _Context {
     const billboard = new Billboard(this.gl, type, material, size);
     const instance = new Instance(billboard);
     this.addInstance(instance, material);
-    stats.triangles += 2;
-    stats.instances++;
+    Stats.triangles += 2;
+    Stats.instances++;
     import_loglevel7.default.debug(`\u{1F6A7} Created billboard instance of type: ${type} size: ${size}`);
     return instance;
   }
@@ -8084,7 +8103,7 @@ export {
   Camera,
   CameraType,
   Colours,
-  Context,
+  Context2 as Context,
   DynamicEnvironmentMap,
   EnvironmentMap,
   HUD,
@@ -8103,11 +8122,11 @@ export {
   PrimitivePlane,
   PrimitiveSphere,
   ProgramCache,
+  Stats,
   TextureCache,
   Tuples,
   getGl,
-  setLogLevel,
-  stats
+  setLogLevel
 };
 /*! Bundled license information:
 
