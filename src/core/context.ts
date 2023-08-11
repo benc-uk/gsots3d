@@ -232,7 +232,7 @@ export class Context {
       u_shadowScatter: this.globalLight.shadowMapOptions?.scatter ?? 0.2,
     } as UniformSet
 
-    // RENDERING - Draw envmap around the scene first
+    // RENDERING - Draw envmap around the scene first, like a skybox & background
     if (this.envmap) {
       this.envmap.render(<mat4>uniforms.u_view, <mat4>uniforms.u_proj, camera)
     }

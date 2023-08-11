@@ -38,8 +38,7 @@ export class HUD {
 
     this.loadingDiv = document.createElement('div')
     this.loadingDiv.classList.add('gsots3d-loading')
-    this.loadingDiv.innerHTML = `💾 Loading...`
-    this.loadingDiv.innerHTML += `<br><br><div style='font-size:1.5vw'>GSOTS-3D v${version}</div>`
+    this.loadingDiv.innerHTML = `💾 Loading...<br><br><div style='font-size:1.5vw'>GSOTS-3D v${version}</div>`
     this.loadingDiv.style.font = 'normal 3vw sans-serif'
     this.loadingDiv.style.color = '#ccc'
     this.loadingDiv.style.position = 'absolute'
@@ -71,13 +70,13 @@ export class HUD {
     // Draw the debug HUD
     if (debug) {
       this.debugDiv.innerHTML = `
-            <b>GSOTS-3D v${version}</b><br><br>
-            <b>Camera: </b>${camera.toString()}<br>
-            <b>Instances: </b>${Stats.instances}<br>
-            <b>Draw calls: </b>${Stats.drawCallsPerFrame}<br>
-            <b>Triangles: </b>${Stats.triangles}<br>
-            <b>Render: </b>FPS: ${Stats.FPS} / ${Stats.totalTimeRound}s<br>
-          `
+        <b>GSOTS-3D v${version}</b><br><br>
+        <b>Camera: </b>${camera.toString()}<br>
+        <b>Instances: </b>${Stats.instances}<br>
+        <b>Draw calls: </b>${Stats.drawCallsPerFrame}<br>
+        <b>Triangles: </b>${Stats.triangles}<br>
+        <b>Render: </b>FPS: ${Stats.FPS} / ${Stats.totalTimeRound}s<br>
+      `
     } else {
       this.debugDiv.innerHTML = ''
     }
