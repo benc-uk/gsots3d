@@ -3282,6 +3282,8 @@ function getElementById(id) {
 var TEXTURE0 = 33984;
 var ARRAY_BUFFER = 34962;
 var ELEMENT_ARRAY_BUFFER$1 = 34963;
+var TRANSFORM_FEEDBACK_BUFFER = 35982;
+var TRANSFORM_FEEDBACK = 36386;
 var COMPILE_STATUS = 35713;
 var LINK_STATUS = 35714;
 var FRAGMENT_SHADER = 35632;
@@ -4009,6 +4011,33 @@ function createTransformFeedbackInfo(gl, program) {
     };
   }
   return info;
+}
+function bindTransformFeedbackInfo(gl, transformFeedbackInfo, bufferInfo) {
+  if (transformFeedbackInfo.transformFeedbackInfo) {
+    transformFeedbackInfo = transformFeedbackInfo.transformFeedbackInfo;
+  }
+  if (bufferInfo.attribs) {
+    bufferInfo = bufferInfo.attribs;
+  }
+  for (const name in bufferInfo) {
+    const varying = transformFeedbackInfo[name];
+    if (varying) {
+      const buf = bufferInfo[name];
+      if (buf.offset) {
+        gl.bindBufferRange(TRANSFORM_FEEDBACK_BUFFER, varying.index, buf.buffer, buf.offset, buf.size);
+      } else {
+        gl.bindBufferBase(TRANSFORM_FEEDBACK_BUFFER, varying.index, buf.buffer);
+      }
+    }
+  }
+}
+function createTransformFeedback(gl, programInfo, bufferInfo) {
+  const tf = gl.createTransformFeedback();
+  gl.bindTransformFeedback(TRANSFORM_FEEDBACK, tf);
+  gl.useProgram(programInfo.program);
+  bindTransformFeedbackInfo(gl, programInfo, bufferInfo);
+  gl.bindTransformFeedback(TRANSFORM_FEEDBACK, null);
+  return tf;
 }
 function createUniformBlockSpecFromProgram(gl, program) {
   const numUniforms = gl.getProgramParameter(program, ACTIVE_UNIFORMS);
@@ -7224,7 +7253,15 @@ var Primitive = class {
     }
     setBuffersAndAttributes(gl, programInfo, this.bufferInfo);
     setUniforms(programInfo, uniforms);
+    let disableCulling = false;
+    if (this instanceof PrimitiveCylinder && !this.caps) {
+      gl.disable(gl.CULL_FACE);
+      disableCulling = true;
+    }
     drawBufferInfo(gl, this.bufferInfo);
+    if (disableCulling) {
+      gl.enable(gl.CULL_FACE);
+    }
     Stats.drawCallsPerFrame++;
   }
 };
@@ -7286,8 +7323,94 @@ var PrimitiveCylinder = class extends Primitive {
    */
   constructor(gl, radius, height, subdivisionsR, subdivisionsV, caps) {
     super();
+    this.caps = caps;
     this.bufferInfo = primitives.createCylinderBufferInfo(gl, radius, height, subdivisionsR, subdivisionsV, caps, caps);
     this.triangles += this.bufferInfo.numElements / 3;
+  }
+};
+
+// shaders/particles/update.frag
+var update_default = "#version 300 es\n\n// ============================================================================\n// Particle update fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Does nothing, just here to make the WebGL compiler happy!\nvoid main() {}\n";
+
+// shaders/particles/update.vert
+var update_default2 = "#version 300 es\n\n// ============================================================================\n// Particle update vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec3 position;\nin vec3 velocity;\nin float age;\n\nuniform float u_time;\nuniform float u_deltaTime;\nuniform float u_maxAge;\nuniform float u_speed;\n\nout vec3 tf_position;\nout vec3 tf_velocity;\nout float tf_age;\n\nfloat random(vec2 p) {\n  vec2 K1 = vec2(\n    23.14069263277926, // e^pi (Gelfond's constant)\n    2.665144142690225 // 2^sqrt(2) (Gelfond\xE2\u20AC\u201CSchneider constant)\n  );\n  return fract(cos(dot(p, K1)) * 12345.6789);\n}\n\nvoid main() {\n  tf_age = age + u_deltaTime;\n  tf_velocity = velocity;\n  tf_position = position + tf_velocity * u_deltaTime * u_speed;\n\n  if (tf_age > u_maxAge) {\n    tf_position = vec3(0.0);\n    tf_velocity = vec3(velocity.x, velocity.y, velocity.z);\n    tf_age = random(vec2(velocity.x, velocity.y)) * u_maxAge * 0.2;\n  }\n}\n";
+
+// shaders/particles/render.frag
+var render_default = "#version 300 es\n\n// ============================================================================\n// Particle render fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec4 v_color;\n\nout vec4 outColor;\n\nvoid main() {\n  outColor = v_color;\n}\n";
+
+// shaders/particles/render.vert
+var render_default2 = "#version 300 es\n\n// ============================================================================\n// Particle render vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec3 tf_position;\nin vec3 tf_velocity;\nin float tf_age;\n\nuniform mat4 u_world;\nuniform mat4 u_worldViewProjection;\nuniform float u_maxAge;\nuniform float u_speed;\n\nout vec4 v_color;\n\nvoid main() {\n  vec4 pos = u_worldViewProjection * vec4(tf_position, 1.0);\n\n  float age = tf_age / u_maxAge;\n\n  // fade out particles as they age\n  // and color from yellow to red\n  v_color = vec4(0.9, 0.9 - age, 0.0, 1.4 - age);\n\n  // scale points based on distance from camera\n  gl_PointSize = 500.0 / length(pos.xyz) * (1.4 - age);\n\n  gl_Position = pos;\n}\n";
+
+// src/models/particles.ts
+var Particles = class {
+  constructor(gl, maxParticles, speed, maxAge) {
+    this.gl = gl;
+    this.progInfoUpdate = createProgramInfo(gl, [update_default2, update_default], {
+      transformFeedbackVaryings: ["tf_position", "tf_velocity", "tf_age"]
+    });
+    this.progInfoRender = createProgramInfo(gl, [render_default2, render_default]);
+    const positions = new Float32Array(maxParticles * 3);
+    const velocities = new Float32Array(maxParticles * 3);
+    const ages = new Float32Array(maxParticles);
+    for (let i = 0; i < maxParticles; i++) {
+      positions[i * 3] = 0;
+      positions[i * 3 + 1] = 0;
+      positions[i * 3 + 2] = 0;
+      velocities[i * 3] = Math.random() * 2 - 1;
+      velocities[i * 3 + 1] = Math.random() * 5;
+      velocities[i * 3 + 2] = Math.random() * 2 - 1;
+      ages[i] = Math.random() * maxAge;
+    }
+    this.inputBuffInfo = createBufferInfoFromArrays(gl, {
+      position: { numComponents: 3, data: positions },
+      velocity: { numComponents: 3, data: velocities },
+      age: { numComponents: 1, data: ages }
+    });
+    this.outputBuffInfo = createBufferInfoFromArrays(gl, {
+      tf_position: { numComponents: 3, data: positions },
+      tf_velocity: { numComponents: 3, data: velocities },
+      tf_age: { numComponents: 1, data: ages }
+    });
+    this.speed = speed;
+    this.maxAge = maxAge;
+  }
+  render(gl, uniforms) {
+    const tf = createTransformFeedback(gl, this.progInfoUpdate, this.outputBuffInfo);
+    this.update(tf);
+    gl.useProgram(this.progInfoRender.program);
+    setUniforms(this.progInfoRender, {
+      ...uniforms,
+      u_speed: this.speed,
+      u_maxAge: this.maxAge
+    });
+    setBuffersAndAttributes(gl, this.progInfoRender, this.outputBuffInfo);
+    drawBufferInfo(gl, this.outputBuffInfo, gl.POINTS);
+    for (const attribName in this.inputBuffInfo.attribs) {
+      const tempBuff = this.inputBuffInfo.attribs[attribName].buffer;
+      if (this.outputBuffInfo && this.outputBuffInfo.attribs && this.outputBuffInfo.attribs[`tf_${attribName}`]) {
+        this.inputBuffInfo.attribs[attribName].buffer = this.outputBuffInfo.attribs[`tf_${attribName}`].buffer;
+        this.outputBuffInfo.attribs[`tf_${attribName}`].buffer = tempBuff;
+      }
+    }
+  }
+  // Update the particles positions and velocities
+  update(transFeedback) {
+    const gl = this.gl;
+    gl.enable(gl.RASTERIZER_DISCARD);
+    gl.useProgram(this.progInfoUpdate.program);
+    setUniforms(this.progInfoUpdate, {
+      u_time: Stats.totalTime,
+      u_deltaTime: Stats.deltaTime,
+      u_speed: this.speed,
+      u_maxAge: this.maxAge
+    });
+    setBuffersAndAttributes(gl, this.progInfoUpdate, this.inputBuffInfo);
+    gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transFeedback);
+    gl.beginTransformFeedback(gl.POINTS);
+    drawBufferInfo(gl, this.inputBuffInfo, gl.POINTS);
+    gl.endTransformFeedback();
+    gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
+    gl.disable(gl.RASTERIZER_DISCARD);
   }
 };
 
@@ -7660,8 +7783,7 @@ var HUD = class {
     this.addHUDItem(this.debugDiv);
     this.loadingDiv = document.createElement("div");
     this.loadingDiv.classList.add("gsots3d-loading");
-    this.loadingDiv.innerHTML = `\u{1F4BE} Loading...`;
-    this.loadingDiv.innerHTML += `<br><br><div style='font-size:1.5vw'>GSOTS-3D v${version}</div>`;
+    this.loadingDiv.innerHTML = `\u{1F4BE} Loading...<br><br><div style='font-size:1.5vw'>GSOTS-3D v${version}</div>`;
     this.loadingDiv.style.font = "normal 3vw sans-serif";
     this.loadingDiv.style.color = "#ccc";
     this.loadingDiv.style.position = "absolute";
@@ -7688,13 +7810,13 @@ var HUD = class {
   render(debug = false, camera) {
     if (debug) {
       this.debugDiv.innerHTML = `
-            <b>GSOTS-3D v${version}</b><br><br>
-            <b>Camera: </b>${camera.toString()}<br>
-            <b>Instances: </b>${Stats.instances}<br>
-            <b>Draw calls: </b>${Stats.drawCallsPerFrame}<br>
-            <b>Triangles: </b>${Stats.triangles}<br>
-            <b>Render: </b>FPS: ${Stats.FPS} / ${Stats.totalTimeRound}s<br>
-          `;
+        <b>GSOTS-3D v${version}</b><br><br>
+        <b>Camera: </b>${camera.toString()}<br>
+        <b>Instances: </b>${Stats.instances}<br>
+        <b>Draw calls: </b>${Stats.drawCallsPerFrame}<br>
+        <b>Triangles: </b>${Stats.triangles}<br>
+        <b>Render: </b>FPS: ${Stats.FPS} / ${Stats.totalTimeRound}s<br>
+      `;
     } else {
       this.debugDiv.innerHTML = "";
     }
@@ -8067,6 +8189,14 @@ var Context2 = class _Context {
     import_loglevel7.default.debug(`\u{1F506} Created point light, pos:${position} col:${colour} int:${intensity}`);
     return light;
   }
+  createParticlesInstance(count, speed = 1, maxAge = 4) {
+    const particles = new Particles(this.gl, count, speed, maxAge);
+    const instance = new Instance(particles);
+    instance.castShadow = false;
+    this.instances.push(instance);
+    Stats.instances++;
+    return instance;
+  }
   /**
    * Set the EnvironmentMap for the scene, will overwrite any existing envmap.
    * This will enable static reflections and create a 'skybox' around the scene
@@ -8093,7 +8223,7 @@ var Context2 = class _Context {
    * @param position - Position to render reflections from
    * @param size - Size of the map to render, note higher sizes will come with a big performance hit
    */
-  setDynamicEnvmap(position, size = 128, renderDistance = 500) {
+  setDynamicEnvmap(position, size = 256, renderDistance = 500) {
     this.dynamicEnvMap = new DynamicEnvironmentMap(this.gl, size, position, renderDistance);
   }
 };

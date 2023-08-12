@@ -63,7 +63,20 @@ export abstract class Primitive implements Renderable {
     setBuffersAndAttributes(gl, programInfo, this.bufferInfo)
     setUniforms(programInfo, uniforms)
 
+    // If cylinder without caps, disable culling
+    let disableCulling = false
+
+    if (this instanceof PrimitiveCylinder && !this.caps) {
+      gl.disable(gl.CULL_FACE)
+      disableCulling = true
+    }
+
     drawBufferInfo(gl, this.bufferInfo)
+
+    if (disableCulling) {
+      gl.enable(gl.CULL_FACE)
+    }
+
     Stats.drawCallsPerFrame++
   }
 }
@@ -145,6 +158,7 @@ export class PrimitivePlane extends Primitive {
  * A simple cylinder primitive with a given radius, height and subdivisions
  */
 export class PrimitiveCylinder extends Primitive {
+  public readonly caps: boolean
   /**
    * Create a new cylinder primitive
    * @param gl WebGL2RenderingContext
@@ -164,6 +178,7 @@ export class PrimitiveCylinder extends Primitive {
   ) {
     super()
 
+    this.caps = caps
     this.bufferInfo = primitives.createCylinderBufferInfo(gl, radius, height, subdivisionsR, subdivisionsV, caps, caps)
 
     this.triangles += this.bufferInfo.numElements / 3

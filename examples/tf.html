@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Particles</title>
+  </head>
+
+  <body>
+    <canvas width="1024" height="768"></canvas>
+    <script type="module">
+      import * as twgl from 'https://twgljs.org/dist/5.x/twgl-full.module.js'
+
+      const gl = document.querySelector('canvas').getContext('webgl2')
+      if (!gl) {
+        console.error('WebGL 2 not available')
+      }
+
+      const updateVs = `
+      #version 300 es
+      precision highp float;
+
+      in vec3 position;
+      in vec3 velocity;
+      in float age;
+
+      uniform float time;
+      uniform float deltaTime;
+
+      out vec3 v_position;
+      out vec3 v_velocity;
+      out float v_age;
+
+
+      void main() {
+        v_age = age + deltaTime;
+        v_velocity = velocity;
+        v_position = position + velocity * deltaTime * 0.8;
+
+        if(age > 8.0) {
+          v_position = vec3(0.0);
+          v_velocity = vec3(-velocity.x, -velocity.y, -velocity.z);
+          v_age = 0.0;
+        }
+      }
+      `
+
+      const updateFs = `
+      #version 300 es
+      void main() {}`
+
+      const renderVs = `
+      #version 300 es
+      precision highp float;
+
+      in vec3 v_position;
+      in vec3 v_velocity;
+      in float v_age;
+
+      out vec4 v_color;
+
+      void main() {
+        gl_Position = vec4(v_position.xyz, 1);
+        gl_PointSize = 3.0;
+
+        v_color = vec4(v_age * 0.4, v_position.z/0.7, 1.0-v_position.z/0.2, 1);
+      }
+      `
+
+      const renderFs = `
+      #version 300 es
+      precision highp float;
+
+      in vec4 v_color;
+      out vec4 outColor;
+
+      void main() {
+        outColor = v_color;
+      }
+      `
+
+      let updateProgInfo = twgl.createProgramInfo(gl, [updateVs, updateFs], {
+        transformFeedbackVaryings: ['v_position', 'v_velocity', 'v_age'],
+      })
+
+      const renderProgInfo = twgl.createProgramInfo(gl, [renderVs, renderFs])
+
+      // 250000 particles in the input buffer
+      const maxParticles = 250000
+      const posArray = new Float32Array(maxParticles * 3)
+      const velArray = new Float32Array(maxParticles * 3)
+      const ageArray = new Float32Array(maxParticles)
+      for (let i = 0; i < maxParticles; ++i) {
+        posArray[i * 3 + 0] = 0.0
+        posArray[i * 3 + 1] = 0.0
+        posArray[i * 3 + 2] = 0.0
+
+        velArray[i * 3 + 0] = Math.random() * 2 - 1
+        velArray[i * 3 + 1] = Math.random() * 2 - 1
+        velArray[i * 3 + 2] = Math.random() * 2 - 1
+
+        ageArray[i] = Math.random() * 8.0
+      }
+
+      // Input buffer
+      let inputBuffer = twgl.createBufferInfoFromArrays(gl, {
+        position: { data: posArray, numComponents: 3 },
+        velocity: { data: velArray, numComponents: 3 },
+        age: { data: ageArray, numComponents: 1 },
+      })
+
+      // Output buffer
+      let outBuffer = twgl.createBufferInfoFromArrays(gl, {
+        v_position: { data: posArray, numComponents: 3 },
+        v_velocity: { data: velArray, numComponents: 3 },
+        v_age: { data: ageArray, numComponents: 1 },
+      })
+
+      let lastTime = 0
+      function render(time) {
+        time *= 0.001
+        let deltaTime = time - lastTime
+
+        const tf = twgl.createTransformFeedback(gl, updateProgInfo, outBuffer)
+
+        // Update the input buffer
+        update(time, deltaTime, inputBuffer, tf)
+
+        // Render the input buffer
+        renderParticles(outBuffer)
+
+        // Swap the buffers, kinda ugly but it works!
+        for (let aName in inputBuffer.attribs) {
+          const temp = inputBuffer.attribs[aName].buffer
+          inputBuffer.attribs[aName].buffer = outBuffer.attribs['v_' + aName].buffer
+          outBuffer.attribs['v_' + aName].buffer = temp
+        }
+
+        lastTime = time
+        requestAnimationFrame(render)
+      }
+
+      requestAnimationFrame(render)
+
+      // Update the particles positions and velocities
+      function update(time, deltaTime, buff, transFeedback) {
+        // Compute with the GPU
+        gl.enable(gl.RASTERIZER_DISCARD)
+        gl.useProgram(updateProgInfo.program)
+
+        const uniforms = {}
+        uniforms.time = time
+        uniforms.deltaTime = deltaTime
+
+        twgl.setUniforms(updateProgInfo, uniforms)
+
+        twgl.setBuffersAndAttributes(gl, updateProgInfo, buff)
+        gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transFeedback)
+
+        gl.beginTransformFeedback(gl.POINTS)
+        twgl.drawBufferInfo(gl, buff, gl.POINTS)
+
+        gl.endTransformFeedback()
+        gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null)
+        gl.disable(gl.RASTERIZER_DISCARD)
+      }
+
+      // Draw the particles
+      function renderParticles(buff) {
+        // clear the screen
+        gl.clearColor(0, 0, 0, 1)
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+        // render the particles
+        gl.useProgram(renderProgInfo.program)
+        twgl.setBuffersAndAttributes(gl, renderProgInfo, buff)
+        twgl.drawBufferInfo(gl, buff, gl.POINTS)
+      }
+    </script>
+  </body>
+</html>

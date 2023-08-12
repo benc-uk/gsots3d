@@ -7,7 +7,7 @@ const ctx = await Context.init()
 const lightPos = [15, 20, 8]
 ctx.camera.position = [0, 80, 100]
 ctx.camera.enableFPControls(0, -0.35, 0.002, 3)
-ctx.camera.far = 500
+ctx.camera.far = 1800
 ctx.gamma = 1.0
 
 ctx.globalLight.setAsPosition(lightPos[0], lightPos[1], lightPos[2])
@@ -15,7 +15,7 @@ const amb = 0.1
 ctx.globalLight.ambient = [amb, amb, amb]
 ctx.globalLight.enableShadows({
   mapSize: 1024,
-  zoom: 90,
+  zoom: 150,
   scatter: 0.5,
 })
 
@@ -39,8 +39,11 @@ const sphereMat = Material.createBasicTexture('../_textures/earth.jpg')
 const sphere = ctx.createSphereInstance(sphereMat, 18, 32, 32)
 sphere.position = [40, 18, 20]
 
+const particles = ctx.createParticlesInstance(160000)
+particles.position = [40, 50, 10]
+
 window.addEventListener('keydown', (e) => {
-  // move light
+  // Move light
   if (e.key === '1') {
     lightPos[0] -= 1
     ctx.globalLight.setAsPosition(lightPos[0], lightPos[1], lightPos[2])

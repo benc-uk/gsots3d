@@ -18,6 +18,7 @@ import { DynamicEnvironmentMap, EnvironmentMap } from '../engine/envmap.ts'
 import { Instance } from '../models/instance.ts'
 import { Billboard, BillboardType } from '../models/billboard.ts'
 import { PrimitiveCube, PrimitivePlane, PrimitiveSphere, PrimitiveCylinder } from '../models/primitive.ts'
+import { Particles } from '../models/particles.ts'
 import { Model } from '../models/model.ts'
 import { HUD } from './hud.ts'
 import { Stats } from './stats.ts'
@@ -529,6 +530,18 @@ export class Context {
     return light
   }
 
+  createParticlesInstance(count: number, speed = 1, maxAge = 4) {
+    const particles = new Particles(this.gl, count, speed, maxAge)
+
+    const instance = new Instance(particles)
+    instance.castShadow = false
+
+    this.instances.push(instance)
+    Stats.instances++
+
+    return instance
+  }
+
   /**
    * Set the EnvironmentMap for the scene, will overwrite any existing envmap.
    * This will enable static reflections and create a 'skybox' around the scene
@@ -558,7 +571,7 @@ export class Context {
    * @param position - Position to render reflections from
    * @param size - Size of the map to render, note higher sizes will come with a big performance hit
    */
-  setDynamicEnvmap(position: XYZ, size = 128, renderDistance = 500) {
+  setDynamicEnvmap(position: XYZ, size = 256, renderDistance = 500) {
     this.dynamicEnvMap = new DynamicEnvironmentMap(this.gl, size, position, renderDistance)
   }
 }
