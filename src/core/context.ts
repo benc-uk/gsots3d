@@ -28,6 +28,7 @@ import fragShaderPhong from '../../shaders/phong/glsl.frag'
 import vertShaderPhong from '../../shaders/phong/glsl.vert'
 import fragShaderBill from '../../shaders/billboard/glsl.frag'
 import vertShaderBill from '../../shaders/billboard/glsl.vert'
+import { ParticlesInst } from '../models/part-inst.ts'
 
 /** @ignore Total max dynamic lights */
 const MAX_LIGHTS = 16
@@ -532,6 +533,18 @@ export class Context {
 
   createParticlesInstance(count: number, speed = 1, maxAge = 4) {
     const particles = new Particles(this.gl, count, speed, maxAge)
+
+    const instance = new Instance(particles)
+    instance.castShadow = false
+
+    this.instances.push(instance)
+    Stats.instances++
+
+    return instance
+  }
+
+  createParticlesInstanceBB() {
+    const particles = new ParticlesInst(this.gl)
 
     const instance = new Instance(particles)
     instance.castShadow = false

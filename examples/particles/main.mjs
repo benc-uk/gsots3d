@@ -1,10 +1,10 @@
 import { Context, Material } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init()
-
+ctx.debug = true
 const lightPos = [15, 20, 8]
-ctx.camera.position = [0, 80, 100]
-ctx.camera.enableFPControls(0, -0.35, 0.002, 3)
+ctx.camera.position = [0, 180, 200]
+ctx.camera.enableFPControls(0, -0.65, 0.002, 4)
 ctx.camera.far = 1800
 ctx.gamma = 1.0
 
@@ -21,7 +21,7 @@ pipeMat.addNormalTexture('../_textures/sci-fi_normal.png')
 const pipe = ctx.createCylinderInstance(pipeMat, 3, 50, 16, 1, false)
 pipe.position = [0, 25, 0]
 
-const particles = ctx.createParticlesInstance(20000, 10, 3)
+const particles = ctx.createParticlesInstance(20000, 60, 1.5)
 particles.position = [0, 50, 0]
 
 ctx.start()

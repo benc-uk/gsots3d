@@ -32,7 +32,7 @@
     "dot-notation": "error",
     "func-style": ["error", "declaration", { "allowArrowFunctions": true }],
     "object-shorthand": "error",
-    "capitalized-comments": "warn",
+    // "capitalized-comments": "warn",
     "spaced-comment": "error"
   }
 }

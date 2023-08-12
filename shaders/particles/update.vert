@@ -29,13 +29,13 @@ float random(vec2 p) {
 }
 
 void main() {
-  tf_age = age + u_deltaTime;
+  tf_age = age + u_deltaTime / u_maxAge;
   tf_velocity = velocity;
   tf_position = position + tf_velocity * u_deltaTime * u_speed;
 
-  if (tf_age > u_maxAge) {
+  if (tf_age > 1.0) {
     tf_position = vec3(0.0);
     tf_velocity = vec3(velocity.x, velocity.y, velocity.z);
-    tf_age = random(vec2(velocity.x, velocity.y)) * u_maxAge * 0.2;
+    tf_age = random(vec2(position.x, position.y)) * 0.8;
   }
 }
