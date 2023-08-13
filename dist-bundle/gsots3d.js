@@ -6232,11 +6232,6 @@ var _TextureCache = class _TextureCache {
       mag: gl.NEAREST,
       src: [255, 255, 255, 255]
     });
-    const normal1pixel = createTexture(gl, {
-      min: gl.NEAREST,
-      mag: gl.NEAREST,
-      src: [128, 128, 255, 255]
-    });
     const randArray = new Uint8Array(512 * 512 * 4);
     for (let i = 0; i < 512 * 512 * 4; i++) {
       randArray[i] = Math.floor(Math.random() * 255);
@@ -6249,8 +6244,6 @@ var _TextureCache = class _TextureCache {
       height: 512,
       wrap: gl.REPEAT
     });
-    this._instance.add("_defaults/white", white1pixel);
-    this._instance.add("_defaults/normal", normal1pixel);
     this._instance.defaultWhite = white1pixel;
     this._instance.defaultRand = randomRGB;
     _TextureCache.initialized = true;
@@ -7181,8 +7174,8 @@ var Material = class _Material {
     this.shininess = 20;
     this.opacity = 1;
     this.reflectivity = 0;
-    this.diffuseTex = TextureCache.instance.get("_defaults/white");
-    this.specularTex = TextureCache.instance.get("_defaults/white");
+    this.diffuseTex = TextureCache.defaultWhite;
+    this.specularTex = TextureCache.defaultWhite;
   }
   /**
    * Create a new material from a raw MTL material
@@ -7397,25 +7390,33 @@ var PrimitiveCylinder = class extends Primitive {
   }
 };
 
+// src/models/particles.ts
+var import_loglevel6 = __toESM(require_loglevel(), 1);
+
 // shaders/particles/update.frag
 var update_default = "#version 300 es\n\n// ============================================================================\n// Particle update fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Does nothing, just here to make the WebGL compiler happy!\nvoid main() {}\n";
 
 // shaders/particles/update.vert
-var update_default2 = "#version 300 es\n\n// ============================================================================\n// Particle update vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec3 position;\nin vec3 velocity;\nin float age;\nin float lifetime;\n\nuniform float u_time;\nuniform float u_deltaTime;\nuniform sampler2D u_randTex;\nuniform float u_maxInstances;\nuniform vec2 u_lifetime;\n\nout vec3 tf_position;\nout vec3 tf_velocity;\nout float tf_age;\nout float tf_lifetime;\n\nvec4 rand(float offset) {\n  float u = float(gl_VertexID) / u_maxInstances + offset;\n  return texture(u_randTex, vec2(u)).rgba;\n}\n\nvoid main() {\n  float speedScale = 1.0;\n  float newAge = age + u_deltaTime * speedScale;\n\n  tf_age = newAge;\n  tf_velocity = velocity + vec3(1.9, -4.0, 0.0) * u_deltaTime * speedScale;\n  tf_position = position + tf_velocity * u_deltaTime * speedScale * 30.0;\n  tf_lifetime = lifetime;\n\n  // Dead particles are respawned\n  if (newAge > lifetime) {\n    vec4 r = rand(lifetime);\n    tf_position = vec3(0.0);\n    tf_velocity = vec3(r.x - 0.5, r.y + 4.0, r.z - 0.5);\n    tf_age = 0.0;\n\n    // Randomise lifetime between min and max\n    tf_lifetime = u_lifetime.x + (u_lifetime.y - u_lifetime.x) * r.w;\n  }\n}\n";
+var update_default2 = "#version 300 es\n\n// ============================================================================\n// Particle update vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec3 position;\nin vec3 velocity;\nin float age;\nin float lifetime;\n\nuniform float u_time;\nuniform float u_deltaTime;\nuniform sampler2D u_randTex;\nuniform float u_maxInstances;\nuniform vec2 u_lifetimeMinMax;\nuniform vec2 u_powerMinMax;\nuniform vec3 u_gravity;\nuniform vec3 u_direction1;\nuniform vec3 u_direction2;\n\nout vec3 tf_position;\nout vec3 tf_velocity;\nout float tf_age;\nout float tf_lifetime;\n\nvec4 rand(float offset) {\n  float u = float(gl_VertexID) / u_maxInstances + offset;\n  return texture(u_randTex, vec2(u)).rgba;\n}\n\nfloat randBetween(float min, float max, float offset) {\n  vec4 r = rand(offset);\n  return min + (max - min) * r.w;\n}\n\nvoid main() {\n  float speedScale = 1.0;\n  float newAge = age + u_deltaTime * speedScale;\n\n  tf_age = newAge;\n  tf_velocity = velocity + u_gravity * u_deltaTime * speedScale;\n  tf_position = position + tf_velocity * u_deltaTime * speedScale * 30.0;\n  tf_lifetime = lifetime;\n\n  // Dead particles are respawned\n  if (newAge > lifetime) {\n    tf_age = 0.0;\n    tf_position = vec3(0.0);\n\n    vec4 r = rand(lifetime);\n    float power = randBetween(u_powerMinMax.x, u_powerMinMax.y, 0.0);\n\n    tf_velocity = vec3(\n      randBetween(u_direction1.x, u_direction2.x, r.x) * power,\n      randBetween(u_direction1.y, u_direction2.y, r.y) * power,\n      randBetween(u_direction1.z, u_direction2.z, r.z) * power\n    );\n\n    tf_lifetime = randBetween(u_lifetimeMinMax.x, u_lifetimeMinMax.y, lifetime);\n  }\n}\n";
 
 // shaders/particles/render.frag
-var render_default = "#version 300 es\n\n// ============================================================================\n// Particle render fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec2 v_texcoord;\nin vec3 v_position;\n\nuniform sampler2D u_texture;\nout vec4 outColor;\n\nvoid main() {\n  vec4 tex = texture(u_texture, v_texcoord);\n\n  outColor = tex;\n}\n";
+var render_default = "#version 300 es\n\n// ============================================================================\n// Particle render fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec2 v_texcoord;\nin vec3 v_position;\nin float v_ageNorm;\n\nuniform sampler2D u_texture;\nout vec4 outColor;\n\nvoid main() {\n  vec4 tex = texture(u_texture, v_texcoord);\n  tex.a *= 1.0 - v_ageNorm;\n\n  outColor = tex;\n}\n";
 
 // shaders/particles/render.vert
-var render_default2 = "#version 300 es\n\n// ============================================================================\n// Particle render vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec4 position;\nin vec2 texcoord;\nin vec3 tf_position;\n\nuniform mat4 u_view;\nuniform mat4 u_proj;\nuniform mat4 u_world;\n\nout vec2 v_texcoord;\nout vec3 v_position;\n\nvoid main() {\n  vec4 world_pos = u_world * vec4(tf_position, 1.0);\n  vec4 view_pos = u_view * world_pos;\n\n  // Billboarding magic\n  gl_Position = u_proj * (view_pos + vec4(position.xy, 0.0, 0.0));\n\n  v_position = world_pos.xyz;\n  v_texcoord = texcoord;\n}\n";
+var render_default2 = "#version 300 es\n\n// ============================================================================\n// Particle render vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec4 position;\nin vec2 texcoord;\nin vec3 tf_position;\nin float tf_age;\nin float tf_lifetime;\n\nuniform mat4 u_view;\nuniform mat4 u_proj;\nuniform mat4 u_world;\n\nout vec2 v_texcoord;\nout vec3 v_position;\nout float v_ageNorm;\n\nvoid main() {\n  vec4 world_pos = u_world * vec4(tf_position, 1.0);\n  vec4 view_pos = u_view * world_pos;\n\n  // Billboarding magic\n  gl_Position = u_proj * (view_pos + vec4(position.xy, 0.0, 0.0));\n\n  v_ageNorm = tf_age / tf_lifetime;\n\n  v_position = world_pos.xyz;\n  v_texcoord = texcoord;\n}\n";
 
 // src/models/particles.ts
-var import_loglevel6 = __toESM(require_loglevel(), 1);
 var ParticleSystem = class {
-  constructor(gl, maxParticles) {
+  constructor(gl, maxParticles, baseSize) {
     this.emitRate = 200;
     this.minLifetime = 0.1;
     this.maxLifetime = 3;
+    this.minPower = 0.1;
+    this.maxPower = 0.5;
+    this.maxLifetime = 3;
+    this.gravity = [0, -5, 0];
+    this.direction1 = [0, 1, 0];
+    this.direction2 = this.direction1;
     this.progInfoUpdate = createProgramInfo(gl, [update_default2, update_default], {
       transformFeedbackVaryings: ["tf_position", "tf_velocity", "tf_age", "tf_lifetime"]
     });
@@ -7432,7 +7433,7 @@ var ParticleSystem = class {
       velocities[i * 3 + 1] = 0;
       velocities[i * 3 + 2] = 0;
       ages[i] = 0;
-      lifetimes[i] = Math.random() * (this.maxLifetime - this.minLifetime) + this.minLifetime;
+      lifetimes[i] = Math.random() * 2;
     }
     this.inputBuffInfo = createBufferInfoFromArrays(gl, {
       position: { numComponents: 3, data: positions, divisor: 0 },
@@ -7440,7 +7441,7 @@ var ParticleSystem = class {
       age: { numComponents: 1, data: ages, divisor: 0 },
       lifetime: { numComponents: 1, data: lifetimes, divisor: 0 }
     });
-    const quadVerts = primitives.createXYQuadVertices(4);
+    const quadVerts = primitives.createXYQuadVertices(baseSize);
     Object.assign(quadVerts, {
       tf_position: { numComponents: 3, data: positions, divisor: 1 },
       tf_velocity: { numComponents: 3, data: velocities, divisor: 1 },
@@ -7449,14 +7450,6 @@ var ParticleSystem = class {
     });
     this.outputBuffInfo = createBufferInfoFromArrays(gl, quadVerts);
     this.outputVAO = createVertexArrayInfo(gl, this.progInfoRender, this.outputBuffInfo);
-    this.objList = [
-      {
-        programInfo: this.progInfoRender,
-        vertexArrayInfo: this.outputVAO,
-        uniforms: {},
-        instanceCount: this.emitRate
-      }
-    ];
     this.texture = TextureCache.defaultWhite;
     import_loglevel6.default.info("\u2728 Created particle system with", maxParticles, "particles");
   }
@@ -7466,14 +7459,6 @@ var ParticleSystem = class {
    * @param uniforms Uniforms to pass to the shaders
    */
   render(gl, uniforms) {
-    this.objList = [
-      {
-        programInfo: this.progInfoRender,
-        vertexArrayInfo: this.outputVAO,
-        uniforms: {},
-        instanceCount: this.emitRate
-      }
-    ];
     this.updateParticles(gl);
     this.renderParticles(gl, uniforms);
     for (const attribName in this.inputBuffInfo.attribs) {
@@ -7484,7 +7469,9 @@ var ParticleSystem = class {
       }
     }
   }
-  // Update the particles positions and velocities
+  /**
+   * Update the particles positions and velocities
+   */
   updateParticles(gl) {
     const tf = createTransformFeedback(gl, this.progInfoUpdate, this.outputBuffInfo);
     gl.enable(gl.RASTERIZER_DISCARD);
@@ -7496,28 +7483,42 @@ var ParticleSystem = class {
       u_time: Stats.totalTime,
       u_deltaTime: Stats.deltaTime,
       u_randTex: TextureCache.defaultRand,
+      // NOTE: ULTRA IMPORTANT! Without this the rand function in the shader will not work
       u_maxInstances: this.inputBuffInfo.numElements,
-      u_lifetime: [this.minLifetime, this.maxLifetime]
+      u_lifetimeMinMax: [this.minLifetime, this.maxLifetime],
+      u_gravity: this.gravity,
+      u_powerMinMax: [this.minPower, this.maxPower],
+      u_direction1: this.direction1,
+      u_direction2: this.direction2
     });
     drawBufferInfo(gl, this.inputBuffInfo, gl.POINTS);
     gl.endTransformFeedback();
     gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
     gl.disable(gl.RASTERIZER_DISCARD);
   }
-  // Render the particles
+  /**
+   * Render the particles to the world
+   */
   renderParticles(gl, uniforms) {
     gl.useProgram(this.progInfoRender.program);
-    const uni = {
+    const particleUniforms = {
       ...uniforms,
       u_texture: this.texture
     };
-    setUniforms(this.progInfoRender, uni);
-    this.objList[0].uniforms = uni;
+    setUniforms(this.progInfoRender, particleUniforms);
+    const objList = [
+      {
+        programInfo: this.progInfoRender,
+        vertexArrayInfo: this.outputVAO,
+        uniforms: particleUniforms,
+        instanceCount: this.emitRate
+      }
+    ];
     setBuffersAndAttributes(gl, this.progInfoRender, this.outputVAO);
     gl.depthMask(false);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-    drawObjectList(gl, this.objList);
+    drawObjectList(gl, objList);
     gl.disable(gl.BLEND);
     gl.depthMask(true);
   }
@@ -8298,8 +8299,8 @@ var Context2 = class _Context {
     import_loglevel8.default.debug(`\u{1F506} Created point light, pos:${position} col:${colour} int:${intensity}`);
     return light;
   }
-  createParticleSystem(maxParticles) {
-    const particles = new ParticleSystem(this.gl, maxParticles);
+  createParticleSystem(maxParticles = 1e3, baseSize = 2) {
+    const particles = new ParticleSystem(this.gl, maxParticles, baseSize);
     const instance = new Instance(particles);
     instance.castShadow = false;
     this.instances.push(instance);

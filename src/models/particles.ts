@@ -3,21 +3,8 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-import {
-  BufferInfo,
-  ProgramInfo,
-  createBufferInfoFromArrays,
-  createProgramInfo,
-  createTransformFeedback,
-  createVertexArrayInfo,
-  drawBufferInfo,
-  setBuffersAndAttributes,
-  setUniforms,
-  primitives,
-  drawObjectList,
-  VertexArrayInfo,
-  DrawObject,
-} from 'twgl.js'
+import * as twgl from 'twgl.js'
+import log from 'loglevel'
 
 import fragShaderUpdate from '../../shaders/particles/update.frag'
 import vertShaderUpdate from '../../shaders/particles/update.vert'
@@ -27,36 +14,48 @@ import vertShaderRender from '../../shaders/particles/render.vert'
 import { Renderable } from './types.ts'
 import { UniformSet } from '../core/gl.ts'
 import { Stats } from '../core/stats.ts'
-import log from 'loglevel'
-import { TextureCache } from '../index.ts'
+import { TextureCache, XYZ } from '../index.ts'
 
 export class ParticleSystem implements Renderable {
-  private progInfoUpdate: ProgramInfo
-  private progInfoRender: ProgramInfo
-  private inputBuffInfo: BufferInfo
-  private outputBuffInfo: BufferInfo
-  private outputVAO: VertexArrayInfo
+  private progInfoUpdate: twgl.ProgramInfo
+  private progInfoRender: twgl.ProgramInfo
+  private inputBuffInfo: twgl.BufferInfo
+  private outputBuffInfo: twgl.BufferInfo
+  private outputVAO: twgl.VertexArrayInfo
+
   public texture: WebGLTexture
-  private objList: DrawObject[]
+
   public emitRate: number
   public minLifetime: number
   public maxLifetime: number
+  public gravity: XYZ
+  public minPower: number
+  public maxPower: number
+  public direction1: XYZ
+  public direction2: XYZ
 
-  constructor(gl: WebGL2RenderingContext, maxParticles: number) {
+  constructor(gl: WebGL2RenderingContext, maxParticles: number, baseSize: number) {
     this.emitRate = 200
     this.minLifetime = 0.1
     this.maxLifetime = 3.0
+    this.minPower = 0.1
+    this.maxPower = 0.5
+    this.maxLifetime = 3.0
+    this.gravity = [0, -5, 0]
+    this.direction1 = [0, 1, 0]
+    this.direction2 = this.direction1
 
-    this.progInfoUpdate = createProgramInfo(gl, [vertShaderUpdate, fragShaderUpdate], {
+    // Create shaders and programs
+    this.progInfoUpdate = twgl.createProgramInfo(gl, [vertShaderUpdate, fragShaderUpdate], {
       transformFeedbackVaryings: ['tf_position', 'tf_velocity', 'tf_age', 'tf_lifetime'],
     })
-    this.progInfoRender = createProgramInfo(gl, [vertShaderRender, fragShaderRender])
+    this.progInfoRender = twgl.createProgramInfo(gl, [vertShaderRender, fragShaderRender])
 
+    // Create initial buffers, note these are for ALL particles regardless of emission rate
     const positions = new Float32Array(maxParticles * 3)
     const velocities = new Float32Array(maxParticles * 3)
     const ages = new Float32Array(maxParticles)
     const lifetimes = new Float32Array(maxParticles)
-
     for (let i = 0; i < maxParticles; i++) {
       positions[i * 3] = 0
       positions[i * 3 + 1] = 0
@@ -67,35 +66,31 @@ export class ParticleSystem implements Renderable {
       velocities[i * 3 + 2] = 0
 
       ages[i] = 0
-      lifetimes[i] = Math.random() * (this.maxLifetime - this.minLifetime) + this.minLifetime
+
+      // Note this is SUPER important, it acts as a random seed
+      lifetimes[i] = Math.random() * 2
     }
 
-    this.inputBuffInfo = createBufferInfoFromArrays(gl, {
+    // Create input buffer used by transform feedback & update shader
+    // Note the divisor of 0, this means the data is static and will not change
+    this.inputBuffInfo = twgl.createBufferInfoFromArrays(gl, {
       position: { numComponents: 3, data: positions, divisor: 0 },
       velocity: { numComponents: 3, data: velocities, divisor: 0 },
       age: { numComponents: 1, data: ages, divisor: 0 },
       lifetime: { numComponents: 1, data: lifetimes, divisor: 0 },
     })
 
-    // Make a quad for rendering the particles
-    const quadVerts = primitives.createXYQuadVertices(4)
+    // Create output buffer which includes vertex attributes for rendering
+    // Note the divisor of 1, this means it will be instanced
+    const quadVerts = twgl.primitives.createXYQuadVertices(baseSize)
     Object.assign(quadVerts, {
       tf_position: { numComponents: 3, data: positions, divisor: 1 },
       tf_velocity: { numComponents: 3, data: velocities, divisor: 1 },
       tf_age: { numComponents: 1, data: ages, divisor: 1 },
       tf_lifetime: { numComponents: 1, data: lifetimes, divisor: 1 },
     })
-    this.outputBuffInfo = createBufferInfoFromArrays(gl, quadVerts)
-
-    this.outputVAO = createVertexArrayInfo(gl, this.progInfoRender, this.outputBuffInfo)
-    this.objList = [
-      {
-        programInfo: this.progInfoRender,
-        vertexArrayInfo: this.outputVAO,
-        uniforms: {},
-        instanceCount: this.emitRate,
-      },
-    ]
+    this.outputBuffInfo = twgl.createBufferInfoFromArrays(gl, quadVerts)
+    this.outputVAO = twgl.createVertexArrayInfo(gl, this.progInfoRender, this.outputBuffInfo)
 
     // Create texture for particle
     this.texture = TextureCache.defaultWhite
@@ -109,15 +104,6 @@ export class ParticleSystem implements Renderable {
    * @param uniforms Uniforms to pass to the shaders
    */
   render(gl: WebGL2RenderingContext, uniforms: UniformSet) {
-    this.objList = [
-      {
-        programInfo: this.progInfoRender,
-        vertexArrayInfo: this.outputVAO,
-        uniforms: {},
-        instanceCount: this.emitRate,
-      },
-    ]
-
     this.updateParticles(gl)
     this.renderParticles(gl, uniforms)
 
@@ -132,51 +118,71 @@ export class ParticleSystem implements Renderable {
     }
   }
 
-  // Update the particles positions and velocities
+  /**
+   * Update the particles positions and velocities
+   */
   private updateParticles(gl: WebGL2RenderingContext) {
-    const tf = createTransformFeedback(gl, this.progInfoUpdate, this.outputBuffInfo)
+    const tf = twgl.createTransformFeedback(gl, this.progInfoUpdate, this.outputBuffInfo)
 
     gl.enable(gl.RASTERIZER_DISCARD)
     gl.useProgram(this.progInfoUpdate.program)
 
-    setBuffersAndAttributes(gl, this.progInfoUpdate, this.inputBuffInfo)
+    twgl.setBuffersAndAttributes(gl, this.progInfoUpdate, this.inputBuffInfo)
     gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, tf)
 
     gl.beginTransformFeedback(gl.POINTS)
 
-    setUniforms(this.progInfoUpdate, {
+    twgl.setUniforms(this.progInfoUpdate, {
       u_time: Stats.totalTime,
       u_deltaTime: Stats.deltaTime,
       u_randTex: TextureCache.defaultRand,
+
+      // NOTE: ULTRA IMPORTANT! Without this the rand function in the shader will not work
       u_maxInstances: this.inputBuffInfo.numElements,
-      u_lifetime: [this.minLifetime, this.maxLifetime],
+
+      u_lifetimeMinMax: [this.minLifetime, this.maxLifetime],
+      u_gravity: this.gravity,
+      u_powerMinMax: [this.minPower, this.maxPower],
+      u_direction1: this.direction1,
+      u_direction2: this.direction2,
     })
 
-    drawBufferInfo(gl, this.inputBuffInfo, gl.POINTS)
+    twgl.drawBufferInfo(gl, this.inputBuffInfo, gl.POINTS)
 
     gl.endTransformFeedback()
     gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null)
     gl.disable(gl.RASTERIZER_DISCARD)
   }
 
-  // Render the particles
+  /**
+   * Render the particles to the world
+   */
   private renderParticles(gl: WebGL2RenderingContext, uniforms: UniformSet) {
     gl.useProgram(this.progInfoRender.program)
 
-    const uni = {
+    const particleUniforms = {
       ...uniforms,
       u_texture: this.texture,
     }
-    setUniforms(this.progInfoRender, uni)
-    this.objList[0].uniforms = uni
 
-    setBuffersAndAttributes(gl, this.progInfoRender, this.outputVAO)
+    twgl.setUniforms(this.progInfoRender, particleUniforms)
+
+    const objList = [
+      {
+        programInfo: this.progInfoRender,
+        vertexArrayInfo: this.outputVAO,
+        uniforms: particleUniforms,
+        instanceCount: this.emitRate,
+      },
+    ]
+
+    twgl.setBuffersAndAttributes(gl, this.progInfoRender, this.outputVAO)
 
     gl.depthMask(false)
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
 
-    drawObjectList(gl, this.objList)
+    twgl.drawObjectList(gl, objList)
 
     gl.disable(gl.BLEND)
     gl.depthMask(true)

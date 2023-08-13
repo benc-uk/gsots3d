@@ -16,7 +16,11 @@ uniform float u_time;
 uniform float u_deltaTime;
 uniform sampler2D u_randTex;
 uniform float u_maxInstances;
-uniform vec2 u_lifetime;
+uniform vec2 u_lifetimeMinMax;
+uniform vec2 u_powerMinMax;
+uniform vec3 u_gravity;
+uniform vec3 u_direction1;
+uniform vec3 u_direction2;
 
 out vec3 tf_position;
 out vec3 tf_velocity;
@@ -28,23 +32,34 @@ vec4 rand(float offset) {
   return texture(u_randTex, vec2(u)).rgba;
 }
 
+float randBetween(float min, float max, float offset) {
+  vec4 r = rand(offset);
+  return min + (max - min) * r.w;
+}
+
 void main() {
   float speedScale = 1.0;
   float newAge = age + u_deltaTime * speedScale;
 
   tf_age = newAge;
-  tf_velocity = velocity + vec3(1.9, -4.0, 0.0) * u_deltaTime * speedScale;
+  tf_velocity = velocity + u_gravity * u_deltaTime * speedScale;
   tf_position = position + tf_velocity * u_deltaTime * speedScale * 30.0;
   tf_lifetime = lifetime;
 
   // Dead particles are respawned
   if (newAge > lifetime) {
-    vec4 r = rand(lifetime);
-    tf_position = vec3(0.0);
-    tf_velocity = vec3(r.x - 0.5, r.y + 4.0, r.z - 0.5);
     tf_age = 0.0;
+    tf_position = vec3(0.0);
 
-    // Randomise lifetime between min and max
-    tf_lifetime = u_lifetime.x + (u_lifetime.y - u_lifetime.x) * r.w;
+    vec4 r = rand(lifetime);
+    float power = randBetween(u_powerMinMax.x, u_powerMinMax.y, 0.0);
+
+    tf_velocity = vec3(
+      randBetween(u_direction1.x, u_direction2.x, r.x) * power,
+      randBetween(u_direction1.y, u_direction2.y, r.y) * power,
+      randBetween(u_direction1.z, u_direction2.z, r.z) * power
+    );
+
+    tf_lifetime = randBetween(u_lifetimeMinMax.x, u_lifetimeMinMax.y, lifetime);
   }
 }

@@ -530,8 +530,8 @@ export class Context {
     return light
   }
 
-  createParticleSystem(maxParticles: number) {
-    const particles = new ParticleSystem(this.gl, maxParticles)
+  createParticleSystem(maxParticles = 1000, baseSize = 2) {
+    const particles = new ParticleSystem(this.gl, maxParticles, baseSize)
 
     const instance = new Instance(particles)
     instance.castShadow = false
