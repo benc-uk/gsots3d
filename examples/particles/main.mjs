@@ -1,4 +1,4 @@
-import { Context, Material } from '../../dist-bundle/gsots3d.js'
+import { Context, Material, TextureCache } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init()
 ctx.debug = true
@@ -21,7 +21,23 @@ pipeMat.addNormalTexture('../_textures/sci-fi_normal.png')
 const pipe = ctx.createCylinderInstance(pipeMat, 3, 50, 16, 1, false)
 pipe.position = [0, 25, 0]
 
-const particles = ctx.createParticlesInstance(20000, 60, 1.5)
-particles.position = [0, 50, 0]
+const r = ctx.createParticleSystem(20000)
+const tex = TextureCache.instance.getCreate('../_textures/particles/particle.png')
+r.particles.texture = tex
+r.particles.emitRate = 600
+r.instance.position = [0, 50, 0]
+
+document.getElementById('emitRange').addEventListener('input', (e) => {
+  r.particles.emitRate = e.target.value
+})
+
+document.getElementById('maxLifetime').addEventListener('input', (e) => {
+  r.particles.maxLifetime = e.target.value / 100
+  console.log(r.particles.minLifetime, r.particles.maxLifetime)
+})
+document.getElementById('minLifetime').addEventListener('input', (e) => {
+  r.particles.minLifetime = e.target.value / 100
+  console.log(r.particles.minLifetime, r.particles.maxLifetime)
+})
 
 ctx.start()

@@ -6220,6 +6220,8 @@ var _TextureCache = class _TextureCache {
   constructor() {
     this.cache = /* @__PURE__ */ new Map();
     this.gl = {};
+    this.defaultWhite = {};
+    this.defaultRand = {};
   }
   // Create a new texture cache
   static init(gl) {
@@ -6235,8 +6237,22 @@ var _TextureCache = class _TextureCache {
       mag: gl.NEAREST,
       src: [128, 128, 255, 255]
     });
+    const randArray = new Uint8Array(512 * 512 * 4);
+    for (let i = 0; i < 512 * 512 * 4; i++) {
+      randArray[i] = Math.floor(Math.random() * 255);
+    }
+    const randomRGB = createTexture(gl, {
+      min: gl.NEAREST,
+      mag: gl.NEAREST,
+      src: randArray,
+      width: 512,
+      height: 512,
+      wrap: gl.REPEAT
+    });
     this._instance.add("_defaults/white", white1pixel);
     this._instance.add("_defaults/normal", normal1pixel);
+    this._instance.defaultWhite = white1pixel;
+    this._instance.defaultRand = randomRGB;
     _TextureCache.initialized = true;
   }
   static get instance() {
@@ -6297,6 +6313,12 @@ var _TextureCache = class _TextureCache {
     );
     this.add(src, texture);
     return texture;
+  }
+  static get defaultWhite() {
+    return this.instance.defaultWhite;
+  }
+  static get defaultRand() {
+    return this.instance.defaultRand;
   }
 };
 _TextureCache.initialized = false;
@@ -7379,111 +7401,80 @@ var PrimitiveCylinder = class extends Primitive {
 var update_default = "#version 300 es\n\n// ============================================================================\n// Particle update fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Does nothing, just here to make the WebGL compiler happy!\nvoid main() {}\n";
 
 // shaders/particles/update.vert
-var update_default2 = "#version 300 es\n\n// ============================================================================\n// Particle update vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec3 position;\nin vec3 velocity;\nin float age;\n\nuniform float u_time;\nuniform float u_deltaTime;\nuniform float u_maxAge;\nuniform float u_speed;\n\nout vec3 tf_position;\nout vec3 tf_velocity;\nout float tf_age;\n\nfloat random(vec2 p) {\n  vec2 K1 = vec2(\n    23.14069263277926, // e^pi (Gelfond's constant)\n    2.665144142690225 // 2^sqrt(2) (Gelfond\xE2\u20AC\u201CSchneider constant)\n  );\n  return fract(cos(dot(p, K1)) * 12345.6789);\n}\n\nvoid main() {\n  tf_age = age + u_deltaTime / u_maxAge;\n  tf_velocity = velocity;\n  tf_position = position + tf_velocity * u_deltaTime * u_speed;\n\n  if (tf_age > 1.0) {\n    tf_position = vec3(0.0);\n    tf_velocity = vec3(velocity.x, velocity.y, velocity.z);\n    tf_age = random(vec2(position.x, position.y)) * 0.8;\n  }\n}\n";
+var update_default2 = "#version 300 es\n\n// ============================================================================\n// Particle update vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec3 position;\nin vec3 velocity;\nin float age;\nin float lifetime;\n\nuniform float u_time;\nuniform float u_deltaTime;\nuniform sampler2D u_randTex;\nuniform float u_maxInstances;\nuniform vec2 u_lifetime;\n\nout vec3 tf_position;\nout vec3 tf_velocity;\nout float tf_age;\nout float tf_lifetime;\n\nvec4 rand(float offset) {\n  float u = float(gl_VertexID) / u_maxInstances + offset;\n  return texture(u_randTex, vec2(u)).rgba;\n}\n\nvoid main() {\n  float speedScale = 1.0;\n  float newAge = age + u_deltaTime * speedScale;\n\n  tf_age = newAge;\n  tf_velocity = velocity + vec3(1.9, -4.0, 0.0) * u_deltaTime * speedScale;\n  tf_position = position + tf_velocity * u_deltaTime * speedScale * 30.0;\n  tf_lifetime = lifetime;\n\n  // Dead particles are respawned\n  if (newAge > lifetime) {\n    vec4 r = rand(lifetime);\n    tf_position = vec3(0.0);\n    tf_velocity = vec3(r.x - 0.5, r.y + 4.0, r.z - 0.5);\n    tf_age = 0.0;\n\n    // Randomise lifetime between min and max\n    tf_lifetime = u_lifetime.x + (u_lifetime.y - u_lifetime.x) * r.w;\n  }\n}\n";
+
+// shaders/particles/render.frag
+var render_default = "#version 300 es\n\n// ============================================================================\n// Particle render fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec2 v_texcoord;\nin vec3 v_position;\n\nuniform sampler2D u_texture;\nout vec4 outColor;\n\nvoid main() {\n  vec4 tex = texture(u_texture, v_texcoord);\n\n  outColor = tex;\n}\n";
+
+// shaders/particles/render.vert
+var render_default2 = "#version 300 es\n\n// ============================================================================\n// Particle render vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec4 position;\nin vec2 texcoord;\nin vec3 tf_position;\n\nuniform mat4 u_view;\nuniform mat4 u_proj;\nuniform mat4 u_world;\n\nout vec2 v_texcoord;\nout vec3 v_position;\n\nvoid main() {\n  vec4 world_pos = u_world * vec4(tf_position, 1.0);\n  vec4 view_pos = u_view * world_pos;\n\n  // Billboarding magic\n  gl_Position = u_proj * (view_pos + vec4(position.xy, 0.0, 0.0));\n\n  v_position = world_pos.xyz;\n  v_texcoord = texcoord;\n}\n";
 
 // src/models/particles.ts
 var import_loglevel6 = __toESM(require_loglevel(), 1);
-var vs = `#version 300 es
-precision highp float;
-
-in vec4 position;
-in vec2 texcoord;
-in vec3 tf_position;
-in vec3 tf_velocity;
-in float tf_age;
-
-uniform mat4 u_view;
-uniform mat4 u_proj;
-uniform mat4 u_world;
-
-out vec2 v_texcoord;
-out float v_age;
-out vec3 v_position;
-
-void main() {
-  v_texcoord = texcoord;
-  v_age = tf_age;
-
-  vec4 view_pos = u_view * u_world * vec4(tf_position, 1.0);
-  // Billboarding magic
-  gl_Position = u_proj * (view_pos + vec4(position.xy, 0.0, 0.0));
-  v_position = (u_world * vec4(tf_position, 1.0)).xyz;
-}
-`;
-var fs = `#version 300 es
-precision highp float;
-
-in vec2 v_texcoord;
-in float v_age;
-in vec3 v_position;
-
-uniform sampler2D u_texture;
-out vec4 outColor;
-
-void main() {
-  vec4 tex = texture(u_texture, v_texcoord);
-
-  // make redder as particle goes up y axis
-  tex.r = (180.0 - v_position.y) / 180.0;
-
-  tex.a = 1.0 - v_age;
-
-  outColor = tex;
-}
-`;
-var Particles = class {
-  constructor(gl, maxParticles, speed, maxAge) {
-    this.gl = gl;
+var ParticleSystem = class {
+  constructor(gl, maxParticles) {
+    this.emitRate = 200;
+    this.minLifetime = 0.1;
+    this.maxLifetime = 3;
     this.progInfoUpdate = createProgramInfo(gl, [update_default2, update_default], {
-      transformFeedbackVaryings: ["tf_position", "tf_velocity", "tf_age"]
+      transformFeedbackVaryings: ["tf_position", "tf_velocity", "tf_age", "tf_lifetime"]
     });
-    this.progInfoRender = createProgramInfo(gl, [vs, fs]);
+    this.progInfoRender = createProgramInfo(gl, [render_default2, render_default]);
     const positions = new Float32Array(maxParticles * 3);
     const velocities = new Float32Array(maxParticles * 3);
     const ages = new Float32Array(maxParticles);
+    const lifetimes = new Float32Array(maxParticles);
     for (let i = 0; i < maxParticles; i++) {
       positions[i * 3] = 0;
       positions[i * 3 + 1] = 0;
       positions[i * 3 + 2] = 0;
-      velocities[i * 3] = Math.random() * 2 - 1;
-      velocities[i * 3 + 1] = Math.random() * 4;
-      velocities[i * 3 + 2] = Math.random() * 2 - 1;
-      ages[i] = Math.random();
+      velocities[i * 3] = 0;
+      velocities[i * 3 + 1] = 0;
+      velocities[i * 3 + 2] = 0;
+      ages[i] = 0;
+      lifetimes[i] = Math.random() * (this.maxLifetime - this.minLifetime) + this.minLifetime;
     }
     this.inputBuffInfo = createBufferInfoFromArrays(gl, {
       position: { numComponents: 3, data: positions, divisor: 0 },
       velocity: { numComponents: 3, data: velocities, divisor: 0 },
-      age: { numComponents: 1, data: ages, divisor: 0 }
+      age: { numComponents: 1, data: ages, divisor: 0 },
+      lifetime: { numComponents: 1, data: lifetimes, divisor: 0 }
     });
     const quadVerts = primitives.createXYQuadVertices(4);
     Object.assign(quadVerts, {
       tf_position: { numComponents: 3, data: positions, divisor: 1 },
       tf_velocity: { numComponents: 3, data: velocities, divisor: 1 },
-      tf_age: { numComponents: 1, data: ages, divisor: 1 }
+      tf_age: { numComponents: 1, data: ages, divisor: 1 },
+      tf_lifetime: { numComponents: 1, data: lifetimes, divisor: 1 }
     });
     this.outputBuffInfo = createBufferInfoFromArrays(gl, quadVerts);
-    this.speed = speed;
-    this.maxAge = maxAge;
     this.outputVAO = createVertexArrayInfo(gl, this.progInfoRender, this.outputBuffInfo);
     this.objList = [
       {
         programInfo: this.progInfoRender,
         vertexArrayInfo: this.outputVAO,
         uniforms: {},
-        instanceCount: maxParticles
+        instanceCount: this.emitRate
       }
     ];
-    this.texture = createTexture(gl, {
-      src: "../../_textures/particles/particle.png"
-    });
+    this.texture = TextureCache.defaultWhite;
     import_loglevel6.default.info("\u2728 Created particle system with", maxParticles, "particles");
   }
   /**
    * Render the particle system and implement the renderable interface
+   * @param gl WebGL2 rendering context
+   * @param uniforms Uniforms to pass to the shaders
    */
   render(gl, uniforms) {
-    const tf = createTransformFeedback(gl, this.progInfoUpdate, this.outputBuffInfo);
-    this.updateParticles(tf);
+    this.objList = [
+      {
+        programInfo: this.progInfoRender,
+        vertexArrayInfo: this.outputVAO,
+        uniforms: {},
+        instanceCount: this.emitRate
+      }
+    ];
+    this.updateParticles(gl);
     this.renderParticles(gl, uniforms);
     for (const attribName in this.inputBuffInfo.attribs) {
       const tempBuff = this.inputBuffInfo.attribs[attribName].buffer;
@@ -7494,19 +7485,20 @@ var Particles = class {
     }
   }
   // Update the particles positions and velocities
-  updateParticles(transFeedback) {
-    const gl = this.gl;
+  updateParticles(gl) {
+    const tf = createTransformFeedback(gl, this.progInfoUpdate, this.outputBuffInfo);
     gl.enable(gl.RASTERIZER_DISCARD);
     gl.useProgram(this.progInfoUpdate.program);
+    setBuffersAndAttributes(gl, this.progInfoUpdate, this.inputBuffInfo);
+    gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, tf);
+    gl.beginTransformFeedback(gl.POINTS);
     setUniforms(this.progInfoUpdate, {
       u_time: Stats.totalTime,
       u_deltaTime: Stats.deltaTime,
-      u_speed: this.speed,
-      u_maxAge: this.maxAge
+      u_randTex: TextureCache.defaultRand,
+      u_maxInstances: this.inputBuffInfo.numElements,
+      u_lifetime: [this.minLifetime, this.maxLifetime]
     });
-    setBuffersAndAttributes(gl, this.progInfoUpdate, this.inputBuffInfo);
-    gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transFeedback);
-    gl.beginTransformFeedback(gl.POINTS);
     drawBufferInfo(gl, this.inputBuffInfo, gl.POINTS);
     gl.endTransformFeedback();
     gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
@@ -7517,8 +7509,6 @@ var Particles = class {
     gl.useProgram(this.progInfoRender.program);
     const uni = {
       ...uniforms,
-      u_speed: this.speed,
-      u_maxAge: this.maxAge,
       u_texture: this.texture
     };
     setUniforms(this.progInfoRender, uni);
@@ -7957,98 +7947,6 @@ var glsl_default7 = "#version 300 es\n\n// =====================================
 // shaders/billboard/glsl.vert
 var glsl_default8 = "#version 300 es\n\n// ============================================================================\n// Billboard vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nconst int MAX_LIGHTS = 16;\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n  bool enabled;\n};\n\n// Input attributes from buffers\nin vec4 position;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_world;\nuniform int u_lightsPosCount;\nuniform vec3 u_camPos;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_lighting;\n\n/*\n * Legacy lighting calc\n * Returns vec2(diffuse, specular)\n */\nvec2 lightCalc(vec3 N, vec3 L, vec3 H, float shininess) {\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), shininess) : 0.0;\n  return vec2(diff, spec);\n}\n\nvoid main() {\n  v_texCoord = texcoord;\n  gl_Position = u_worldViewProjection * position;\n  vec3 worldPos = (u_world * position).xyz;\n\n  // Normal for a billboard always points at camera\n  vec3 worldNormal = normalize(u_camPos - worldPos);\n\n  vec3 V = normalize(u_camPos - worldPos);\n  vec3 N = normalize(worldNormal);\n  float fudge = 1.5;\n\n  // Add point lights to lighting output\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    LightPos light = u_lightsPos[i];\n    vec3 L = normalize(light.position - worldPos.xyz);\n\n    float diffuse = max(dot(N, L), 0.0);\n\n    // Distance attenuation\n    float distance = length(light.position - worldPos.xyz);\n    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quad * (distance * distance));\n\n    // Note small hack here to fudge the light intensity\n    v_lighting += light.colour * fudge * attenuation * diffuse;\n  }\n\n  // Add in global directional light\n  // Approximate by using a fixed direction for the normal pointing up\n  vec3 globalLightL = normalize(-u_lightDirGlobal.direction);\n  float globalDiffuse = dot(vec3(0.0, 1.0, 0.0), globalLightL);\n\n  v_lighting += u_lightDirGlobal.colour * globalDiffuse;\n  v_lighting += u_lightDirGlobal.ambient;\n}\n";
 
-// src/models/part-inst.ts
-var vs2 = `#version 300 es
-precision highp float;
-
-in vec4 position;
-in vec2 texcoord;
-in vec3 inst_pos;
-in vec3 inst_vec;
-
-uniform mat4 u_view;
-uniform mat4 u_proj;
-uniform mat4 u_world;
-uniform float u_totalTime;
-
-out vec2 v_texcoord;
-
-void main() {
-  v_texcoord = texcoord;
-
-  vec4 view_pos = u_view * u_world * vec4(inst_pos + inst_vec * u_totalTime * 42.0, 1.0);
-  gl_Position = u_proj * (view_pos + vec4(position.xy, 0.0, 0.0));
-}
-`;
-var fs2 = `#version 300 es
-precision highp float;
-
-in vec2 v_texcoord;
-uniform sampler2D u_texture;
-uniform float u_totalTime;
-out vec4 outColor;
-
-void main() {
-  vec4 tex = texture(u_texture, v_texcoord);
-
-  outColor = tex;
-}
-`;
-var ParticlesInst = class {
-  constructor(gl) {
-    this.progInfo = createProgramInfo(gl, [vs2, fs2], {});
-    const maxParticles = 15e3;
-    const positions = new Float32Array(maxParticles * 3);
-    const vectors = new Float32Array(maxParticles * 3);
-    for (let i = 0; i < maxParticles; i++) {
-      positions[i * 3] = Math.random() * 20 - 10;
-      positions[i * 3 + 1] = Math.random() * 20 - 10;
-      positions[i * 3 + 2] = Math.random() * 20 - 10;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.random() * Math.PI * 2;
-      const r = Math.random() * 1.5 + 0.5;
-      vectors[i * 3] = Math.sin(theta) * Math.cos(phi) * r;
-      vectors[i * 3 + 1] = Math.sin(theta) * Math.sin(phi) * r;
-      vectors[i * 3 + 2] = Math.cos(theta) * r;
-    }
-    const vertArrays = primitives.createXYQuadVertices(4);
-    Object.assign(vertArrays, {
-      inst_pos: { numComponents: 3, data: positions, divisor: 1 },
-      inst_vec: { numComponents: 3, data: vectors, divisor: 1 }
-    });
-    const bufferInfo = createBufferInfoFromArrays(gl, vertArrays);
-    this.vertexArrayInfo = createVertexArrayInfo(gl, this.progInfo, bufferInfo);
-    const tex = createTexture(gl, {
-      src: "../../_textures/particles/particle.png"
-    });
-    const uniforms = {
-      u_texture: tex
-    };
-    this.objList = [
-      {
-        programInfo: this.progInfo,
-        vertexArrayInfo: this.vertexArrayInfo,
-        uniforms,
-        instanceCount: maxParticles
-      }
-    ];
-  }
-  render(gl, uniforms) {
-    gl.useProgram(this.progInfo.program);
-    gl.depthMask(false);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-    setBuffersAndAttributes(gl, this.progInfo, this.vertexArrayInfo);
-    setUniforms(this.progInfo, {
-      ...uniforms,
-      u_totalTime: Stats.totalTime
-    });
-    drawObjectList(gl, this.objList);
-    gl.disable(gl.BLEND);
-    gl.depthMask(true);
-  }
-};
-
 // src/core/context.ts
 var MAX_LIGHTS = 16;
 var Context2 = class _Context {
@@ -8400,21 +8298,13 @@ var Context2 = class _Context {
     import_loglevel8.default.debug(`\u{1F506} Created point light, pos:${position} col:${colour} int:${intensity}`);
     return light;
   }
-  createParticlesInstance(count, speed = 1, maxAge = 4) {
-    const particles = new Particles(this.gl, count, speed, maxAge);
+  createParticleSystem(maxParticles) {
+    const particles = new ParticleSystem(this.gl, maxParticles);
     const instance = new Instance(particles);
     instance.castShadow = false;
     this.instances.push(instance);
     Stats.instances++;
-    return instance;
-  }
-  createParticlesInstanceBB() {
-    const particles = new ParticlesInst(this.gl);
-    const instance = new Instance(particles);
-    instance.castShadow = false;
-    this.instances.push(instance);
-    Stats.instances++;
-    return instance;
+    return { instance, particles };
   }
   /**
    * Set the EnvironmentMap for the scene, will overwrite any existing envmap.

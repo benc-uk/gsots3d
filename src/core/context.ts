@@ -18,7 +18,7 @@ import { DynamicEnvironmentMap, EnvironmentMap } from '../engine/envmap.ts'
 import { Instance } from '../models/instance.ts'
 import { Billboard, BillboardType } from '../models/billboard.ts'
 import { PrimitiveCube, PrimitivePlane, PrimitiveSphere, PrimitiveCylinder } from '../models/primitive.ts'
-import { Particles } from '../models/particles.ts'
+import { ParticleSystem } from '../models/particles.ts'
 import { Model } from '../models/model.ts'
 import { HUD } from './hud.ts'
 import { Stats } from './stats.ts'
@@ -28,7 +28,6 @@ import fragShaderPhong from '../../shaders/phong/glsl.frag'
 import vertShaderPhong from '../../shaders/phong/glsl.vert'
 import fragShaderBill from '../../shaders/billboard/glsl.frag'
 import vertShaderBill from '../../shaders/billboard/glsl.vert'
-import { ParticlesInst } from '../models/part-inst.ts'
 
 /** @ignore Total max dynamic lights */
 const MAX_LIGHTS = 16
@@ -531,8 +530,8 @@ export class Context {
     return light
   }
 
-  createParticlesInstance(count: number, speed = 1, maxAge = 4) {
-    const particles = new Particles(this.gl, count, speed, maxAge)
+  createParticleSystem(maxParticles: number) {
+    const particles = new ParticleSystem(this.gl, maxParticles)
 
     const instance = new Instance(particles)
     instance.castShadow = false
@@ -540,19 +539,7 @@ export class Context {
     this.instances.push(instance)
     Stats.instances++
 
-    return instance
-  }
-
-  createParticlesInstanceBB() {
-    const particles = new ParticlesInst(this.gl)
-
-    const instance = new Instance(particles)
-    instance.castShadow = false
-
-    this.instances.push(instance)
-    Stats.instances++
-
-    return instance
+    return { instance, particles }
   }
 
   /**

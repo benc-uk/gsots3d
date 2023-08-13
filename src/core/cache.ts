@@ -65,10 +65,14 @@ export class TextureCache {
   private gl: WebGL2RenderingContext
   private static _instance: TextureCache
   private static initialized = false
+  private defaultWhite: WebGLTexture
+  private defaultRand: WebGLTexture
 
   private constructor() {
     this.cache = new Map<string, WebGLTexture>()
     this.gl = {} as WebGL2RenderingContext
+    this.defaultWhite = {} as WebGLTexture
+    this.defaultRand = {} as WebGLTexture
   }
 
   // Create a new texture cache
@@ -92,8 +96,24 @@ export class TextureCache {
       src: [128, 128, 255, 255],
     })
 
+    // 256 by 256 random RGB texture, used for debugging
+    const randArray = new Uint8Array(512 * 512 * 4)
+    for (let i = 0; i < 512 * 512 * 4; i++) {
+      randArray[i] = Math.floor(Math.random() * 255)
+    }
+    const randomRGB = createTexture(gl, {
+      min: gl.NEAREST,
+      mag: gl.NEAREST,
+      src: randArray,
+      width: 512,
+      height: 512,
+      wrap: gl.REPEAT,
+    })
+
     this._instance.add('_defaults/white', white1pixel)
     this._instance.add('_defaults/normal', normal1pixel)
+    this._instance.defaultWhite = white1pixel
+    this._instance.defaultRand = randomRGB
 
     TextureCache.initialized = true
   }
@@ -169,6 +189,14 @@ export class TextureCache {
 
     this.add(src, texture)
     return texture
+  }
+
+  static get defaultWhite() {
+    return this.instance.defaultWhite
+  }
+
+  static get defaultRand() {
+    return this.instance.defaultRand
   }
 }
 

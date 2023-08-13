@@ -7,28 +7,24 @@
 
 precision highp float;
 
+in vec4 position;
+in vec2 texcoord;
 in vec3 tf_position;
-in vec3 tf_velocity;
-in float tf_age;
 
+uniform mat4 u_view;
+uniform mat4 u_proj;
 uniform mat4 u_world;
-uniform mat4 u_worldViewProjection;
-uniform float u_maxAge;
-uniform float u_speed;
 
-out vec4 v_color;
+out vec2 v_texcoord;
+out vec3 v_position;
 
 void main() {
-  vec4 pos = u_worldViewProjection * vec4(tf_position, 1.0);
+  vec4 world_pos = u_world * vec4(tf_position, 1.0);
+  vec4 view_pos = u_view * world_pos;
 
-  float age = tf_age / u_maxAge;
+  // Billboarding magic
+  gl_Position = u_proj * (view_pos + vec4(position.xy, 0.0, 0.0));
 
-  // fade out particles as they age
-  // and color from yellow to red
-  v_color = vec4(0.9, 0.9 - age, 0.0, 1.4 - age);
-
-  // scale points based on distance from camera
-  gl_PointSize = 500.0 / length(pos.xyz) * (1.4 - age);
-
-  gl_Position = pos;
+  v_position = world_pos.xyz;
+  v_texcoord = texcoord;
 }
