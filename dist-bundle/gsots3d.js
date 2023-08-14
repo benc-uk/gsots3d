@@ -287,6 +287,14 @@ function getGl(aa = true, selector = "canvas") {
     return void 0;
   }
   import_loglevel.default.info(`\u{1F4D0} Internal: ${canvas.width} x ${canvas.height}, display: ${canvas.clientWidth} x ${canvas.clientHeight}`);
+  const varyings = glContext.getParameter(glContext.MAX_VARYING_VECTORS);
+  const varyingsTF = glContext.getParameter(glContext.MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS);
+  const varyingsTFI = glContext.getParameter(glContext.MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS);
+  const uniforms = glContext.getParameter(glContext.MAX_VERTEX_UNIFORM_VECTORS);
+  const texSize = glContext.getParameter(glContext.MAX_TEXTURE_SIZE);
+  console.log(
+    `\u{1F6A6} WebGL2 limits: Varyings=${varyings}, TF var=${varyingsTF} / ${varyingsTFI} Uniforms=${uniforms}, Texture size=${texSize}`
+  );
   return glContext;
 }
 
@@ -7397,10 +7405,10 @@ var import_loglevel6 = __toESM(require_loglevel(), 1);
 var update_default = "#version 300 es\n\n// ============================================================================\n// Particle update fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Does nothing, just here to make the WebGL compiler happy!\nvoid main() {}\n";
 
 // shaders/particles/update.vert
-var update_default2 = "#version 300 es\n\n// ============================================================================\n// Particle update vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec3 position;\nin vec3 velocity;\nin float age;\nin float lifetime;\n\nuniform float u_time;\nuniform float u_deltaTime;\nuniform sampler2D u_randTex;\nuniform float u_maxInstances;\nuniform vec2 u_lifetimeMinMax;\nuniform vec2 u_powerMinMax;\nuniform vec3 u_gravity;\nuniform vec3 u_direction1;\nuniform vec3 u_direction2;\n\nout vec3 tf_position;\nout vec3 tf_velocity;\nout float tf_age;\nout float tf_lifetime;\n\nvec4 rand(float offset) {\n  float u = float(gl_VertexID) / u_maxInstances + offset;\n  return texture(u_randTex, vec2(u)).rgba;\n}\n\nfloat randBetween(float min, float max, float offset) {\n  vec4 r = rand(offset);\n  return min + (max - min) * r.w;\n}\n\nvoid main() {\n  float speedScale = 1.0;\n  float newAge = age + u_deltaTime * speedScale;\n\n  tf_age = newAge;\n  tf_velocity = velocity + u_gravity * u_deltaTime * speedScale;\n  tf_position = position + tf_velocity * u_deltaTime * speedScale * 30.0;\n  tf_lifetime = lifetime;\n\n  // Dead particles are respawned\n  if (newAge > lifetime) {\n    tf_age = 0.0;\n    tf_position = vec3(0.0);\n\n    vec4 r = rand(lifetime);\n    float power = randBetween(u_powerMinMax.x, u_powerMinMax.y, 0.0);\n\n    tf_velocity = vec3(\n      randBetween(u_direction1.x, u_direction2.x, r.x) * power,\n      randBetween(u_direction1.y, u_direction2.y, r.y) * power,\n      randBetween(u_direction1.z, u_direction2.z, r.z) * power\n    );\n\n    tf_lifetime = randBetween(u_lifetimeMinMax.x, u_lifetimeMinMax.y, lifetime);\n  }\n}\n";
+var update_default2 = "#version 300 es\n\n// ============================================================================\n// Particle update vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec3 position;\nin vec3 velocity;\nin float age;\nin float lifetime;\nin float seed;\n\nuniform float u_time;\nuniform float u_deltaTime;\nuniform sampler2D u_randTex;\nuniform float u_maxInstances;\nuniform vec2 u_lifetimeMinMax;\nuniform vec2 u_powerMinMax;\nuniform vec3 u_gravity;\nuniform vec3 u_direction1;\nuniform vec3 u_direction2;\nuniform float u_timeScale;\n\nout vec3 tf_position;\nout vec3 tf_velocity;\nout float tf_age;\nout float tf_lifetime;\n\nvec4 rand(float offset) {\n  float u = float(gl_VertexID) / u_maxInstances + offset;\n  return texture(u_randTex, vec2(u)).rgba;\n}\n\nfloat randBetween(float min, float max, float offset) {\n  vec4 r = rand(offset);\n  return min + (max - min) * r.w;\n}\n\nvoid main() {\n  float newAge = age + u_deltaTime * u_timeScale;\n\n  tf_age = newAge;\n  tf_velocity = velocity + u_gravity * u_deltaTime * u_timeScale;\n  tf_position = position + tf_velocity * u_deltaTime * u_timeScale;\n  tf_lifetime = lifetime;\n\n  // Dead particles are respawned\n  if (newAge > lifetime) {\n    tf_age = 0.0;\n    tf_position = vec3(0.0);\n\n    vec4 r = rand(seed);\n    float power = randBetween(u_powerMinMax.x, u_powerMinMax.y, 0.0);\n\n    tf_velocity = vec3(\n      randBetween(u_direction1.x, u_direction2.x, r.x) * power,\n      randBetween(u_direction1.y, u_direction2.y, r.y) * power,\n      randBetween(u_direction1.z, u_direction2.z, r.z) * power\n    );\n\n    tf_lifetime = randBetween(u_lifetimeMinMax.x, u_lifetimeMinMax.y, seed);\n  }\n}\n";
 
 // shaders/particles/render.frag
-var render_default = "#version 300 es\n\n// ============================================================================\n// Particle render fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec2 v_texcoord;\nin vec3 v_position;\nin float v_ageNorm;\n\nuniform sampler2D u_texture;\nout vec4 outColor;\n\nvoid main() {\n  vec4 tex = texture(u_texture, v_texcoord);\n  tex.a *= 1.0 - v_ageNorm;\n\n  outColor = tex;\n}\n";
+var render_default = "#version 300 es\n\n// ============================================================================\n// Particle render fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec2 v_texcoord;\nin vec3 v_position;\nin float v_ageNorm;\n\nuniform sampler2D u_texture;\nuniform vec4 u_ageColour;\n\nout vec4 outColor;\n\nvoid main() {\n  vec4 tex = texture(u_texture, v_texcoord);\n  tex.a *= 1.0 - v_ageNorm * u_ageColour.a;\n  tex.r *= 1.0 - v_ageNorm * u_ageColour.r;\n  tex.g *= 1.0 - v_ageNorm * u_ageColour.g;\n  tex.b *= 1.0 - v_ageNorm * u_ageColour.b;\n\n  outColor = tex;\n}\n";
 
 // shaders/particles/render.vert
 var render_default2 = "#version 300 es\n\n// ============================================================================\n// Particle render vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec4 position;\nin vec2 texcoord;\nin vec3 tf_position;\nin float tf_age;\nin float tf_lifetime;\n\nuniform mat4 u_view;\nuniform mat4 u_proj;\nuniform mat4 u_world;\n\nout vec2 v_texcoord;\nout vec3 v_position;\nout float v_ageNorm;\n\nvoid main() {\n  vec4 world_pos = u_world * vec4(tf_position, 1.0);\n  vec4 view_pos = u_view * world_pos;\n\n  // Billboarding magic\n  gl_Position = u_proj * (view_pos + vec4(position.xy, 0.0, 0.0));\n\n  v_ageNorm = tf_age / tf_lifetime;\n\n  v_position = world_pos.xyz;\n  v_texcoord = texcoord;\n}\n";
@@ -7408,15 +7416,19 @@ var render_default2 = "#version 300 es\n\n// ===================================
 // src/models/particles.ts
 var ParticleSystem = class {
   constructor(gl, maxParticles, baseSize) {
-    this.emitRate = 200;
-    this.minLifetime = 0.1;
-    this.maxLifetime = 3;
-    this.minPower = 0.1;
-    this.maxPower = 0.5;
-    this.maxLifetime = 3;
-    this.gravity = [0, -5, 0];
-    this.direction1 = [0, 1, 0];
-    this.direction2 = this.direction1;
+    this.emitRate = 300;
+    this.minLifetime = 2;
+    this.maxLifetime = 6;
+    this.minPower = 25;
+    this.maxPower = 35;
+    this.gravity = [0, -9.81, 0];
+    this.direction1 = [-0.5, 1, -0.5];
+    this.direction2 = [0.5, 1, 0.5];
+    this.timeScale = 3;
+    this.ageColourAlpha = 1;
+    this.ageColourRed = 0;
+    this.ageColourGreen = 0;
+    this.ageColourBlue = 0;
     this.progInfoUpdate = createProgramInfo(gl, [update_default2, update_default], {
       transformFeedbackVaryings: ["tf_position", "tf_velocity", "tf_age", "tf_lifetime"]
     });
@@ -7425,6 +7437,7 @@ var ParticleSystem = class {
     const velocities = new Float32Array(maxParticles * 3);
     const ages = new Float32Array(maxParticles);
     const lifetimes = new Float32Array(maxParticles);
+    const seeds = new Float32Array(maxParticles);
     for (let i = 0; i < maxParticles; i++) {
       positions[i * 3] = 0;
       positions[i * 3 + 1] = 0;
@@ -7433,13 +7446,15 @@ var ParticleSystem = class {
       velocities[i * 3 + 1] = 0;
       velocities[i * 3 + 2] = 0;
       ages[i] = 0;
-      lifetimes[i] = Math.random() * 2;
+      lifetimes[i] = Math.random() * (this.maxLifetime - this.minLifetime) + this.minLifetime;
+      seeds[i] = Math.random();
     }
     this.inputBuffInfo = createBufferInfoFromArrays(gl, {
       position: { numComponents: 3, data: positions, divisor: 0 },
       velocity: { numComponents: 3, data: velocities, divisor: 0 },
       age: { numComponents: 1, data: ages, divisor: 0 },
-      lifetime: { numComponents: 1, data: lifetimes, divisor: 0 }
+      lifetime: { numComponents: 1, data: lifetimes, divisor: 0 },
+      seed: { numComponents: 1, data: seeds, divisor: 0 }
     });
     const quadVerts = primitives.createXYQuadVertices(baseSize);
     Object.assign(quadVerts, {
@@ -7489,7 +7504,8 @@ var ParticleSystem = class {
       u_gravity: this.gravity,
       u_powerMinMax: [this.minPower, this.maxPower],
       u_direction1: this.direction1,
-      u_direction2: this.direction2
+      u_direction2: this.direction2,
+      u_timeScale: this.timeScale
     });
     drawBufferInfo(gl, this.inputBuffInfo, gl.POINTS);
     gl.endTransformFeedback();
@@ -7503,7 +7519,8 @@ var ParticleSystem = class {
     gl.useProgram(this.progInfoRender.program);
     const particleUniforms = {
       ...uniforms,
-      u_texture: this.texture
+      u_texture: this.texture,
+      u_ageColour: [this.ageColourRed, this.ageColourGreen, this.ageColourBlue, this.ageColourAlpha]
     };
     setUniforms(this.progInfoRender, particleUniforms);
     const objList = [

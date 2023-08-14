@@ -33,17 +33,26 @@ export class ParticleSystem implements Renderable {
   public maxPower: number
   public direction1: XYZ
   public direction2: XYZ
+  public timeScale: number
+  public ageColourAlpha: number
+  public ageColourRed: number
+  public ageColourGreen: number
+  public ageColourBlue: number
 
   constructor(gl: WebGL2RenderingContext, maxParticles: number, baseSize: number) {
-    this.emitRate = 200
-    this.minLifetime = 0.1
-    this.maxLifetime = 3.0
-    this.minPower = 0.1
-    this.maxPower = 0.5
-    this.maxLifetime = 3.0
-    this.gravity = [0, -5, 0]
-    this.direction1 = [0, 1, 0]
-    this.direction2 = this.direction1
+    this.emitRate = 300
+    this.minLifetime = 2.0
+    this.maxLifetime = 6.0
+    this.minPower = 25
+    this.maxPower = 35
+    this.gravity = [0, -9.81, 0]
+    this.direction1 = [-0.5, 1, -0.5]
+    this.direction2 = [0.5, 1, 0.5]
+    this.timeScale = 3.0
+    this.ageColourAlpha = 1.0
+    this.ageColourRed = 0.0
+    this.ageColourGreen = 0.0
+    this.ageColourBlue = 0.0
 
     // Create shaders and programs
     this.progInfoUpdate = twgl.createProgramInfo(gl, [vertShaderUpdate, fragShaderUpdate], {
@@ -56,6 +65,7 @@ export class ParticleSystem implements Renderable {
     const velocities = new Float32Array(maxParticles * 3)
     const ages = new Float32Array(maxParticles)
     const lifetimes = new Float32Array(maxParticles)
+    const seeds = new Float32Array(maxParticles)
     for (let i = 0; i < maxParticles; i++) {
       positions[i * 3] = 0
       positions[i * 3 + 1] = 0
@@ -68,7 +78,9 @@ export class ParticleSystem implements Renderable {
       ages[i] = 0
 
       // Note this is SUPER important, it acts as a random seed
-      lifetimes[i] = Math.random() * 2
+      lifetimes[i] = Math.random() * (this.maxLifetime - this.minLifetime) + this.minLifetime
+
+      seeds[i] = Math.random()
     }
 
     // Create input buffer used by transform feedback & update shader
@@ -78,18 +90,22 @@ export class ParticleSystem implements Renderable {
       velocity: { numComponents: 3, data: velocities, divisor: 0 },
       age: { numComponents: 1, data: ages, divisor: 0 },
       lifetime: { numComponents: 1, data: lifetimes, divisor: 0 },
+      seed: { numComponents: 1, data: seeds, divisor: 0 },
     })
 
-    // Create output buffer which includes vertex attributes for rendering
-    // Note the divisor of 1, this means it will be instanced
+    // Create output buffer used by transform feedback & update shader
+    // Note the divisor of 1, this means the data is dynamic and will change
     const quadVerts = twgl.primitives.createXYQuadVertices(baseSize)
+    // Mutate/merge the quadVerts object to add our custom attributes
     Object.assign(quadVerts, {
       tf_position: { numComponents: 3, data: positions, divisor: 1 },
       tf_velocity: { numComponents: 3, data: velocities, divisor: 1 },
       tf_age: { numComponents: 1, data: ages, divisor: 1 },
       tf_lifetime: { numComponents: 1, data: lifetimes, divisor: 1 },
     })
+    // Now create the buffer and VAO
     this.outputBuffInfo = twgl.createBufferInfoFromArrays(gl, quadVerts)
+
     this.outputVAO = twgl.createVertexArrayInfo(gl, this.progInfoRender, this.outputBuffInfo)
 
     // Create texture for particle
@@ -145,6 +161,7 @@ export class ParticleSystem implements Renderable {
       u_powerMinMax: [this.minPower, this.maxPower],
       u_direction1: this.direction1,
       u_direction2: this.direction2,
+      u_timeScale: this.timeScale,
     })
 
     twgl.drawBufferInfo(gl, this.inputBuffInfo, gl.POINTS)
@@ -163,6 +180,7 @@ export class ParticleSystem implements Renderable {
     const particleUniforms = {
       ...uniforms,
       u_texture: this.texture,
+      u_ageColour: [this.ageColourRed, this.ageColourGreen, this.ageColourBlue, this.ageColourAlpha],
     }
 
     twgl.setUniforms(this.progInfoRender, particleUniforms)

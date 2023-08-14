@@ -22,25 +22,25 @@
 
       in vec3 position;
       in vec3 velocity;
-      in float age;
+      in vec4 props;
+      in vec4 seeds;
 
       uniform float time;
       uniform float deltaTime;
 
       out vec3 v_position;
       out vec3 v_velocity;
-      out float v_age;
-
+      out vec4 v_props;
 
       void main() {
-        v_age = age + deltaTime;
+        v_props[0] = props[0] + deltaTime;
         v_velocity = velocity;
         v_position = position + velocity * deltaTime * 0.8;
 
-        if(age > 8.0) {
+        if(props[0] > 4.0) {
           v_position = vec3(0.0);
-          v_velocity = vec3(-velocity.x, -velocity.y, -velocity.z);
-          v_age = 0.0;
+          v_velocity = vec3((seeds[0]-1.0)*2.0, (seeds[1]-1.0)*2.0, (seeds[2]-1.0)*2.0);
+          v_props[0] = seeds[0];
         }
       }
       `
@@ -55,7 +55,7 @@
 
       in vec3 v_position;
       in vec3 v_velocity;
-      in float v_age;
+      in vec4 v_props;
 
       out vec4 v_color;
 
@@ -63,7 +63,7 @@
         gl_Position = vec4(v_position.xyz, 1);
         gl_PointSize = 3.0;
 
-        v_color = vec4(v_age * 0.4, v_position.z/0.7, 1.0-v_position.z/0.2, 1);
+        v_color = vec4(1.0-(v_props[0] * 0.3), 0.2, 0.8, 1.0);
       }
       `
 
@@ -80,40 +80,43 @@
       `
 
       let updateProgInfo = twgl.createProgramInfo(gl, [updateVs, updateFs], {
-        transformFeedbackVaryings: ['v_position', 'v_velocity', 'v_age'],
+        transformFeedbackVaryings: ['v_position', 'v_velocity', 'v_props'],
       })
 
       const renderProgInfo = twgl.createProgramInfo(gl, [renderVs, renderFs])
 
       // 250000 particles in the input buffer
-      const maxParticles = 250000
+      const maxParticles = 25000
       const posArray = new Float32Array(maxParticles * 3)
       const velArray = new Float32Array(maxParticles * 3)
-      const ageArray = new Float32Array(maxParticles)
+      const propsArray = new Float32Array(maxParticles * 4)
+      const seedsArray = new Float32Array(maxParticles * 4)
       for (let i = 0; i < maxParticles; ++i) {
         posArray[i * 3 + 0] = 0.0
         posArray[i * 3 + 1] = 0.0
         posArray[i * 3 + 2] = 0.0
 
-        velArray[i * 3 + 0] = Math.random() * 2 - 1
-        velArray[i * 3 + 1] = Math.random() * 2 - 1
-        velArray[i * 3 + 2] = Math.random() * 2 - 1
+        velArray[i * 3 + 0] = 0
+        velArray[i * 3 + 1] = 0
+        velArray[i * 3 + 2] = 0
 
-        ageArray[i] = Math.random() * 8.0
+        propsArray[i] = 0
+        seedsArray[i] = Math.random()
       }
 
       // Input buffer
       let inputBuffer = twgl.createBufferInfoFromArrays(gl, {
         position: { data: posArray, numComponents: 3 },
         velocity: { data: velArray, numComponents: 3 },
-        age: { data: ageArray, numComponents: 1 },
+        props: { data: propsArray, numComponents: 4 },
+        seeds: { data: seedsArray, numComponents: 4 },
       })
 
       // Output buffer
       let outBuffer = twgl.createBufferInfoFromArrays(gl, {
         v_position: { data: posArray, numComponents: 3 },
         v_velocity: { data: velArray, numComponents: 3 },
-        v_age: { data: ageArray, numComponents: 1 },
+        v_props: { data: propsArray, numComponents: 4 },
       })
 
       let lastTime = 0
@@ -131,6 +134,7 @@
 
         // Swap the buffers, kinda ugly but it works!
         for (let aName in inputBuffer.attribs) {
+          if (aName === 'seeds') continue
           const temp = inputBuffer.attribs[aName].buffer
           inputBuffer.attribs[aName].buffer = outBuffer.attribs['v_' + aName].buffer
           outBuffer.attribs['v_' + aName].buffer = temp
