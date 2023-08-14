@@ -3,15 +3,18 @@ import { Context, Material, TextureCache } from '../../dist-bundle/gsots3d.js'
 const ctx = await Context.init()
 ctx.debug = true
 const lightPos = [15, 20, 8]
-ctx.camera.position = [0, 130, 200]
-ctx.camera.enableFPControls(0, -0.65, 0.002, 4)
+ctx.camera.position = [0, 130, 150]
+ctx.camera.enableFPControls(0, -0.45, 0.002, 4)
 ctx.camera.far = 1800
 ctx.gamma = 1.0
 
 ctx.globalLight.setAsPosition(lightPos[0], lightPos[1], lightPos[2])
 const amb = 0.1
 ctx.globalLight.ambient = [amb, amb, amb]
-ctx.globalLight.enableShadows()
+ctx.globalLight.enableShadows({
+  mapSize: 512,
+  scatter: 0.8,
+})
 
 const floorMat = Material.createBasicTexture('../_textures/wood-floor.png')
 ctx.createPlaneInstance(floorMat, 1000, 1000, 1, 1, 6)
