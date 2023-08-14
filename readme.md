@@ -14,6 +14,7 @@ Feature Set:
 - **🪩 Environment mapping**: Scene based reflections, skyboxes & dynamic realtime reflections
 - **🔦 Lights**: Global directional and dynamic point lights.
 - **📦 Primitives**: Sphere, cube, plane.
+- **🎆 Particles**: GPU based particle system.
 - **💧 Transparency**: Transparent materials & primitives 
 - **🌑 Shadows**: Realtime shadows from directional light source.
 - **💖 Reflection**: Both dynamic and static environment mapping.
@@ -26,11 +27,11 @@ Feature Set:
 
 ## 🖼️ Screenshots
 
-![Some room in a dungeon or something](https://user-images.githubusercontent.com/14982936/258633859-f66590d3-0729-47ef-aa2f-ddb3fe1753b6.png)
+![Some room in a dungeon or something](https://user-images.githubusercontent.com/14982936/260514854-e96ed8d1-a498-459b-bef3-58b6612cc3cf.png)
 
-![normal mapping and environment mapping](https://user-images.githubusercontent.com/14982936/257891971-aa97557b-a32c-4f45-aa2b-70778b0c8449.png)
+![normal mapping and environment mapping](https://user-images.githubusercontent.com/14982936/260514818-0ab70843-5485-4f29-aea9-585367137245.png)
 
-![Dynamic reflections](https://user-images.githubusercontent.com/14982936/258633763-38fd07c9-0447-4dd8-b286-cbd7fddd01b5.png)
+![Particle system](https://user-images.githubusercontent.com/14982936/260514449-0e9dac87-9bdf-4712-aa9a-8fa952158459.png)
 
 ![screenshot of treasure chest](https://user-images.githubusercontent.com/14982936/253808708-32c89ca7-ad08-4c26-9de1-2964aa32a0a2.png)
 

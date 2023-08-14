@@ -22,25 +22,32 @@
 
       in vec3 position;
       in vec3 velocity;
-      in vec4 props;
-      in vec4 seeds;
+      in float age;
 
       uniform float time;
       uniform float deltaTime;
+      uniform sampler2D u_randTex;
+      uniform float u_maxInstances;
 
       out vec3 v_position;
       out vec3 v_velocity;
-      out vec4 v_props;
+      out float v_age;
+
+      vec4 rand(float offset) {
+        float u = float(gl_VertexID) / u_maxInstances + offset;
+        return texture(u_randTex, vec2(u)).rgba;
+      }
 
       void main() {
-        v_props[0] = props[0] + deltaTime;
+        v_age = age + deltaTime;
         v_velocity = velocity;
         v_position = position + velocity * deltaTime * 0.8;
 
-        if(props[0] > 4.0) {
+        if(v_age > 1.0) {
+          vec4 r = rand(position.x + position.y + position.z + time);
           v_position = vec3(0.0);
-          v_velocity = vec3((seeds[0]-1.0)*2.0, (seeds[1]-1.0)*2.0, (seeds[2]-1.0)*2.0);
-          v_props[0] = seeds[0];
+          v_velocity = vec3(r.x * 2.0 - 1.0, r.y * 2.0 - 1.0, r.z * 2.0 - 1.0);
+          v_age = r.w;
         }
       }
       `
@@ -55,7 +62,7 @@
 
       in vec3 v_position;
       in vec3 v_velocity;
-      in vec4 v_props;
+      in float v_age;
 
       out vec4 v_color;
 
@@ -63,7 +70,7 @@
         gl_Position = vec4(v_position.xyz, 1);
         gl_PointSize = 3.0;
 
-        v_color = vec4(1.0-(v_props[0] * 0.3), 0.2, 0.8, 1.0);
+        v_color = vec4(1.0-(v_age * 0.3), 1.2, 0.8, 1.0);
       }
       `
 
@@ -80,17 +87,16 @@
       `
 
       let updateProgInfo = twgl.createProgramInfo(gl, [updateVs, updateFs], {
-        transformFeedbackVaryings: ['v_position', 'v_velocity', 'v_props'],
+        transformFeedbackVaryings: ['v_position', 'v_velocity', 'v_age'],
       })
 
       const renderProgInfo = twgl.createProgramInfo(gl, [renderVs, renderFs])
 
       // 250000 particles in the input buffer
-      const maxParticles = 25000
+      const maxParticles = 500
       const posArray = new Float32Array(maxParticles * 3)
       const velArray = new Float32Array(maxParticles * 3)
-      const propsArray = new Float32Array(maxParticles * 4)
-      const seedsArray = new Float32Array(maxParticles * 4)
+      const ageArray = new Float32Array(maxParticles * 1)
       for (let i = 0; i < maxParticles; ++i) {
         posArray[i * 3 + 0] = 0.0
         posArray[i * 3 + 1] = 0.0
@@ -100,23 +106,40 @@
         velArray[i * 3 + 1] = 0
         velArray[i * 3 + 2] = 0
 
-        propsArray[i] = 0
-        seedsArray[i] = Math.random()
+        ageArray[i] = 0
       }
+
+      // raw buffer with maxParticles * 7 floats
+      const stuffRaw = new Float32Array(maxParticles * 7)
+      const b1 = twgl.createBufferInfoFromArrays(gl, {
+        stuff: { data: stuffRaw, numComponents: 7 },
+      })
 
       // Input buffer
       let inputBuffer = twgl.createBufferInfoFromArrays(gl, {
         position: { data: posArray, numComponents: 3 },
         velocity: { data: velArray, numComponents: 3 },
-        props: { data: propsArray, numComponents: 4 },
-        seeds: { data: seedsArray, numComponents: 4 },
+        age: { data: ageArray, numComponents: 1 },
       })
 
       // Output buffer
       let outBuffer = twgl.createBufferInfoFromArrays(gl, {
-        v_position: { data: posArray, numComponents: 3 },
+        v_position: { buffer: b1.attribs.stuff.buffer, numComponents: 3 },
         v_velocity: { data: velArray, numComponents: 3 },
-        v_props: { data: propsArray, numComponents: 4 },
+        v_age: { data: ageArray, numComponents: 1 },
+      })
+
+      const randArray = new Uint8Array(512 * 512 * 4)
+      for (let i = 0; i < 512 * 512 * 4; i++) {
+        randArray[i] = Math.floor(Math.random() * 255)
+      }
+      const noiseTex = twgl.createTexture(gl, {
+        min: gl.NEAREST,
+        mag: gl.NEAREST,
+        src: randArray,
+        width: 512,
+        height: 512,
+        wrap: gl.REPEAT,
       })
 
       let lastTime = 0
@@ -134,7 +157,6 @@
 
         // Swap the buffers, kinda ugly but it works!
         for (let aName in inputBuffer.attribs) {
-          if (aName === 'seeds') continue
           const temp = inputBuffer.attribs[aName].buffer
           inputBuffer.attribs[aName].buffer = outBuffer.attribs['v_' + aName].buffer
           outBuffer.attribs['v_' + aName].buffer = temp
@@ -155,6 +177,8 @@
         const uniforms = {}
         uniforms.time = time
         uniforms.deltaTime = deltaTime
+        uniforms.u_randTex = noiseTex
+        uniforms.u_maxInstances = maxParticles
 
         twgl.setUniforms(updateProgInfo, uniforms)
 
@@ -178,7 +202,7 @@
         // render the particles
         gl.useProgram(renderProgInfo.program)
         twgl.setBuffersAndAttributes(gl, renderProgInfo, buff)
-        twgl.drawBufferInfo(gl, buff, gl.POINTS)
+        twgl.drawBufferInfo(gl, buff, gl.POINTS, maxParticles)
       }
     </script>
   </body>

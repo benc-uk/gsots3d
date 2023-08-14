@@ -8,7 +8,6 @@
 precision highp float;
 
 in vec2 v_texcoord;
-in vec3 v_position;
 in float v_ageNorm;
 
 uniform sampler2D u_texture;
