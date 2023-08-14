@@ -308,7 +308,7 @@ function setLogLevel(level) {
 var import_loglevel8 = __toESM(require_loglevel(), 1);
 
 // package.json
-var version = "0.0.4-alpha.3";
+var version = "0.0.4-alpha.4";
 
 // node_modules/twgl.js/dist/5.x/twgl-full.module.js
 var VecType = Float32Array;
