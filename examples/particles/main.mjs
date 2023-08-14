@@ -57,19 +57,19 @@ r2.particles.direction2 = [spread2, 2, spread2]
 r2.particles.ageColourGreen = 2.0
 r2.particles.ageColourBlue = 3.0
 
-document.getElementById('emitRange').addEventListener('input', (e) => {
-  r.particles.emitRate = e.target.value
-})
+// document.getElementById('emitRange').addEventListener('input', (e) => {
+//   r.particles.emitRate = e.target.value
+// })
 
-document.getElementById('maxLifetime').addEventListener('input', (e) => {
-  r.particles.maxLifetime = e.target.value / 100
-})
+// document.getElementById('maxLifetime').addEventListener('input', (e) => {
+//   r.particles.maxLifetime = e.target.value / 100
+// })
 
-document.getElementById('minLifetime').addEventListener('input', (e) => {
-  r.particles.minLifetime = e.target.value / 100
-})
-document.getElementById('grav').addEventListener('input', (e) => {
-  r.particles.gravity = [0, -e.target.value, 0]
-})
+// document.getElementById('minLifetime').addEventListener('input', (e) => {
+//   r.particles.minLifetime = e.target.value / 100
+// })
+// document.getElementById('grav').addEventListener('input', (e) => {
+//   r.particles.gravity = [0, -e.target.value, 0]
+// })
 
 ctx.start()
