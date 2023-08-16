@@ -89,7 +89,7 @@ export class TextureCache {
       src: [255, 255, 255, 255],
     })
 
-    // 256 by 256 random RGB texture, used for debugging
+    // 256 by 256 random RGB texture, used for random numbers
     const randArray = new Uint8Array(512 * 512 * 4)
     for (let i = 0; i < 512 * 512 * 4; i++) {
       randArray[i] = Math.floor(Math.random() * 255)

@@ -6,18 +6,19 @@
 import * as twgl from 'twgl.js'
 import log from 'loglevel'
 
-import fragShaderUpdate from '../../shaders/particles/update.frag'
-import vertShaderUpdate from '../../shaders/particles/update.vert'
-import fragShaderRender from '../../shaders/particles/render.frag'
-import vertShaderRender from '../../shaders/particles/render.vert'
+import updateFS from '../../shaders/particles/update.frag'
+import updateVS from '../../shaders/particles/update.vert'
+import renderFS from '../../shaders/particles/render.frag'
+import renderVS from '../../shaders/particles/render.vert'
 
 import { Renderable } from './types.ts'
 import { UniformSet } from '../core/gl.ts'
 import { Stats } from '../core/stats.ts'
-import { TextureCache, XYZ } from '../index.ts'
+import { RGBA, XYZ } from '../engine/tuples.ts'
+import { TextureCache } from '../core/cache.ts'
 
 /**
- * Particle system, uses transform feedback to update particles
+ * Particle system, uses transform feedback on the GPU to update particles
  * and VAO instancing to render them
  */
 export class ParticleSystem implements Renderable {
@@ -27,31 +28,61 @@ export class ParticleSystem implements Renderable {
   private outputBuffInfo: twgl.BufferInfo
   private outputVAO: twgl.VertexArrayInfo
 
+  /** When enabled, particles will be spawned and emitted */
+  public enabled: boolean
+  /** Texture to use for particles */
   public texture: WebGLTexture
+  /** Emission rate, number of particles per frame */
   public emitRate: number
+  /** Min lifetime of particles in seconds */
   public minLifetime: number
+  /** Max lifetime of particles in seconds  */
   public maxLifetime: number
+  /** Gravity vector. Default: [0, -9.81, 0] */
   public gravity: XYZ
+  /** Min power (speed) of particles, this is multiplied by the direction vector */
   public minPower: number
+  /** Max power (speed) of particles, this is multiplied by the direction vector */
   public maxPower: number
+  /** Particles will randomly emit in a direction between this vector and direction2 */
   public direction1: XYZ
+  /** Particles will randomly emit in a direction between this vector and direction1 */
   public direction2: XYZ
+  /** Particles are spawned in a bounding box, defined by this vector as one corner */
+  public emitterBoxMin: XYZ
+  /** Particles are spawned in a bounding box, defined by this vector as one corner */
+  public emitterBoxMax: XYZ
+  /** Speed up or slow down time */
   public timeScale: number
-  public ageColourAlpha: number
-  public ageColourRed: number
-  public ageColourGreen: number
-  public ageColourBlue: number
+  /** Change colour and alpha as particle reaches it's lifetime. Default: [0,0,0,1] */
+  public ageColour: RGBA
+  /** Min random size of particles */
   public minSize: number
+  /** Max random size of particles */
   public maxSize: number
+  /** Min initial random rotation of particles in radians */
   public minInitialRotation: number
+  /** Max initial random rotation of particles in radians */
   public maxInitialRotation: number
+  /** Min random rotation speed of particles in radians per second */
   public minRotationSpeed: number
+  /** Max random rotation speed of particles in radians per second */
   public maxRotationSpeed: number
+  /** Duration of particle system in frames, -1 = forever. Default: -1 */
+  public duration: number
+  /** Acceleration or deceleration multiplier, default 1.0. Applied every frame, so keep values *very* close to 1.0 */
+  public acceleration: number
+  /** Blend source mode, default: 'SRC_ALPHA', leave alone unless you know what you are doing */
+  public blendSource: number
+  /** Blend destination mode, default: 'ONE', leave alone unless you know what you are doing */
+  public blendDest: number
+  /** Colour multiplier pre-applied to particle texture before ageing */
+  public preColour: RGBA
 
   /**
    * Create a new particle system
    * @param gl WebGL2 rendering context
-   * @param maxParticles Maximum number of particles to render
+   * @param maxParticles Maximum number of particles in the system
    * @param baseSize Size of the particle quad
    */
   constructor(gl: WebGL2RenderingContext, maxParticles: number, baseSize: number) {
@@ -64,22 +95,27 @@ export class ParticleSystem implements Renderable {
     this.direction1 = [-0.5, 1, -0.5]
     this.direction2 = [0.5, 1, 0.5]
     this.timeScale = 3.0
-    this.ageColourAlpha = 1.0
-    this.ageColourRed = 0.0
-    this.ageColourGreen = 0.0
-    this.ageColourBlue = 0.0
+    this.ageColour = [0.0, 0.0, 0.0, 1.0]
     this.minSize = 1.0
     this.maxSize = 1.0
     this.minInitialRotation = 0.0
     this.maxInitialRotation = 0.0
     this.minRotationSpeed = 0.0
     this.maxRotationSpeed = 0.0
+    this.duration = -1
+    this.enabled = true
+    this.emitterBoxMin = [0, 0, 0]
+    this.emitterBoxMax = [0, 0, 0]
+    this.acceleration = 1.0
+    this.blendSource = gl.SRC_ALPHA
+    this.blendDest = gl.ONE
+    this.preColour = [1.0, 1.0, 1.0, 1.0]
 
     // Create shaders and programs
-    this.progInfoUpdate = twgl.createProgramInfo(gl, [vertShaderUpdate, fragShaderUpdate], {
+    this.progInfoUpdate = twgl.createProgramInfo(gl, [updateVS, updateFS], {
       transformFeedbackVaryings: ['tf_position', 'tf_velocity', 'tf_age', 'tf_props'],
     })
-    this.progInfoRender = twgl.createProgramInfo(gl, [vertShaderRender, fragShaderRender])
+    this.progInfoRender = twgl.createProgramInfo(gl, [renderVS, renderFS])
 
     // Create initial buffers, note these are for ALL particles regardless of emission rate
     // These are all updated in the shader
@@ -92,21 +128,20 @@ export class ParticleSystem implements Renderable {
       positions[i * 3] = 0
       positions[i * 3 + 1] = 0
       positions[i * 3 + 2] = 0
-      positions[i * 3 + 3] = 0
+      positions[i * 3 + 3] = 0 // Rotation
 
       velocities[i * 3] = 0
       velocities[i * 3 + 1] = 0
       velocities[i * 3 + 2] = 0
 
-      // age[0] -> current age, age[1] -> lifetime
-      ages[i * 2] = 0
-      ages[i * 2 + 1] = Math.random() * (this.maxLifetime - this.minLifetime) + this.minLifetime
+      ages[i * 2] = 0 // Age
+      // Lifetime, initial random value to stop "bursting"
+      ages[i * 2 + 1] = Math.random() * 3
 
-      // props[0] -> size, props[1] -> spin
-      props[i * 4] = 1.0
-      props[i * 4 + 1] = 0
-      props[i * 4 + 2] = 0
-      props[i * 4 + 3] = 0
+      props[i * 4] = 1.0 // Size
+      props[i * 4 + 1] = 0 // Rotation speed
+      props[i * 4 + 2] = 0 // Unused
+      props[i * 4 + 3] = 0 // Unused
 
       seeds[i] = Math.random()
     }
@@ -148,6 +183,14 @@ export class ParticleSystem implements Renderable {
    * @param uniforms Uniforms to pass to the shaders
    */
   render(gl: WebGL2RenderingContext, uniforms: UniformSet) {
+    if (this.duration == 0) {
+      this.enabled = false
+    }
+    if (this.duration > 0) {
+      this.duration--
+    }
+
+    gl.blendFunc(this.blendSource, this.blendDest)
     this.updateParticles(gl)
     this.renderParticles(gl, uniforms)
 
@@ -178,12 +221,13 @@ export class ParticleSystem implements Renderable {
 
     twgl.setUniforms(this.progInfoUpdate, {
       u_time: Stats.totalTime,
-      u_deltaTime: Stats.deltaTime,
+      u_deltaTime: Stats.deltaTime * this.timeScale,
       u_randTex: TextureCache.defaultRand,
 
       // NOTE: ULTRA IMPORTANT! Without this the rand function in the shader will not work
       u_maxInstances: this.inputBuffInfo.numElements,
 
+      u_enabled: this.enabled,
       u_lifetimeMinMax: [this.minLifetime, this.maxLifetime],
       u_gravity: this.gravity,
       u_powerMinMax: [this.minPower, this.maxPower],
@@ -193,9 +237,12 @@ export class ParticleSystem implements Renderable {
       u_sizeMinMax: [this.minSize, this.maxSize],
       u_initialRotationMinMax: [this.minInitialRotation, this.maxInitialRotation],
       u_rotationSpeedMinMax: [this.minRotationSpeed, this.maxRotationSpeed],
+      u_emitterBoxMin: this.emitterBoxMin,
+      u_emitterBoxMax: this.emitterBoxMax,
+      u_accel: this.acceleration,
     })
 
-    twgl.drawBufferInfo(gl, this.inputBuffInfo, gl.POINTS)
+    twgl.drawBufferInfo(gl, this.inputBuffInfo, gl.POINTS, this.emitRate)
 
     gl.endTransformFeedback()
     gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null)
@@ -211,7 +258,8 @@ export class ParticleSystem implements Renderable {
     const particleUniforms = {
       ...uniforms,
       u_texture: this.texture,
-      u_ageColour: [this.ageColourRed, this.ageColourGreen, this.ageColourBlue, this.ageColourAlpha],
+      u_ageColour: this.ageColour,
+      u_preColour: this.preColour,
     }
 
     twgl.setUniforms(this.progInfoRender, particleUniforms)
@@ -226,14 +274,6 @@ export class ParticleSystem implements Renderable {
     ]
 
     twgl.setBuffersAndAttributes(gl, this.progInfoRender, this.outputVAO)
-
-    gl.depthMask(false)
-    gl.enable(gl.BLEND)
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
-
     twgl.drawObjectList(gl, objList)
-
-    gl.disable(gl.BLEND)
-    gl.depthMask(true)
   }
 }

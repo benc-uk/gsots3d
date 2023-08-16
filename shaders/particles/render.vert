@@ -34,7 +34,7 @@ void main() {
   // Scale by tf_props[0] (size)
   vert_pos = vert_pos.xyz * tf_props[0];
 
-  // Move to world position
+  // Move to the world at the particle position
   vec4 world_pos = u_world * vec4(tf_position.xyz, 1.0);
   vec4 view_pos = u_view * world_pos;
 

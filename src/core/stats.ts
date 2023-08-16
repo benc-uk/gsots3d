@@ -11,6 +11,7 @@ export const Stats = {
   prevTime: 0,
   deltaTime: 0,
   totalTime: 0,
+  frameCount: 0,
 
   resetPerFrame() {
     Stats.drawCallsPerFrame = 0

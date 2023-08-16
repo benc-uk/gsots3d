@@ -138,6 +138,9 @@ export class Instance {
     uniforms.u_flipTextureX = this.flipTextureX
     uniforms.u_flipTextureY = this.flipTextureY
 
+    gl.enable(gl.BLEND)
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
     // Render the renderable thing wrapped by this instance
     this.renderable.render(gl, uniforms, this.material, programOverride)
   }

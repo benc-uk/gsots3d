@@ -7089,6 +7089,8 @@ var Instance = class {
     mat4_exports.multiply(uniforms.u_worldViewProjection, uniforms.u_proj, worldView);
     uniforms.u_flipTextureX = this.flipTextureX;
     uniforms.u_flipTextureY = this.flipTextureY;
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     this.renderable.render(gl, uniforms, this.material, programOverride);
   }
 };
@@ -7101,6 +7103,7 @@ var Stats = {
   prevTime: 0,
   deltaTime: 0,
   totalTime: 0,
+  frameCount: 0,
   resetPerFrame() {
     Stats.drawCallsPerFrame = 0;
   },
@@ -7405,20 +7408,20 @@ var import_loglevel6 = __toESM(require_loglevel(), 1);
 var update_default = "#version 300 es\n\n// ============================================================================\n// Particle update fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Does nothing, just here to make the WebGL compiler happy!\nvoid main() {}\n";
 
 // shaders/particles/update.vert
-var update_default2 = "#version 300 es\n\n// ============================================================================\n// Particle update vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec4 position;\nin vec3 velocity;\nin vec2 age;\nin vec4 props;\nin float seed;\n\nuniform float u_deltaTime;\nuniform sampler2D u_randTex;\nuniform float u_maxInstances;\nuniform vec2 u_lifetimeMinMax;\nuniform vec2 u_powerMinMax;\nuniform vec3 u_gravity;\nuniform vec3 u_direction1;\nuniform vec3 u_direction2;\nuniform float u_timeScale;\nuniform vec2 u_sizeMinMax;\nuniform vec2 u_initialRotationMinMax;\nuniform vec2 u_rotationSpeedMinMax;\n\nout vec4 tf_position;\nout vec3 tf_velocity;\nout vec2 tf_age;\nout vec4 tf_props;\n\nvec4 rand(float offset) {\n  float uv = float(gl_VertexID) / u_maxInstances + offset;\n  return texture(u_randTex, vec2(uv)).rgba;\n}\n\nfloat randBetween(float min, float max, float offset) {\n  vec4 r = rand(offset);\n  return min + (max - min) * r.w;\n}\n\n// NOTES: TF varyings & packing\n// * position[0,1,2] = current position\n// * position[3] = rotation\n// * age[0] = current age\n// * age[1] = lifetime\n// * props[0] = size\n// * props[1] = rotation speed\n\nvoid main() {\n  float new_age = age[0] + u_deltaTime * u_timeScale;\n\n  // Rotate particle\n  float rot = position[3] + props[1] * u_deltaTime * u_timeScale;\n\n  tf_velocity = velocity + u_gravity * u_deltaTime * u_timeScale;\n  tf_position = vec4(position.xyz + tf_velocity * u_deltaTime * u_timeScale, rot);\n  tf_age[0] = new_age;\n  tf_age[1] = age[1];\n  tf_props = props;\n\n  // Dead particles are respawned\n  if (new_age > age[1]) {\n    tf_age[0] = 0.0;\n    tf_position = vec4(0.0);\n    tf_position[3] = randBetween(u_initialRotationMinMax.x, u_initialRotationMinMax.y, seed);\n\n    vec4 r = rand(seed);\n    float power = randBetween(u_powerMinMax.x, u_powerMinMax.y, 0.0);\n\n    tf_velocity = vec3(\n      randBetween(u_direction1.x, u_direction2.x, r.x) * power,\n      randBetween(u_direction1.y, u_direction2.y, r.y) * power,\n      randBetween(u_direction1.z, u_direction2.z, r.z) * power\n    );\n\n    tf_age[1] = randBetween(u_lifetimeMinMax.x, u_lifetimeMinMax.y, seed);\n    tf_props[0] = randBetween(u_sizeMinMax.x, u_sizeMinMax.y, seed);\n    tf_props[1] = randBetween(u_rotationSpeedMinMax.x, u_rotationSpeedMinMax.y, seed);\n  }\n}\n";
+var update_default2 = "#version 300 es\n\n// ============================================================================\n// Particle update vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec4 position;\nin vec3 velocity;\nin vec2 age;\nin vec4 props;\nin float seed;\n\nuniform float u_deltaTime;\nuniform sampler2D u_randTex;\nuniform float u_maxInstances;\nuniform vec2 u_lifetimeMinMax;\nuniform vec2 u_powerMinMax;\nuniform vec3 u_gravity;\nuniform vec3 u_direction1;\nuniform vec3 u_direction2;\nuniform float u_timeScale;\nuniform vec2 u_sizeMinMax;\nuniform vec2 u_initialRotationMinMax;\nuniform vec2 u_rotationSpeedMinMax;\nuniform bool u_enabled;\nuniform vec3 u_emitterBoxMin;\nuniform vec3 u_emitterBoxMax;\nuniform float u_accel;\n\nout vec4 tf_position;\nout vec3 tf_velocity;\nout vec2 tf_age;\nout vec4 tf_props;\n\nvec4 rand(float offset) {\n  float uv = float(gl_VertexID) / u_maxInstances + offset;\n  return texture(u_randTex, vec2(uv)).rgba;\n}\n\nfloat randBetween(float min, float max, float offset) {\n  vec4 r = rand(offset);\n  return min + (max - min) * r.w;\n}\n\n// NOTES: TF varyings & packing\n// * position[0,1,2] = current position\n// * position[3] = rotation\n// * age[0] = current age\n// * age[1] = lifetime\n// * props[0] = size\n// * props[1] = rotation speed\n\nvoid main() {\n  float t = u_deltaTime;\n  float new_age = age[0] + t;\n\n  float rot = position[3] + props[1] * t;\n\n  tf_velocity = velocity * u_accel + u_gravity * t;\n  tf_position = vec4(position.xyz + tf_velocity * t, rot);\n  tf_age[0] = new_age;\n  tf_age[1] = age[1];\n  tf_props = props;\n\n  // Dead particles are respawned\n  if (new_age > age[1] && u_enabled) {\n    vec4 r = rand(seed);\n\n    tf_age[0] = 0.0;\n    tf_position[0] = randBetween(u_emitterBoxMin.x, u_emitterBoxMax.x, r.x);\n    tf_position[1] = randBetween(u_emitterBoxMin.y, u_emitterBoxMax.y, r.y);\n    tf_position[2] = randBetween(u_emitterBoxMin.z, u_emitterBoxMax.z, r.z);\n    tf_position[3] = randBetween(u_initialRotationMinMax.x, u_initialRotationMinMax.y, seed);\n\n    float power = randBetween(u_powerMinMax.x, u_powerMinMax.y, 0.0);\n\n    tf_velocity = vec3(\n      randBetween(u_direction1.x, u_direction2.x, r.x + position.x) * power,\n      randBetween(u_direction1.y, u_direction2.y, r.y + position.y) * power,\n      randBetween(u_direction1.z, u_direction2.z, r.z + position.z) * power\n    );\n\n    tf_age[1] = randBetween(u_lifetimeMinMax.x, u_lifetimeMinMax.y, seed + position.x);\n    tf_props[0] = randBetween(u_sizeMinMax.x, u_sizeMinMax.y, seed + position.y);\n    tf_props[1] = randBetween(u_rotationSpeedMinMax.x, u_rotationSpeedMinMax.y, seed);\n  }\n}\n";
 
 // shaders/particles/render.frag
-var render_default = "#version 300 es\n\n// ============================================================================\n// Particle render fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec2 v_texcoord;\nin float v_ageNorm;\n\nuniform sampler2D u_texture;\nuniform vec4 u_ageColour;\n\nout vec4 outColor;\n\nvoid main() {\n  vec4 tex = texture(u_texture, v_texcoord);\n  tex.a *= 1.0 - v_ageNorm * u_ageColour.a;\n  tex.r *= 1.0 - v_ageNorm * u_ageColour.r;\n  tex.g *= 1.0 - v_ageNorm * u_ageColour.g;\n  tex.b *= 1.0 - v_ageNorm * u_ageColour.b;\n\n  outColor = tex;\n}\n";
+var render_default = "#version 300 es\n\n// ============================================================================\n// Particle render fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec2 v_texcoord;\nin float v_ageNorm;\n\nuniform sampler2D u_texture;\nuniform vec4 u_ageColour;\nuniform vec4 u_preColour;\n\nout vec4 outColor;\n\nvoid main() {\n  vec4 tex = texture(u_texture, v_texcoord);\n  tex.r *= u_preColour.r;\n  tex.g *= u_preColour.g;\n  tex.b *= u_preColour.b;\n  tex.a *= u_preColour.a;\n\n  tex.a *= 1.0 - v_ageNorm * u_ageColour.a;\n  tex.r *= 1.0 - v_ageNorm * u_ageColour.r;\n  tex.g *= 1.0 - v_ageNorm * u_ageColour.g;\n  tex.b *= 1.0 - v_ageNorm * u_ageColour.b;\n\n  outColor = tex;\n}\n";
 
 // shaders/particles/render.vert
-var render_default2 = "#version 300 es\n\n// ============================================================================\n// Particle render vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec4 position; // Vertex positions of the particle quad\nin vec2 texcoord;\nin vec4 tf_position; // Position of the particle\nin vec2 tf_age;\nin vec4 tf_props;\n\nuniform mat4 u_view;\nuniform mat4 u_proj;\nuniform mat4 u_world;\n\nout vec2 v_texcoord;\nout vec3 v_position;\nout float v_ageNorm;\n\nvoid main() {\n  vec3 vert_pos = position.xyz;\n  v_ageNorm = tf_age[0] / tf_age[1];\n\n  // Rotate by tf_position[3] (rotation)\n  float s = sin(tf_position[3]);\n  float c = cos(tf_position[3]);\n  mat2 rot = mat2(c, -s, s, c);\n  vert_pos.xy = rot * position.xy;\n\n  // Scale by tf_props[0] (size)\n  vert_pos = vert_pos.xyz * tf_props[0];\n\n  // Move to world position\n  vec4 world_pos = u_world * vec4(tf_position.xyz, 1.0);\n  vec4 view_pos = u_view * world_pos;\n\n  // Billboarding magic\n  gl_Position = u_proj * (view_pos + vec4(vert_pos.xy, 0.0, 0.0));\n\n  v_position = world_pos.xyz;\n  v_texcoord = texcoord;\n}\n";
+var render_default2 = "#version 300 es\n\n// ============================================================================\n// Particle render vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec4 position; // Vertex positions of the particle quad\nin vec2 texcoord;\nin vec4 tf_position; // Position of the particle\nin vec2 tf_age;\nin vec4 tf_props;\n\nuniform mat4 u_view;\nuniform mat4 u_proj;\nuniform mat4 u_world;\n\nout vec2 v_texcoord;\nout vec3 v_position;\nout float v_ageNorm;\n\nvoid main() {\n  vec3 vert_pos = position.xyz;\n  v_ageNorm = tf_age[0] / tf_age[1];\n\n  // Rotate by tf_position[3] (rotation)\n  float s = sin(tf_position[3]);\n  float c = cos(tf_position[3]);\n  mat2 rot = mat2(c, -s, s, c);\n  vert_pos.xy = rot * position.xy;\n\n  // Scale by tf_props[0] (size)\n  vert_pos = vert_pos.xyz * tf_props[0];\n\n  // Move to the world at the particle position\n  vec4 world_pos = u_world * vec4(tf_position.xyz, 1.0);\n  vec4 view_pos = u_view * world_pos;\n\n  // Billboarding magic\n  gl_Position = u_proj * (view_pos + vec4(vert_pos.xy, 0.0, 0.0));\n\n  v_position = world_pos.xyz;\n  v_texcoord = texcoord;\n}\n";
 
 // src/models/particles.ts
 var ParticleSystem = class {
   /**
    * Create a new particle system
    * @param gl WebGL2 rendering context
-   * @param maxParticles Maximum number of particles to render
+   * @param maxParticles Maximum number of particles in the system
    * @param baseSize Size of the particle quad
    */
   constructor(gl, maxParticles, baseSize) {
@@ -7431,16 +7434,21 @@ var ParticleSystem = class {
     this.direction1 = [-0.5, 1, -0.5];
     this.direction2 = [0.5, 1, 0.5];
     this.timeScale = 3;
-    this.ageColourAlpha = 1;
-    this.ageColourRed = 0;
-    this.ageColourGreen = 0;
-    this.ageColourBlue = 0;
+    this.ageColour = [0, 0, 0, 1];
     this.minSize = 1;
     this.maxSize = 1;
     this.minInitialRotation = 0;
     this.maxInitialRotation = 0;
     this.minRotationSpeed = 0;
     this.maxRotationSpeed = 0;
+    this.duration = -1;
+    this.enabled = true;
+    this.emitterBoxMin = [0, 0, 0];
+    this.emitterBoxMax = [0, 0, 0];
+    this.acceleration = 1;
+    this.blendSource = gl.SRC_ALPHA;
+    this.blendDest = gl.ONE;
+    this.preColour = [1, 1, 1, 1];
     this.progInfoUpdate = createProgramInfo(gl, [update_default2, update_default], {
       transformFeedbackVaryings: ["tf_position", "tf_velocity", "tf_age", "tf_props"]
     });
@@ -7459,7 +7467,7 @@ var ParticleSystem = class {
       velocities[i * 3 + 1] = 0;
       velocities[i * 3 + 2] = 0;
       ages[i * 2] = 0;
-      ages[i * 2 + 1] = Math.random() * (this.maxLifetime - this.minLifetime) + this.minLifetime;
+      ages[i * 2 + 1] = Math.random() * 3;
       props[i * 4] = 1;
       props[i * 4 + 1] = 0;
       props[i * 4 + 2] = 0;
@@ -7491,6 +7499,13 @@ var ParticleSystem = class {
    * @param uniforms Uniforms to pass to the shaders
    */
   render(gl, uniforms) {
+    if (this.duration == 0) {
+      this.enabled = false;
+    }
+    if (this.duration > 0) {
+      this.duration--;
+    }
+    gl.blendFunc(this.blendSource, this.blendDest);
     this.updateParticles(gl);
     this.renderParticles(gl, uniforms);
     for (const attribName in this.inputBuffInfo.attribs) {
@@ -7513,10 +7528,11 @@ var ParticleSystem = class {
     gl.beginTransformFeedback(gl.POINTS);
     setUniforms(this.progInfoUpdate, {
       u_time: Stats.totalTime,
-      u_deltaTime: Stats.deltaTime,
+      u_deltaTime: Stats.deltaTime * this.timeScale,
       u_randTex: TextureCache.defaultRand,
       // NOTE: ULTRA IMPORTANT! Without this the rand function in the shader will not work
       u_maxInstances: this.inputBuffInfo.numElements,
+      u_enabled: this.enabled,
       u_lifetimeMinMax: [this.minLifetime, this.maxLifetime],
       u_gravity: this.gravity,
       u_powerMinMax: [this.minPower, this.maxPower],
@@ -7525,9 +7541,12 @@ var ParticleSystem = class {
       u_timeScale: this.timeScale,
       u_sizeMinMax: [this.minSize, this.maxSize],
       u_initialRotationMinMax: [this.minInitialRotation, this.maxInitialRotation],
-      u_rotationSpeedMinMax: [this.minRotationSpeed, this.maxRotationSpeed]
+      u_rotationSpeedMinMax: [this.minRotationSpeed, this.maxRotationSpeed],
+      u_emitterBoxMin: this.emitterBoxMin,
+      u_emitterBoxMax: this.emitterBoxMax,
+      u_accel: this.acceleration
     });
-    drawBufferInfo(gl, this.inputBuffInfo, gl.POINTS);
+    drawBufferInfo(gl, this.inputBuffInfo, gl.POINTS, this.emitRate);
     gl.endTransformFeedback();
     gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
     gl.disable(gl.RASTERIZER_DISCARD);
@@ -7540,7 +7559,8 @@ var ParticleSystem = class {
     const particleUniforms = {
       ...uniforms,
       u_texture: this.texture,
-      u_ageColour: [this.ageColourRed, this.ageColourGreen, this.ageColourBlue, this.ageColourAlpha]
+      u_ageColour: this.ageColour,
+      u_preColour: this.preColour
     };
     setUniforms(this.progInfoRender, particleUniforms);
     const objList = [
@@ -7552,12 +7572,7 @@ var ParticleSystem = class {
       }
     ];
     setBuffersAndAttributes(gl, this.progInfoRender, this.outputVAO);
-    gl.depthMask(false);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
     drawObjectList(gl, objList);
-    gl.disable(gl.BLEND);
-    gl.depthMask(true);
   }
 };
 
@@ -7992,6 +8007,7 @@ var Context2 = class _Context {
   constructor(gl) {
     this.instances = [];
     this.instancesTrans = [];
+    this.instancesParticles = [];
     this.cameras = /* @__PURE__ */ new Map();
     /** All the dynamic point lights in the scene */
     this.lights = [];
@@ -8077,6 +8093,7 @@ var Context2 = class _Context {
     if (this.started)
       requestAnimationFrame(this.render);
     Stats.resetPerFrame();
+    Stats.frameCount++;
   }
   /**
    * Render the scene from the given camera, used internally
@@ -8141,6 +8158,11 @@ var Context2 = class _Context {
     for (const instance of this.instancesTrans) {
       instance.render(this.gl, uniforms, programOverride);
     }
+    this.gl.depthMask(false);
+    for (const instance of this.instancesParticles) {
+      instance.render(this.gl, uniforms, programOverride);
+    }
+    this.gl.depthMask(true);
   }
   /**
    * Start the rendering loop
@@ -8336,13 +8358,19 @@ var Context2 = class _Context {
     import_loglevel8.default.debug(`\u{1F506} Created point light, pos:${position} col:${colour} int:${intensity}`);
     return light;
   }
+  /**
+   * Create a new particle system in the scene
+   * @param maxParticles Maximum number of particles to allow in the system
+   * @param baseSize Base size of the particles, default 2
+   * @returns Both the instance and the particle system
+   */
   createParticleSystem(maxParticles = 1e3, baseSize = 2) {
-    const particles = new ParticleSystem(this.gl, maxParticles, baseSize);
-    const instance = new Instance(particles);
+    const particleSystem = new ParticleSystem(this.gl, maxParticles, baseSize);
+    const instance = new Instance(particleSystem);
     instance.castShadow = false;
-    this.instances.push(instance);
+    this.instancesParticles.push(instance);
     Stats.instances++;
-    return { instance, particles };
+    return { instance, particleSystem };
   }
   /**
    * Set the EnvironmentMap for the scene, will overwrite any existing envmap.
@@ -8393,6 +8421,7 @@ export {
   ModelPart,
   PROG_BILLBOARD,
   PROG_DEFAULT,
+  ParticleSystem,
   Primitive,
   PrimitiveCube,
   PrimitiveCylinder,

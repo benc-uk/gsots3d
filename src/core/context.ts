@@ -41,6 +41,7 @@ export class Context {
   private started: boolean
   private instances: Instance[] = []
   private instancesTrans: Instance[] = []
+  private instancesParticles: Instance[] = []
   private cameras: Map<string, Camera> = new Map()
   private activeCameraName: string
   private envmap?: EnvironmentMap
@@ -186,6 +187,7 @@ export class Context {
 
     // Reset stats for next frame
     Stats.resetPerFrame()
+    Stats.frameCount++
   }
 
   /**
@@ -284,6 +286,13 @@ export class Context {
     for (const instance of this.instancesTrans) {
       instance.render(this.gl, uniforms, programOverride)
     }
+
+    // RENDERING - Draw all particle systems
+    this.gl.depthMask(false)
+    for (const instance of this.instancesParticles) {
+      instance.render(this.gl, uniforms, programOverride)
+    }
+    this.gl.depthMask(true)
   }
 
   /**
@@ -530,16 +539,22 @@ export class Context {
     return light
   }
 
+  /**
+   * Create a new particle system in the scene
+   * @param maxParticles Maximum number of particles to allow in the system
+   * @param baseSize Base size of the particles, default 2
+   * @returns Both the instance and the particle system
+   */
   createParticleSystem(maxParticles = 1000, baseSize = 2) {
-    const particles = new ParticleSystem(this.gl, maxParticles, baseSize)
+    const particleSystem = new ParticleSystem(this.gl, maxParticles, baseSize)
 
-    const instance = new Instance(particles)
+    const instance = new Instance(particleSystem)
     instance.castShadow = false
 
-    this.instances.push(instance)
+    this.instancesParticles.push(instance)
     Stats.instances++
 
-    return { instance, particles }
+    return { instance, particleSystem }
   }
 
   /**
