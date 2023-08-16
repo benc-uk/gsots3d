@@ -70,7 +70,7 @@ export class Context {
   public readonly hud: HUD
 
   /** Gamma correction value, default 1.0 */
-  public gamma = 1.0
+  public gamma: number
 
   // ==== Getters =============================================================
 
@@ -89,6 +89,7 @@ export class Context {
     this.gl = gl
     this.started = false
     this.debug = false
+    this.gamma = 1.0
 
     // Main global light
     this.globalLight = new LightDirectional()
@@ -166,6 +167,10 @@ export class Context {
       const shadowCam = this.globalLight.getShadowCamera()
       // Switch to front face culling for shadow map, yeah it's weird but it works!
       this.gl.cullFace(this.gl.FRONT)
+      this.gl.enable(this.gl.POLYGON_OFFSET_FILL)
+
+      const shadowOpt = this.globalLight.shadowMapOptions
+      this.gl.polygonOffset(shadowOpt?.polygonOffsetFactor ?? 0, 1)
 
       // Bind the shadow map framebuffer and render the scene from the light's POV
       // Using the special shadow map program as an override for the whole rendering pass
@@ -174,6 +179,7 @@ export class Context {
 
       // Switch back to back face culling
       this.gl.cullFace(this.gl.BACK)
+      this.gl.disable(this.gl.POLYGON_OFFSET_FILL)
     }
 
     // RENDERING - Render the scene from active camera into the main framebuffer

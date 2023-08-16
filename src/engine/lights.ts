@@ -20,10 +20,7 @@ export type ShadowOptions = {
   /** Size of the shadow map texture. Default: 512 */
   mapSize: number
 
-  /**
-   * Zoom level of the shadow map camera, larger will cover more of the scene,
-   * but results in more blocky shadows. Default 120
-   */
+  /** Zoom level of the shadow map camera, larger will cover more of the scene, but results in more blocky shadows. Default 120 */
   zoom: number
 
   /** Far clipping pane of shadow map camera, default 1000 */
@@ -31,6 +28,9 @@ export type ShadowOptions = {
 
   /** Blur the edges of shadows, higher values them more random, default 0.2 */
   scatter: number
+
+  /** Offset used to reduce shadow acne especially when self shadowing */
+  polygonOffsetFactor: number
 }
 
 /**
@@ -124,6 +124,9 @@ export class LightDirectional {
     }
     if (!this._shadowOptions.scatter) {
       this._shadowOptions.scatter = 0.2
+    }
+    if (!this._shadowOptions.polygonOffsetFactor) {
+      this._shadowOptions.polygonOffsetFactor = 0
     }
 
     const gl = getGl()

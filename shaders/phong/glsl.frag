@@ -73,6 +73,7 @@ uniform samplerCube u_reflectionMap;
 // Shadows
 uniform highp sampler2DShadow u_shadowMap;
 uniform float u_shadowScatter;
+uniform bool u_receiveShadow;
 
 // Global texture coords shared between functions
 vec2 texCoord;
@@ -110,17 +111,17 @@ vec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {
 
   // Shadow map lookup
   vec3 projCoords = v_shadowCoord.xyz / v_shadowCoord.w * 0.5 + 0.5;
-  float shadow = 0.0;
 
   // Carry out PCF for shadows using 4 samples of a poisson disk
+  float shadow = 0.0;
   for (int i = 0; i < 4; i++) {
     vec3 offset = poissonDisk[i] * (u_shadowScatter / 100.0);
     shadow += shadowMapSample(u_shadowMap, projCoords + offset) * 0.25;
   }
 
   vec3 ambient = light.ambient * mat.ambient * diffuseCol;
-  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * shadow;
-  vec3 specular = light.colour * spec * specularCol * shadow;
+  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * (u_receiveShadow ? shadow : 1.0);
+  vec3 specular = light.colour * spec * specularCol * (u_receiveShadow ? shadow : 1.0);
 
   // Return a vec4 to support transparency, note specular is not affected by opacity
   return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);

@@ -2,33 +2,36 @@ import { Context, Material, TextureCache, setLogLevel } from '../../dist-bundle/
 
 const ctx = await Context.init()
 ctx.camera.position = [0, 130, 150]
-ctx.camera.enableFPControls(0, -0.04, 0.002, 4)
+ctx.camera.enableFPControls(0, -0.24, 0.002, 4)
 ctx.camera.far = 1800
-ctx.gamma = 1.0
+ctx.gamma = 1.1
 setLogLevel(1)
 
-ctx.globalLight.setAsPosition(5, 20, 18)
-const amb = 0.1
+ctx.globalLight.setAsPosition(5, 20, 12)
+const amb = 0.2
 ctx.globalLight.ambient = [amb, amb, amb]
 ctx.globalLight.enableShadows({
-  mapSize: 512,
-  scatter: 0.8,
+  mapSize: 1024,
+  // scatter: 0.4,
+  zoom: 180.0,
+  polygonOffsetFactor: 2.5,
 })
 
-// ctx.setEnvmap(
-//   true,
-//   '../_textures/skybox-dungeon/right.png',
-//   '../_textures/skybox-dungeon/left.png',
-//   '../_textures/skybox-dungeon/up.png',
-//   '../_textures/skybox-dungeon/down.png',
-//   '../_textures/skybox-dungeon/front.png',
-//   '../_textures/skybox-dungeon/back.png'
-// )
+ctx.setEnvmap(
+  true,
+  '../_textures/skybox-dungeon/right.png',
+  '../_textures/skybox-dungeon/left.png',
+  '../_textures/skybox-dungeon/up.png',
+  '../_textures/skybox-dungeon/down.png',
+  '../_textures/skybox-dungeon/front.png',
+  '../_textures/skybox-dungeon/back.png'
+)
 
 await ctx.loadModel('../_objects/box', 'box.obj')
 
 const floorMat = Material.createBasicTexture('../_textures/wood-floor.png')
-ctx.createPlaneInstance(floorMat, 1000, 1000, 1, 1, 6)
+const f = ctx.createPlaneInstance(floorMat, 1000, 1000, 1, 1, 6)
+f.receiveShadow = true
 
 const pipeMat = Material.createBasicTexture('../_textures/sci-fi.png')
 pipeMat.addNormalTexture('../_textures/sci-fi_normal.png')
@@ -107,6 +110,7 @@ part3.ageColour = [0, 0, 0, 3.0]
 part3.gravity = [0, -2, 0]
 part3.timeScale = 1
 part3.preColour = [0.0, 0.7, 0.0, 1.0]
+part3.blendSource = ctx.gl.SRC_COLOR
 
 window.addEventListener('keydown', (e) => {
   if (e.key === '1') {

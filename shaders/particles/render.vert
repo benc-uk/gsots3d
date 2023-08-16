@@ -23,7 +23,8 @@ out float v_ageNorm;
 
 void main() {
   vec3 vert_pos = position.xyz;
-  v_ageNorm = tf_age[0] / tf_age[1];
+  v_ageNorm = clamp(tf_age[0] / tf_age[1], 0.0, 1.0);
+  v_ageNorm = pow(v_ageNorm, 0.7);
 
   // Rotate by tf_position[3] (rotation)
   float s = sin(tf_position[3]);

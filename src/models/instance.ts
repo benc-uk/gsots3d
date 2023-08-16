@@ -45,6 +45,9 @@ export class Instance {
   /** Rotation in radians around X, Y, Z axis */
   private rotate: XYZ | undefined
 
+  /** Should this instance receive shadows */
+  private receiveShadow = true
+
   /**
    * Create a new instace of a renderable thing
    * @param {Renderable} renderable - Renderable to use for this instance
@@ -134,9 +137,10 @@ export class Instance {
     // Finally populate u_worldViewProjection used for rendering
     mat4.multiply(<mat4>uniforms.u_worldViewProjection, <mat4>uniforms.u_proj, worldView)
 
-    // Apply per instance texture flip flags
+    // Apply per instance uniforms for the shader
     uniforms.u_flipTextureX = this.flipTextureX
     uniforms.u_flipTextureY = this.flipTextureY
+    uniforms.u_receiveShadow = this.receiveShadow
 
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
