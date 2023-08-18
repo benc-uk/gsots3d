@@ -4,7 +4,7 @@
 // ============================================================================
 
 import { mat4 } from 'gl-matrix'
-import { FramebufferInfo, ProgramInfo, createFramebufferInfo, createProgramInfo, createTexture } from 'twgl.js'
+import * as twgl from 'twgl.js'
 
 import { UniformSet, getGl } from '../core/gl.ts'
 import { Camera, CameraType } from './camera.ts'
@@ -39,8 +39,8 @@ export type ShadowOptions = {
  */
 export class LightDirectional {
   private _direction: XYZ
-  private _shadowMapProgram?: ProgramInfo
-  private _shadowMapFB?: FramebufferInfo
+  private _shadowMapProgram?: twgl.ProgramInfo
+  private _shadowMapFB?: twgl.FramebufferInfo
   private _shadowMapTex?: WebGLTexture
   private _shadowOptions?: ShadowOptions
 
@@ -65,7 +65,7 @@ export class LightDirectional {
       throw new Error('💥 LightDirectional: Cannot create shadow map shader, no GL context')
     }
 
-    this._shadowMapProgram = createProgramInfo(gl, [vertShaderShadow, fragShaderShadow], ['shadowProgram'])
+    this._shadowMapProgram = twgl.createProgramInfo(gl, [vertShaderShadow, fragShaderShadow], ['shadowProgram'])
   }
 
   /**
@@ -135,7 +135,7 @@ export class LightDirectional {
     }
 
     // This is a special type of texture, used for depth comparison and shadow mapping
-    this._shadowMapTex = createTexture(gl, {
+    this._shadowMapTex = twgl.createTexture(gl, {
       width: this._shadowOptions.mapSize,
       height: this._shadowOptions.mapSize,
       internalFormat: gl.DEPTH_COMPONENT32F, // Makes this a depth texture
@@ -144,7 +144,7 @@ export class LightDirectional {
     })
 
     // Framebuffer to render the shadow map into
-    this._shadowMapFB = createFramebufferInfo(
+    this._shadowMapFB = twgl.createFramebufferInfo(
       gl,
       [{ attachment: this._shadowMapTex, attachmentPoint: gl.DEPTH_ATTACHMENT }],
       this._shadowOptions.mapSize,

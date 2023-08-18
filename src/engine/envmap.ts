@@ -3,34 +3,23 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-import {
-  BufferInfo,
-  FramebufferInfo,
-  ProgramInfo,
-  bindFramebufferInfo,
-  createFramebufferInfo,
-  createProgramInfo,
-  createTexture,
-  drawBufferInfo,
-  primitives,
-  setBuffersAndAttributes,
-  setUniforms,
-} from 'twgl.js'
+import * as twgl from 'twgl.js'
 import { mat4 } from 'gl-matrix'
 import log from 'loglevel'
 
 import { Camera, CameraType } from './camera.ts'
 import { XYZ } from './tuples.ts'
-import { Context, Stats } from '../index.ts'
 
 import fragShaderEnvmap from '../../shaders/envmap/glsl.frag'
 import vertShaderEnvmap from '../../shaders/envmap/glsl.vert'
+import { Stats } from '../core/stats.ts'
+import { Context } from '../core/context.ts'
 
 export class EnvironmentMap {
-  private programInfo: ProgramInfo
+  private programInfo: twgl.ProgramInfo
   private gl: WebGL2RenderingContext
   private _texture: WebGLTexture
-  private cube: BufferInfo
+  private cube: twgl.BufferInfo
 
   /**
    * Render the environment map as a background, like a skybox
@@ -46,10 +35,10 @@ export class EnvironmentMap {
     this.gl = gl
 
     // Create shader program for special envmap rendering
-    this.programInfo = createProgramInfo(gl, [vertShaderEnvmap, fragShaderEnvmap])
+    this.programInfo = twgl.createProgramInfo(gl, [vertShaderEnvmap, fragShaderEnvmap])
 
     // Create the cube
-    this.cube = primitives.createCubeBufferInfo(gl, 1)
+    this.cube = twgl.primitives.createCubeBufferInfo(gl, 1)
     this.renderAsBackground = true
 
     log.info(`🏔️ EnvironmentMap created!`)
@@ -59,7 +48,7 @@ export class EnvironmentMap {
       throw new Error('💥 Cubemap requires 6 textures')
     }
 
-    this._texture = createTexture(gl, {
+    this._texture = twgl.createTexture(gl, {
       target: gl.TEXTURE_CUBE_MAP,
       src: textureURLs,
       min: gl.LINEAR_MIPMAP_LINEAR,
@@ -107,9 +96,9 @@ export class EnvironmentMap {
 
     mat4.multiply(<mat4>uniforms.u_worldViewProjection, projMatrix, worldView)
 
-    setBuffersAndAttributes(this.gl, this.programInfo, this.cube)
-    setUniforms(this.programInfo, uniforms)
-    drawBufferInfo(this.gl, this.cube)
+    twgl.setBuffersAndAttributes(this.gl, this.programInfo, this.cube)
+    twgl.setUniforms(this.programInfo, uniforms)
+    twgl.drawBufferInfo(this.gl, this.cube)
     Stats.drawCallsPerFrame++
 
     this.gl.enable(this.gl.DEPTH_TEST)
@@ -137,7 +126,7 @@ export class DynamicEnvironmentMap {
    */
   constructor(gl: WebGL2RenderingContext, size: number, position: XYZ, far: number) {
     // The main texture cubemap
-    this._texture = createTexture(gl, {
+    this._texture = twgl.createTexture(gl, {
       target: gl.TEXTURE_CUBE_MAP,
       width: size,
       height: size,
@@ -157,7 +146,7 @@ export class DynamicEnvironmentMap {
       {
         face: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
         direction: [1, 0, 0],
-        buffer: createFramebufferInfo(
+        buffer: twgl.createFramebufferInfo(
           gl,
           [{ attachment: this._texture, target: gl.TEXTURE_CUBE_MAP_POSITIVE_X }, { format: gl.DEPTH_COMPONENT16 }],
           size,
@@ -167,7 +156,7 @@ export class DynamicEnvironmentMap {
       {
         face: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
         direction: [-1, 0, 0],
-        buffer: createFramebufferInfo(
+        buffer: twgl.createFramebufferInfo(
           gl,
           [{ attachment: this._texture, target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X }, { format: gl.DEPTH_COMPONENT16 }],
           size,
@@ -177,7 +166,7 @@ export class DynamicEnvironmentMap {
       {
         face: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
         direction: [0, 1, 0],
-        buffer: createFramebufferInfo(
+        buffer: twgl.createFramebufferInfo(
           gl,
           [{ attachment: this._texture, target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y }, { format: gl.DEPTH_COMPONENT16 }],
           size,
@@ -187,7 +176,7 @@ export class DynamicEnvironmentMap {
       {
         face: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
         direction: [0, -1, 0],
-        buffer: createFramebufferInfo(
+        buffer: twgl.createFramebufferInfo(
           gl,
           [{ attachment: this._texture, target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y }, { format: gl.DEPTH_COMPONENT16 }],
           size,
@@ -197,7 +186,7 @@ export class DynamicEnvironmentMap {
       {
         face: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
         direction: [0, 0, 1],
-        buffer: createFramebufferInfo(
+        buffer: twgl.createFramebufferInfo(
           gl,
           [{ attachment: this._texture, target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z }, { format: gl.DEPTH_COMPONENT16 }],
           size,
@@ -207,7 +196,7 @@ export class DynamicEnvironmentMap {
       {
         face: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
         direction: [0, 0, -1],
-        buffer: createFramebufferInfo(
+        buffer: twgl.createFramebufferInfo(
           gl,
           [{ attachment: this._texture, target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z }, { format: gl.DEPTH_COMPONENT16 }],
           size,
@@ -263,7 +252,7 @@ export class DynamicEnvironmentMap {
         this.camera.up = [0, 0, 1]
       }
 
-      bindFramebufferInfo(gl, facing.buffer)
+      twgl.bindFramebufferInfo(gl, facing.buffer)
       ctx.renderWithCamera(this.camera)
     }
   }
@@ -275,5 +264,5 @@ export class DynamicEnvironmentMap {
 export type DynamicEnvMapFace = {
   face: number
   direction: XYZ
-  buffer: FramebufferInfo
+  buffer: twgl.FramebufferInfo
 }

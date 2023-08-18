@@ -1,5 +1,5 @@
 // ===== particles.ts =========================================================
-// Particle system using transform feedback + GPGPU and VAO instancing
+// Particle system using GPU for particle simulation and VAO instancing
 // Ben Coleman, 2023
 // ============================================================================
 
@@ -78,6 +78,10 @@ export class ParticleSystem implements Renderable {
   public blendDest: number
   /** Colour multiplier pre-applied to particle texture before ageing */
   public preColour: RGBA
+  /** Emitter box position offset to move the origin of particles */
+  public positionOffset: XYZ
+  /** Age power curve */
+  public agePower: number
 
   /**
    * Create a new particle system
@@ -110,6 +114,8 @@ export class ParticleSystem implements Renderable {
     this.blendSource = gl.SRC_ALPHA
     this.blendDest = gl.ONE
     this.preColour = [1.0, 1.0, 1.0, 1.0]
+    this.positionOffset = [0, 0, 0]
+    this.agePower = 1.0
 
     // Create shaders and programs
     this.progInfoUpdate = twgl.createProgramInfo(gl, [updateVS, updateFS], {
@@ -240,6 +246,7 @@ export class ParticleSystem implements Renderable {
       u_emitterBoxMin: this.emitterBoxMin,
       u_emitterBoxMax: this.emitterBoxMax,
       u_accel: this.acceleration,
+      u_posOffset: this.positionOffset,
     })
 
     twgl.drawBufferInfo(gl, this.inputBuffInfo, gl.POINTS, this.emitRate)
@@ -260,6 +267,7 @@ export class ParticleSystem implements Renderable {
       u_texture: this.texture,
       u_ageColour: this.ageColour,
       u_preColour: this.preColour,
+      u_agePower: this.agePower,
     }
 
     twgl.setUniforms(this.progInfoRender, particleUniforms)

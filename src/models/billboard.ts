@@ -3,21 +3,14 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-import {
-  ProgramInfo,
-  drawBufferInfo,
-  setBuffersAndAttributes,
-  setUniforms,
-  primitives,
-  BufferInfo,
-  createBufferInfoFromArrays,
-} from 'twgl.js'
+import { mat4, vec3 } from 'gl-matrix'
+import * as twgl from 'twgl.js'
+
 import { UniformSet } from '../core/gl.ts'
 import { Renderable } from './types.ts'
 import { Material } from '../engine/material.ts'
 import { Stats } from '../core/stats.ts'
-import { ProgramCache } from '../index.ts'
-import { mat4, vec3 } from 'gl-matrix'
+import { ProgramCache } from '../core/cache.ts'
 
 /** Billboarding modes, most things will ue NONE */
 export enum BillboardType {
@@ -32,8 +25,8 @@ export enum BillboardType {
  * @see http://www.opengl-tutorial.org/intermediate-tutorials/billboards-particles/billboards/
  */
 export class Billboard implements Renderable {
-  protected bufferInfo: BufferInfo
-  private programInfo: ProgramInfo
+  protected bufferInfo: twgl.BufferInfo
+  private programInfo: twgl.ProgramInfo
   public material: Material
   public tex: WebGLTexture | undefined
   public type: BillboardType = BillboardType.CYLINDRICAL
@@ -44,14 +37,14 @@ export class Billboard implements Renderable {
     this.type = type
 
     // Create quad vertices
-    const verts = primitives.createXYQuadVertices(size, 0, size / 2)
+    const verts = twgl.primitives.createXYQuadVertices(size, 0, size / 2)
 
     // Flip Y axis, so texture is not upside down
     for (let i = 1; i < verts.texcoord.length; i += 2) {
       verts.texcoord[i] = 1 - verts.texcoord[i]
     }
 
-    this.bufferInfo = createBufferInfoFromArrays(gl, verts)
+    this.bufferInfo = twgl.createBufferInfoFromArrays(gl, verts)
 
     // Use the billboard shader for this renderable
     this.programInfo = ProgramCache.instance.get(ProgramCache.PROG_BILLBOARD)
@@ -98,10 +91,10 @@ export class Billboard implements Renderable {
     // We're doubling up on work again :/
     mat4.multiply(<mat4>uniforms.u_worldViewProjection, <mat4>uniforms.u_proj, worldView)
 
-    setBuffersAndAttributes(gl, programInfo, this.bufferInfo)
-    setUniforms(programInfo, uniforms)
+    twgl.setBuffersAndAttributes(gl, programInfo, this.bufferInfo)
+    twgl.setUniforms(programInfo, uniforms)
 
-    drawBufferInfo(gl, this.bufferInfo)
+    twgl.drawBufferInfo(gl, this.bufferInfo)
     Stats.drawCallsPerFrame++
   }
 }

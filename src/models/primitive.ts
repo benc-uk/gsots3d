@@ -4,15 +4,7 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-import {
-  ProgramInfo,
-  drawBufferInfo,
-  setBuffersAndAttributes,
-  setUniforms,
-  primitives,
-  BufferInfo,
-  createBufferInfoFromArrays,
-} from 'twgl.js'
+import * as twgl from 'twgl.js'
 import { UniformSet } from '../core/gl.ts'
 import { Renderable } from './types.ts'
 import { Material } from '../engine/material.ts'
@@ -23,8 +15,8 @@ import { ProgramCache } from '../core/cache.ts'
  * A simple primitive 3D object, like a sphere or cube
  */
 export abstract class Primitive implements Renderable {
-  protected bufferInfo: BufferInfo | undefined
-  private programInfo: ProgramInfo
+  protected bufferInfo: twgl.BufferInfo | undefined
+  private programInfo: twgl.ProgramInfo
   public material: Material
   public tex: WebGLTexture | undefined
   protected triangles: number
@@ -47,7 +39,7 @@ export abstract class Primitive implements Renderable {
     gl: WebGL2RenderingContext,
     uniforms: UniformSet,
     materialOverride?: Material,
-    programOverride?: ProgramInfo
+    programOverride?: twgl.ProgramInfo
   ): void {
     if (!this.bufferInfo) return
 
@@ -60,8 +52,8 @@ export abstract class Primitive implements Renderable {
       materialOverride.apply(programInfo)
     }
 
-    setBuffersAndAttributes(gl, programInfo, this.bufferInfo)
-    setUniforms(programInfo, uniforms)
+    twgl.setBuffersAndAttributes(gl, programInfo, this.bufferInfo)
+    twgl.setUniforms(programInfo, uniforms)
 
     // If cylinder without caps, disable culling
     let disableCulling = false
@@ -71,7 +63,7 @@ export abstract class Primitive implements Renderable {
       disableCulling = true
     }
 
-    drawBufferInfo(gl, this.bufferInfo)
+    twgl.drawBufferInfo(gl, this.bufferInfo)
 
     if (disableCulling) {
       gl.enable(gl.CULL_FACE)
@@ -95,7 +87,7 @@ export class PrimitiveSphere extends Primitive {
   constructor(gl: WebGL2RenderingContext, radius: number, subdivisionsH: number, subdivisionsV: number) {
     super()
 
-    this.bufferInfo = primitives.createSphereBufferInfo(gl, radius, subdivisionsH, subdivisionsV)
+    this.bufferInfo = twgl.primitives.createSphereBufferInfo(gl, radius, subdivisionsH, subdivisionsV)
 
     this.triangles += this.bufferInfo.numElements / 3
   }
@@ -113,7 +105,7 @@ export class PrimitiveCube extends Primitive {
   constructor(gl: WebGL2RenderingContext, size: number) {
     super()
 
-    this.bufferInfo = primitives.createCubeBufferInfo(gl, size)
+    this.bufferInfo = twgl.primitives.createCubeBufferInfo(gl, size)
 
     this.triangles += this.bufferInfo.numElements / 3
   }
@@ -142,14 +134,14 @@ export class PrimitivePlane extends Primitive {
   ) {
     super()
 
-    const verts = primitives.createPlaneVertices(width, height, subdivisionsW, subdivisionsH)
+    const verts = twgl.primitives.createPlaneVertices(width, height, subdivisionsW, subdivisionsH)
 
     // Mutate the texture coords to tile the texture
     for (let i = 0; i < verts.texcoord.length; i++) {
       verts.texcoord[i] = verts.texcoord[i] * tilingFactor
     }
 
-    this.bufferInfo = createBufferInfoFromArrays(gl, verts)
+    this.bufferInfo = twgl.createBufferInfoFromArrays(gl, verts)
     this.triangles += this.bufferInfo.numElements / 3
   }
 }
@@ -179,7 +171,15 @@ export class PrimitiveCylinder extends Primitive {
     super()
 
     this.caps = caps
-    this.bufferInfo = primitives.createCylinderBufferInfo(gl, radius, height, subdivisionsR, subdivisionsV, caps, caps)
+    this.bufferInfo = twgl.primitives.createCylinderBufferInfo(
+      gl,
+      radius,
+      height,
+      subdivisionsR,
+      subdivisionsV,
+      caps,
+      caps
+    )
 
     this.triangles += this.bufferInfo.numElements / 3
   }

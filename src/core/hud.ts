@@ -5,7 +5,7 @@
 
 import { Stats } from './stats.ts'
 import { version } from '../../package.json'
-import { Camera } from '../index.ts'
+import { Camera } from '../engine/camera.ts'
 
 export class HUD {
   private hud: HTMLDivElement

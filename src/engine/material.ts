@@ -3,7 +3,7 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-import { ProgramInfo, setUniforms } from 'twgl.js'
+import * as twgl from 'twgl.js'
 import { RGB } from './tuples.ts'
 import { MtlMaterial } from '../parsers/mtl-parser.ts'
 import { UniformSet } from '../core/gl.ts'
@@ -193,12 +193,12 @@ export class Material {
   /**
    * Applies the material to the given program as a uniform struct
    */
-  apply(programInfo: ProgramInfo, uniformSuffix = '') {
+  apply(programInfo: twgl.ProgramInfo, uniformSuffix = '') {
     const uni = {
       [`u_mat${uniformSuffix}`]: this.uniforms,
     }
 
-    setUniforms(programInfo, uni)
+    twgl.setUniforms(programInfo, uni)
   }
 
   /**

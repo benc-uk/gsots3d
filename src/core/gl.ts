@@ -52,14 +52,5 @@ export function getGl(aa = true, selector = 'canvas') {
 
   log.info(`📐 Internal: ${canvas.width} x ${canvas.height}, display: ${canvas.clientWidth} x ${canvas.clientHeight}`)
 
-  const varyings = glContext.getParameter(glContext.MAX_VARYING_VECTORS)
-  const varyingsTF = glContext.getParameter(glContext.MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS)
-  const varyingsTFI = glContext.getParameter(glContext.MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS)
-  const uniforms = glContext.getParameter(glContext.MAX_VERTEX_UNIFORM_VECTORS)
-  const texSize = glContext.getParameter(glContext.MAX_TEXTURE_SIZE)
-  console.log(
-    `🚦 WebGL2 limits: Varyings=${varyings}, TF var=${varyingsTF} / ${varyingsTFI} Uniforms=${uniforms}, Texture size=${texSize}`
-  )
-
   return glContext
 }

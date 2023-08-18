@@ -4,10 +4,10 @@
 // ============================================================================
 
 import log from 'loglevel'
-import { version } from '../../package.json'
-import { bindFramebufferInfo, createProgramInfo, ProgramInfo, resizeCanvasToDisplaySize } from 'twgl.js'
+import * as twgl from 'twgl.js'
 import { mat4, vec3 } from 'gl-matrix'
 
+import { version } from '../../package.json'
 import { getGl, UniformSet } from './gl.ts'
 import { RGB, XYZ, Tuples } from '../engine/tuples.ts'
 import { ModelCache, ProgramCache, TextureCache } from './cache.ts'
@@ -106,7 +106,7 @@ export class Context {
   }
 
   /**
-   * Create & initialize a new Context which will render into provided canvas selector. This is where you start when using the library.
+   * Create & initialize a new Context which will render into provided canvas. This is where you start when using the library.
    * @param canvasSelector CSS selector for canvas element, default is 'canvas'
    * @param antiAlias Enable anti-aliasing in GL, default is true
    */
@@ -125,10 +125,10 @@ export class Context {
     ctx.camera.aspectRatio = canvas.clientWidth / canvas.clientHeight
 
     // Load shaders and put into global cache
-    const phongProgInfo = createProgramInfo(gl, [vertShaderPhong, fragShaderPhong])
+    const phongProgInfo = twgl.createProgramInfo(gl, [vertShaderPhong, fragShaderPhong])
     ProgramCache.init(phongProgInfo)
     ProgramCache.instance.add(ProgramCache.PROG_PHONG, phongProgInfo)
-    ProgramCache.instance.add(ProgramCache.PROG_BILLBOARD, createProgramInfo(gl, [vertShaderBill, fragShaderBill]))
+    ProgramCache.instance.add(ProgramCache.PROG_BILLBOARD, twgl.createProgramInfo(gl, [vertShaderBill, fragShaderBill]))
     log.info(`🎨 Loaded all shaders & programs, GL is ready`)
 
     gl.enable(gl.DEPTH_TEST)
@@ -174,7 +174,7 @@ export class Context {
 
       // Bind the shadow map framebuffer and render the scene from the light's POV
       // Using the special shadow map program as an override for the whole rendering pass
-      bindFramebufferInfo(this.gl, this.globalLight.shadowMapFrameBufffer)
+      twgl.bindFramebufferInfo(this.gl, this.globalLight.shadowMapFrameBufffer)
       if (shadowCam) this.renderWithCamera(shadowCam, this.globalLight.shadowMapProgram)
 
       // Switch back to back face culling
@@ -183,7 +183,7 @@ export class Context {
     }
 
     // RENDERING - Render the scene from active camera into the main framebuffer
-    bindFramebufferInfo(this.gl, null)
+    twgl.bindFramebufferInfo(this.gl, null)
     this.renderWithCamera(this.camera)
 
     this.hud.render(this.debug, this.camera)
@@ -200,7 +200,7 @@ export class Context {
    * Render the scene from the given camera, used internally
    * @param camera
    */
-  renderWithCamera(camera: Camera, programOverride?: ProgramInfo) {
+  renderWithCamera(camera: Camera, programOverride?: twgl.ProgramInfo) {
     if (!this.gl) return
 
     // Clear the framebuffer and depth buffer
@@ -305,6 +305,8 @@ export class Context {
    * Start the rendering loop
    */
   start() {
+    log.info('🚀 Starting main GSOTS render loop!')
+
     this.hud.hideLoading()
     this.started = true
     // Restart the render loop
@@ -315,6 +317,8 @@ export class Context {
    * Stop the rendering loop
    */
   stop() {
+    log.info('🛑 Stopping main GSOTS render loop')
+
     this.started = false
   }
 
@@ -325,7 +329,7 @@ export class Context {
   resize(viewportOnly = false) {
     const canvas = <HTMLCanvasElement>this.gl.canvas
 
-    if (!viewportOnly) resizeCanvasToDisplaySize(canvas)
+    if (!viewportOnly) twgl.resizeCanvasToDisplaySize(canvas)
 
     this.gl.viewport(0, 0, canvas.width, canvas.height)
     this.camera.aspectRatio = canvas.width / canvas.height

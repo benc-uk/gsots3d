@@ -4,14 +4,7 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-import {
-  BufferInfo,
-  ProgramInfo,
-  createBufferInfoFromArrays,
-  drawBufferInfo,
-  setBuffersAndAttributes,
-  setUniforms,
-} from 'twgl.js'
+import * as twgl from 'twgl.js'
 import log from 'loglevel'
 
 import { Material } from '../engine/material.ts'
@@ -28,7 +21,7 @@ import { ProgramCache } from '../core/cache.ts'
  * Plus map of named materials
  */
 export class Model implements Renderable {
-  private programInfo: ProgramInfo
+  private programInfo: twgl.ProgramInfo
   private readonly parts = [] as ModelPart[]
   private readonly materials = {} as Record<string, Material>
   private triangles: number
@@ -53,7 +46,7 @@ export class Model implements Renderable {
     gl: WebGL2RenderingContext,
     uniforms: UniformSet,
     materialOverride?: Material,
-    programOverride?: ProgramInfo
+    programOverride?: twgl.ProgramInfo
   ): void {
     const programInfo = programOverride || this.programInfo
     gl.useProgram(programInfo.program)
@@ -76,10 +69,10 @@ export class Model implements Renderable {
         materialOverride.apply(programInfo)
       }
 
-      setBuffersAndAttributes(gl, programInfo, bufferInfo)
-      setUniforms(programInfo, uniforms)
+      twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo)
+      twgl.setUniforms(programInfo, uniforms)
 
-      drawBufferInfo(gl, bufferInfo)
+      twgl.drawBufferInfo(gl, bufferInfo)
       Stats.drawCallsPerFrame++
     }
   }
@@ -148,7 +141,7 @@ export class Model implements Renderable {
 
     for (const g of objData.geometries) {
       // TODO: One day add tangent generation
-      const bufferInfo = createBufferInfoFromArrays(gl, g.data)
+      const bufferInfo = twgl.createBufferInfoFromArrays(gl, g.data)
       model.parts.push(new ModelPart(bufferInfo, g.material))
     }
 
@@ -208,14 +201,14 @@ export class Model implements Renderable {
  * Plus the material name associated with this part
  */
 export class ModelPart {
-  public readonly bufferInfo: BufferInfo
+  public readonly bufferInfo: twgl.BufferInfo
   public readonly materialName: string
 
   /**
    * @param {twgl.BufferInfo} bufferInfo - WebGL buffer info for this model part
    * @param {string} materialName - Name of the material associated with this part
    */
-  constructor(bufferInfo: BufferInfo, materialName: string) {
+  constructor(bufferInfo: twgl.BufferInfo, materialName: string) {
     this.bufferInfo = bufferInfo
     this.materialName = materialName
   }

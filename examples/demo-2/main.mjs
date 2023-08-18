@@ -17,7 +17,7 @@ ctx.camera.far = 500
 ctx.globalLight.enableShadows({
   mapSize: 1024,
   cameraZoom: 90,
-  samplingSize: 0.25,
+  // polygonOffsetFactor: 2.5,
 })
 
 ctx.camera.enableFPControls(0, -0.2, 0.002, moveSpeed)

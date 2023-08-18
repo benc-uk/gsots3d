@@ -1,7 +1,7 @@
 #version 300 es
 
 // ============================================================================
-// Particle update vertex shader
+// Particle update vertex shader, for on GPU particle simulation
 // Ben Coleman, 2023
 // ============================================================================
 
@@ -29,6 +29,7 @@ uniform bool u_enabled;
 uniform vec3 u_emitterBoxMin;
 uniform vec3 u_emitterBoxMax;
 uniform float u_accel;
+uniform vec3 u_posOffset;
 
 out vec4 tf_position;
 out vec3 tf_velocity;
@@ -70,9 +71,9 @@ void main() {
     vec4 r = rand(seed);
 
     tf_age[0] = 0.0;
-    tf_position[0] = randBetween(u_emitterBoxMin.x, u_emitterBoxMax.x, r.x);
-    tf_position[1] = randBetween(u_emitterBoxMin.y, u_emitterBoxMax.y, r.y);
-    tf_position[2] = randBetween(u_emitterBoxMin.z, u_emitterBoxMax.z, r.z);
+    tf_position[0] = randBetween(u_emitterBoxMin.x, u_emitterBoxMax.x, r.x) + u_posOffset.x;
+    tf_position[1] = randBetween(u_emitterBoxMin.y, u_emitterBoxMax.y, r.y) + u_posOffset.y;
+    tf_position[2] = randBetween(u_emitterBoxMin.z, u_emitterBoxMax.z, r.z) + u_posOffset.z;
     tf_position[3] = randBetween(u_initialRotationMinMax.x, u_initialRotationMinMax.y, seed);
 
     float power = randBetween(u_powerMinMax.x, u_powerMinMax.y, 0.0);

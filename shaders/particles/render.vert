@@ -16,6 +16,7 @@ in vec4 tf_props;
 uniform mat4 u_view;
 uniform mat4 u_proj;
 uniform mat4 u_world;
+uniform float u_agePower;
 
 out vec2 v_texcoord;
 out vec3 v_position;
@@ -24,7 +25,7 @@ out float v_ageNorm;
 void main() {
   vec3 vert_pos = position.xyz;
   v_ageNorm = clamp(tf_age[0] / tf_age[1], 0.0, 1.0);
-  v_ageNorm = pow(v_ageNorm, 0.7);
+  v_ageNorm = pow(v_ageNorm, u_agePower);
 
   // Rotate by tf_position[3] (rotation)
   float s = sin(tf_position[3]);

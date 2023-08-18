@@ -20,6 +20,9 @@ export class Instance {
   /** Position in world space */
   public position: XYZ | undefined
 
+  /** Pre-translation in world space */
+  public preTranslate: XYZ | undefined
+
   /** Scale in world space */
   public scale: XYZ | undefined
 
@@ -122,6 +125,7 @@ export class Instance {
     // Combine all transforms into world matrix, in reverse order
     const world = translate
     mat4.multiply(world, world, rotate)
+    if (this.preTranslate) mat4.translate(world, world, this.preTranslate)
     mat4.multiply(world, world, scale)
 
     // Populate u_world - used for normals & shading

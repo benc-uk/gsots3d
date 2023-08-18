@@ -36,9 +36,15 @@ f.receiveShadow = true
 const pipeMat = Material.createBasicTexture('../_textures/sci-fi.png')
 pipeMat.addNormalTexture('../_textures/sci-fi_normal.png')
 const pipe = ctx.createCylinderInstance(pipeMat, 8, 80, 16, 1, false)
-pipe.position = [0, 40, 0]
+pipe.position = [-20, 40, 20]
 const pipe2 = ctx.createCylinderInstance(pipeMat, 3, 80, 16, 1, false)
 pipe2.position = [80, 40, -40]
+const pipe3 = ctx.createCylinderInstance(pipeMat, 3, 30, 16, 1, false)
+pipe3.position = [80, 80, -40]
+pipe3.preTranslate = [0, -15, 0]
+pipe3.rotateZDeg(90)
+const sph = ctx.createSphereInstance(pipeMat, 6, 16, 16)
+sph.position = [80, 80, -40]
 
 const box = ctx.createModelInstance('box')
 box.position = [-90, 25, -110]
@@ -51,9 +57,9 @@ slime.position = [-90, 40, -110]
 const dirtTex = TextureCache.instance.getCreate('../_textures/particles/water.png')
 const fireTex = TextureCache.instance.getCreate('../_textures/particles/fire.png')
 const lightTex = TextureCache.instance.getCreate('../_textures/particles/light_03.png')
-
-const { particleSystem: part1, instance: inst1 } = ctx.createParticleSystem(5000, 5)
-inst1.position = [0, 75, 0]
+const bubTex = TextureCache.instance.getCreate('../_textures/particles/bubble.png')
+const { particleSystem: part1, instance: inst1 } = ctx.createParticleSystem(2000, 5)
+inst1.position = [-20, 75, 20]
 part1.texture = dirtTex
 part1.minLifetime = 3
 part1.maxLifetime = 5
@@ -71,7 +77,7 @@ part1.minRotationSpeed = 0
 part1.maxRotationSpeed = 2
 part1.timeScale = 3.5
 
-const { particleSystem: part2, instance: inst2 } = ctx.createParticleSystem(2000, 5)
+const { particleSystem: part2, instance: inst2 } = ctx.createParticleSystem(1000, 5)
 inst2.position = [80, 82, -40]
 part2.texture = fireTex
 part2.emitRate = 400
@@ -91,8 +97,9 @@ part2.maxRotationSpeed = 4.8
 part2.timeScale = 3
 part2.duration = -1
 part2.acceleration = 0.985
+part2.agePower = 0.7
 
-const { particleSystem: part3, instance: inst3 } = ctx.createParticleSystem(2000, 5)
+const { particleSystem: part3, instance: inst3 } = ctx.createParticleSystem(800, 5)
 inst3.position = [-90, 40, -110]
 part3.texture = lightTex
 part3.emitRate = 200
@@ -112,20 +119,31 @@ part3.timeScale = 1
 part3.preColour = [0.0, 0.7, 0.0, 1.0]
 part3.blendSource = ctx.gl.SRC_COLOR
 
-window.addEventListener('keydown', (e) => {
-  if (e.key === '1') {
-    part1.enabled = !part1.enabled
-    part2.enabled = !part2.enabled
-    part2.duration = -1
-  }
-  if (e.key === '2') {
-    part2.timeScale = part2.timeScale > 0 ? 0 : 3
-    part1.timeScale = part1.timeScale > 0 ? 0 : 3
-  }
-  if (e.key === '3') {
-    part2.duration = 5
-    part2.enabled = true
-  }
-})
+const { particleSystem: part4, instance: inst4 } = ctx.createParticleSystem(80, 5)
+inst4.position = [-90, 40, -110]
+part4.texture = bubTex
+part4.emitRate = 30
+part4.emitterBoxMax = [57, 0.5, 19]
+part4.emitterBoxMin = [-57, 0.5, -19]
+part4.direction1 = [-0.1, 1, -0.1]
+part4.direction2 = [0.1, 1, 0.1]
+part4.minPower = 9
+part4.maxPower = 18.5
+part4.maxLifetime = 17
+part4.gravity = [0, -2, 0]
+part4.maxSize = 1.5
+part4.minSize = 0.5
+
+const radius = 30
+let t = 0
+ctx.update = (delta) => {
+  t = t + delta
+  const x = Math.cos(t * 4) * radius
+  const z = Math.sin(t * 4) * radius
+  const y = 0
+  part2.positionOffset = [x, y, z]
+  pipe3.rotateY(-delta * 4)
+  sph.rotateY(-delta * 4)
+}
 
 ctx.start()

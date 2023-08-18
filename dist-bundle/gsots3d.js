@@ -287,14 +287,6 @@ function getGl(aa = true, selector = "canvas") {
     return void 0;
   }
   import_loglevel.default.info(`\u{1F4D0} Internal: ${canvas.width} x ${canvas.height}, display: ${canvas.clientWidth} x ${canvas.clientHeight}`);
-  const varyings = glContext.getParameter(glContext.MAX_VARYING_VECTORS);
-  const varyingsTF = glContext.getParameter(glContext.MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS);
-  const varyingsTFI = glContext.getParameter(glContext.MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS);
-  const uniforms = glContext.getParameter(glContext.MAX_VERTEX_UNIFORM_VECTORS);
-  const texSize = glContext.getParameter(glContext.MAX_TEXTURE_SIZE);
-  console.log(
-    `\u{1F6A6} WebGL2 limits: Varyings=${varyings}, TF var=${varyingsTF} / ${varyingsTFI} Uniforms=${uniforms}, Texture size=${texSize}`
-  );
   return glContext;
 }
 
@@ -306,9 +298,6 @@ function setLogLevel(level) {
 
 // src/core/context.ts
 var import_loglevel8 = __toESM(require_loglevel(), 1);
-
-// package.json
-var version = "0.0.4-alpha.4";
 
 // node_modules/twgl.js/dist/5.x/twgl-full.module.js
 var VecType = Float32Array;
@@ -6138,6 +6127,9 @@ var forEach = function() {
   };
 }();
 
+// package.json
+var version = "0.0.4-alpha.4";
+
 // src/engine/tuples.ts
 function normalize2(tuple) {
   const [x, y, z] = tuple;
@@ -6817,6 +6809,31 @@ var glsl_default3 = "#version 300 es\n\n// =====================================
 // shaders/envmap/glsl.vert
 var glsl_default4 = "#version 300 es\n\n// ============================================================================\n// Environment map vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec4 position;\n\nuniform mat4 u_worldViewProjection;\n\nout vec3 v_texCoord;\n\nvoid main() {\n  // This essentially is what makes the envmap work, texCoords\n  // are taken from the vertex position\n  v_texCoord = position.xyz;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
 
+// src/core/stats.ts
+var Stats = {
+  drawCallsPerFrame: 0,
+  instances: 0,
+  triangles: 0,
+  prevTime: 0,
+  deltaTime: 0,
+  totalTime: 0,
+  frameCount: 0,
+  resetPerFrame() {
+    Stats.drawCallsPerFrame = 0;
+  },
+  updateTime(now) {
+    Stats.deltaTime = now - Stats.prevTime;
+    Stats.prevTime = now;
+    Stats.totalTime += Stats.deltaTime;
+  },
+  get FPS() {
+    return Math.round(1 / Stats.deltaTime);
+  },
+  get totalTimeRound() {
+    return Math.round(Stats.totalTime);
+  }
+};
+
 // src/engine/envmap.ts
 var EnvironmentMap = class {
   /**
@@ -7086,6 +7103,8 @@ var Instance = class {
       mat4_exports.translate(translate2, translate2, this.position);
     const world = translate2;
     mat4_exports.multiply(world, world, rotate2);
+    if (this.preTranslate)
+      mat4_exports.translate(world, world, this.preTranslate);
     mat4_exports.multiply(world, world, scale4);
     uniforms.u_world = world;
     mat4_exports.invert(uniforms.u_worldInverseTranspose, world);
@@ -7098,31 +7117,6 @@ var Instance = class {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     this.renderable.render(gl, uniforms, this.material, programOverride);
-  }
-};
-
-// src/core/stats.ts
-var Stats = {
-  drawCallsPerFrame: 0,
-  instances: 0,
-  triangles: 0,
-  prevTime: 0,
-  deltaTime: 0,
-  totalTime: 0,
-  frameCount: 0,
-  resetPerFrame() {
-    Stats.drawCallsPerFrame = 0;
-  },
-  updateTime(now) {
-    Stats.deltaTime = now - Stats.prevTime;
-    Stats.prevTime = now;
-    Stats.totalTime += Stats.deltaTime;
-  },
-  get FPS() {
-    return Math.round(1 / Stats.deltaTime);
-  },
-  get totalTimeRound() {
-    return Math.round(Stats.totalTime);
   }
 };
 
@@ -7402,7 +7396,15 @@ var PrimitiveCylinder = class extends Primitive {
   constructor(gl, radius, height, subdivisionsR, subdivisionsV, caps) {
     super();
     this.caps = caps;
-    this.bufferInfo = primitives.createCylinderBufferInfo(gl, radius, height, subdivisionsR, subdivisionsV, caps, caps);
+    this.bufferInfo = primitives.createCylinderBufferInfo(
+      gl,
+      radius,
+      height,
+      subdivisionsR,
+      subdivisionsV,
+      caps,
+      caps
+    );
     this.triangles += this.bufferInfo.numElements / 3;
   }
 };
@@ -7414,13 +7416,13 @@ var import_loglevel6 = __toESM(require_loglevel(), 1);
 var update_default = "#version 300 es\n\n// ============================================================================\n// Particle update fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Does nothing, just here to make the WebGL compiler happy!\nvoid main() {}\n";
 
 // shaders/particles/update.vert
-var update_default2 = "#version 300 es\n\n// ============================================================================\n// Particle update vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec4 position;\nin vec3 velocity;\nin vec2 age;\nin vec4 props;\nin float seed;\n\nuniform float u_deltaTime;\nuniform sampler2D u_randTex;\nuniform float u_maxInstances;\nuniform vec2 u_lifetimeMinMax;\nuniform vec2 u_powerMinMax;\nuniform vec3 u_gravity;\nuniform vec3 u_direction1;\nuniform vec3 u_direction2;\nuniform float u_timeScale;\nuniform vec2 u_sizeMinMax;\nuniform vec2 u_initialRotationMinMax;\nuniform vec2 u_rotationSpeedMinMax;\nuniform bool u_enabled;\nuniform vec3 u_emitterBoxMin;\nuniform vec3 u_emitterBoxMax;\nuniform float u_accel;\n\nout vec4 tf_position;\nout vec3 tf_velocity;\nout vec2 tf_age;\nout vec4 tf_props;\n\nvec4 rand(float offset) {\n  float uv = float(gl_VertexID) / u_maxInstances + offset;\n  return texture(u_randTex, vec2(uv)).rgba;\n}\n\nfloat randBetween(float min, float max, float offset) {\n  vec4 r = rand(offset);\n  return min + (max - min) * r.w;\n}\n\n// NOTES: TF varyings & packing\n// * position[0,1,2] = current position\n// * position[3] = rotation\n// * age[0] = current age\n// * age[1] = lifetime\n// * props[0] = size\n// * props[1] = rotation speed\n\nvoid main() {\n  float t = u_deltaTime;\n  float new_age = age[0] + t;\n\n  float rot = position[3] + props[1] * t;\n\n  tf_velocity = velocity * u_accel + u_gravity * t;\n  tf_position = vec4(position.xyz + tf_velocity * t, rot);\n  tf_age[0] = new_age;\n  tf_age[1] = age[1];\n  tf_props = props;\n\n  // Dead particles are respawned\n  if (new_age > age[1] && u_enabled) {\n    vec4 r = rand(seed);\n\n    tf_age[0] = 0.0;\n    tf_position[0] = randBetween(u_emitterBoxMin.x, u_emitterBoxMax.x, r.x);\n    tf_position[1] = randBetween(u_emitterBoxMin.y, u_emitterBoxMax.y, r.y);\n    tf_position[2] = randBetween(u_emitterBoxMin.z, u_emitterBoxMax.z, r.z);\n    tf_position[3] = randBetween(u_initialRotationMinMax.x, u_initialRotationMinMax.y, seed);\n\n    float power = randBetween(u_powerMinMax.x, u_powerMinMax.y, 0.0);\n\n    tf_velocity = vec3(\n      randBetween(u_direction1.x, u_direction2.x, r.x + position.x) * power,\n      randBetween(u_direction1.y, u_direction2.y, r.y + position.y) * power,\n      randBetween(u_direction1.z, u_direction2.z, r.z + position.z) * power\n    );\n\n    tf_age[1] = randBetween(u_lifetimeMinMax.x, u_lifetimeMinMax.y, seed + position.x);\n    tf_props[0] = randBetween(u_sizeMinMax.x, u_sizeMinMax.y, seed + position.y);\n    tf_props[1] = randBetween(u_rotationSpeedMinMax.x, u_rotationSpeedMinMax.y, seed);\n  }\n}\n";
+var update_default2 = "#version 300 es\n\n// ============================================================================\n// Particle update vertex shader, for on GPU particle simulation\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec4 position;\nin vec3 velocity;\nin vec2 age;\nin vec4 props;\nin float seed;\n\nuniform float u_deltaTime;\nuniform sampler2D u_randTex;\nuniform float u_maxInstances;\nuniform vec2 u_lifetimeMinMax;\nuniform vec2 u_powerMinMax;\nuniform vec3 u_gravity;\nuniform vec3 u_direction1;\nuniform vec3 u_direction2;\nuniform float u_timeScale;\nuniform vec2 u_sizeMinMax;\nuniform vec2 u_initialRotationMinMax;\nuniform vec2 u_rotationSpeedMinMax;\nuniform bool u_enabled;\nuniform vec3 u_emitterBoxMin;\nuniform vec3 u_emitterBoxMax;\nuniform float u_accel;\nuniform vec3 u_posOffset;\n\nout vec4 tf_position;\nout vec3 tf_velocity;\nout vec2 tf_age;\nout vec4 tf_props;\n\nvec4 rand(float offset) {\n  float uv = float(gl_VertexID) / u_maxInstances + offset;\n  return texture(u_randTex, vec2(uv)).rgba;\n}\n\nfloat randBetween(float min, float max, float offset) {\n  vec4 r = rand(offset);\n  return min + (max - min) * r.w;\n}\n\n// NOTES: TF varyings & packing\n// * position[0,1,2] = current position\n// * position[3] = rotation\n// * age[0] = current age\n// * age[1] = lifetime\n// * props[0] = size\n// * props[1] = rotation speed\n\nvoid main() {\n  float t = u_deltaTime;\n  float new_age = age[0] + t;\n\n  float rot = position[3] + props[1] * t;\n\n  tf_velocity = velocity * u_accel + u_gravity * t;\n  tf_position = vec4(position.xyz + tf_velocity * t, rot);\n  tf_age[0] = new_age;\n  tf_age[1] = age[1];\n  tf_props = props;\n\n  // Dead particles are respawned\n  if (new_age > age[1] && u_enabled) {\n    vec4 r = rand(seed);\n\n    tf_age[0] = 0.0;\n    tf_position[0] = randBetween(u_emitterBoxMin.x, u_emitterBoxMax.x, r.x) + u_posOffset.x;\n    tf_position[1] = randBetween(u_emitterBoxMin.y, u_emitterBoxMax.y, r.y) + u_posOffset.y;\n    tf_position[2] = randBetween(u_emitterBoxMin.z, u_emitterBoxMax.z, r.z) + u_posOffset.z;\n    tf_position[3] = randBetween(u_initialRotationMinMax.x, u_initialRotationMinMax.y, seed);\n\n    float power = randBetween(u_powerMinMax.x, u_powerMinMax.y, 0.0);\n\n    tf_velocity = vec3(\n      randBetween(u_direction1.x, u_direction2.x, r.x + position.x) * power,\n      randBetween(u_direction1.y, u_direction2.y, r.y + position.y) * power,\n      randBetween(u_direction1.z, u_direction2.z, r.z + position.z) * power\n    );\n\n    tf_age[1] = randBetween(u_lifetimeMinMax.x, u_lifetimeMinMax.y, seed + position.x);\n    tf_props[0] = randBetween(u_sizeMinMax.x, u_sizeMinMax.y, seed + position.y);\n    tf_props[1] = randBetween(u_rotationSpeedMinMax.x, u_rotationSpeedMinMax.y, seed);\n  }\n}\n";
 
 // shaders/particles/render.frag
 var render_default = "#version 300 es\n\n// ============================================================================\n// Particle render fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec2 v_texcoord;\nin float v_ageNorm;\n\nuniform sampler2D u_texture;\nuniform vec4 u_ageColour;\nuniform vec4 u_preColour;\n\nout vec4 outColor;\n\nvoid main() {\n  vec4 tex = texture(u_texture, v_texcoord);\n  tex.r *= u_preColour.r;\n  tex.g *= u_preColour.g;\n  tex.b *= u_preColour.b;\n  tex.a *= u_preColour.a;\n\n  tex.a *= 1.0 - v_ageNorm * u_ageColour.a;\n  tex.r *= 1.0 - v_ageNorm * u_ageColour.r;\n  tex.g *= 1.0 - v_ageNorm * u_ageColour.g;\n  tex.b *= 1.0 - v_ageNorm * u_ageColour.b;\n\n  outColor = tex;\n}\n";
 
 // shaders/particles/render.vert
-var render_default2 = "#version 300 es\n\n// ============================================================================\n// Particle render vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec4 position; // Vertex positions of the particle quad\nin vec2 texcoord;\nin vec4 tf_position; // Position of the particle\nin vec2 tf_age;\nin vec4 tf_props;\n\nuniform mat4 u_view;\nuniform mat4 u_proj;\nuniform mat4 u_world;\n\nout vec2 v_texcoord;\nout vec3 v_position;\nout float v_ageNorm;\n\nvoid main() {\n  vec3 vert_pos = position.xyz;\n  v_ageNorm = clamp(tf_age[0] / tf_age[1], 0.0, 1.0);\n  v_ageNorm = pow(v_ageNorm, 0.7);\n\n  // Rotate by tf_position[3] (rotation)\n  float s = sin(tf_position[3]);\n  float c = cos(tf_position[3]);\n  mat2 rot = mat2(c, -s, s, c);\n  vert_pos.xy = rot * position.xy;\n\n  // Scale by tf_props[0] (size)\n  vert_pos = vert_pos.xyz * tf_props[0];\n\n  // Move to the world at the particle position\n  vec4 world_pos = u_world * vec4(tf_position.xyz, 1.0);\n  vec4 view_pos = u_view * world_pos;\n\n  // Billboarding magic\n  gl_Position = u_proj * (view_pos + vec4(vert_pos.xy, 0.0, 0.0));\n\n  v_position = world_pos.xyz;\n  v_texcoord = texcoord;\n}\n";
+var render_default2 = "#version 300 es\n\n// ============================================================================\n// Particle render vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec4 position; // Vertex positions of the particle quad\nin vec2 texcoord;\nin vec4 tf_position; // Position of the particle\nin vec2 tf_age;\nin vec4 tf_props;\n\nuniform mat4 u_view;\nuniform mat4 u_proj;\nuniform mat4 u_world;\nuniform float u_agePower;\n\nout vec2 v_texcoord;\nout vec3 v_position;\nout float v_ageNorm;\n\nvoid main() {\n  vec3 vert_pos = position.xyz;\n  v_ageNorm = clamp(tf_age[0] / tf_age[1], 0.0, 1.0);\n  v_ageNorm = pow(v_ageNorm, u_agePower);\n\n  // Rotate by tf_position[3] (rotation)\n  float s = sin(tf_position[3]);\n  float c = cos(tf_position[3]);\n  mat2 rot = mat2(c, -s, s, c);\n  vert_pos.xy = rot * position.xy;\n\n  // Scale by tf_props[0] (size)\n  vert_pos = vert_pos.xyz * tf_props[0];\n\n  // Move to the world at the particle position\n  vec4 world_pos = u_world * vec4(tf_position.xyz, 1.0);\n  vec4 view_pos = u_view * world_pos;\n\n  // Billboarding magic\n  gl_Position = u_proj * (view_pos + vec4(vert_pos.xy, 0.0, 0.0));\n\n  v_position = world_pos.xyz;\n  v_texcoord = texcoord;\n}\n";
 
 // src/models/particles.ts
 var ParticleSystem = class {
@@ -7455,6 +7457,8 @@ var ParticleSystem = class {
     this.blendSource = gl.SRC_ALPHA;
     this.blendDest = gl.ONE;
     this.preColour = [1, 1, 1, 1];
+    this.positionOffset = [0, 0, 0];
+    this.agePower = 1;
     this.progInfoUpdate = createProgramInfo(gl, [update_default2, update_default], {
       transformFeedbackVaryings: ["tf_position", "tf_velocity", "tf_age", "tf_props"]
     });
@@ -7550,7 +7554,8 @@ var ParticleSystem = class {
       u_rotationSpeedMinMax: [this.minRotationSpeed, this.maxRotationSpeed],
       u_emitterBoxMin: this.emitterBoxMin,
       u_emitterBoxMax: this.emitterBoxMax,
-      u_accel: this.acceleration
+      u_accel: this.acceleration,
+      u_posOffset: this.positionOffset
     });
     drawBufferInfo(gl, this.inputBuffInfo, gl.POINTS, this.emitRate);
     gl.endTransformFeedback();
@@ -7566,7 +7571,8 @@ var ParticleSystem = class {
       ...uniforms,
       u_texture: this.texture,
       u_ageColour: this.ageColour,
-      u_preColour: this.preColour
+      u_preColour: this.preColour,
+      u_agePower: this.agePower
     };
     setUniforms(this.progInfoRender, particleUniforms);
     const objList = [
@@ -8008,7 +8014,7 @@ var glsl_default8 = "#version 300 es\n\n// =====================================
 
 // src/core/context.ts
 var MAX_LIGHTS = 16;
-var Context2 = class _Context {
+var Context = class _Context {
   /** Constructor is private, use init() to create a new context */
   constructor(gl) {
     this.instances = [];
@@ -8024,11 +8030,10 @@ var Context2 = class _Context {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     this.update = () => {
     };
-    /** Gamma correction value, default 1.0 */
-    this.gamma = 1;
     this.gl = gl;
     this.started = false;
     this.debug = false;
+    this.gamma = 1;
     this.globalLight = new LightDirectional();
     this.globalLight.setAsPosition(20, 50, 30);
     const defaultCamera = new Camera(0 /* PERSPECTIVE */);
@@ -8048,7 +8053,7 @@ var Context2 = class _Context {
     return this.activeCameraName;
   }
   /**
-   * Create & initialize a new Context which will render into provided canvas selector. This is where you start when using the library.
+   * Create & initialize a new Context which will render into provided canvas. This is where you start when using the library.
    * @param canvasSelector CSS selector for canvas element, default is 'canvas'
    * @param antiAlias Enable anti-aliasing in GL, default is true
    */
@@ -8178,6 +8183,7 @@ var Context2 = class _Context {
    * Start the rendering loop
    */
   start() {
+    import_loglevel8.default.info("\u{1F680} Starting main GSOTS render loop!");
     this.hud.hideLoading();
     this.started = true;
     requestAnimationFrame(this.render);
@@ -8186,6 +8192,7 @@ var Context2 = class _Context {
    * Stop the rendering loop
    */
   stop() {
+    import_loglevel8.default.info("\u{1F6D1} Stopping main GSOTS render loop");
     this.started = false;
   }
   /**
@@ -8418,7 +8425,7 @@ export {
   Camera,
   CameraType,
   Colours,
-  Context2 as Context,
+  Context,
   DynamicEnvironmentMap,
   EnvironmentMap,
   HUD,
