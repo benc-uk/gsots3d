@@ -4,9 +4,13 @@
 // ======================================================================
 
 import { vec3 } from 'gl-matrix'
+import * as CANNON from 'cannon-es'
 
 /** A simple 3D position or vector tuple */
 export type XYZ = [number, number, number]
+
+/** A simple 4D position or vector tuple */
+export type XYZW = [number, number, number, number]
 
 /** A simple RGB colour tuple */
 export type RGB = [number, number, number]
@@ -67,6 +71,14 @@ function distance(a: XYZ, b: XYZ) {
   return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2
 }
 
+export function fromCannon(v: CANNON.Vec3 | CANNON.Quaternion) {
+  if (v instanceof CANNON.Vec3) {
+    return [v.x, v.y, v.z] as XYZ
+  }
+
+  return [v.x, v.y, v.z, v.w] as XYZW
+}
+
 // ============================================================================
 // Colour helpers
 // ============================================================================
@@ -120,4 +132,5 @@ export const Tuples = {
   rgbColourHex,
   toVec3,
   distance,
+  fromCannon,
 }

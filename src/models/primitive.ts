@@ -40,7 +40,7 @@ export abstract class Primitive implements Renderable {
     uniforms: UniformSet,
     materialOverride?: Material,
     programOverride?: twgl.ProgramInfo
-  ): void {
+  ) {
     if (!this.bufferInfo) return
 
     const programInfo = programOverride || this.programInfo
@@ -77,6 +77,8 @@ export abstract class Primitive implements Renderable {
  * A simple sphere primitive with a given radius and subdivisions
  */
 export class PrimitiveSphere extends Primitive {
+  readonly radius: number
+
   /**
    * Create a new sphere primitive
    * @param gl WebGL2RenderingContext
@@ -88,8 +90,8 @@ export class PrimitiveSphere extends Primitive {
     super()
 
     this.bufferInfo = twgl.primitives.createSphereBufferInfo(gl, radius, subdivisionsH, subdivisionsV)
-
     this.triangles += this.bufferInfo.numElements / 3
+    this.radius = radius
   }
 }
 
@@ -97,6 +99,8 @@ export class PrimitiveSphere extends Primitive {
  * A simple cube primitive with a given size
  */
 export class PrimitiveCube extends Primitive {
+  readonly size: number
+
   /**
    * Create a new cube primitive
    * @param gl WebGL2RenderingContext
@@ -106,8 +110,8 @@ export class PrimitiveCube extends Primitive {
     super()
 
     this.bufferInfo = twgl.primitives.createCubeBufferInfo(gl, size)
-
     this.triangles += this.bufferInfo.numElements / 3
+    this.size = size
   }
 }
 

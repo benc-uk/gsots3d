@@ -18,6 +18,7 @@ Feature Set:
 - **💧 Transparency**: Transparent materials & primitives 
 - **🌑 Shadows**: Realtime shadows from directional light source.
 - **💖 Reflection**: Both dynamic and static environment mapping.
+- **⚖️ Physics**: Helpers to integrate with with cannon-es physics engine.
 - **🪧 Billboarding**: For adding 'flat' 2D sprites into the 3D scene.
 - **🎥 Camera**: Perspective and orthographic projection, and first person mouse & keyboard controls
 

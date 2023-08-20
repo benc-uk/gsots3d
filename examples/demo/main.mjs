@@ -75,30 +75,31 @@ try {
   ctx.createPlaneInstance(floorMat, 260, 260, 1, 1, 8)
   floorMat.diffuse = [0.7, 0.7, 1]
 
-  const wallMat1 = Material.createBasicTexture('../_textures/brickwall.jpg')
-  wallMat1.addNormalTexture('../_textures/brickwall_normal.jpg')
-  wallMat1.specular = [0.2, 0.2, 0.2]
-  wallMat1.reflectivity = 0.0
-  const wall1 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 4)
+  const wallMat = Material.createBasicTexture('../_textures/brickwall.jpg')
+  wallMat.addNormalTexture('../_textures/brickwall_normal.jpg')
+  wallMat.specular = [0.2, 0.2, 0.2]
+  wallMat.reflectivity = 0.0
+
+  const wall1 = ctx.createPlaneInstance(wallMat, 260, 260, 10, 10, 4)
   wall1.position = [0, 130, -130]
   wall1.rotateXDeg(90)
   wall1.castShadow = false
 
-  const wall2 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 4)
+  const wall2 = ctx.createPlaneInstance(wallMat, 260, 260, 10, 10, 4)
   wall2.position = [0, 130, 130]
   wall2.rotateXDeg(-90)
   wall2.castShadow = false
 
-  const wall3 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 4)
+  const wall3 = ctx.createPlaneInstance(wallMat, 260, 260, 10, 10, 4)
   wall3.position = [130, 130, 0]
   wall3.rotateZDeg(90)
-  wall3.rotateXDeg(90)
+  wall3.rotateYDeg(90)
   wall3.castShadow = false
 
-  const wall4 = ctx.createPlaneInstance(wallMat1, 260, 260, 10, 10, 4)
+  const wall4 = ctx.createPlaneInstance(wallMat, 260, 260, 10, 10, 4)
   wall4.position = [-130, 130, 0]
   wall4.rotateZDeg(-90)
-  wall4.rotateXDeg(90)
+  wall4.rotateYDeg(90)
   wall4.castShadow = false
 
   const impMat = Material.createBasicTexture('../_textures/doom-imp.png')

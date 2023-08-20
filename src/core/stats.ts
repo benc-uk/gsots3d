@@ -18,8 +18,8 @@ export const Stats = {
   },
 
   updateTime(now: number) {
-    Stats.deltaTime = now - Stats.prevTime // Get smoothed time difference
-    Stats.prevTime = now
+    Stats.deltaTime = now * 0.001 - Stats.prevTime // Get smoothed time difference
+    Stats.prevTime = now * 0.001
     Stats.totalTime += Stats.deltaTime
   },
 

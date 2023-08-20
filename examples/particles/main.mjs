@@ -41,8 +41,9 @@ const pipe2 = ctx.createCylinderInstance(pipeMat, 3, 80, 16, 1, false)
 pipe2.position = [80, 40, -40]
 const pipe3 = ctx.createCylinderInstance(pipeMat, 3, 30, 16, 1, false)
 pipe3.position = [80, 80, -40]
-pipe3.preTranslate = [0, -15, 0]
 pipe3.rotateZDeg(90)
+pipe3.postTranslate = [0, -15, 0]
+
 const sph = ctx.createSphereInstance(pipeMat, 6, 16, 16)
 sph.position = [80, 80, -40]
 
@@ -136,13 +137,14 @@ part4.minSize = 0.5
 
 const radius = 30
 let t = 0
+pipe3.rotateY(Math.PI / 2)
 ctx.update = (delta) => {
   t = t + delta
   const x = Math.cos(t * 4) * radius
   const z = Math.sin(t * 4) * radius
   const y = 0
   part2.positionOffset = [x, y, z]
-  pipe3.rotateY(-delta * 4)
+  pipe3.rotateZ(-delta * 4)
   sph.rotateY(-delta * 4)
 }
 

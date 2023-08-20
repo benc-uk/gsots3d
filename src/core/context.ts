@@ -64,7 +64,7 @@ export class Context {
    * Hook in your custom logic and processing here
    */
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  public update: (delta: number) => void = () => {}
+  public update: (delta: number, now?: number) => void = () => {}
 
   /** A HUD you can use to render HTML elements over the canvas */
   public readonly hud: HUD
@@ -108,7 +108,7 @@ export class Context {
   /**
    * Create & initialize a new Context which will render into provided canvas. This is where you start when using the library.
    * @param canvasSelector CSS selector for canvas element, default is 'canvas'
-   * @param antiAlias Enable anti-aliasing in GL, default is true
+   * @param antiAlias Enable anti-aliasing in the renderer, default is true
    */
   static async init(canvasSelector = 'canvas', antiAlias = true) {
     const gl = getGl(antiAlias, canvasSelector)
@@ -151,10 +151,10 @@ export class Context {
   private async render(now: number) {
     if (!this.gl) return
 
-    Stats.updateTime(now * 0.001)
+    Stats.updateTime(now)
 
     // Call the external update function
-    this.update(Stats.deltaTime)
+    this.update(Stats.deltaTime, now)
 
     // RENDERING - Render into the dynamic environment map(s) if any
     if (this.dynamicEnvMap) {

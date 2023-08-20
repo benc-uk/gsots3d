@@ -57,6 +57,7 @@
     "vite": "^4.4.8"
   },
   "dependencies": {
+    "cannon-es": "^0.20.0",
     "gl-matrix": "^3.4.3",
     "loglevel": "^1.8.1",
     "twgl.js": "^5.5.1"
