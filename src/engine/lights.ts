@@ -43,6 +43,7 @@ export class LightDirectional {
   private _shadowMapFB?: twgl.FramebufferInfo
   private _shadowMapTex?: WebGLTexture
   private _shadowOptions?: ShadowOptions
+  // public shadowViewOffset: XYZ
 
   /** Colour of the light, used for both diffuse and specular. Default: [0, 0, 0] */
   public colour: RGB
@@ -59,6 +60,7 @@ export class LightDirectional {
     this.colour = Colours.WHITE
     this.ambient = Colours.BLACK
     this.enabled = true
+    // this.shadowViewOffset = [0, 0, 0]
 
     const gl = getGl()
     if (!gl) {
@@ -162,14 +164,22 @@ export class LightDirectional {
       return undefined
     }
 
-    const moveDist = this._shadowOptions.distance * 0.2
+    const moveDist = this._shadowOptions.distance * 0.8
 
-    const cam = new Camera(CameraType.ORTHOGRAPHIC, 1.0)
+    const cam = new Camera(CameraType.ORTHOGRAPHIC, 4 / 3)
     cam.orthoZoom = this._shadowOptions.zoom
     cam.lookAt = [0, 0, 0]
     cam.position = [-this.direction[0] * moveDist, -this.direction[1] * moveDist, -this.direction[2] * moveDist]
     cam.usedForShadowMap = true
-    cam.far = this._shadowOptions.distance
+    cam.far = this._shadowOptions.distance * 2
+    // cam.near = this._shadowOptions.distance / 2
+
+    // cam.position[0] += this.shadowViewOffset[0]
+    // cam.position[1] += this.shadowViewOffset[1]
+    // cam.position[2] += this.shadowViewOffset[2]
+    // cam.lookAt[0] += this.shadowViewOffset[0]
+    // cam.lookAt[1] += this.shadowViewOffset[1]
+    // cam.lookAt[2] += this.shadowViewOffset[2]
 
     return cam
   }
@@ -188,14 +198,13 @@ export class LightDirectional {
       return undefined
     }
 
-    const camViewMatrix = shadowCam.matrix
-    const shadowMatrix = mat4.multiply(
+    const shadowMat = mat4.multiply(
       mat4.create(),
       shadowCam.projectionMatrix,
-      mat4.invert(mat4.create(), camViewMatrix)
+      mat4.invert(mat4.create(), shadowCam.matrix)
     )
 
-    return shadowMatrix
+    return shadowMat
   }
 
   /**

@@ -106,10 +106,20 @@ export class PrimitiveCube extends Primitive {
    * @param gl WebGL2RenderingContext
    * @param size Size of the cube
    */
-  constructor(gl: WebGL2RenderingContext, size: number) {
+  constructor(gl: WebGL2RenderingContext, size: number, tilingFactor?: number) {
     super()
 
-    this.bufferInfo = twgl.primitives.createCubeBufferInfo(gl, size)
+    const verts = twgl.primitives.createCubeVertices(size)
+
+    // Mutate the texture coords to tile the texture
+    if (tilingFactor) {
+      for (let i = 0; i < verts.texcoord.length; i++) {
+        verts.texcoord[i] = verts.texcoord[i] * tilingFactor
+      }
+    }
+
+    this.bufferInfo = twgl.createBufferInfoFromArrays(gl, verts)
+
     this.triangles += this.bufferInfo.numElements / 3
     this.size = size
   }

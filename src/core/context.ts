@@ -167,6 +167,7 @@ export class Context {
       const shadowCam = this.globalLight.getShadowCamera()
       // Switch to front face culling for shadow map, yeah it's weird but it works!
       this.gl.cullFace(this.gl.FRONT)
+      this.gl.enable(this.gl.CULL_FACE)
       this.gl.enable(this.gl.POLYGON_OFFSET_FILL)
 
       const shadowOpt = this.globalLight.shadowMapOptions
@@ -194,6 +195,8 @@ export class Context {
     // Reset stats for next frame
     Stats.resetPerFrame()
     Stats.frameCount++
+
+    // this.globalLight.shadowViewOffset = this.camera.position
   }
 
   /**
@@ -471,8 +474,8 @@ export class Context {
   /**
    * Create an instance of a primitive cube
    */
-  createCubeInstance(material: Material, size = 5) {
-    const cube = new PrimitiveCube(this.gl, size)
+  createCubeInstance(material: Material, size = 5, tilingFactor?: number) {
+    const cube = new PrimitiveCube(this.gl, size, tilingFactor)
     cube.material = material
 
     const instance = new Instance(cube)

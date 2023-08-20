@@ -8823,7 +8823,7 @@ var ConvexPolyhedron = class _ConvexPolyhedron extends Shape {
     localOrigin.setZero();
     Transform.vectorToLocalFrame(pos, quat, axis, localAxis);
     Transform.pointToLocalFrame(pos, quat, localOrigin, localOrigin);
-    const add6 = localOrigin.dot(localAxis);
+    const add7 = localOrigin.dot(localAxis);
     min2 = max2 = vs[0].dot(localAxis);
     for (let i = 1; i < n; i++) {
       const val = vs[i].dot(localAxis);
@@ -8834,8 +8834,8 @@ var ConvexPolyhedron = class _ConvexPolyhedron extends Shape {
         min2 = val;
       }
     }
-    min2 -= add6;
-    max2 -= add6;
+    min2 -= add7;
+    max2 -= add7;
     if (min2 > max2) {
       const temp = min2;
       min2 = max2;
@@ -12231,6 +12231,9 @@ function toVec3(tuple) {
 function distance2(a2, b2) {
   return (a2[0] - b2[0]) ** 2 + (a2[1] - b2[1]) ** 2 + (a2[2] - b2[2]) ** 2;
 }
+function add6(a2, b2) {
+  return [a2[0] + b2[0], a2[1] + b2[1], a2[2] + b2[2]];
+}
 function fromCannon(v) {
   if (v instanceof Vec3) {
     return [v.x, v.y, v.z];
@@ -12265,7 +12268,8 @@ var Tuples = {
   rgbColourHex,
   toVec3,
   distance: distance2,
-  fromCannon
+  fromCannon,
+  add: add6
 };
 
 // src/core/cache.ts
@@ -12704,6 +12708,7 @@ var LightDirectional = class {
     this.colour = Colours.WHITE;
     this.ambient = Colours.BLACK;
     this.enabled = true;
+    this.shadowViewOffset = [0, 0, 0];
     const gl = getGl();
     if (!gl) {
       throw new Error("\u{1F4A5} LightDirectional: Cannot create shadow map shader, no GL context");
@@ -12795,13 +12800,13 @@ var LightDirectional = class {
     if (!this._shadowOptions) {
       return void 0;
     }
-    const moveDist = this._shadowOptions.distance * 0.2;
-    const cam = new Camera(1 /* ORTHOGRAPHIC */, 1);
+    const moveDist = this._shadowOptions.distance * 0.8;
+    const cam = new Camera(1 /* ORTHOGRAPHIC */, 4 / 3);
     cam.orthoZoom = this._shadowOptions.zoom;
     cam.lookAt = [0, 0, 0];
     cam.position = [-this.direction[0] * moveDist, -this.direction[1] * moveDist, -this.direction[2] * moveDist];
     cam.usedForShadowMap = true;
-    cam.far = this._shadowOptions.distance;
+    cam.far = this._shadowOptions.distance * 2;
     return cam;
   }
   /**
@@ -12816,13 +12821,12 @@ var LightDirectional = class {
     if (!shadowCam) {
       return void 0;
     }
-    const camViewMatrix = shadowCam.matrix;
-    const shadowMatrix = mat4_exports.multiply(
+    const shadowMat = mat4_exports.multiply(
       mat4_exports.create(),
       shadowCam.projectionMatrix,
-      mat4_exports.invert(mat4_exports.create(), camViewMatrix)
+      mat4_exports.invert(mat4_exports.create(), shadowCam.matrix)
     );
-    return shadowMatrix;
+    return shadowMat;
   }
   /**
    * Are shadows enabled for this light?
@@ -13179,11 +13183,12 @@ var Instance = class {
   setQuaternion(quatArray) {
     this.quaternion = quat_exports.fromValues(quatArray[0], quatArray[1], quatArray[2], quatArray[3]);
   }
+  /** Get the rotation quaternion as a XYZW 4-tuple */
   getQuaternion() {
     return [this.quaternion[0], this.quaternion[1], this.quaternion[2], this.quaternion[3]];
   }
   /**
-   * Render this instance in the world
+   * Render this instance in the world, called internally by the context when rendering
    * @param {WebGL2RenderingContext} gl - WebGL context to render into
    * @param {UniformSet} uniforms - Map of uniforms to pass to shader
    */
@@ -13454,9 +13459,15 @@ var PrimitiveCube = class extends Primitive {
    * @param gl WebGL2RenderingContext
    * @param size Size of the cube
    */
-  constructor(gl, size) {
+  constructor(gl, size, tilingFactor) {
     super();
-    this.bufferInfo = primitives.createCubeBufferInfo(gl, size);
+    const verts = primitives.createCubeVertices(size);
+    if (tilingFactor) {
+      for (let i = 0; i < verts.texcoord.length; i++) {
+        verts.texcoord[i] = verts.texcoord[i] * tilingFactor;
+      }
+    }
+    this.bufferInfo = createBufferInfoFromArrays(gl, verts);
     this.triangles += this.bufferInfo.numElements / 3;
     this.size = size;
   }
@@ -14191,6 +14202,7 @@ var Context = class _Context {
     if (this.globalLight.shadowsEnabled) {
       const shadowCam = this.globalLight.getShadowCamera();
       this.gl.cullFace(this.gl.FRONT);
+      this.gl.enable(this.gl.CULL_FACE);
       this.gl.enable(this.gl.POLYGON_OFFSET_FILL);
       const shadowOpt = this.globalLight.shadowMapOptions;
       this.gl.polygonOffset(shadowOpt?.polygonOffsetFactor ?? 0, 1);
@@ -14207,6 +14219,7 @@ var Context = class _Context {
       requestAnimationFrame(this.render);
     Stats.resetPerFrame();
     Stats.frameCount++;
+    this.globalLight.shadowViewOffset = this.camera.position;
   }
   /**
    * Render the scene from the given camera, used internally
@@ -14416,8 +14429,8 @@ var Context = class _Context {
   /**
    * Create an instance of a primitive cube
    */
-  createCubeInstance(material, size = 5) {
-    const cube = new PrimitiveCube(this.gl, size);
+  createCubeInstance(material, size = 5, tilingFactor) {
+    const cube = new PrimitiveCube(this.gl, size, tilingFactor);
     cube.material = material;
     const instance = new Instance(cube);
     this.addInstance(instance, material);

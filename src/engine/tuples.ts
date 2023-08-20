@@ -71,6 +71,14 @@ function distance(a: XYZ, b: XYZ) {
   return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2
 }
 
+function add(a: XYZ, b: XYZ) {
+  return [a[0] + b[0], a[1] + b[1], a[2] + b[2]] as XYZ
+}
+
+/**
+ * Converts a Cannon.js vector or quaternion to a 3-tuple
+ * @param v The Cannon.js vector or quaternion to convert
+ */
 export function fromCannon(v: CANNON.Vec3 | CANNON.Quaternion) {
   if (v instanceof CANNON.Vec3) {
     return [v.x, v.y, v.z] as XYZ
@@ -133,4 +141,5 @@ export const Tuples = {
   toVec3,
   distance,
   fromCannon,
+  add,
 }

@@ -7,19 +7,20 @@ ctx.camera.enableFPControls(0.5, -0.24, 0.002, 4)
 ctx.camera.far = 3000
 setLogLevel('info')
 
-ctx.globalLight.setAsPosition(5, 20, 12)
+ctx.globalLight.setAsPosition(5, 10, 7)
 const amb = 0.2
 ctx.globalLight.ambient = [amb, amb, amb]
 ctx.globalLight.enableShadows({
-  zoom: 1200,
+  zoom: 500,
   mapSize: 2048,
+  distance: 500,
 })
 
 const floorMat = Material.createBasicTexture('../_textures/brickwall.jpg')
-floorMat.diffuse = [0.9, 1.0, 0.9]
-floorMat.specular = [1, 1, 1]
+floorMat.specular = [0.6, 0.6, 0.6]
 floorMat.addNormalTexture('../_textures/brickwall_normal.jpg')
-const floor = ctx.createPlaneInstance(floorMat, 2000, 2000, 1, 1, 6)
+const floor = ctx.createCubeInstance(floorMat, 1200, 6)
+floor.position = [0, -600, 0]
 floor.rotate(0, 0, -0.1)
 floor.receiveShadow = true
 
@@ -36,7 +37,7 @@ cube.rotateY(0.3)
 cube.rotateZ(-0.1)
 
 const cube2 = ctx.createCubeInstance(crateMat, 80)
-cube2.position = [380, 4, 170]
+cube2.position = [380, -4, 220]
 cube2.rotateY(-0.6)
 cube2.rotateZ(-0.1)
 
@@ -46,7 +47,8 @@ const groundMaterial = new CANNON.Material()
 const sphereMat = new CANNON.Material()
 
 const sphereBody = Physics.createSphereBody(sphere, 15, -1, sphereMat)
-const groundBody = Physics.createPlaneBody(floor, 0, groundMaterial)
+const groundBody = Physics.createBoxBody(floor, 0, -1, groundMaterial)
+
 const cubeBody = Physics.createBoxBody(cube, 0, -1, groundMaterial)
 const cubeBody2 = Physics.createBoxBody(cube2, 0, -1, groundMaterial)
 
@@ -63,9 +65,21 @@ const contactMat = new CANNON.ContactMaterial(groundMaterial, sphereMat, {
 world.addContactMaterial(contactMat)
 
 ctx.update = (delta, now) => {
-  world.step(delta, now)
+  world.step(1 / 60, now)
   sphere.position = Tuples.fromCannon(sphereBody.position)
   sphere.setQuaternion(Tuples.fromCannon(sphereBody.quaternion))
 }
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'z') {
+    const lc = ctx.globalLight.getShadowCamera()
+    ctx.addCamera('lc', lc)
+    ctx.setActiveCamera('lc')
+  }
+
+  if (e.key === 'x') {
+    ctx.setActiveCamera('default')
+  }
+})
 
 ctx.start()
