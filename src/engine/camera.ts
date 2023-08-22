@@ -110,6 +110,7 @@ export class Camera {
     mat4.translate(camView, camView, this.position)
     mat4.rotateY(camView, camView, this.fpAngleY)
     mat4.rotateX(camView, camView, this.fpAngleX)
+
     return camView
   }
 

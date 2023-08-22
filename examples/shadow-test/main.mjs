@@ -15,8 +15,7 @@ const amb = 0.1
 ctx.globalLight.ambient = [amb, amb, amb]
 ctx.globalLight.enableShadows({
   mapSize: 1024,
-  zoom: 150,
-  scatter: 0.5,
+  zoom: 50,
 })
 
 const floorMat = Material.createBasicTexture('../_textures/wood-floor.png')
@@ -38,9 +37,6 @@ crate2.rotateYDeg(-36)
 const sphereMat = Material.createBasicTexture('../_textures/earth.jpg')
 const sphere = ctx.createSphereInstance(sphereMat, 18, 32, 32)
 sphere.position = [40, 18, 20]
-
-const particles = ctx.createParticlesInstance(160000)
-particles.position = [40, 50, 10]
 
 window.addEventListener('keydown', (e) => {
   // Move light

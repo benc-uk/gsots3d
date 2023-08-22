@@ -27,10 +27,10 @@ export type ShadowOptions = {
   distance: number
 
   /** Blur the edges of shadows, higher values them more random, default 0.2 */
-  scatter: number
+  // scatter: number
 
   /** Offset used to reduce shadow acne especially when self shadowing */
-  polygonOffsetFactor: number
+  polygonOffset: number
 }
 
 /**
@@ -43,7 +43,7 @@ export class LightDirectional {
   private _shadowMapFB?: twgl.FramebufferInfo
   private _shadowMapTex?: WebGLTexture
   private _shadowOptions?: ShadowOptions
-  // public shadowViewOffset: XYZ
+  public shadowViewOffset: XYZ
 
   /** Colour of the light, used for both diffuse and specular. Default: [0, 0, 0] */
   public colour: RGB
@@ -60,7 +60,7 @@ export class LightDirectional {
     this.colour = Colours.WHITE
     this.ambient = Colours.BLACK
     this.enabled = true
-    // this.shadowViewOffset = [0, 0, 0]
+    this.shadowViewOffset = [0, 0, 0]
 
     const gl = getGl()
     if (!gl) {
@@ -124,11 +124,11 @@ export class LightDirectional {
     if (!this._shadowOptions.distance) {
       this._shadowOptions.distance = 1000
     }
-    if (!this._shadowOptions.scatter) {
-      this._shadowOptions.scatter = 0.2
-    }
-    if (!this._shadowOptions.polygonOffsetFactor) {
-      this._shadowOptions.polygonOffsetFactor = 0
+    // if (!this._shadowOptions.scatter) {
+    //   this._shadowOptions.scatter = 0.22
+    // }
+    if (!this._shadowOptions.polygonOffset) {
+      this._shadowOptions.polygonOffset = 0
     }
 
     const gl = getGl()
@@ -164,7 +164,7 @@ export class LightDirectional {
       return undefined
     }
 
-    const moveDist = this._shadowOptions.distance * 0.8
+    const moveDist = this._shadowOptions.distance * 0.9
 
     const cam = new Camera(CameraType.ORTHOGRAPHIC, 4 / 3)
     cam.orthoZoom = this._shadowOptions.zoom
@@ -172,14 +172,13 @@ export class LightDirectional {
     cam.position = [-this.direction[0] * moveDist, -this.direction[1] * moveDist, -this.direction[2] * moveDist]
     cam.usedForShadowMap = true
     cam.far = this._shadowOptions.distance * 2
-    // cam.near = this._shadowOptions.distance / 2
 
-    // cam.position[0] += this.shadowViewOffset[0]
-    // cam.position[1] += this.shadowViewOffset[1]
-    // cam.position[2] += this.shadowViewOffset[2]
-    // cam.lookAt[0] += this.shadowViewOffset[0]
-    // cam.lookAt[1] += this.shadowViewOffset[1]
-    // cam.lookAt[2] += this.shadowViewOffset[2]
+    cam.position[0] += this.shadowViewOffset[0]
+    cam.position[1] += this.shadowViewOffset[1]
+    cam.position[2] += this.shadowViewOffset[2]
+    cam.lookAt[0] += this.shadowViewOffset[0]
+    cam.lookAt[1] += this.shadowViewOffset[1]
+    cam.lookAt[2] += this.shadowViewOffset[2]
 
     return cam
   }

@@ -171,7 +171,7 @@ export class Context {
       this.gl.enable(this.gl.POLYGON_OFFSET_FILL)
 
       const shadowOpt = this.globalLight.shadowMapOptions
-      this.gl.polygonOffset(shadowOpt?.polygonOffsetFactor ?? 0, 1)
+      this.gl.polygonOffset(shadowOpt?.polygonOffset ?? 0, 1)
 
       // Bind the shadow map framebuffer and render the scene from the light's POV
       // Using the special shadow map program as an override for the whole rendering pass
@@ -241,7 +241,7 @@ export class Context {
 
       u_shadowMap: this.globalLight.shadowMapTexture,
       u_shadowMatrix: this.globalLight.shadowMatrix ?? mat4.create(),
-      u_shadowScatter: this.globalLight.shadowMapOptions?.scatter ?? 0.2,
+      // u_shadowScatter: this.globalLight.shadowMapOptions?.scatter ?? 0.2,
     } as UniformSet
 
     // RENDERING - Draw envmap around the scene first, like a skybox & background

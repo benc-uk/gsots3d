@@ -10,13 +10,19 @@ precision highp float;
 // ===== Constants ============================================================
 
 const int MAX_LIGHTS = 16;
+const int MAX_SHADOWS = 8;
+const float MAX_SHAD_A = 0.125;
 
 // Got this from http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#poisson-sampling
-vec3 poissonDisk[4] = vec3[](
-  vec3(-0.94201624, -0.39906216, 0.0),
-  vec3(0.94558609, -0.76890725, 0.0),
-  vec3(-0.094184101, -0.9293887, 0.0),
-  vec3(0.34495938, 0.2938776, 0.0)
+vec3 poissonDisk[8] = vec3[](
+  vec3(-0.94201624, -0.39906216, -0.4684316),
+  vec3(0.94558609, -0.76890725, -0.34478877),
+  vec3(-0.094184101, -0.9293887, -0.3048823),
+  vec3(0.34495938, 0.2938776, -0.001735733),
+  vec3(-0.91588581, 0.45771432, -0.087759815),
+  vec3(-0.81544232, -0.87912464, -0.03352997),
+  vec3(-0.38277543, 0.27676845, -0.9485365),
+  vec3(-0.58723171, -0.73007023, -0.22162315)
 );
 
 // ===== Structs ==============================================================
@@ -72,7 +78,7 @@ uniform int u_lightsPosCount;
 uniform samplerCube u_reflectionMap;
 // Shadows
 uniform highp sampler2DShadow u_shadowMap;
-uniform float u_shadowScatter;
+// uniform float u_shadowScatter;  // REMOVED FOR NOW
 uniform bool u_receiveShadow;
 
 // Global texture coords shared between functions
@@ -112,16 +118,19 @@ vec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {
   // Shadow map lookup
   vec3 projCoords = v_shadowCoord.xyz / v_shadowCoord.w * 0.5 + 0.5;
 
-  // Carry out PCF for shadows using 4 samples of a poisson disk
-  float shadow = 0.0;
-  for (int i = 0; i < 4; i++) {
-    vec3 offset = poissonDisk[i] * (u_shadowScatter / 100.0);
-    shadow += shadowMapSample(u_shadowMap, projCoords + offset) * 0.25;
-  }
+  // REMOVED FOR NOW - PCF for shadows using 8 samples of a poisson disk
+  // float shadow = u_receiveShadow ? 0.0 : 1.0;
+  // float scatter = u_shadowScatter / 100.0;
+  // for (int i = u_receiveShadow ? 0 : MAX_SHADOWS; i < MAX_SHADOWS; i++) {
+  //   vec3 offset = poissonDisk[i] * scatter;
+  //   shadow += shadowMapSample(u_shadowMap, projCoords + offset) * MAX_SHAD_A;
+  // }
+
+  float shadow = u_receiveShadow ? shadowMapSample(u_shadowMap, projCoords) : 1.0;
 
   vec3 ambient = light.ambient * mat.ambient * diffuseCol;
-  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * (u_receiveShadow ? shadow : 1.0);
-  vec3 specular = light.colour * spec * specularCol * (u_receiveShadow ? shadow : 1.0);
+  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * shadow;
+  vec3 specular = light.colour * spec * specularCol * shadow;
 
   // Return a vec4 to support transparency, note specular is not affected by opacity
   return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);
