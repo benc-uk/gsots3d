@@ -12,6 +12,7 @@ export const Stats = {
   deltaTime: 0,
   totalTime: 0,
   frameCount: 0,
+  fpsBucket: [] as number[],
 
   resetPerFrame() {
     Stats.drawCallsPerFrame = 0
@@ -21,10 +22,16 @@ export const Stats = {
     Stats.deltaTime = now * 0.001 - Stats.prevTime // Get smoothed time difference
     Stats.prevTime = now * 0.001
     Stats.totalTime += Stats.deltaTime
+
+    Stats.fpsBucket.push(Stats.deltaTime)
+    if (Stats.fpsBucket.length > 10) {
+      Stats.fpsBucket.shift()
+    }
   },
 
   get FPS() {
-    return Math.round(1 / Stats.deltaTime)
+    const sum = Stats.fpsBucket.reduce((a, b) => a + b, 0)
+    return Math.round(1 / (sum / Stats.fpsBucket.length))
   },
 
   get totalTimeRound() {

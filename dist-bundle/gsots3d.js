@@ -12914,6 +12914,7 @@ var Stats = {
   deltaTime: 0,
   totalTime: 0,
   frameCount: 0,
+  fpsBucket: [],
   resetPerFrame() {
     Stats.drawCallsPerFrame = 0;
   },
@@ -12921,9 +12922,14 @@ var Stats = {
     Stats.deltaTime = now * 1e-3 - Stats.prevTime;
     Stats.prevTime = now * 1e-3;
     Stats.totalTime += Stats.deltaTime;
+    Stats.fpsBucket.push(Stats.deltaTime);
+    if (Stats.fpsBucket.length > 10) {
+      Stats.fpsBucket.shift();
+    }
   },
   get FPS() {
-    return Math.round(1 / Stats.deltaTime);
+    const sum = Stats.fpsBucket.reduce((a2, b2) => a2 + b2, 0);
+    return Math.round(1 / (sum / Stats.fpsBucket.length));
   },
   get totalTimeRound() {
     return Math.round(Stats.totalTime);
@@ -13400,6 +13406,23 @@ var Material2 = class _Material {
       normalTex: this.normalTex ? this.normalTex : null,
       hasNormalTex: this.normalTex ? true : false
     };
+  }
+  /**
+   * Clone this material, returns a new material with the same properties
+   */
+  clone() {
+    const m = new _Material();
+    m.ambient = this.ambient;
+    m.diffuse = this.diffuse;
+    m.specular = this.specular;
+    m.emissive = this.emissive;
+    m.shininess = this.shininess;
+    m.opacity = this.opacity;
+    m.reflectivity = this.reflectivity;
+    m.diffuseTex = this.diffuseTex;
+    m.specularTex = this.specularTex;
+    m.normalTex = this.normalTex;
+    return m;
   }
 };
 
@@ -14205,7 +14228,6 @@ var Context = class _Context {
     if (this.globalLight.shadowsEnabled) {
       const shadowCam = this.globalLight.getShadowCamera();
       this.gl.cullFace(this.gl.FRONT);
-      this.gl.enable(this.gl.CULL_FACE);
       this.gl.enable(this.gl.POLYGON_OFFSET_FILL);
       const shadowOpt = this.globalLight.shadowMapOptions;
       this.gl.polygonOffset(shadowOpt?.polygonOffset ?? 0, 1);
@@ -14220,6 +14242,9 @@ var Context = class _Context {
     this.hud.render(this.debug, this.camera);
     if (this.started)
       requestAnimationFrame(this.render);
+    if (this.physicsWorld) {
+      this.physicsWorld.step(1 / 60, Stats.prevTime);
+    }
     Stats.resetPerFrame();
     Stats.frameCount++;
   }

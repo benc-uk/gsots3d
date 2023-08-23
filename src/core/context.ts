@@ -4,6 +4,7 @@
 // ============================================================================
 
 import log from 'loglevel'
+import * as CANNON from 'cannon-es'
 import * as twgl from 'twgl.js'
 import { mat4, vec3 } from 'gl-matrix'
 
@@ -71,6 +72,8 @@ export class Context {
 
   /** Gamma correction value, default 1.0 */
   public gamma: number
+
+  public physicsWorld?: CANNON.World
 
   // ==== Getters =============================================================
 
@@ -167,7 +170,6 @@ export class Context {
       const shadowCam = this.globalLight.getShadowCamera()
       // Switch to front face culling for shadow map, yeah it's weird but it works!
       this.gl.cullFace(this.gl.FRONT)
-      this.gl.enable(this.gl.CULL_FACE)
       this.gl.enable(this.gl.POLYGON_OFFSET_FILL)
 
       const shadowOpt = this.globalLight.shadowMapOptions
@@ -192,11 +194,14 @@ export class Context {
     // Loop forever or stop if not started
     if (this.started) requestAnimationFrame(this.render)
 
+    // Advance the physics world
+    if (this.physicsWorld) {
+      this.physicsWorld.step(1 / 60, Stats.prevTime)
+    }
+
     // Reset stats for next frame
     Stats.resetPerFrame()
     Stats.frameCount++
-
-    // this.globalLight.shadowViewOffset = this.camera.position
   }
 
   /**

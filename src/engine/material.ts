@@ -219,4 +219,23 @@ export class Material {
       hasNormalTex: this.normalTex ? true : false,
     } as UniformSet
   }
+
+  /**
+   * Clone this material, returns a new material with the same properties
+   */
+  clone() {
+    const m = new Material()
+    m.ambient = this.ambient
+    m.diffuse = this.diffuse
+    m.specular = this.specular
+    m.emissive = this.emissive
+    m.shininess = this.shininess
+    m.opacity = this.opacity
+    m.reflectivity = this.reflectivity
+    m.diffuseTex = this.diffuseTex
+    m.specularTex = this.specularTex
+    m.normalTex = this.normalTex
+
+    return m
+  }
 }
