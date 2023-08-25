@@ -354,8 +354,7 @@ export class Context {
    */
   private addInstance(instance: Instance, material: Material) {
     if (material.opacity !== undefined && material.opacity < 1) {
-      // this.instancesTrans.push(instance)
-      // this.instanceMap.set(instance.id, [instance, 1])
+      this.instancesTrans.push(instance)
     } else {
       this.instances.set(instance.id, instance)
     }

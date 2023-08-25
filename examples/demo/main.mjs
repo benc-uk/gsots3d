@@ -242,9 +242,9 @@ ctx.setDynamicEnvmap([0, 15, 0], 256)
 
 // Shadows
 ctx.globalLight.enableShadows({
-  mapSize: 1024,
+  mapSize: 2048,
   zoom: 100,
-  scatter: 0.3,
+  polygonOffset: 0.1,
 })
 
 ctx.start()

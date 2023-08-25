@@ -14354,6 +14354,7 @@ var Context = class _Context {
    */
   addInstance(instance, material) {
     if (material.opacity !== void 0 && material.opacity < 1) {
+      this.instancesTrans.push(instance);
     } else {
       this.instances.set(instance.id, instance);
     }
