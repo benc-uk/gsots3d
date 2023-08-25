@@ -40,7 +40,7 @@ const MAX_LIGHTS = 16
 export class Context {
   private gl: WebGL2RenderingContext
   private started: boolean
-  private instances: Instance[] = []
+  private instances: Map<number, Instance> = new Map()
   private instancesTrans: Instance[] = []
   private instancesParticles: Instance[] = []
   private cameras: Map<string, Camera> = new Map()
@@ -167,7 +167,6 @@ export class Context {
 
     // RENDERING - Render the shadow map from the global light
     if (this.globalLight.shadowsEnabled) {
-      const shadowCam = this.globalLight.getShadowCamera()
       // Switch to front face culling for shadow map, yeah it's weird but it works!
       this.gl.cullFace(this.gl.FRONT)
       this.gl.enable(this.gl.POLYGON_OFFSET_FILL)
@@ -178,6 +177,7 @@ export class Context {
       // Bind the shadow map framebuffer and render the scene from the light's POV
       // Using the special shadow map program as an override for the whole rendering pass
       twgl.bindFramebufferInfo(this.gl, this.globalLight.shadowMapFrameBufffer)
+      const shadowCam = this.globalLight.getShadowCamera()
       if (shadowCam) this.renderWithCamera(shadowCam, this.globalLight.shadowMapProgram)
 
       // Switch back to back face culling
@@ -194,9 +194,9 @@ export class Context {
     // Loop forever or stop if not started
     if (this.started) requestAnimationFrame(this.render)
 
-    // Advance the physics world
+    // Advance the physics simulation if configured
     if (this.physicsWorld) {
-      this.physicsWorld.step(1 / 60, Stats.prevTime)
+      this.physicsWorld.step(1 / 8)
     }
 
     // Reset stats for next frame
@@ -205,7 +205,8 @@ export class Context {
   }
 
   /**
-   * Render the scene from the given camera, used internally
+   * Render the scene from the given camera, used internally for rendering both the main view,
+   * but also shadow maps and dynamic env maps
    * @param camera
    */
   renderWithCamera(camera: Camera, programOverride?: twgl.ProgramInfo) {
@@ -282,7 +283,8 @@ export class Context {
 
     // RENDERING - Draw all opaque instances
     this.gl.enable(this.gl.CULL_FACE)
-    for (const instance of this.instances) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for (const [_id, instance] of this.instances) {
       instance.render(this.gl, uniforms, programOverride)
     }
 
@@ -352,9 +354,10 @@ export class Context {
    */
   private addInstance(instance: Instance, material: Material) {
     if (material.opacity !== undefined && material.opacity < 1) {
-      this.instancesTrans.push(instance)
+      // this.instancesTrans.push(instance)
+      // this.instanceMap.set(instance.id, [instance, 1])
     } else {
-      this.instances.push(instance)
+      this.instances.set(instance.id, instance)
     }
   }
 
@@ -366,7 +369,7 @@ export class Context {
    * @param filterTextures Apply texture filtering as materials are loaded
    * @param flipTextureY Flip the Y coordinate of the texture
    */
-  public async loadModel(path: string, fileName: string, filterTextures = true, flipY = false) {
+  public async loadModel(path: string, fileName: string, filterTextures = true, flipY = false, flipUV = true) {
     const modelName = fileName.split('.')[0]
 
     // Check if model is already loaded
@@ -376,7 +379,7 @@ export class Context {
     }
 
     // Load the model and always flip the UV
-    const model = await Model.parse(path, fileName, filterTextures, flipY, true)
+    const model = await Model.parse(path, fileName, filterTextures, flipY, flipUV)
 
     ModelCache.instance.add(model)
   }
@@ -425,7 +428,7 @@ export class Context {
     }
 
     const instance = new Instance(model)
-    this.instances.push(instance)
+    this.instances.set(instance.id, instance)
     Stats.triangles += model.triangleCount
     Stats.instances++
 
@@ -606,5 +609,25 @@ export class Context {
    */
   setDynamicEnvmap(position: XYZ, size = 256, renderDistance = 500) {
     this.dynamicEnvMap = new DynamicEnvironmentMap(this.gl, size, position, renderDistance)
+  }
+
+  /**
+   * Remove instance from the scene
+   * @param instance - Instance to remove
+   */
+  removeInstance(instance: Instance) {
+    if (!instance) return
+
+    if (instance.renderable instanceof ParticleSystem) {
+      for (let i = 0; i < this.instancesParticles.length; i++) {
+        if (this.instancesParticles[i].id === instance.id) {
+          this.instancesParticles.splice(i, 1)
+          return
+        }
+      }
+    }
+
+    // TODO: Only non-transparent instances are in the map!
+    this.instances.delete(instance.id)
   }
 }

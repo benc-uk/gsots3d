@@ -13144,6 +13144,7 @@ var Instance = class {
     this.metadata = {};
     /** Should this instance receive shadows */
     this.receiveShadow = true;
+    this.id = Math.random();
     this.renderable = renderable;
     this.position = [0, 0, 0];
     this.scale = [1, 1, 1];
@@ -13981,7 +13982,7 @@ var Model = class _Model {
    * @param {boolean} flipTextureY - Flip the Y axis of textures as they are loaded, default: false
    * @param {boolean} flipUV - Flip the UV coords of the model in the vertex/mesh data, default: true
    */
-  static async parse(path = ".", objFilename, filterTextures = true, flipTextureY = false, flipUV = true) {
+  static async parse(path = ".", objFilename, filterTextures = true, flipTextureY = false, flipUV = false) {
     const startTime = performance.now();
     const name = objFilename.split(".")[0];
     const model = new _Model(name);
@@ -14136,7 +14137,7 @@ var HUD = class {
 };
 
 // shaders/phong/glsl.frag
-var glsl_default5 = "#version 300 es\n\n// ============================================================================\n// Phong fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// ===== Constants ============================================================\n\nconst int MAX_LIGHTS = 16;\nconst int MAX_SHADOWS = 8;\nconst float MAX_SHAD_A = 0.125;\n\n// Got this from http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#poisson-sampling\nvec3 poissonDisk[8] = vec3[](\n  vec3(-0.94201624, -0.39906216, -0.4684316),\n  vec3(0.94558609, -0.76890725, -0.34478877),\n  vec3(-0.094184101, -0.9293887, -0.3048823),\n  vec3(0.34495938, 0.2938776, -0.001735733),\n  vec3(-0.91588581, 0.45771432, -0.087759815),\n  vec3(-0.81544232, -0.87912464, -0.03352997),\n  vec3(-0.38277543, 0.27676845, -0.9485365),\n  vec3(-0.58723171, -0.73007023, -0.22162315)\n);\n\n// ===== Structs ==============================================================\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n  bool enabled;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  float reflectivity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n  sampler2D normalTex;\n  bool hasNormalTex;\n};\n\n// Inputs from vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\nin vec4 v_shadowCoord;\n\n// Some global uniforms\nuniform vec3 u_camPos;\nuniform float u_gamma;\nuniform bool u_flipTextureX;\nuniform bool u_flipTextureY;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n// Reflection map isn't part of the material struct for complex reasons\nuniform samplerCube u_reflectionMap;\n// Shadows\nuniform highp sampler2DShadow u_shadowMap;\n// uniform float u_shadowScatter;  // REMOVED FOR NOW\nuniform bool u_receiveShadow;\n\n// Global texture coords shared between functions\nvec2 texCoord;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\n// ===== Helper functions =====================================================\n\n// Simple mixer\nvec4 mix4(vec4 a, vec4 b, float mix) {\n  return a * (1.0 - mix) + b * mix;\n}\n\n// Function to help with get values from the shadow map\nfloat shadowMapSample(highp sampler2DShadow map, vec3 coord) {\n  // As WebGL 2 does not support GL_CLAMP_TO_BORDER or GL_TEXTURE_BORDER_COLOR, we need to do this :(\n  if (coord.x < 0.0 || coord.x > 1.0 || coord.y < 0.0 || coord.y > 1.0) {\n    return 1.0;\n  }\n\n  return texture(map, coord);\n}\n\n// Shade a fragment using a directional light source\nvec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(-light.direction);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // Shadow map lookup\n  vec3 projCoords = v_shadowCoord.xyz / v_shadowCoord.w * 0.5 + 0.5;\n\n  // REMOVED FOR NOW - PCF for shadows using 8 samples of a poisson disk\n  // float shadow = u_receiveShadow ? 0.0 : 1.0;\n  // float scatter = u_shadowScatter / 100.0;\n  // for (int i = u_receiveShadow ? 0 : MAX_SHADOWS; i < MAX_SHADOWS; i++) {\n  //   vec3 offset = poissonDisk[i] * scatter;\n  //   shadow += shadowMapSample(u_shadowMap, projCoords + offset) * MAX_SHAD_A;\n  // }\n\n  float shadow = u_receiveShadow ? shadowMapSample(u_shadowMap, projCoords) : 1.0;\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * shadow;\n  vec3 specular = light.colour * spec * specularCol * shadow;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n// Shade a fragment using a positional light source\nvec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(light.position - v_position.xyz);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // Light attenuation, see: https://learnopengl.com/Lighting/Light-casters\n  float dist = length(light.position - v_position.xyz);\n  float attenuation = 1.0 / (light.constant + light.linear * dist + light.quad * (dist * dist));\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol * attenuation;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * attenuation;\n  vec3 specular = light.colour * spec * specularCol * attenuation;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n// ===== Main shader ==========================================================\n\nvoid main() {\n  vec3 V = normalize(u_camPos - v_position.xyz);\n\n  // Flip texture coords if needed\n  texCoord = u_flipTextureY ? vec2(v_texCoord.x, 1.0 - v_texCoord.y) : v_texCoord;\n  texCoord = u_flipTextureX ? vec2(1.0 - texCoord.x, texCoord.y) : texCoord;\n\n  vec3 N = normalize(v_normal);\n\n  // Normal mapping, this is expensive so only do it if we have a normal map\n  if (u_mat.hasNormalTex) {\n    vec3 normMap = texture(u_mat.normalTex, texCoord).xyz * 2.0 - 1.0;\n\n    vec3 Q1 = dFdx(v_position.xyz);\n    vec3 Q2 = dFdy(v_position.xyz);\n    vec2 st1 = dFdx(texCoord);\n    vec2 st2 = dFdy(texCoord);\n\n    vec3 T = -normalize(Q1 * st2.t - Q2 * st1.t);\n    vec3 B = normalize(cross(N, T));\n    mat3 TBN = mat3(T, B, N);\n\n    N = normalize(TBN * normMap);\n  }\n\n  // Handle the main directional light, only one of these\n  vec4 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, N, V);\n\n  // Add positional lights\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    outColorPart += shadePosLight(u_lightsPos[i], u_mat, N, V);\n  }\n\n  // Add emissive component\n  float emissiveAlpha = u_mat.emissive.r + u_mat.emissive.g + u_mat.emissive.b > 0.0 ? 1.0 : 0.0;\n  outColorPart += vec4(u_mat.emissive, emissiveAlpha);\n\n  // Get reflection vector and sample reflection texture\n  vec3 R = reflect(-V, N);\n  vec4 reflectCol = vec4(texture(u_reflectionMap, R).rgb, 1.0);\n\n  // Add reflection component, not sure if this is correct, looks ok\n  outColorPart = mix4(outColorPart, reflectCol, u_mat.reflectivity);\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  outColorPart.rgb = pow(outColorPart.rgb, vec3(1.0 / u_gamma));\n\n  outColour = outColorPart;\n}\n";
+var glsl_default5 = "#version 300 es\n\n// ============================================================================\n// Phong fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// ===== Constants ============================================================\n\nconst int MAX_LIGHTS = 16;\nconst int MAX_SHADOWS = 8;\nconst float MAX_SHAD_A = 0.125;\n\n// Got this from http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#poisson-sampling\nvec3 poissonDisk[8] = vec3[](\n  vec3(-0.94201624, -0.39906216, -0.4684316),\n  vec3(0.94558609, -0.76890725, -0.34478877),\n  vec3(-0.094184101, -0.9293887, -0.3048823),\n  vec3(0.34495938, 0.2938776, -0.001735733),\n  vec3(-0.91588581, 0.45771432, -0.087759815),\n  vec3(-0.81544232, -0.87912464, -0.03352997),\n  vec3(-0.38277543, 0.27676845, -0.9485365),\n  vec3(-0.58723171, -0.73007023, -0.22162315)\n);\n\n// ===== Structs ==============================================================\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n  bool enabled;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  float reflectivity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n  sampler2D normalTex;\n  bool hasNormalTex;\n};\n\n// Inputs from vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\nin vec4 v_shadowCoord;\n\n// Some global uniforms\nuniform vec3 u_camPos;\nuniform float u_gamma;\nuniform bool u_flipTextureX;\nuniform bool u_flipTextureY;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n// Reflection map isn't part of the material struct for complex reasons\nuniform samplerCube u_reflectionMap;\n// Shadows\nuniform highp sampler2DShadow u_shadowMap;\n// uniform float u_shadowScatter;  // REMOVED FOR NOW\nuniform bool u_receiveShadow;\n\n// Global texture coords shared between functions\nvec2 texCoord;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\n// ===== Helper functions =====================================================\n\n// Simple mixer\nvec4 mix4(vec4 a, vec4 b, float mix) {\n  return a * (1.0 - mix) + b * mix;\n}\n\n// Function to help with get values from the shadow map\nfloat shadowMapSample(highp sampler2DShadow map, vec3 coord) {\n  // As WebGL 2 does not support GL_CLAMP_TO_BORDER or GL_TEXTURE_BORDER_COLOR, we need to do this :(\n  if (coord.x < 0.0 || coord.x > 1.0 || coord.y < 0.0 || coord.y > 1.0) {\n    return 1.0;\n  }\n\n  return texture(map, coord);\n}\n\n// Shade a fragment using a directional light source\nvec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(-light.direction);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // Shadow map lookup\n  vec3 projCoords = v_shadowCoord.xyz / v_shadowCoord.w * 0.5 + 0.5;\n\n  // REMOVED FOR NOW - PCF for shadows using samples of a poisson disk\n  // float shadow = u_receiveShadow ? 0.0 : 1.0;\n  // float scatter = u_shadowScatter / 100.0;\n  // for (int i = u_receiveShadow ? 0 : MAX_SHADOWS; i < MAX_SHADOWS; i++) {\n  //   vec3 offset = poissonDisk[i] * scatter;\n  //   shadow += shadowMapSample(u_shadowMap, projCoords + offset) * MAX_SHAD_A;\n  // }\n\n  float shadow = u_receiveShadow ? shadowMapSample(u_shadowMap, projCoords) : 1.0;\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * shadow;\n  vec3 specular = light.colour * spec * specularCol * shadow;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n// Shade a fragment using a positional light source\nvec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(light.position - v_position.xyz);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // Light attenuation, see: https://learnopengl.com/Lighting/Light-casters\n  float dist = length(light.position - v_position.xyz);\n  float attenuation = 1.0 / (light.constant + light.linear * dist + light.quad * (dist * dist));\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol * attenuation;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * attenuation;\n  vec3 specular = light.colour * spec * specularCol * attenuation;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n// ===== Main shader ==========================================================\n\nvoid main() {\n  vec3 V = normalize(u_camPos - v_position.xyz);\n\n  // Flip texture coords if needed\n  texCoord = u_flipTextureY ? vec2(v_texCoord.x, 1.0 - v_texCoord.y) : v_texCoord;\n  texCoord = u_flipTextureX ? vec2(1.0 - texCoord.x, texCoord.y) : texCoord;\n\n  vec3 N = normalize(v_normal);\n\n  // Normal mapping, this is expensive so only do it if we have a normal map\n  if (u_mat.hasNormalTex) {\n    vec3 normMap = texture(u_mat.normalTex, texCoord).xyz * 2.0 - 1.0;\n\n    vec3 Q1 = dFdx(v_position.xyz);\n    vec3 Q2 = dFdy(v_position.xyz);\n    vec2 st1 = dFdx(texCoord);\n    vec2 st2 = dFdy(texCoord);\n\n    vec3 T = -normalize(Q1 * st2.t - Q2 * st1.t);\n    vec3 B = normalize(cross(N, T));\n    mat3 TBN = mat3(T, B, N);\n\n    N = normalize(TBN * normMap);\n  }\n\n  // Handle the main directional light, only one of these\n  vec4 outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, N, V);\n\n  // Add positional lights\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    outColorPart += shadePosLight(u_lightsPos[i], u_mat, N, V);\n  }\n\n  // Add emissive component\n  float emissiveAlpha = u_mat.emissive.r + u_mat.emissive.g + u_mat.emissive.b > 0.0 ? 1.0 : 0.0;\n  outColorPart += vec4(u_mat.emissive, emissiveAlpha);\n\n  // Get reflection vector and sample reflection texture\n  vec3 R = reflect(-V, N);\n  vec4 reflectCol = vec4(texture(u_reflectionMap, R).rgb, 1.0);\n\n  // Add reflection component, not sure if this is correct, looks ok\n  outColorPart = mix4(outColorPart, reflectCol, u_mat.reflectivity);\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  outColorPart.rgb = pow(outColorPart.rgb, vec3(1.0 / u_gamma));\n\n  outColour = outColorPart;\n}\n";
 
 // shaders/phong/glsl.vert
 var glsl_default6 = "#version 300 es\n\n// ============================================================================\n// Phong vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\nuniform mat4 u_shadowMatrix;\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_normal;\nout vec4 v_position;\nout vec4 v_shadowCoord;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  v_position = u_world * position;\n  v_shadowCoord = u_shadowMatrix * v_position;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
@@ -14152,7 +14153,7 @@ var MAX_LIGHTS = 16;
 var Context = class _Context {
   /** Constructor is private, use init() to create a new context */
   constructor(gl) {
-    this.instances = [];
+    this.instances = /* @__PURE__ */ new Map();
     this.instancesTrans = [];
     this.instancesParticles = [];
     this.cameras = /* @__PURE__ */ new Map();
@@ -14226,12 +14227,12 @@ var Context = class _Context {
       this.dynamicEnvMap.update(this.gl, this);
     }
     if (this.globalLight.shadowsEnabled) {
-      const shadowCam = this.globalLight.getShadowCamera();
       this.gl.cullFace(this.gl.FRONT);
       this.gl.enable(this.gl.POLYGON_OFFSET_FILL);
       const shadowOpt = this.globalLight.shadowMapOptions;
       this.gl.polygonOffset(shadowOpt?.polygonOffset ?? 0, 1);
       bindFramebufferInfo(this.gl, this.globalLight.shadowMapFrameBufffer);
+      const shadowCam = this.globalLight.getShadowCamera();
       if (shadowCam)
         this.renderWithCamera(shadowCam, this.globalLight.shadowMapProgram);
       this.gl.cullFace(this.gl.BACK);
@@ -14243,13 +14244,14 @@ var Context = class _Context {
     if (this.started)
       requestAnimationFrame(this.render);
     if (this.physicsWorld) {
-      this.physicsWorld.step(1 / 60, Stats.prevTime);
+      this.physicsWorld.step(1 / 8);
     }
     Stats.resetPerFrame();
     Stats.frameCount++;
   }
   /**
-   * Render the scene from the given camera, used internally
+   * Render the scene from the given camera, used internally for rendering both the main view,
+   * but also shadow maps and dynamic env maps
    * @param camera
    */
   renderWithCamera(camera, programOverride) {
@@ -14299,7 +14301,8 @@ var Context = class _Context {
     }
     uniforms.u_lightsPosCount = lightCount;
     this.gl.enable(this.gl.CULL_FACE);
-    for (const instance of this.instances) {
+    for (const [id, instance] of this.instances) {
+      console.log(id, instance);
       instance.render(this.gl, uniforms, programOverride);
     }
     this.gl.disable(this.gl.CULL_FACE);
@@ -14352,9 +14355,8 @@ var Context = class _Context {
    */
   addInstance(instance, material) {
     if (material.opacity !== void 0 && material.opacity < 1) {
-      this.instancesTrans.push(instance);
     } else {
-      this.instances.push(instance);
+      this.instances.set(instance.id, instance);
     }
   }
   /**
@@ -14365,13 +14367,13 @@ var Context = class _Context {
    * @param filterTextures Apply texture filtering as materials are loaded
    * @param flipTextureY Flip the Y coordinate of the texture
    */
-  async loadModel(path, fileName, filterTextures = true, flipY = false) {
+  async loadModel(path, fileName, filterTextures = true, flipY = false, flipUV = true) {
     const modelName = fileName.split(".")[0];
     if (ModelCache.instance.get(modelName, false)) {
       import_loglevel8.default.warn(`\u26A0\uFE0F Model '${modelName}' already loaded, skipping`);
       return;
     }
-    const model = await Model.parse(path, fileName, filterTextures, flipY, true);
+    const model = await Model.parse(path, fileName, filterTextures, flipY, flipUV);
     ModelCache.instance.add(model);
   }
   /**
@@ -14412,7 +14414,7 @@ var Context = class _Context {
       throw new Error(`\u{1F4A5} Unable to create model instance for ${modelName}`);
     }
     const instance = new Instance(model);
-    this.instances.push(instance);
+    this.instances.set(instance.id, instance);
     Stats.triangles += model.triangleCount;
     Stats.instances++;
     return instance;
@@ -14555,6 +14557,23 @@ var Context = class _Context {
    */
   setDynamicEnvmap(position, size = 256, renderDistance = 500) {
     this.dynamicEnvMap = new DynamicEnvironmentMap(this.gl, size, position, renderDistance);
+  }
+  /**
+   * Remove instance from the scene
+   * @param instance - Instance to remove
+   */
+  removeInstance(instance) {
+    if (!instance)
+      return;
+    if (instance.renderable instanceof ParticleSystem) {
+      for (let i = 0; i < this.instancesParticles.length; i++) {
+        if (this.instancesParticles[i].id === instance.id) {
+          this.instancesParticles.splice(i, 1);
+          return;
+        }
+      }
+    }
+    this.instances.delete(instance.id);
   }
 };
 

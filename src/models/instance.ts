@@ -50,11 +50,16 @@ export class Instance {
   /** Should this instance receive shadows */
   private receiveShadow = true
 
+  public readonly id: number
+
   /**
    * Create a new instace of a renderable thing
    * @param {Renderable} renderable - Renderable to use for this instance
    */
   constructor(renderable: Renderable) {
+    // TODO: This is a plain straight up lazy hack
+    this.id = Math.random()
+
     this.renderable = renderable
 
     this.position = [0, 0, 0]

@@ -1,15 +1,13 @@
-import { Context, setLogLevel, Physics, Tuples, Model } from '../../dist-bundle/gsots3d.js'
+import { Context, Physics, Tuples } from '../../dist-bundle/gsots3d.js'
 import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.min.js'
 
 const ctx = await Context.init()
 ctx.camera.position = [50, 80, 60]
 ctx.camera.enableFPControls(0.8, -0.49, 0.0015, 1.8)
-ctx.camera.far = 300
+ctx.camera.far = 1300
 ctx.camera.fov = 43
-ctx.debug = true
-setLogLevel('info')
 
-ctx.globalLight.setAsPosition(5, 6, 3)
+ctx.globalLight.setAsPosition(9, 9, 9)
 const amb = 0.2
 ctx.globalLight.ambient = [amb, amb, amb]
 ctx.globalLight.enableShadows({
@@ -32,13 +30,14 @@ table.scale = [0.7, 1.1, 1.2]
 table.rotateXDeg(-90)
 
 const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -4.8, 0) })
+world.allowSleep = true
 
 const tableMaterial = new CANNON.Material()
 const diceMat = new CANNON.Material()
 world.addContactMaterial(
   new CANNON.ContactMaterial(tableMaterial, diceMat, {
     friction: 0.2,
-    restitution: 0.6,
+    restitution: 0.4,
   })
 )
 
@@ -46,28 +45,35 @@ const tableBody = Physics.createBoxBody(table, 0, 85, tableMaterial)
 tableBody.position = new CANNON.Vec3(0, 0, 0)
 world.addBody(tableBody)
 
-const startDiceCount = 70
+const startDiceCount = 200
 const diceBodies = []
 const diceInstances = []
 for (let d = 0; d < startDiceCount; d++) {
   setTimeout(() => {
     addDice()
-  }, 50 * d)
+  }, 20 * d)
 }
 
 ctx.physicsWorld = world
-ctx.update = (delta, now) => {
+ctx.update = () => {
   for (let d = 0; d < diceBodies.length; d++) {
     const dice = diceInstances[d]
     const diceBody = diceBodies[d]
-
     dice.position = Tuples.fromCannon(diceBody.position)
     dice.setQuaternion(Tuples.fromCannon(diceBody.quaternion))
+
+    if (dice.position[1] < -200) {
+      world.removeBody(diceBody)
+      ctx.removeInstance(dice)
+      diceBodies.splice(d, 1)
+      diceInstances.splice(d, 1)
+      d--
+    }
   }
 }
 
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'z') {
+  if (e.key === ' ') {
     addDice()
   }
 })
@@ -88,7 +94,11 @@ function addDice() {
     quaternion: new CANNON.Quaternion(dice.quaternion[0], dice.quaternion[1], dice.quaternion[2], dice.quaternion[3]),
     shape: new CANNON.Box(new CANNON.Vec3(2.5, 2.5, 2.5)),
     material: diceMat,
+    sleepSpeedLimit: 0.2,
+    sleepTimeLimit: 2,
+    allowSleep: true,
   })
+
   diceBody.angularVelocity.set(Math.random() * 2, Math.random() * 2, Math.random() * 2)
   world.addBody(diceBody)
 

@@ -1,15 +1,10 @@
-# Blender MTL File: 'dice.blend'
-# Material Count: 2
+# Blender 3.6.2 MTL File: 'dice.blend'
+# www.blender.org
 
-newmtl Material.001
+newmtl Material
+Ns 60
 Ka 1.000000 1.000000 1.000000
-Kd 0.8 0.8 0.8
-Ks 0 0 0
-illum 2
-
-newmtl Material.002
-Ns 70
-Ka 1.000000 1.000000 1.000000
-Kd 0.1 0.51 0.15
-Ks 0.700000 0.700000 0.700000
-illum 2
+Kd 1 1 1
+Ks 0.7 0.9 0.7
+map_Kd dice.png
+map_bump dice_normal.png

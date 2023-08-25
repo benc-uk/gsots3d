@@ -1,7 +1,0 @@
-newmtl diceface
-Ka 1 1 1
-Kd 0.5 0.2 0.9
-Ks 0.7 0.7 0.7
-Ns 50
-map_Kd dice.png
-map_bump dice_normal.png

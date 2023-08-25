@@ -90,7 +90,7 @@ export class Model implements Renderable {
    * @param {boolean} flipTextureY - Flip the Y axis of textures as they are loaded, default: false
    * @param {boolean} flipUV - Flip the UV coords of the model in the vertex/mesh data, default: true
    */
-  static async parse(path = '.', objFilename: string, filterTextures = true, flipTextureY = false, flipUV = true) {
+  static async parse(path = '.', objFilename: string, filterTextures = true, flipTextureY = false, flipUV = false) {
     const startTime = performance.now()
 
     // Create a new model with the name of the file
@@ -106,7 +106,6 @@ export class Model implements Renderable {
     }
 
     // Try to parse the OBJ file
-    // NOTE: We flip texture coords by default, this is because most OBJ files don't work with OpenGL
     const objData = parseOBJ(objFile, flipUV)
 
     if (!objData.geometries || objData.geometries.length === 0) {
