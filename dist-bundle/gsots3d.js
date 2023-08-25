@@ -14154,8 +14154,8 @@ var Context = class _Context {
   /** Constructor is private, use init() to create a new context */
   constructor(gl) {
     this.instances = /* @__PURE__ */ new Map();
-    this.instancesTrans = [];
-    this.instancesParticles = [];
+    this.instancesTrans = /* @__PURE__ */ new Map();
+    this.instancesParticles = /* @__PURE__ */ new Map();
     this.cameras = /* @__PURE__ */ new Map();
     /** All the dynamic point lights in the scene */
     this.lights = [];
@@ -14304,23 +14304,24 @@ var Context = class _Context {
     for (const [_id, instance] of this.instances) {
       instance.render(this.gl, uniforms, programOverride);
     }
-    this.gl.disable(this.gl.CULL_FACE);
-    this.instancesTrans.sort((a2, b2) => {
+    const instancesTransArray = Array.from(this.instancesTrans.values());
+    instancesTransArray.sort((a2, b2) => {
       const ad = Tuples.distance(a2.position ?? [0, 0, 0], this.camera.position);
       const bd = Tuples.distance(b2.position ?? [0, 0, 0], this.camera.position);
       return bd - ad;
     });
-    for (const instance of this.instancesTrans) {
+    this.gl.disable(this.gl.CULL_FACE);
+    for (const instance of instancesTransArray) {
       instance.render(this.gl, uniforms, programOverride);
     }
     this.gl.depthMask(false);
-    for (const instance of this.instancesParticles) {
+    for (const [_id, instance] of this.instancesParticles) {
       instance.render(this.gl, uniforms, programOverride);
     }
     this.gl.depthMask(true);
   }
   /**
-   * Start the rendering loop
+   * Start the rendering loop, without calling this nothing will render
    */
   start() {
     import_loglevel8.default.info("\u{1F680} Starting main GSOTS render loop!");
@@ -14336,7 +14337,7 @@ var Context = class _Context {
     this.started = false;
   }
   /**
-   * Resize the canvas to match the size of the element it's in
+   * Resize the canvas to match the size of the HTML element that contains it
    * @param viewportOnly - Only resize the viewport, not the canvas
    */
   resize(viewportOnly = false) {
@@ -14354,7 +14355,7 @@ var Context = class _Context {
    */
   addInstance(instance, material) {
     if (material.opacity !== void 0 && material.opacity < 1) {
-      this.instancesTrans.push(instance);
+      this.instancesTrans.set(instance.id, instance);
     } else {
       this.instances.set(instance.id, instance);
     }
@@ -14525,7 +14526,7 @@ var Context = class _Context {
     const particleSystem = new ParticleSystem(this.gl, maxParticles, baseSize);
     const instance = new Instance(particleSystem);
     instance.castShadow = false;
-    this.instancesParticles.push(instance);
+    this.instancesParticles.set(instance.id, instance);
     Stats.instances++;
     return { instance, particleSystem };
   }
@@ -14566,14 +14567,11 @@ var Context = class _Context {
     if (!instance)
       return;
     if (instance.renderable instanceof ParticleSystem) {
-      for (let i = 0; i < this.instancesParticles.length; i++) {
-        if (this.instancesParticles[i].id === instance.id) {
-          this.instancesParticles.splice(i, 1);
-          return;
-        }
-      }
+      this.instancesParticles.delete(instance.id);
+      return;
     }
     this.instances.delete(instance.id);
+    this.instancesTrans.delete(instance.id);
   }
 };
 

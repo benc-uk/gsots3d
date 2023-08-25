@@ -2,6 +2,8 @@ import { Context, Physics, Tuples } from '../../dist-bundle/gsots3d.js'
 import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.min.js'
 
 const ctx = await Context.init()
+ctx.start()
+
 ctx.camera.position = [50, 80, 60]
 ctx.camera.enableFPControls(0.8, -0.49, 0.0015, 1.8)
 ctx.camera.far = 1300
@@ -77,8 +79,6 @@ window.addEventListener('keydown', (e) => {
     addDice()
   }
 })
-
-ctx.start()
 
 function addDice() {
   const dice = ctx.createModelInstance('dice')

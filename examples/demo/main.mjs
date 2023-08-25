@@ -62,7 +62,7 @@ try {
   matGlass.opacity = 0.3
   matGlass.reflectivity = 0.6
   const crystalBall = ctx.createSphereInstance(matGlass, 4, 24, 12)
-  crystalBall.position = [12, 22, -8]
+  crystalBall.position = [12, 21, -8]
 
   const matBlueGlass = Material.createSolidColour(0.2, 0.3, 1.0)
   matBlueGlass.specular = [0.8, 0.8, 0.8]
@@ -112,7 +112,7 @@ try {
   mellonTx.diffuse = [0.7, 1.4, 0.7]
   mellonTx.specular = [1.0, 1.0, 1.0]
   mellonTx.shininess = 25
-  mellon.position = [22, 22, -19]
+  mellon.position = [22, 21.5, -19]
 
   const crateMat = Material.createBasicTexture('../_textures/crate.png')
   crateMat.addSpecularTexture('../_textures/crate-specular.png')
@@ -244,7 +244,7 @@ ctx.setDynamicEnvmap([0, 15, 0], 256)
 ctx.globalLight.enableShadows({
   mapSize: 2048,
   zoom: 100,
-  polygonOffset: 0.1,
+  polygonOffset: 1,
 })
 
 ctx.start()

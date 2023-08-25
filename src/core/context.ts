@@ -40,19 +40,19 @@ const MAX_LIGHTS = 16
 export class Context {
   private gl: WebGL2RenderingContext
   private started: boolean
-  private instances: Map<number, Instance> = new Map()
-  private instancesTrans: Instance[] = []
-  private instancesParticles: Instance[] = []
-  private cameras: Map<string, Camera> = new Map()
+  private instances: Map<number, Instance>
+  private instancesTrans: Map<number, Instance>
+  private instancesParticles: Map<number, Instance>
+  private cameras: Map<string, Camera>
   private activeCameraName: string
-  private envmap?: EnvironmentMap
+  private _envmap?: EnvironmentMap
   private dynamicEnvMap?: DynamicEnvironmentMap
 
   /** Global directional light */
   public globalLight: LightDirectional
 
   /** All the dynamic point lights in the scene */
-  public lights: LightPoint[] = []
+  public lights: LightPoint[]
 
   /** Main camera for this context */
   private _camera: Camera
@@ -87,12 +87,22 @@ export class Context {
     return this.activeCameraName
   }
 
+  /** Get the current EnvironmentMap for the scene */
+  get envmap() {
+    return this._envmap
+  }
+
   /** Constructor is private, use init() to create a new context */
   private constructor(gl: WebGL2RenderingContext) {
     this.gl = gl
     this.started = false
     this.debug = false
     this.gamma = 1.0
+    this.instances = new Map()
+    this.instancesTrans = new Map()
+    this.instancesParticles = new Map()
+    this.cameras = new Map()
+    this.lights = []
 
     // Main global light
     this.globalLight = new LightDirectional()
@@ -159,13 +169,17 @@ export class Context {
     // Call the external update function
     this.update(Stats.deltaTime, now)
 
-    // RENDERING - Render into the dynamic environment map(s) if any
+    // -----------------------------------------------------------------------
+    // RENDER CORE - Render into the dynamic environment map(s) if any
+    // -----------------------------------------------------------------------
     if (this.dynamicEnvMap) {
       // This is a rare case of passing the context to the object, but it's needed for the dynamic env map
       this.dynamicEnvMap.update(this.gl, this)
     }
 
-    // RENDERING - Render the shadow map from the global light
+    // -------------------------------------------------------------
+    // RENDER CORE - Render the shadow map from the global light
+    // -------------------------------------------------------------
     if (this.globalLight.shadowsEnabled) {
       // Switch to front face culling for shadow map, yeah it's weird but it works!
       this.gl.cullFace(this.gl.FRONT)
@@ -185,7 +199,9 @@ export class Context {
       this.gl.disable(this.gl.POLYGON_OFFSET_FILL)
     }
 
-    // RENDERING - Render the scene from active camera into the main framebuffer
+    // -------------------------------------------------------------------------------------
+    // RENDER CORE - Render the scene from active camera into the main framebuffer
+    // -------------------------------------------------------------------------------------
     twgl.bindFramebufferInfo(this.gl, null)
     this.renderWithCamera(this.camera)
 
@@ -223,7 +239,7 @@ export class Context {
 
     // Work out what reflection map to use, if any
     // NOTE: This *not* part of the material because it's too hard to dynamically change
-    let reflectMap: WebGLTexture | null = this.envmap?.texture ?? null
+    let reflectMap: WebGLTexture | null = this._envmap?.texture ?? null
 
     // As there is only one dynamic reflection envmap, we can use it across all instances
     // But ONLY set this when the camera is NOT rendering into it!
@@ -250,12 +266,16 @@ export class Context {
       // u_shadowScatter: this.globalLight.shadowMapOptions?.scatter ?? 0.2,
     } as UniformSet
 
-    // RENDERING - Draw envmap around the scene first, like a skybox & background
-    if (this.envmap) {
-      this.envmap.render(<mat4>uniforms.u_view, <mat4>uniforms.u_proj, camera)
+    // ------------------------------------------------------------------------------
+    // RENDER CORE - Draw envmap around the scene first, as a skybox background
+    // ------------------------------------------------------------------------------
+    if (this._envmap) {
+      this._envmap.render(<mat4>uniforms.u_view, <mat4>uniforms.u_proj, camera)
     }
 
-    // RENDERING - Process lighting
+    // ------------------------------------------------
+    // RENDER CORE - Process lighting
+    // ------------------------------------------------
 
     // Apply global light to the two programs
     uniforms.u_lightDirGlobal = this.globalLight.uniforms
@@ -281,38 +301,50 @@ export class Context {
 
     uniforms.u_lightsPosCount = lightCount
 
-    // RENDERING - Draw all opaque instances
+    // ------------------------------------------------
+    // RENDER CORE - Draw all standard opaque instances
+    // ------------------------------------------------
     this.gl.enable(this.gl.CULL_FACE)
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [_id, instance] of this.instances) {
       instance.render(this.gl, uniforms, programOverride)
     }
 
-    // RENDERING - Draw all transparent instances
-    this.gl.disable(this.gl.CULL_FACE)
+    // ------------------------------------------------
+    // RENDER CORE - Draw all transparent instances
+    // ------------------------------------------------
 
     // Sort transparent instances by distance to camera
-    // Maybe remove this in scenes with lots of transparent instances?
-    this.instancesTrans.sort((a, b) => {
+    // TODO: Maybe remove this in scenes with lots of transparent instances?
+    const instancesTransArray = Array.from(this.instancesTrans.values())
+    instancesTransArray.sort((a, b) => {
       const ad = Tuples.distance(a.position ?? [0, 0, 0], this.camera.position)
       const bd = Tuples.distance(b.position ?? [0, 0, 0], this.camera.position)
       return bd - ad
     })
 
-    for (const instance of this.instancesTrans) {
+    this.gl.disable(this.gl.CULL_FACE)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for (const instance of instancesTransArray) {
       instance.render(this.gl, uniforms, programOverride)
     }
 
-    // RENDERING - Draw all particle systems
+    // ------------------------------------------------
+    // RENDER CORE - Draw all particle systems
+    // ------------------------------------------------
     this.gl.depthMask(false)
-    for (const instance of this.instancesParticles) {
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for (const [_id, instance] of this.instancesParticles) {
       instance.render(this.gl, uniforms, programOverride)
     }
+
     this.gl.depthMask(true)
   }
 
   /**
-   * Start the rendering loop
+   * Start the rendering loop, without calling this nothing will render
    */
   start() {
     log.info('🚀 Starting main GSOTS render loop!')
@@ -333,7 +365,7 @@ export class Context {
   }
 
   /**
-   * Resize the canvas to match the size of the element it's in
+   * Resize the canvas to match the size of the HTML element that contains it
    * @param viewportOnly - Only resize the viewport, not the canvas
    */
   resize(viewportOnly = false) {
@@ -354,7 +386,7 @@ export class Context {
    */
   private addInstance(instance: Instance, material: Material) {
     if (material.opacity !== undefined && material.opacity < 1) {
-      this.instancesTrans.push(instance)
+      this.instancesTrans.set(instance.id, instance)
     } else {
       this.instances.set(instance.id, instance)
     }
@@ -571,7 +603,7 @@ export class Context {
     const instance = new Instance(particleSystem)
     instance.castShadow = false
 
-    this.instancesParticles.push(instance)
+    this.instancesParticles.set(instance.id, instance)
     Stats.instances++
 
     return { instance, particleSystem }
@@ -583,22 +615,15 @@ export class Context {
    * @param textureURLs - Array of 6 texture URLs to use for the map, in the order: +X, -X, +Y, -Y, +Z, -Z
    */
   setEnvmap(renderAsBackground = false, ...textureURLs: string[]) {
-    this.envmap = new EnvironmentMap(this.gl, textureURLs)
-    this.envmap.renderAsBackground = renderAsBackground
+    this._envmap = new EnvironmentMap(this.gl, textureURLs)
+    this._envmap.renderAsBackground = renderAsBackground
   }
 
   /**
    * Remove any current EnvironmentMap from the scene
    */
   removeEnvmap() {
-    this.envmap = undefined
-  }
-
-  /**
-   * Get the current EnvironmentMap for the scene
-   */
-  getEnvmap() {
-    return this.envmap
+    this._envmap = undefined
   }
 
   /**
@@ -611,22 +636,18 @@ export class Context {
   }
 
   /**
-   * Remove instance from the scene
+   * Remove instance from the scene, it will no longer be rendered
    * @param instance - Instance to remove
    */
   removeInstance(instance: Instance) {
     if (!instance) return
 
     if (instance.renderable instanceof ParticleSystem) {
-      for (let i = 0; i < this.instancesParticles.length; i++) {
-        if (this.instancesParticles[i].id === instance.id) {
-          this.instancesParticles.splice(i, 1)
-          return
-        }
-      }
+      this.instancesParticles.delete(instance.id)
+      return
     }
 
-    // TODO: Only non-transparent instances are in the map!
     this.instances.delete(instance.id)
+    this.instancesTrans.delete(instance.id)
   }
 }
