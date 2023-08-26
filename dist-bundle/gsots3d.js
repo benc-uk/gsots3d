@@ -6618,7 +6618,7 @@ var setAxes = function() {
 }();
 
 // package.json
-var version = "0.0.5-alpha.0";
+var version = "0.0.5-alpha.1";
 
 // node_modules/cannon-es/dist/cannon-es.js
 var Mat3 = class _Mat3 {
