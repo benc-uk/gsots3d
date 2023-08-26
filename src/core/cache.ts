@@ -4,7 +4,7 @@
 // ============================================================================
 
 import log from 'loglevel'
-import { Model } from '../models/model.ts'
+import { Model } from '../renderable/model.ts'
 import { ProgramInfo, createTexture } from 'twgl.js'
 
 export const PROG_DEFAULT = 'phong'

@@ -12799,17 +12799,15 @@ var LightDirectional = class {
     }
     const moveDist = this._shadowOptions.distance * 0.9;
     const cam = new Camera(1 /* ORTHOGRAPHIC */, 4 / 3);
-    cam.orthoZoom = this._shadowOptions.zoom;
-    cam.lookAt = [0, 0, 0];
-    cam.position = [-this.direction[0] * moveDist, -this.direction[1] * moveDist, -this.direction[2] * moveDist];
     cam.usedForShadowMap = true;
+    cam.orthoZoom = this._shadowOptions.zoom;
+    cam.lookAt = this.shadowViewOffset;
+    cam.position = [
+      -this.direction[0] * moveDist + this.shadowViewOffset[0],
+      -this.direction[1] * moveDist + this.shadowViewOffset[1],
+      -this.direction[2] * moveDist + this.shadowViewOffset[2]
+    ];
     cam.far = this._shadowOptions.distance * 2;
-    cam.position[0] += this.shadowViewOffset[0];
-    cam.position[1] += this.shadowViewOffset[1];
-    cam.position[2] += this.shadowViewOffset[2];
-    cam.lookAt[0] += this.shadowViewOffset[0];
-    cam.lookAt[1] += this.shadowViewOffset[1];
-    cam.lookAt[2] += this.shadowViewOffset[2];
     return cam;
   }
   /**
@@ -13125,7 +13123,7 @@ var DynamicEnvironmentMap = class {
   }
 };
 
-// src/models/instance.ts
+// src/renderable/instance.ts
 var Instance = class {
   /**
    * Create a new instace of a renderable thing
@@ -13231,7 +13229,7 @@ var Instance = class {
   }
 };
 
-// src/models/billboard.ts
+// src/renderable/billboard.ts
 var BillboardType = /* @__PURE__ */ ((BillboardType2) => {
   BillboardType2[BillboardType2["SPHERICAL"] = 0] = "SPHERICAL";
   BillboardType2[BillboardType2["CYLINDRICAL"] = 1] = "CYLINDRICAL";
@@ -13427,7 +13425,7 @@ var Material2 = class _Material {
   }
 };
 
-// src/models/primitive.ts
+// src/renderable/primitive.ts
 var Primitive = class {
   constructor() {
     this.material = new Material2();
@@ -13545,7 +13543,7 @@ var PrimitiveCylinder = class extends Primitive {
   }
 };
 
-// src/models/particles.ts
+// src/renderable/particles.ts
 var import_loglevel6 = __toESM(require_loglevel(), 1);
 
 // shaders/particles/update.frag
@@ -13560,7 +13558,7 @@ var render_default = "#version 300 es\n\n// ====================================
 // shaders/particles/render.vert
 var render_default2 = "#version 300 es\n\n// ============================================================================\n// Particle render vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec4 position; // Vertex positions of the particle quad\nin vec2 texcoord;\nin vec4 tf_position; // Position of the particle\nin vec2 tf_age;\nin vec4 tf_props;\n\nuniform mat4 u_view;\nuniform mat4 u_proj;\nuniform mat4 u_world;\nuniform float u_agePower;\n\nout vec2 v_texcoord;\nout vec3 v_position;\nout float v_ageNorm;\n\nvoid main() {\n  vec3 vert_pos = position.xyz;\n  v_ageNorm = clamp(tf_age[0] / tf_age[1], 0.0, 1.0);\n  v_ageNorm = pow(v_ageNorm, u_agePower);\n\n  // Rotate by tf_position[3] (rotation)\n  float s = sin(tf_position[3]);\n  float c = cos(tf_position[3]);\n  mat2 rot = mat2(c, -s, s, c);\n  vert_pos.xy = rot * position.xy;\n\n  // Scale by tf_props[0] (size)\n  vert_pos = vert_pos.xyz * tf_props[0];\n\n  // Move to the world at the particle position\n  vec4 world_pos = u_world * vec4(tf_position.xyz, 1.0);\n  vec4 view_pos = u_view * world_pos;\n\n  // Billboarding magic\n  gl_Position = u_proj * (view_pos + vec4(vert_pos.xy, 0.0, 0.0));\n\n  v_position = world_pos.xyz;\n  v_texcoord = texcoord;\n}\n";
 
-// src/models/particles.ts
+// src/renderable/particles.ts
 var ParticleSystem = class {
   /**
    * Create a new particle system
@@ -13724,7 +13722,7 @@ var ParticleSystem = class {
   }
 };
 
-// src/models/model.ts
+// src/renderable/model.ts
 var import_loglevel7 = __toESM(require_loglevel(), 1);
 
 // src/parsers/mtl-parser.ts
@@ -13934,7 +13932,7 @@ async function fetchFile(filePath) {
   return text;
 }
 
-// src/models/model.ts
+// src/renderable/model.ts
 var Model = class _Model {
   /**
    * Constructor is private, use static `parse()` method instead
@@ -14153,12 +14151,6 @@ var MAX_LIGHTS = 16;
 var Context = class _Context {
   /** Constructor is private, use init() to create a new context */
   constructor(gl) {
-    this.instances = /* @__PURE__ */ new Map();
-    this.instancesTrans = /* @__PURE__ */ new Map();
-    this.instancesParticles = /* @__PURE__ */ new Map();
-    this.cameras = /* @__PURE__ */ new Map();
-    /** All the dynamic point lights in the scene */
-    this.lights = [];
     /**
      * The pre-render update function, called every frame.
      * Hook in your custom logic and processing here
@@ -14170,6 +14162,11 @@ var Context = class _Context {
     this.started = false;
     this.debug = false;
     this.gamma = 1;
+    this.instances = /* @__PURE__ */ new Map();
+    this.instancesTrans = /* @__PURE__ */ new Map();
+    this.instancesParticles = /* @__PURE__ */ new Map();
+    this.cameras = /* @__PURE__ */ new Map();
+    this.lights = [];
     this.globalLight = new LightDirectional();
     this.globalLight.setAsPosition(20, 50, 30);
     const defaultCamera = new Camera(0 /* PERSPECTIVE */);
@@ -14187,6 +14184,10 @@ var Context = class _Context {
   /** Get the name of the active camera */
   get cameraName() {
     return this.activeCameraName;
+  }
+  /** Get the current EnvironmentMap for the scene */
+  get envmap() {
+    return this._envmap;
   }
   /**
    * Create & initialize a new Context which will render into provided canvas. This is where you start when using the library.
@@ -14223,6 +14224,8 @@ var Context = class _Context {
       return;
     Stats.updateTime(now);
     this.update(Stats.deltaTime, now);
+    this.camera.update();
+    this.globalLight.shadowViewOffset = this.camera.position;
     if (this.dynamicEnvMap) {
       this.dynamicEnvMap.update(this.gl, this);
     }
@@ -14258,9 +14261,8 @@ var Context = class _Context {
     if (!this.gl)
       return;
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-    camera.update();
     const camMatrix = camera.matrix;
-    let reflectMap = this.envmap?.texture ?? null;
+    let reflectMap = this._envmap?.texture ?? null;
     if (this.dynamicEnvMap) {
       if (!camera.usedForEnvMap) {
         reflectMap = this.dynamicEnvMap.texture;
@@ -14280,8 +14282,8 @@ var Context = class _Context {
       u_shadowMatrix: this.globalLight.shadowMatrix ?? mat4_exports.create()
       // u_shadowScatter: this.globalLight.shadowMapOptions?.scatter ?? 0.2,
     };
-    if (this.envmap) {
-      this.envmap.render(uniforms.u_view, uniforms.u_proj, camera);
+    if (this._envmap) {
+      this._envmap.render(uniforms.u_view, uniforms.u_proj, camera);
     }
     uniforms.u_lightDirGlobal = this.globalLight.uniforms;
     if (this.lights.length > MAX_LIGHTS) {
@@ -14363,7 +14365,7 @@ var Context = class _Context {
   /**
    * Model loader, loads an OBJ model from a file via URL or path and adds it to the cache
    * This is preferred over calling Model.parse() directly
-   * @param path Base path to the model file, e.g. './models/'
+   * @param path Base path to the model file, e.g. './renderable/'
    * @param fileName Name of the model file, e.g 'teapot.obj'
    * @param filterTextures Apply texture filtering as materials are loaded
    * @param flipTextureY Flip the Y coordinate of the texture
@@ -14536,20 +14538,14 @@ var Context = class _Context {
    * @param textureURLs - Array of 6 texture URLs to use for the map, in the order: +X, -X, +Y, -Y, +Z, -Z
    */
   setEnvmap(renderAsBackground = false, ...textureURLs) {
-    this.envmap = new EnvironmentMap(this.gl, textureURLs);
-    this.envmap.renderAsBackground = renderAsBackground;
+    this._envmap = new EnvironmentMap(this.gl, textureURLs);
+    this._envmap.renderAsBackground = renderAsBackground;
   }
   /**
    * Remove any current EnvironmentMap from the scene
    */
   removeEnvmap() {
-    this.envmap = void 0;
-  }
-  /**
-   * Get the current EnvironmentMap for the scene
-   */
-  getEnvmap() {
-    return this.envmap;
+    this._envmap = void 0;
   }
   /**
    * Set and create a dynamic environment map which will enable dynamic/realtime reflections
@@ -14560,7 +14556,7 @@ var Context = class _Context {
     this.dynamicEnvMap = new DynamicEnvironmentMap(this.gl, size, position, renderDistance);
   }
   /**
-   * Remove instance from the scene
+   * Remove instance from the scene, it will no longer be rendered
    * @param instance - Instance to remove
    */
   removeInstance(instance) {

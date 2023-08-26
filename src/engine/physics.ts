@@ -1,6 +1,6 @@
 import * as CANNON from 'cannon-es'
-import { Instance } from '../models/instance.ts'
-import { PrimitiveCube, PrimitiveSphere } from '../models/primitive.ts'
+import { Instance } from '../renderable/instance.ts'
+import { PrimitiveCube, PrimitiveSphere } from '../renderable/primitive.ts'
 import { quat } from 'gl-matrix'
 
 /**

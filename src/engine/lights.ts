@@ -167,18 +167,16 @@ export class LightDirectional {
     const moveDist = this._shadowOptions.distance * 0.9
 
     const cam = new Camera(CameraType.ORTHOGRAPHIC, 4 / 3)
-    cam.orthoZoom = this._shadowOptions.zoom
-    cam.lookAt = [0, 0, 0]
-    cam.position = [-this.direction[0] * moveDist, -this.direction[1] * moveDist, -this.direction[2] * moveDist]
     cam.usedForShadowMap = true
-    cam.far = this._shadowOptions.distance * 2
+    cam.orthoZoom = this._shadowOptions.zoom
+    cam.lookAt = this.shadowViewOffset
+    cam.position = [
+      -this.direction[0] * moveDist + this.shadowViewOffset[0],
+      -this.direction[1] * moveDist + this.shadowViewOffset[1],
+      -this.direction[2] * moveDist + this.shadowViewOffset[2],
+    ]
 
-    cam.position[0] += this.shadowViewOffset[0]
-    cam.position[1] += this.shadowViewOffset[1]
-    cam.position[2] += this.shadowViewOffset[2]
-    cam.lookAt[0] += this.shadowViewOffset[0]
-    cam.lookAt[1] += this.shadowViewOffset[1]
-    cam.lookAt[2] += this.shadowViewOffset[2]
+    cam.far = this._shadowOptions.distance * 2
 
     return cam
   }

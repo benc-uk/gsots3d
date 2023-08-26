@@ -16,11 +16,11 @@ import { LightDirectional, LightPoint } from '../engine/lights.ts'
 import { Camera, CameraType } from '../engine/camera.ts'
 import { Material } from '../engine/material.ts'
 import { DynamicEnvironmentMap, EnvironmentMap } from '../engine/envmap.ts'
-import { Instance } from '../models/instance.ts'
-import { Billboard, BillboardType } from '../models/billboard.ts'
-import { PrimitiveCube, PrimitivePlane, PrimitiveSphere, PrimitiveCylinder } from '../models/primitive.ts'
-import { ParticleSystem } from '../models/particles.ts'
-import { Model } from '../models/model.ts'
+import { Instance } from '../renderable/instance.ts'
+import { Billboard, BillboardType } from '../renderable/billboard.ts'
+import { PrimitiveCube, PrimitivePlane, PrimitiveSphere, PrimitiveCylinder } from '../renderable/primitive.ts'
+import { ParticleSystem } from '../renderable/particles.ts'
+import { Model } from '../renderable/model.ts'
 import { HUD } from './hud.ts'
 import { Stats } from './stats.ts'
 
@@ -169,6 +169,12 @@ export class Context {
     // Call the external update function
     this.update(Stats.deltaTime, now)
 
+    // Move camera before any rendering
+    this.camera.update()
+
+    // Link global camera shadow offset to the camera position
+    this.globalLight.shadowViewOffset = this.camera.position
+
     // -----------------------------------------------------------------------
     // RENDER CORE - Render into the dynamic environment map(s) if any
     // -----------------------------------------------------------------------
@@ -230,9 +236,6 @@ export class Context {
 
     // Clear the framebuffer and depth buffer
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT)
-
-    // Update the camera
-    camera.update()
 
     // Do this in every frame since camera can move
     const camMatrix = camera.matrix
@@ -395,7 +398,7 @@ export class Context {
   /**
    * Model loader, loads an OBJ model from a file via URL or path and adds it to the cache
    * This is preferred over calling Model.parse() directly
-   * @param path Base path to the model file, e.g. './models/'
+   * @param path Base path to the model file, e.g. './renderable/'
    * @param fileName Name of the model file, e.g 'teapot.obj'
    * @param filterTextures Apply texture filtering as materials are loaded
    * @param flipTextureY Flip the Y coordinate of the texture
