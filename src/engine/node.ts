@@ -4,37 +4,54 @@
 // =============================================================================================
 
 import { mat4, quat } from 'gl-matrix'
-import { XYZ, XYZW } from './tuples.ts'
+import { Tuples, XYZ, XYZW } from './tuples.ts'
 import log from 'loglevel'
+import * as CANNON from 'cannon-es'
 
 /**
  * A Node with position, rotation, scale, all Instances extend this class.
  * But Nodes also be created to group instances and simplify transformations.
  */
 export class Node {
+  /** Unique ID for this node */
   public readonly id: string
+
+  /** Position of this Node in world space, relative to any parent nodes (if any) */
   public position: XYZ
+
+  /** Scale of this Node in world space, relative to any parent nodes (if any) */
   public scale: XYZ
+
+  /** Rotation quaternion of this Node in world space, relative to any parent nodes (if any) */
   public quaternion: quat
-  public enabled: boolean
+
+  /** Metadata is a key/value store for any extra data you want to store on a node */
   public metadata: Record<string, string | number | boolean>
-  public receiveShadow: boolean
-  public castShadow: boolean
-  public parent?: Node
+
+  private _receiveShadow: boolean
+  private _castShadow: boolean
+  private _enabled: boolean
+
+  private _parent?: Node
+  private _children: Node[] = []
+
+  private _physicsBody?: CANNON.Body
 
   /** Create a default node, at origin with scale of [1,1,1] and no rotation */
   constructor() {
-    // TODO: This is a plain straight up lazy hack
     this.id = uniqueId()
+    this.metadata = {}
+
     this.position = [0, 0, 0]
     this.scale = [1, 1, 1]
     this.quaternion = quat.create()
-    this.enabled = true
-    this.metadata = {}
-    this.receiveShadow = true
-    this.castShadow = true
 
-    log.debug(`Node created with id ${this.id}`)
+    this._enabled = true
+    this._receiveShadow = true
+    this._castShadow = true
+    this._physicsBody = undefined
+
+    log.debug(`📍 Node created with id ${this.id}`)
   }
 
   /** Rotate this instance around the X, Y and Z axis in radians */
@@ -74,7 +91,8 @@ export class Node {
     this.rotateX((angle * Math.PI) / 180)
   }
 
-  /** Set the rotation quaternion directly, useful to integrate with physics system */
+  /** Set the rotation quaternion directly, normally users should use the rotate methods.
+   * This method is for advanced uses, like integration with an external physics system */
   setQuaternion(quatArray: XYZW) {
     this.quaternion = quat.fromValues(quatArray[0], quatArray[1], quatArray[2], quatArray[3])
   }
@@ -100,14 +118,109 @@ export class Node {
     return modelMatrix
   }
 
-  /** Convenience method to make another node a child of this one */
+  /** Convenience method to make another Node a child of this one */
   addChild(node: Node) {
-    node.parent = this
+    node._parent = this
+
+    this._children.push(node)
   }
 
-  /** Convenience method to remove a child node */
+  /** Convenience method to remove a child Node */
   removeChild(node: Node) {
-    node.parent = undefined
+    node._parent = undefined
+
+    this._children = this._children.filter((child) => child.id !== node.id)
+  }
+
+  /** Convenience method to remove all child Nodes */
+  removeAllChildren() {
+    this._children.forEach((child) => {
+      child._parent = undefined
+    })
+
+    this._children = []
+  }
+
+  /** Sets the parent this Node, to the provided Node */
+  set parent(node: Node | undefined) {
+    // remove from old parent if there is one
+    if (this._parent) {
+      this._parent.removeChild(this)
+    }
+
+    // Add to new parent if there is one
+    if (node) {
+      node.addChild(this)
+    }
+  }
+
+  /** Fetch all child Nodes of this Node */
+  get children(): Node[] {
+    return this._children
+  }
+
+  /** Get current parent of this Node */
+  get parent(): Node | undefined {
+    return this._parent
+  }
+
+  /** Is this Node enabled. Disabled nodes will not be rendered */
+  get enabled(): boolean {
+    return this._enabled
+  }
+
+  /** Set enabled state of this Node, this will also set all child nodes */
+  set enabled(enabled: boolean) {
+    this._enabled = enabled
+
+    this._children.forEach((child) => {
+      child.enabled = enabled
+    })
+  }
+
+  /** Does this Node cast shadows, default true  */
+  public get castShadow(): boolean {
+    return this._castShadow
+  }
+
+  /** Set will this Node cast shadows, this will also set all child nodes */
+  public set castShadow(value: boolean) {
+    this._castShadow = value
+
+    this._children.forEach((child) => {
+      child.castShadow = value
+    })
+  }
+
+  /** Does this Node receive shadows, default true */
+  public get receiveShadow(): boolean {
+    return this._receiveShadow
+  }
+
+  /** Set will this Node receive shadows, this will also set all child nodes */
+  public set receiveShadow(value: boolean) {
+    this._receiveShadow = value
+
+    this._children.forEach((child) => {
+      child.receiveShadow = value
+    })
+  }
+
+  /** Get the physics body for this Node, if there is one */
+  public get physicsBody(): CANNON.Body | undefined {
+    return this._physicsBody
+  }
+
+  /** Set the physics body for this Node */
+  public set physicsBody(body: CANNON.Body | undefined) {
+    this._physicsBody = body
+  }
+
+  public updateFromPhysicsBody() {
+    if (!this._physicsBody) return
+
+    this.position = Tuples.fromCannon(this._physicsBody.position) as XYZ
+    this.setQuaternion(Tuples.fromCannon(this._physicsBody.quaternion) as XYZW)
   }
 }
 

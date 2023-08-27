@@ -1,13 +1,12 @@
 import { Colours, Context, Material } from '../../dist-bundle/gsots3d.js'
-
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+import { isMobile } from '../screen.mjs'
 
 const ctx = await Context.init()
 ctx.debug = false
 
 // Tweaks for mobile
-ctx.gamma = isMobile ? 1.2 : 1.0
-const moveSpeed = isMobile ? 0.5 : 1.2
+ctx.gamma = isMobile() ? 1.2 : 1.0
+const moveSpeed = isMobile() ? 0.8 : 1.2
 
 ctx.camera.position = [37, 40, 76]
 ctx.globalLight.setAsPosition(-0.5, 1, 0)
@@ -15,9 +14,8 @@ ctx.globalLight.colour = Colours.WHITE
 ctx.globalLight.ambient = [0.2, 0.2, 0.2]
 ctx.camera.far = 500
 ctx.globalLight.enableShadows({
-  mapSize: 1024,
-  cameraZoom: 90,
-  // polygonOffsetFactor: 2.5,
+  mapSize: 2048,
+  zoom: 150,
 })
 
 ctx.camera.enableFPControls(0, -0.2, 0.002, moveSpeed)

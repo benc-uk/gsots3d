@@ -13128,15 +13128,17 @@ var import_loglevel6 = __toESM(require_loglevel(), 1);
 var Node = class {
   /** Create a default node, at origin with scale of [1,1,1] and no rotation */
   constructor() {
+    this._children = [];
     this.id = uniqueId();
+    this.metadata = {};
     this.position = [0, 0, 0];
     this.scale = [1, 1, 1];
     this.quaternion = quat_exports.create();
-    this.enabled = true;
-    this.metadata = {};
-    this.receiveShadow = true;
-    this.castShadow = true;
-    import_loglevel6.default.debug(`Node created with id ${this.id}`);
+    this._enabled = true;
+    this._receiveShadow = true;
+    this._castShadow = true;
+    this._physicsBody = void 0;
+    import_loglevel6.default.debug(`\u{1F4CD} Node created with id ${this.id}`);
   }
   /** Rotate this instance around the X, Y and Z axis in radians */
   rotate(ax, ay, az) {
@@ -13168,7 +13170,8 @@ var Node = class {
   rotateXDeg(angle2) {
     this.rotateX(angle2 * Math.PI / 180);
   }
-  /** Set the rotation quaternion directly, useful to integrate with physics system */
+  /** Set the rotation quaternion directly, normally users should use the rotate methods.
+   * This method is for advanced uses, like integration with an external physics system */
   setQuaternion(quatArray) {
     this.quaternion = quat_exports.fromValues(quatArray[0], quatArray[1], quatArray[2], quatArray[3]);
   }
@@ -13188,13 +13191,86 @@ var Node = class {
     mat4_exports.multiply(modelMatrix, this.parent.modelMatrix ?? mat4_exports.create(), modelMatrix);
     return modelMatrix;
   }
-  /** Convenience method to make another node a child of this one */
+  /** Convenience method to make another Node a child of this one */
   addChild(node) {
-    node.parent = this;
+    node._parent = this;
+    this._children.push(node);
   }
-  /** Convenience method to remove a child node */
+  /** Convenience method to remove a child Node */
   removeChild(node) {
-    node.parent = void 0;
+    node._parent = void 0;
+    this._children = this._children.filter((child) => child.id !== node.id);
+  }
+  /** Convenience method to remove all child Nodes */
+  removeAllChildren() {
+    this._children.forEach((child) => {
+      child._parent = void 0;
+    });
+    this._children = [];
+  }
+  /** Sets the parent this Node, to the provided Node */
+  set parent(node) {
+    if (this._parent) {
+      this._parent.removeChild(this);
+    }
+    if (node) {
+      node.addChild(this);
+    }
+  }
+  /** Fetch all child Nodes of this Node */
+  get children() {
+    return this._children;
+  }
+  /** Get current parent of this Node */
+  get parent() {
+    return this._parent;
+  }
+  /** Is this Node enabled. Disabled nodes will not be rendered */
+  get enabled() {
+    return this._enabled;
+  }
+  /** Set enabled state of this Node, this will also set all child nodes */
+  set enabled(enabled) {
+    this._enabled = enabled;
+    this._children.forEach((child) => {
+      child.enabled = enabled;
+    });
+  }
+  /** Does this Node cast shadows, default true  */
+  get castShadow() {
+    return this._castShadow;
+  }
+  /** Set will this Node cast shadows, this will also set all child nodes */
+  set castShadow(value) {
+    this._castShadow = value;
+    this._children.forEach((child) => {
+      child.castShadow = value;
+    });
+  }
+  /** Does this Node receive shadows, default true */
+  get receiveShadow() {
+    return this._receiveShadow;
+  }
+  /** Set will this Node receive shadows, this will also set all child nodes */
+  set receiveShadow(value) {
+    this._receiveShadow = value;
+    this._children.forEach((child) => {
+      child.receiveShadow = value;
+    });
+  }
+  /** Get the physics body for this Node, if there is one */
+  get physicsBody() {
+    return this._physicsBody;
+  }
+  /** Set the physics body for this Node */
+  set physicsBody(body) {
+    this._physicsBody = body;
+  }
+  updateFromPhysicsBody() {
+    if (!this._physicsBody)
+      return;
+    this.position = Tuples.fromCannon(this._physicsBody.position);
+    this.setQuaternion(Tuples.fromCannon(this._physicsBody.quaternion));
   }
 };
 function uniqueId() {
@@ -14189,8 +14265,6 @@ var Context = class _Context {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     this.update = () => {
     };
-    /** Set the fixed time step for physics stepping, only used when physicsWorld is set */
-    this.physicsTimeStep = 1 / 60;
     this.gl = gl;
     this.started = false;
     this.debug = false;
@@ -14200,6 +14274,8 @@ var Context = class _Context {
     this.instancesParticles = /* @__PURE__ */ new Map();
     this.cameras = /* @__PURE__ */ new Map();
     this.lights = [];
+    this.renderPass = 0;
+    this.physicsTimeStep = 1 / 60;
     this.globalLight = new LightDirectional();
     this.globalLight.setAsPosition(20, 50, 30);
     const defaultCamera = new Camera(0 /* PERSPECTIVE */);
@@ -14278,10 +14354,11 @@ var Context = class _Context {
     this.hud.render(this.debug, this.camera);
     this.update(Stats.deltaTime, now);
     if (this.physicsWorld) {
-      this.physicsWorld.step(this.physicsTimeStep);
+      this.physicsWorld.step(this.physicsTimeStep, Stats.prevTime);
     }
     Stats.resetPerFrame();
     Stats.frameCount++;
+    this.renderPass = 0;
     if (this.started)
       requestAnimationFrame(this.render);
   }
@@ -14293,6 +14370,7 @@ var Context = class _Context {
   renderWithCamera(camera, programOverride) {
     if (!this.gl)
       return;
+    this.renderPass++;
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
     const camMatrix = camera.matrix;
     let reflectMap = this._envmap?.texture ?? null;
@@ -14340,6 +14418,8 @@ var Context = class _Context {
     this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
     for (const [_id, instance] of this.instances) {
       instance.render(this.gl, uniforms, programOverride);
+      if (this.renderPass == 1)
+        instance.updateFromPhysicsBody();
     }
     const instancesTransArray = Array.from(this.instancesTrans.values());
     instancesTransArray.sort((a2, b2) => {
@@ -14350,6 +14430,8 @@ var Context = class _Context {
     this.gl.disable(this.gl.CULL_FACE);
     for (const instance of instancesTransArray) {
       instance.render(this.gl, uniforms, programOverride);
+      if (this.renderPass == 1)
+        instance.updateFromPhysicsBody();
     }
     this.gl.depthMask(false);
     for (const [_id, instance] of this.instancesParticles) {
@@ -14617,12 +14699,14 @@ function createSphereBody(inst, mass, radius, material) {
   if (inst.renderable instanceof PrimitiveCube) {
     radius = inst.renderable.size / 2;
   }
-  return new Body({
+  const body = new Body({
     mass,
     position: new Vec3(inst.position[0], inst.position[1], inst.position[2]),
     shape: new Sphere(radius),
     material
   });
+  inst.physicsBody = body;
+  return body;
 }
 function createBoxBody(inst, mass, size, material) {
   if (inst.renderable === void 0) {
@@ -14635,26 +14719,30 @@ function createBoxBody(inst, mass, size, material) {
     size = inst.renderable.size;
   }
   const quat = inst.getQuaternion();
-  return new Body({
+  const body = new Body({
     mass,
     position: new Vec3(inst.position[0], inst.position[1], inst.position[2]),
     shape: new Box(new Vec3(size / 2, size / 2, size / 2)),
     material,
     quaternion: new Quaternion(quat[0], quat[1], quat[2], quat[3])
   });
+  inst.physicsBody = body;
+  return body;
 }
 function createPlaneBody(inst, mass, material) {
   const instQuat = inst.getQuaternion();
   const q = quat_exports.fromValues(instQuat[0], instQuat[1], instQuat[2], instQuat[3]);
   quat_exports.rotateX(q, q, -Math.PI / 2);
   const quaternion = new Quaternion(q[0], q[1], q[2], q[3]);
-  return new Body({
+  const body = new Body({
     mass,
     position: new Vec3(inst.position[0], inst.position[1], inst.position[2]),
     shape: new Plane(),
     material,
     quaternion
   });
+  inst.physicsBody = body;
+  return body;
 }
 var Physics = {
   createSphereBody,
@@ -14703,3 +14791,4 @@ twgl.js/dist/5.x/twgl-full.module.js:
   Available via the MIT license.
   see: http://github.com/greggman/twgl.js for details *)
 */
+//# sourceMappingURL=gsots3d.js.map

@@ -13,6 +13,7 @@ Feature Set:
 - **✨ Materials**: With diffuse texture mapping, specular maps & normal/bump mapping.
 - **🪩 Environment mapping**: Scene based reflections, skyboxes & dynamic realtime reflections
 - **🔦 Lights**: Global directional and dynamic point lights.
+- **📍 Nodes**: Hierarchical node system for instances and grouping.
 - **📦 Primitives**: Sphere, cube, plane.
 - **🎆 Particles**: GPU based particle system.
 - **💧 Transparency**: Transparent materials & primitives 
@@ -102,7 +103,8 @@ Due to the vast inconsistencies in OBJ & MTL exporting from the thousands of sof
 - Billboards: Shading on spherical billboards might not be correct
 - OBJ & MTL: The parsers are far from comprehensive and may not handle all features
 - Due to the performance overhead only a single dynamic environment map is supported 
-- Shadow mapping follows the active camera by default
+- Shadow mapping follows the active camera by default in a not very good way
+- Particle system: The emitter source is limited to a cuboid shape
 
 ## 📝 Documentation & Links
 

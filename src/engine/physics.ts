@@ -4,7 +4,7 @@ import { PrimitiveCube, PrimitiveSphere } from '../renderable/primitive.ts'
 import { quat } from 'gl-matrix'
 
 /**
- * Create a new CANNON.Body for a sphere
+ * Create a new CANNON.Body for a sphere, will link the body to the instance
  * @param inst Instance to create body for
  * @param mass Mass of the body
  * @param radius Radius of the sphere, if instance is a PrimitiveSphere this is ignored and instance radius is used
@@ -23,16 +23,19 @@ function createSphereBody(inst: Instance, mass: number, radius: number, material
     radius = (inst.renderable as PrimitiveCube).size / 2
   }
 
-  return new CANNON.Body({
+  const body = new CANNON.Body({
     mass,
     position: new CANNON.Vec3(inst.position[0], inst.position[1], inst.position[2]),
     shape: new CANNON.Sphere(radius),
     material,
   })
+
+  inst.physicsBody = body
+  return body
 }
 
 /**
- * Create a new CANNON.Body for a box
+ * Create a new CANNON.Body for a box, will link the body to the instance
  * @param inst Instance to create body for
  * @param mass Mass of the body
  * @param size Size of the box, if instance is a PrimitiveBox this is ignored and instance size is used
@@ -52,17 +55,20 @@ function createBoxBody(inst: Instance, mass: number, size: number, material?: CA
   }
 
   const quat = inst.getQuaternion()
-  return new CANNON.Body({
+  const body = new CANNON.Body({
     mass,
     position: new CANNON.Vec3(inst.position[0], inst.position[1], inst.position[2]),
     shape: new CANNON.Box(new CANNON.Vec3(size / 2, size / 2, size / 2)),
     material,
     quaternion: new CANNON.Quaternion(quat[0], quat[1], quat[2], quat[3]),
   })
+
+  inst.physicsBody = body
+  return body
 }
 
 /**
- * Create a new CANNON.Body for a plane
+ * Create a new CANNON.Body for a plane, will link the body to the instance
  * @param inst Instance to create body for
  * @param mass Mass of the body
  * @param material Optional CANNON.Material to use
@@ -76,13 +82,16 @@ function createPlaneBody(inst: Instance, mass: number, material?: CANNON.Materia
 
   const quaternion = new CANNON.Quaternion(q[0], q[1], q[2], q[3])
 
-  return new CANNON.Body({
+  const body = new CANNON.Body({
     mass,
     position: new CANNON.Vec3(inst.position[0], inst.position[1], inst.position[2]),
     shape: new CANNON.Plane(),
     material,
     quaternion,
   })
+
+  inst.physicsBody = body
+  return body
 }
 
 export const Physics = {

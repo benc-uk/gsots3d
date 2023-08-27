@@ -47,6 +47,7 @@ export class Context {
   private activeCameraName: string
   private _envmap?: EnvironmentMap
   private dynamicEnvMap?: DynamicEnvironmentMap
+  private renderPass: number
 
   /** Global directional light */
   public globalLight: LightDirectional
@@ -80,7 +81,7 @@ export class Context {
   public physicsWorld?: CANNON.World
 
   /** Set the fixed time step for physics stepping, only used when physicsWorld is set */
-  public physicsTimeStep: number = 1 / 60
+  public physicsTimeStep: number
 
   // ==== Getters =============================================================
 
@@ -110,6 +111,8 @@ export class Context {
     this.instancesParticles = new Map()
     this.cameras = new Map()
     this.lights = []
+    this.renderPass = 0
+    this.physicsTimeStep = 1 / 60
 
     // Main global light
     this.globalLight = new LightDirectional()
@@ -225,12 +228,13 @@ export class Context {
 
     // Advance the physics simulation if configured
     if (this.physicsWorld) {
-      this.physicsWorld.step(this.physicsTimeStep)
+      this.physicsWorld.step(this.physicsTimeStep, Stats.prevTime)
     }
 
     // Reset stats for next frame
     Stats.resetPerFrame()
     Stats.frameCount++
+    this.renderPass = 0
 
     // Loop forever or stop if not started
     if (this.started) requestAnimationFrame(this.render)
@@ -243,6 +247,7 @@ export class Context {
    */
   renderWithCamera(camera: Camera, programOverride?: twgl.ProgramInfo) {
     if (!this.gl) return
+    this.renderPass++
 
     // Clear the framebuffer and depth buffer
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT)
@@ -324,6 +329,9 @@ export class Context {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [_id, instance] of this.instances) {
       instance.render(this.gl, uniforms, programOverride)
+
+      // Update physics body position from instance only on first render pass
+      if (this.renderPass == 1) instance.updateFromPhysicsBody()
     }
 
     // ------------------------------------------------
@@ -343,6 +351,9 @@ export class Context {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const instance of instancesTransArray) {
       instance.render(this.gl, uniforms, programOverride)
+
+      // Update physics body position from instance only on first render pass
+      if (this.renderPass == 1) instance.updateFromPhysicsBody()
     }
 
     // ------------------------------------------------
