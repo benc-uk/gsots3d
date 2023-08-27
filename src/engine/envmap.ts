@@ -66,7 +66,7 @@ export class EnvironmentMap {
   }
 
   /**
-   * Render this envmap as a cube in, around the given camera & matrices
+   * Render this envmap as a cube around the given camera & matrices
    * This is used for rendering the envmap as a background and skybox around the scene
    * @param viewMatrix View matrix
    * @param projMatrix Projection matrix

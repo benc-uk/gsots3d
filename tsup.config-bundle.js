@@ -14,7 +14,7 @@ export default defineConfig({
 
   bundle: true,
   splitting: false,
-  sourcemap: true,
+  sourcemap: false,
   dts: false,
   // Note: It's easier to use jsdelivr for minified version
   minify: false,

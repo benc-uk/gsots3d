@@ -297,7 +297,7 @@ function setLogLevel(level) {
 }
 
 // src/core/context.ts
-var import_loglevel8 = __toESM(require_loglevel(), 1);
+var import_loglevel9 = __toESM(require_loglevel(), 1);
 
 // node_modules/twgl.js/dist/5.x/twgl-full.module.js
 var VecType = Float32Array;
@@ -3691,13 +3691,13 @@ attrTypeMap[FLOAT_MAT2] = { size: 4, setter: matAttribSetter, count: 2 };
 attrTypeMap[FLOAT_MAT3] = { size: 9, setter: matAttribSetter, count: 3 };
 attrTypeMap[FLOAT_MAT4] = { size: 16, setter: matAttribSetter, count: 4 };
 var errorRE = /ERROR:\s*\d+:(\d+)/gi;
-function addLineNumbersWithError(src, log9 = "", lineOffset = 0) {
-  const matches = [...log9.matchAll(errorRE)];
+function addLineNumbersWithError(src, log10 = "", lineOffset = 0) {
+  const matches = [...log10.matchAll(errorRE)];
   const lineNoToErrorMap = new Map(matches.map((m, ndx) => {
     const lineNo = parseInt(m[1]);
     const next = matches[ndx + 1];
-    const end = next ? next.index : log9.length;
-    const msg = log9.substring(m.index, end);
+    const end = next ? next.index : log10.length;
+    const msg = log10.substring(m.index, end);
     return [lineNo - 1, msg];
   }));
   return src.split("\n").map((line, lineNo) => {
@@ -12967,7 +12967,7 @@ var EnvironmentMap = class {
     });
   }
   /**
-   * Render this envmap as a cube in, around the given camera & matrices
+   * Render this envmap as a cube around the given camera & matrices
    * This is used for rendering the envmap as a background and skybox around the scene
    * @param viewMatrix View matrix
    * @param projMatrix Projection matrix
@@ -13123,39 +13123,20 @@ var DynamicEnvironmentMap = class {
   }
 };
 
-// src/renderable/instance.ts
-var Instance = class {
-  /**
-   * Create a new instace of a renderable thing
-   * @param {Renderable} renderable - Renderable to use for this instance
-   */
-  constructor(renderable) {
-    /** Should this instance be rendered and drawn */
-    this.enabled = true;
-    /** Should this instance cast a shadow */
-    this.castShadow = true;
-    /** Flip all textures on this instance on the X axis */
-    this.flipTextureX = false;
-    /** Flip all textures on this instance on the Y axis */
-    this.flipTextureY = false;
-    /** Metadata for this instance, can be used to store anything */
-    this.metadata = {};
-    /** Should this instance receive shadows */
-    this.receiveShadow = true;
-    this.id = Math.random();
-    this.renderable = renderable;
+// src/engine/node.ts
+var import_loglevel6 = __toESM(require_loglevel(), 1);
+var Node = class {
+  /** Create a default node, at origin with scale of [1,1,1] and no rotation */
+  constructor() {
+    this.id = uniqueId();
     this.position = [0, 0, 0];
     this.scale = [1, 1, 1];
     this.quaternion = quat_exports.create();
-  }
-  setPosition(x, y, z) {
-    if (x instanceof Array) {
-      this.position = x;
-      return;
-    }
-    if (y === void 0 || z === void 0)
-      throw new Error("setPosition requires either an array or 3 numbers");
-    this.position = [x, y, z];
+    this.enabled = true;
+    this.metadata = {};
+    this.receiveShadow = true;
+    this.castShadow = true;
+    import_loglevel6.default.debug(`Node created with id ${this.id}`);
   }
   /** Rotate this instance around the X, Y and Z axis in radians */
   rotate(ax, ay, az) {
@@ -13196,6 +13177,56 @@ var Instance = class {
     return [this.quaternion[0], this.quaternion[1], this.quaternion[2], this.quaternion[3]];
   }
   /**
+   * Return the world or model matrix for this node, this is the matrix that places this node in the world.
+   * This will be in relation to the parent node, if there is one.
+   */
+  get modelMatrix() {
+    const modelMatrix = mat4_exports.fromRotationTranslationScale(mat4_exports.create(), this.quaternion, this.position, this.scale);
+    if (!this.parent) {
+      return modelMatrix;
+    }
+    mat4_exports.multiply(modelMatrix, this.parent.modelMatrix ?? mat4_exports.create(), modelMatrix);
+    return modelMatrix;
+  }
+  /** Convenience method to make another node a child of this one */
+  addChild(node) {
+    node.parent = this;
+  }
+  /** Convenience method to remove a child node */
+  removeChild(node) {
+    node.parent = void 0;
+  }
+};
+function uniqueId() {
+  const dateString = Date.now().toString(36).substring(0, 5);
+  const randomness = Math.random().toString(36).substring(0, 5);
+  return dateString + randomness;
+}
+
+// src/renderable/instance.ts
+var Instance = class extends Node {
+  /**
+   * Create a new instace of a renderable thing
+   * @param {Renderable} renderable - Renderable to use for this instance
+   */
+  constructor(renderable) {
+    super();
+    /** Flip all textures on this instance on the X axis */
+    this.flipTextureX = false;
+    /** Flip all textures on this instance on the Y axis */
+    this.flipTextureY = false;
+    this.renderable = renderable;
+  }
+  setPosition(x, y, z) {
+    if (x instanceof Array) {
+      this.position = x;
+      return;
+    }
+    if (y === void 0 || z === void 0)
+      throw new Error("setPosition requires either an array or 3 numbers");
+    this.position = [x, y, z];
+  }
+  /**
    * Render this instance in the world, called internally by the context when rendering
    * @param {WebGL2RenderingContext} gl - WebGL context to render into
    * @param {UniformSet} uniforms - Map of uniforms to pass to shader
@@ -13210,11 +13241,7 @@ var Instance = class {
     if (programOverride && !this.castShadow) {
       return;
     }
-    const world = mat4_exports.create();
-    mat4_exports.fromRotationTranslationScale(world, this.quaternion, this.position, this.scale);
-    if (this.postTranslate) {
-      mat4_exports.translate(world, world, this.postTranslate);
-    }
+    const world = this.modelMatrix;
     uniforms.u_world = world;
     mat4_exports.invert(uniforms.u_worldInverseTranspose, world);
     mat4_exports.transpose(uniforms.u_worldInverseTranspose, uniforms.u_worldInverseTranspose);
@@ -13223,8 +13250,6 @@ var Instance = class {
     uniforms.u_flipTextureX = this.flipTextureX;
     uniforms.u_flipTextureY = this.flipTextureY;
     uniforms.u_receiveShadow = this.receiveShadow;
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     this.renderable.render(gl, uniforms, this.material, programOverride);
   }
 };
@@ -13544,7 +13569,7 @@ var PrimitiveCylinder = class extends Primitive {
 };
 
 // src/renderable/particles.ts
-var import_loglevel6 = __toESM(require_loglevel(), 1);
+var import_loglevel7 = __toESM(require_loglevel(), 1);
 
 // shaders/particles/update.frag
 var update_default = "#version 300 es\n\n// ============================================================================\n// Particle update fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Does nothing, just here to make the WebGL compiler happy!\nvoid main() {}\n";
@@ -13559,6 +13584,7 @@ var render_default = "#version 300 es\n\n// ====================================
 var render_default2 = "#version 300 es\n\n// ============================================================================\n// Particle render vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec4 position; // Vertex positions of the particle quad\nin vec2 texcoord;\nin vec4 tf_position; // Position of the particle\nin vec2 tf_age;\nin vec4 tf_props;\n\nuniform mat4 u_view;\nuniform mat4 u_proj;\nuniform mat4 u_world;\nuniform float u_agePower;\n\nout vec2 v_texcoord;\nout vec3 v_position;\nout float v_ageNorm;\n\nvoid main() {\n  vec3 vert_pos = position.xyz;\n  v_ageNorm = clamp(tf_age[0] / tf_age[1], 0.0, 1.0);\n  v_ageNorm = pow(v_ageNorm, u_agePower);\n\n  // Rotate by tf_position[3] (rotation)\n  float s = sin(tf_position[3]);\n  float c = cos(tf_position[3]);\n  mat2 rot = mat2(c, -s, s, c);\n  vert_pos.xy = rot * position.xy;\n\n  // Scale by tf_props[0] (size)\n  vert_pos = vert_pos.xyz * tf_props[0];\n\n  // Move to the world at the particle position\n  vec4 world_pos = u_world * vec4(tf_position.xyz, 1.0);\n  vec4 view_pos = u_view * world_pos;\n\n  // Billboarding magic\n  gl_Position = u_proj * (view_pos + vec4(vert_pos.xy, 0.0, 0.0));\n\n  v_position = world_pos.xyz;\n  v_texcoord = texcoord;\n}\n";
 
 // src/renderable/particles.ts
+var emptyMat = mat4_exports.create();
 var ParticleSystem = class {
   /**
    * Create a new particle system
@@ -13591,8 +13617,8 @@ var ParticleSystem = class {
     this.blendSource = gl.SRC_ALPHA;
     this.blendDest = gl.ONE;
     this.preColour = [1, 1, 1, 1];
-    this.positionOffset = [0, 0, 0];
     this.agePower = 1;
+    this.localSpace = false;
     this.progInfoUpdate = createProgramInfo(gl, [update_default2, update_default], {
       transformFeedbackVaryings: ["tf_position", "tf_velocity", "tf_age", "tf_props"]
     });
@@ -13635,7 +13661,7 @@ var ParticleSystem = class {
     this.outputBuffInfo = createBufferInfoFromArrays(gl, quadVerts);
     this.outputVAO = createVertexArrayInfo(gl, this.progInfoRender, this.outputBuffInfo);
     this.texture = TextureCache.defaultWhite;
-    import_loglevel6.default.info("\u2728 Created particle system with", maxParticles, "particles");
+    import_loglevel7.default.info("\u2728 Created particle system with", maxParticles, "particles");
   }
   /**
    * Render the particle system and implement the renderable interface
@@ -13650,7 +13676,7 @@ var ParticleSystem = class {
       this.duration--;
     }
     gl.blendFunc(this.blendSource, this.blendDest);
-    this.updateParticles(gl);
+    this.updateParticles(gl, uniforms.u_world);
     this.renderParticles(gl, uniforms);
     for (const attribName in this.inputBuffInfo.attribs) {
       const tempBuff = this.inputBuffInfo.attribs[attribName].buffer;
@@ -13663,8 +13689,12 @@ var ParticleSystem = class {
   /**
    * Update the particles positions and velocities
    */
-  updateParticles(gl) {
+  updateParticles(gl, worldTrans) {
     const tf = createTransformFeedback(gl, this.progInfoUpdate, this.outputBuffInfo);
+    const pos = [0, 0, 0];
+    if (!this.localSpace) {
+      vec3_exports.transformMat4(pos, pos, worldTrans);
+    }
     gl.enable(gl.RASTERIZER_DISCARD);
     gl.useProgram(this.progInfoUpdate.program);
     setBuffersAndAttributes(gl, this.progInfoUpdate, this.inputBuffInfo);
@@ -13689,7 +13719,7 @@ var ParticleSystem = class {
       u_emitterBoxMin: this.emitterBoxMin,
       u_emitterBoxMax: this.emitterBoxMax,
       u_accel: this.acceleration,
-      u_posOffset: this.positionOffset
+      u_posOffset: pos
     });
     drawBufferInfo(gl, this.inputBuffInfo, gl.POINTS, this.emitRate);
     gl.endTransformFeedback();
@@ -13703,6 +13733,7 @@ var ParticleSystem = class {
     gl.useProgram(this.progInfoRender.program);
     const particleUniforms = {
       ...uniforms,
+      u_world: this.localSpace ? uniforms.u_world : emptyMat,
       u_texture: this.texture,
       u_ageColour: this.ageColour,
       u_preColour: this.preColour,
@@ -13723,7 +13754,7 @@ var ParticleSystem = class {
 };
 
 // src/renderable/model.ts
-var import_loglevel7 = __toESM(require_loglevel(), 1);
+var import_loglevel8 = __toESM(require_loglevel(), 1);
 
 // src/parsers/mtl-parser.ts
 function parseMTL(mtlFile) {
@@ -14002,7 +14033,7 @@ var Model = class _Model {
           model.materials[matName] = Material2.fromMtl(matRaw, path, filterTextures, flipTextureY);
         }
       } catch (err) {
-        import_loglevel7.default.warn(`\u{1F4A5} Unable to load material library ${objData.matLibNames[0]}`);
+        import_loglevel8.default.warn(`\u{1F4A5} Unable to load material library ${objData.matLibNames[0]}`);
       }
     }
     model.materials.__default = new Material2();
@@ -14015,7 +14046,7 @@ var Model = class _Model {
       const bufferInfo = createBufferInfoFromArrays(gl, g.data);
       model.parts.push(new ModelPart(bufferInfo, g.material));
     }
-    import_loglevel7.default.debug(
+    import_loglevel8.default.debug(
       `\u265F\uFE0F Model '${objFilename}' loaded with ${model.parts.length} parts, ${Object.keys(model.materials).length} materials in ${((performance.now() - startTime) / 1e3).toFixed(2)}s`
     );
     model.triangles = objData.triangles;
@@ -14158,6 +14189,8 @@ var Context = class _Context {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     this.update = () => {
     };
+    /** Set the fixed time step for physics stepping, only used when physicsWorld is set */
+    this.physicsTimeStep = 1 / 60;
     this.gl = gl;
     this.started = false;
     this.debug = false;
@@ -14174,7 +14207,7 @@ var Context = class _Context {
     this._camera = defaultCamera;
     this.activeCameraName = "default";
     this.hud = new HUD(gl.canvas);
-    import_loglevel8.default.info(`\u{1F451} GSOTS-3D context created, v${version}`);
+    import_loglevel9.default.info(`\u{1F451} GSOTS-3D context created, v${version}`);
   }
   // ==== Getters =============================================================
   /** Get the active camera */
@@ -14197,7 +14230,7 @@ var Context = class _Context {
   static async init(canvasSelector = "canvas", antiAlias = true) {
     const gl = getGl(antiAlias, canvasSelector);
     if (!gl) {
-      import_loglevel8.default.error("\u{1F4A5} Failed to create WebGL context, this is extremely bad news");
+      import_loglevel9.default.error("\u{1F4A5} Failed to create WebGL context, this is extremely bad news");
       throw new Error("Failed to get WebGL context");
     }
     const ctx = new _Context(gl);
@@ -14207,7 +14240,7 @@ var Context = class _Context {
     ProgramCache.init(phongProgInfo);
     ProgramCache.instance.add(ProgramCache.PROG_PHONG, phongProgInfo);
     ProgramCache.instance.add(ProgramCache.PROG_BILLBOARD, createProgramInfo(gl, [glsl_default8, glsl_default7]));
-    import_loglevel8.default.info(`\u{1F3A8} Loaded all shaders & programs, GL is ready`);
+    import_loglevel9.default.info(`\u{1F3A8} Loaded all shaders & programs, GL is ready`);
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -14223,7 +14256,6 @@ var Context = class _Context {
     if (!this.gl)
       return;
     Stats.updateTime(now);
-    this.update(Stats.deltaTime, now);
     this.camera.update();
     this.globalLight.shadowViewOffset = this.camera.position;
     if (this.dynamicEnvMap) {
@@ -14244,13 +14276,14 @@ var Context = class _Context {
     bindFramebufferInfo(this.gl, null);
     this.renderWithCamera(this.camera);
     this.hud.render(this.debug, this.camera);
-    if (this.started)
-      requestAnimationFrame(this.render);
+    this.update(Stats.deltaTime, now);
     if (this.physicsWorld) {
-      this.physicsWorld.step(1 / 8);
+      this.physicsWorld.step(this.physicsTimeStep);
     }
     Stats.resetPerFrame();
     Stats.frameCount++;
+    if (this.started)
+      requestAnimationFrame(this.render);
   }
   /**
    * Render the scene from the given camera, used internally for rendering both the main view,
@@ -14303,6 +14336,8 @@ var Context = class _Context {
     }
     uniforms.u_lightsPosCount = lightCount;
     this.gl.enable(this.gl.CULL_FACE);
+    this.gl.enable(this.gl.BLEND);
+    this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
     for (const [_id, instance] of this.instances) {
       instance.render(this.gl, uniforms, programOverride);
     }
@@ -14326,7 +14361,7 @@ var Context = class _Context {
    * Start the rendering loop, without calling this nothing will render
    */
   start() {
-    import_loglevel8.default.info("\u{1F680} Starting main GSOTS render loop!");
+    import_loglevel9.default.info("\u{1F680} Starting main GSOTS render loop!");
     this.hud.hideLoading();
     this.started = true;
     requestAnimationFrame(this.render);
@@ -14335,7 +14370,7 @@ var Context = class _Context {
    * Stop the rendering loop
    */
   stop() {
-    import_loglevel8.default.info("\u{1F6D1} Stopping main GSOTS render loop");
+    import_loglevel9.default.info("\u{1F6D1} Stopping main GSOTS render loop");
     this.started = false;
   }
   /**
@@ -14348,7 +14383,7 @@ var Context = class _Context {
       resizeCanvasToDisplaySize(canvas);
     this.gl.viewport(0, 0, canvas.width, canvas.height);
     this.camera.aspectRatio = canvas.width / canvas.height;
-    import_loglevel8.default.info(
+    import_loglevel9.default.info(
       `\u{1F4D0} RESIZE Internal: ${canvas.width} x ${canvas.height}, display: ${canvas.clientWidth} x ${canvas.clientHeight}`
     );
   }
@@ -14373,7 +14408,7 @@ var Context = class _Context {
   async loadModel(path, fileName, filterTextures = true, flipY = false, flipUV = true) {
     const modelName = fileName.split(".")[0];
     if (ModelCache.instance.get(modelName, false)) {
-      import_loglevel8.default.warn(`\u26A0\uFE0F Model '${modelName}' already loaded, skipping`);
+      import_loglevel9.default.warn(`\u26A0\uFE0F Model '${modelName}' already loaded, skipping`);
       return;
     }
     const model = await Model.parse(path, fileName, filterTextures, flipY, flipUV);
@@ -14436,7 +14471,7 @@ var Context = class _Context {
     this.addInstance(instance, material);
     Stats.triangles += sphere.triangleCount;
     Stats.instances++;
-    import_loglevel8.default.debug(`\u{1F7E2} Created sphere instance, r:${radius}`);
+    import_loglevel9.default.debug(`\u{1F7E2} Created sphere instance, r:${radius}`);
     return instance;
   }
   /**
@@ -14455,7 +14490,7 @@ var Context = class _Context {
     this.addInstance(instance, material);
     Stats.triangles += plane.triangleCount;
     Stats.instances++;
-    import_loglevel8.default.debug(`\u{1F7E8} Created plane instance, w:${width} h:${height}`);
+    import_loglevel9.default.debug(`\u{1F7E8} Created plane instance, w:${width} h:${height}`);
     return instance;
   }
   /**
@@ -14468,7 +14503,7 @@ var Context = class _Context {
     this.addInstance(instance, material);
     Stats.triangles += cube.triangleCount;
     Stats.instances++;
-    import_loglevel8.default.debug(`\u{1F4E6} Created cube instance, size:${size}`);
+    import_loglevel9.default.debug(`\u{1F4E6} Created cube instance, size:${size}`);
     return instance;
   }
   /**
@@ -14481,7 +14516,7 @@ var Context = class _Context {
     this.addInstance(instance, material);
     Stats.triangles += cyl.triangleCount;
     Stats.instances++;
-    import_loglevel8.default.debug(`\u{1F6E2}\uFE0F Created cylinder instance, r:${r}`);
+    import_loglevel9.default.debug(`\u{1F6E2}\uFE0F Created cylinder instance, r:${r}`);
     return instance;
   }
   /**
@@ -14497,7 +14532,7 @@ var Context = class _Context {
     this.addInstance(instance, material);
     Stats.triangles += 2;
     Stats.instances++;
-    import_loglevel8.default.debug(`\u{1F6A7} Created billboard instance of type: ${type} size: ${size}`);
+    import_loglevel9.default.debug(`\u{1F6A7} Created billboard instance of type: ${type} size: ${size}`);
     return instance;
   }
   /**
@@ -14515,7 +14550,7 @@ var Context = class _Context {
     light.linear /= intensity;
     light.quad /= intensity;
     this.lights.push(light);
-    import_loglevel8.default.debug(`\u{1F506} Created point light, pos:${position} col:${colour} int:${intensity}`);
+    import_loglevel9.default.debug(`\u{1F506} Created point light, pos:${position} col:${colour} int:${intensity}`);
     return light;
   }
   /**
@@ -14643,6 +14678,7 @@ export {
   Model,
   ModelCache,
   ModelPart,
+  Node,
   PROG_BILLBOARD,
   PROG_DEFAULT,
   ParticleSystem,
@@ -14667,4 +14703,3 @@ twgl.js/dist/5.x/twgl-full.module.js:
   Available via the MIT license.
   see: http://github.com/greggman/twgl.js for details *)
 */
-//# sourceMappingURL=gsots3d.js.map

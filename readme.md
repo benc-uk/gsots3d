@@ -2,10 +2,10 @@
 
 <img src="https://code.benco.io/gsots3d/icon.png" align="left" width="120px"/>
 
-A library for _Getting S\*\*t On The Screen_ in 3D  
-So you can get cool looking 3D stuff happening in your browser, if that's your thing.
+A library for _Getting Stuff On The Screen_ in 3D  
+So you can get cool looking 3D things happening in your browser, with hopefully minimal effort.
 
-This library is an opinionated set of abstractions and wrappers around WebGL & [twgl.js](https://twgljs.org/). GSOTS takes the pain out of the process of loading models, defining a camera, rendering a scene, lighting etc. It is based on the classic Blinn-Phong shading model, rather than the more modern PBR based shaders, because I'm old.
+This library is an opinionated set of abstractions and wrappers around WebGL & [twgl.js](https://twgljs.org/). GSOTS takes the pain out of loading models, defining a camera, rendering a scene, lighting etc. It is based on the classic Blinn-Phong shading model, rather than the more modern PBR based shaders, because I'm old.
 
 Feature Set:
 
@@ -16,9 +16,9 @@ Feature Set:
 - **📦 Primitives**: Sphere, cube, plane.
 - **🎆 Particles**: GPU based particle system.
 - **💧 Transparency**: Transparent materials & primitives 
-- **🌑 Shadows**: Realtime shadows from directional light source.
+- **🌑 Shadows**: Realtime shadows from directional light sources.
 - **💖 Reflection**: Both dynamic and static environment mapping.
-- **⚖️ Physics**: Helpers to integrate with with cannon-es physics engine.
+- **⚖️ Physics**: Helpers to integrate with with [cannon-es](https://pmndrs.github.io/cannon-es/) physics engine.
 - **🪧 Billboarding**: For adding 'flat' 2D sprites into the 3D scene.
 - **🎥 Camera**: Perspective and orthographic projection, and first person mouse & keyboard controls
 
@@ -83,7 +83,7 @@ A standalone ESM bundle is delivered via jsDelivr & GitHub, this can be used dir
 import { Context } from 'https://cdn.jsdelivr.net/gh/benc-uk/gsots3d@main/dist-bundle/gsots3d.min.js'
 ```
 
-If you want to reference a specific released version you can do so by changing `benc-uk/gsots3d@main` for example `benc-uk/gsots3d@0.0.1`
+If you want to reference a specific released version you can do so by changing `benc-uk/gsots3d@main` for example `benc-uk/gsots3d@0.0.4`
 
 ## 📦 Supported Models & Textures
 
@@ -93,7 +93,7 @@ Normal maps will be parsed from any MTL (or can added to a *Material* with `addN
 
 Normal maps must be in OpenGL format, i.e. Y+ or "green at top", see this [reference image](https://doc.babylonjs.com/img/how_to/Materials/normal_maps1.jpg)
 
-Due to the vast inconsistencies in OBJ & MTL exporting from the 1000s of software packages and tools out there (and the age of the format), it's unlikely any OBJ you download and use will work without some modification, usually to just the MTL file.
+Due to the vast inconsistencies in OBJ & MTL exporting from the thousands of software packages and tools out there (and the age of the format), it's fairly unlikely any OBJ you download or export will work without some modification, often to just the MTL file.
 
 ## 🤔 Known Limitations & Issues
 
@@ -102,6 +102,7 @@ Due to the vast inconsistencies in OBJ & MTL exporting from the 1000s of softwar
 - Billboards: Shading on spherical billboards might not be correct
 - OBJ & MTL: The parsers are far from comprehensive and may not handle all features
 - Due to the performance overhead only a single dynamic environment map is supported 
+- Shadow mapping follows the active camera by default
 
 ## 📝 Documentation & Links
 

@@ -16,6 +16,9 @@ import { UniformSet } from '../core/gl.ts'
 import { Stats } from '../core/stats.ts'
 import { RGBA, XYZ } from '../engine/tuples.ts'
 import { TextureCache } from '../core/cache.ts'
+import { mat4, vec3 } from 'gl-matrix'
+
+const emptyMat = mat4.create()
 
 /**
  * Particle system, uses transform feedback on the GPU to update particles
@@ -78,10 +81,10 @@ export class ParticleSystem implements Renderable {
   public blendDest: number
   /** Colour multiplier pre-applied to particle texture before ageing */
   public preColour: RGBA
-  /** Emitter box position offset to move the origin of particles */
-  public positionOffset: XYZ
   /** Age power curve */
   public agePower: number
+  /** Particles transformed fixed to local coordinate space, generally leave as false */
+  public localSpace: boolean
 
   /**
    * Create a new particle system
@@ -114,8 +117,8 @@ export class ParticleSystem implements Renderable {
     this.blendSource = gl.SRC_ALPHA
     this.blendDest = gl.ONE
     this.preColour = [1.0, 1.0, 1.0, 1.0]
-    this.positionOffset = [0, 0, 0]
     this.agePower = 1.0
+    this.localSpace = false
 
     // Create shaders and programs
     this.progInfoUpdate = twgl.createProgramInfo(gl, [updateVS, updateFS], {
@@ -197,7 +200,7 @@ export class ParticleSystem implements Renderable {
     }
 
     gl.blendFunc(this.blendSource, this.blendDest)
-    this.updateParticles(gl)
+    this.updateParticles(gl, uniforms.u_world as mat4)
     this.renderParticles(gl, uniforms)
 
     // Swap the buffers between input & output, kinda weird and ugly but it works!
@@ -214,8 +217,13 @@ export class ParticleSystem implements Renderable {
   /**
    * Update the particles positions and velocities
    */
-  private updateParticles(gl: WebGL2RenderingContext) {
+  private updateParticles(gl: WebGL2RenderingContext, worldTrans: mat4) {
     const tf = twgl.createTransformFeedback(gl, this.progInfoUpdate, this.outputBuffInfo)
+
+    const pos = [0, 0, 0] as vec3
+    if (!this.localSpace) {
+      vec3.transformMat4(pos, pos, worldTrans)
+    }
 
     gl.enable(gl.RASTERIZER_DISCARD)
     gl.useProgram(this.progInfoUpdate.program)
@@ -246,7 +254,7 @@ export class ParticleSystem implements Renderable {
       u_emitterBoxMin: this.emitterBoxMin,
       u_emitterBoxMax: this.emitterBoxMax,
       u_accel: this.acceleration,
-      u_posOffset: this.positionOffset,
+      u_posOffset: pos,
     })
 
     twgl.drawBufferInfo(gl, this.inputBuffInfo, gl.POINTS, this.emitRate)
@@ -264,6 +272,7 @@ export class ParticleSystem implements Renderable {
 
     const particleUniforms = {
       ...uniforms,
+      u_world: this.localSpace ? uniforms.u_world : emptyMat,
       u_texture: this.texture,
       u_ageColour: this.ageColour,
       u_preColour: this.preColour,

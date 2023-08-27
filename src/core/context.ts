@@ -40,9 +40,9 @@ const MAX_LIGHTS = 16
 export class Context {
   private gl: WebGL2RenderingContext
   private started: boolean
-  private instances: Map<number, Instance>
-  private instancesTrans: Map<number, Instance>
-  private instancesParticles: Map<number, Instance>
+  private instances: Map<string, Instance>
+  private instancesTrans: Map<string, Instance>
+  private instancesParticles: Map<string, Instance>
   private cameras: Map<string, Camera>
   private activeCameraName: string
   private _envmap?: EnvironmentMap
@@ -73,7 +73,14 @@ export class Context {
   /** Gamma correction value, default 1.0 */
   public gamma: number
 
+  /**
+   * Integration with cannon-es for physics, set the CANNON.World you are using here.
+   * When set, world stepping will be called for you in the core rendering loop
+   */
   public physicsWorld?: CANNON.World
+
+  /** Set the fixed time step for physics stepping, only used when physicsWorld is set */
+  public physicsTimeStep: number = 1 / 60
 
   // ==== Getters =============================================================
 
@@ -166,13 +173,11 @@ export class Context {
 
     Stats.updateTime(now)
 
-    // Call the external update function
-    this.update(Stats.deltaTime, now)
-
     // Move camera before any rendering
     this.camera.update()
 
     // Link global camera shadow offset to the camera position
+    // This means that the shadow map will be centred around the camera
     this.globalLight.shadowViewOffset = this.camera.position
 
     // -----------------------------------------------------------------------
@@ -211,19 +216,24 @@ export class Context {
     twgl.bindFramebufferInfo(this.gl, null)
     this.renderWithCamera(this.camera)
 
+    // **** FINAL POST RENDER STEPS ****
+
     this.hud.render(this.debug, this.camera)
 
-    // Loop forever or stop if not started
-    if (this.started) requestAnimationFrame(this.render)
+    // Call the external update function
+    this.update(Stats.deltaTime, now)
 
     // Advance the physics simulation if configured
     if (this.physicsWorld) {
-      this.physicsWorld.step(1 / 8)
+      this.physicsWorld.step(this.physicsTimeStep)
     }
 
     // Reset stats for next frame
     Stats.resetPerFrame()
     Stats.frameCount++
+
+    // Loop forever or stop if not started
+    if (this.started) requestAnimationFrame(this.render)
   }
 
   /**
@@ -308,6 +318,8 @@ export class Context {
     // RENDER CORE - Draw all standard opaque instances
     // ------------------------------------------------
     this.gl.enable(this.gl.CULL_FACE)
+    this.gl.enable(this.gl.BLEND)
+    this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA)
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [_id, instance] of this.instances) {

@@ -16,6 +16,7 @@ export * from './engine/material.ts'
 export * from './engine/tuples.ts'
 export * from './engine/envmap.ts'
 export * from './engine/physics.ts'
+export * from './engine/node.ts'
 
 export * from './renderable/particles.ts'
 export * from './renderable/types.ts'

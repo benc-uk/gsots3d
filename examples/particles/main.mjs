@@ -1,4 +1,4 @@
-import { Context, Material, TextureCache, setLogLevel } from '../../dist-bundle/gsots3d.js'
+import { Context, Material, TextureCache, setLogLevel, Node } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init()
 ctx.camera.position = [0, 130, 150]
@@ -12,9 +12,8 @@ const amb = 0.2
 ctx.globalLight.ambient = [amb, amb, amb]
 ctx.globalLight.enableShadows({
   mapSize: 1024,
-  // scatter: 0.4,
-  zoom: 180.0,
-  polygonOffsetFactor: 2.5,
+  zoom: 400.0,
+  polygonOffset: 1.0,
 })
 
 ctx.setEnvmap(
@@ -39,13 +38,16 @@ const pipe = ctx.createCylinderInstance(pipeMat, 8, 80, 16, 1, false)
 pipe.position = [-20, 40, 20]
 const pipe2 = ctx.createCylinderInstance(pipeMat, 3, 80, 16, 1, false)
 pipe2.position = [80, 40, -40]
+
 const pipe3 = ctx.createCylinderInstance(pipeMat, 3, 30, 16, 1, false)
-pipe3.position = [80, 80, -40]
+const firePipe = new Node()
+firePipe.position = [80, 80, -40]
+firePipe.addChild(pipe3)
+pipe3.position = [15, 0, 0]
 pipe3.rotateZDeg(90)
-pipe3.postTranslate = [0, -15, 0]
 
 const sph = ctx.createSphereInstance(pipeMat, 6, 16, 16)
-sph.position = [80, 80, -40]
+firePipe.addChild(sph)
 
 const box = ctx.createModelInstance('box')
 box.position = [-90, 25, -110]
@@ -79,7 +81,8 @@ part1.maxRotationSpeed = 2
 part1.timeScale = 3.5
 
 const { particleSystem: part2, instance: inst2 } = ctx.createParticleSystem(1000, 5)
-inst2.position = [80, 82, -40]
+inst2.position = [30, 0, 0]
+firePipe.addChild(inst2)
 part2.texture = fireTex
 part2.emitRate = 400
 part2.minPower = 10
@@ -135,17 +138,8 @@ part4.gravity = [0, -2, 0]
 part4.maxSize = 1.5
 part4.minSize = 0.5
 
-const radius = 30
-let t = 0
-pipe3.rotateY(Math.PI / 2)
 ctx.update = (delta) => {
-  t = t + delta
-  const x = Math.cos(t * 4) * radius
-  const z = Math.sin(t * 4) * radius
-  const y = 0
-  part2.positionOffset = [x, y, z]
-  pipe3.rotateZ(-delta * 4)
-  sph.rotateY(-delta * 4)
+  firePipe.rotateY(-delta * 4)
 }
 
 ctx.start()

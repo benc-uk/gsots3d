@@ -1,22 +1,25 @@
 import { Context, Physics, Tuples } from '../../dist-bundle/gsots3d.js'
+import { isMobile } from '../screen.mjs'
+
 import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.min.js'
 
 const ctx = await Context.init()
 ctx.start()
+ctx.debug = true
 
 ctx.camera.position = [50, 80, 60]
 ctx.camera.enableFPControls(0.8, -0.49, 0.0015, 1.8)
 ctx.camera.far = 1300
 ctx.camera.fov = 43
 
-ctx.globalLight.setAsPosition(9, 9, 9)
+ctx.globalLight.setAsPosition(6, 9, 3)
 const amb = 0.2
 ctx.globalLight.ambient = [amb, amb, amb]
 ctx.globalLight.enableShadows({
-  zoom: 70,
+  zoom: 150,
   mapSize: 2048,
   polygonOffset: 0.2,
-  distance: 100,
+  distance: 2000,
 })
 
 // Load models
@@ -31,7 +34,7 @@ const table = ctx.createModelInstance('table')
 table.scale = [0.7, 1.1, 1.2]
 table.rotateXDeg(-90)
 
-const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -4.8, 0) })
+const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.81, 0) })
 world.allowSleep = true
 
 const tableMaterial = new CANNON.Material()
@@ -39,7 +42,7 @@ const diceMat = new CANNON.Material()
 world.addContactMaterial(
   new CANNON.ContactMaterial(tableMaterial, diceMat, {
     friction: 0.2,
-    restitution: 0.4,
+    restitution: 0.6,
   })
 )
 
@@ -53,10 +56,12 @@ const diceInstances = []
 for (let d = 0; d < startDiceCount; d++) {
   setTimeout(() => {
     addDice()
-  }, 20 * d)
+  }, 40 * d)
 }
 
 ctx.physicsWorld = world
+ctx.physicsTimeStep = isMobile() ? 1 / 24 : 1 / 12
+
 ctx.update = () => {
   for (let d = 0; d < diceBodies.length; d++) {
     const dice = diceInstances[d]
@@ -89,7 +94,7 @@ function addDice() {
   dice.scale = [2.5, 2.5, 2.5]
 
   const diceBody = new CANNON.Body({
-    mass: 0.005,
+    mass: 0.05,
     position: new CANNON.Vec3(dice.position[0], dice.position[1], dice.position[2]),
     quaternion: new CANNON.Quaternion(dice.quaternion[0], dice.quaternion[1], dice.quaternion[2], dice.quaternion[3]),
     shape: new CANNON.Box(new CANNON.Vec3(2.5, 2.5, 2.5)),
