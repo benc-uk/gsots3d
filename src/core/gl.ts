@@ -13,13 +13,12 @@ export type UniformSet = { [key: string]: number | number[] | mat4 | WebGLTextur
 let glContext: WebGL2RenderingContext | undefined
 
 /**
- * Get the WebGL2 context, if it doesn't exist create it
- *
+ * Get the WebGL2 context, if it doesn't exist it will be created for the provided canvas element, and memoized
  * @returns {WebGL2RenderingContext} - Global WebGL2 context
  * @param {boolean} aa - Enable antialiasing
  * @param {string} selector - CSS selector for locating the canvas element
  */
-export function getGl(aa = true, selector = 'canvas') {
+export function getGl(selector = 'canvas', aa = true) {
   if (glContext) {
     return glContext
   }

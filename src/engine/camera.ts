@@ -315,6 +315,18 @@ export class Camera {
           this.lookAt[0] -= dZ
           this.lookAt[2] += dX
           break
+
+        case ']':
+          // Move up
+          this.position[1] += this.fpMoveSpeed * 0.75
+          this.lookAt[1] += this.fpMoveSpeed * 0.75
+          break
+
+        case '[':
+          // Move down
+          this.position[1] -= this.fpMoveSpeed * 0.75
+          this.lookAt[1] -= this.fpMoveSpeed * 0.75
+          break
       }
     }
   }

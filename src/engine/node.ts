@@ -5,8 +5,19 @@
 
 import { mat4, quat } from 'gl-matrix'
 import { Tuples, XYZ, XYZW } from './tuples.ts'
+
 import log from 'loglevel'
 import * as CANNON from 'cannon-es'
+
+const EVENT_POSITION = 'position'
+
+/** Event triggered when a node position, rotation or scale changes */
+export type NodeEvent = {
+  position: XYZ
+  rotation: XYZW
+  scale: XYZ
+  nodeId: string
+}
 
 /**
  * A Node with position, rotation, scale, all Instances extend this class.
@@ -28,19 +39,23 @@ export class Node {
   /** Metadata is a key/value store for any extra data you want to store on a node */
   public metadata: Record<string, string | number | boolean>
 
+  // Private properties with getters/setters
   private _receiveShadow: boolean
   private _castShadow: boolean
   private _enabled: boolean
-
   private _parent?: Node
   private _children: Node[] = []
-
   private _physicsBody?: CANNON.Body
+
+  // Event handlers
+  private eventHandlers: Map<string, ((event: NodeEvent) => void)[]>
 
   /** Create a default node, at origin with scale of [1,1,1] and no rotation */
   constructor() {
     this.id = uniqueId()
     this.metadata = {}
+    this.eventHandlers = new Map()
+    this.eventHandlers.set(EVENT_POSITION, [])
 
     this.position = [0, 0, 0]
     this.scale = [1, 1, 1]
@@ -216,11 +231,34 @@ export class Node {
     this._physicsBody = body
   }
 
+  /**
+   * Updates the position & rotation of this node to match it's linked physics Body
+   * This is called automatically by the engine, but can be called manually if needed
+   */
   public updateFromPhysicsBody() {
     if (!this._physicsBody) return
 
     this.position = Tuples.fromCannon(this._physicsBody.position) as XYZ
     this.setQuaternion(Tuples.fromCannon(this._physicsBody.quaternion) as XYZW)
+
+    // Trigger position event handlers
+    for (const handler of this.eventHandlers.get(EVENT_POSITION) ?? []) {
+      handler({
+        position: this.position,
+        rotation: this.getQuaternion(),
+        scale: this.scale,
+        nodeId: this.id,
+      })
+    }
+  }
+
+  /**
+   * Add an event handler to listen for node changes
+   * @param event NodeEvent type, one of 'position', 'rotation', 'scale'
+   * @param handler Function to call when event is triggered
+   */
+  addEventHandler(event: string, handler: (event: NodeEvent) => void) {
+    this.eventHandlers.get(event)?.push(handler)
   }
 }
 

@@ -1,10 +1,10 @@
-import { Context, Material, Colours, setLogLevel } from '../../dist-bundle/gsots3d.js'
+import { Context, Material, Colours } from '../../dist-bundle/gsots3d.js'
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
 const ctx = await Context.init('canvas')
 ctx.debug = false
-setLogLevel('info')
+ctx.setLogLevel('info')
 
 // Tweaks for mobile
 ctx.gamma = isMobile ? 1.5 : 1.0

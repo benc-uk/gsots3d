@@ -4,7 +4,6 @@
 // ============================================================================
 
 export * from './core/gl.ts'
-export * from './core/logging.ts'
 export * from './core/context.ts'
 export * from './core/hud.ts'
 export * from './core/cache.ts'

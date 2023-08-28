@@ -1,11 +1,11 @@
-import { Context, Material, TextureCache, setLogLevel, Node } from '../../dist-bundle/gsots3d.js'
+import { Context, Material, TextureCache, Node } from '../../dist-bundle/gsots3d.js'
 
 const ctx = await Context.init()
 ctx.camera.position = [0, 130, 150]
 ctx.camera.enableFPControls(0, -0.24, 0.002, 4)
 ctx.camera.far = 1800
 ctx.gamma = 1.1
-setLogLevel(1)
+ctx.setLogLevel('debug')
 
 ctx.globalLight.setAsPosition(5, 20, 12)
 const amb = 0.2

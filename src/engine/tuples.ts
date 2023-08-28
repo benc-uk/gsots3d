@@ -68,7 +68,7 @@ function toVec3(tuple: XYZ) {
  * @param b Second tuple
  */
 function distance(a: XYZ, b: XYZ) {
-  return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2
+  return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2)
 }
 
 function add(a: XYZ, b: XYZ) {
@@ -76,15 +76,15 @@ function add(a: XYZ, b: XYZ) {
 }
 
 /**
- * Converts a Cannon.js vector or quaternion to a 3-tuple
- * @param v The Cannon.js vector or quaternion to convert
+ * Converts a Cannon.js vector or quaternion to a tuple
+ * @param value The Cannon.js vector or quaternion to convert
  */
-export function fromCannon(v: CANNON.Vec3 | CANNON.Quaternion) {
-  if (v instanceof CANNON.Vec3) {
-    return [v.x, v.y, v.z] as XYZ
+function fromCannon(value: CANNON.Vec3 | CANNON.Quaternion) {
+  if (value instanceof CANNON.Vec3) {
+    return [value.x, value.y, value.z] as XYZ
   }
 
-  return [v.x, v.y, v.z, v.w] as XYZW
+  return [value.x, value.y, value.z, value.w] as XYZW
 }
 
 // ============================================================================

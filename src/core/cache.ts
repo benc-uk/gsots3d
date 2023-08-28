@@ -7,7 +7,9 @@ import log from 'loglevel'
 import { Model } from '../renderable/model.ts'
 import { ProgramInfo, createTexture } from 'twgl.js'
 
+/** @ignore */
 export const PROG_DEFAULT = 'phong'
+/** @ignore */
 export const PROG_BILLBOARD = 'billboard'
 
 /**

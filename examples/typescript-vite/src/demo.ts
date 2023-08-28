@@ -1,7 +1,7 @@
 import './style.css'
 
 import { initResizer, isMobile } from './screen.ts'
-import { Context, Material, Colours, setLogLevel } from '@benc-uk/gsots3d'
+import { Context, Material, Colours } from '@benc-uk/gsots3d'
 
 // Init the app a bit like React :)
 const appDiv = document.querySelector<HTMLDivElement>('#app')
@@ -17,8 +17,8 @@ initResizer(document.querySelector<HTMLCanvasElement>('canvas'))
 
 // Below here is all the GSOTS-3D code
 
-setLogLevel('debug')
 const ctx = await Context.init()
+ctx.setLogLevel('debug')
 ctx.debug = true
 
 // Setup controls, disable FP controls on mobile

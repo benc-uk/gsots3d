@@ -262,7 +262,7 @@ var require_loglevel = __commonJS({
 // src/core/gl.ts
 var import_loglevel = __toESM(require_loglevel(), 1);
 var glContext;
-function getGl(aa = true, selector = "canvas") {
+function getGl(selector = "canvas", aa = true) {
   if (glContext) {
     return glContext;
   }
@@ -290,14 +290,8 @@ function getGl(aa = true, selector = "canvas") {
   return glContext;
 }
 
-// src/core/logging.ts
-var import_loglevel2 = __toESM(require_loglevel(), 1);
-function setLogLevel(level) {
-  import_loglevel2.default.setLevel(level);
-}
-
 // src/core/context.ts
-var import_loglevel9 = __toESM(require_loglevel(), 1);
+var import_loglevel8 = __toESM(require_loglevel(), 1);
 
 // node_modules/twgl.js/dist/5.x/twgl-full.module.js
 var VecType = Float32Array;
@@ -3691,13 +3685,13 @@ attrTypeMap[FLOAT_MAT2] = { size: 4, setter: matAttribSetter, count: 2 };
 attrTypeMap[FLOAT_MAT3] = { size: 9, setter: matAttribSetter, count: 3 };
 attrTypeMap[FLOAT_MAT4] = { size: 16, setter: matAttribSetter, count: 4 };
 var errorRE = /ERROR:\s*\d+:(\d+)/gi;
-function addLineNumbersWithError(src, log10 = "", lineOffset = 0) {
-  const matches = [...log10.matchAll(errorRE)];
+function addLineNumbersWithError(src, log9 = "", lineOffset = 0) {
+  const matches = [...log9.matchAll(errorRE)];
   const lineNoToErrorMap = new Map(matches.map((m, ndx) => {
     const lineNo = parseInt(m[1]);
     const next = matches[ndx + 1];
-    const end = next ? next.index : log10.length;
-    const msg = log10.substring(m.index, end);
+    const end = next ? next.index : log9.length;
+    const msg = log9.substring(m.index, end);
     return [lineNo - 1, msg];
   }));
   return src.split("\n").map((line, lineNo) => {
@@ -12229,16 +12223,16 @@ function toVec3(tuple) {
   return vec3_exports.fromValues(tuple[0], tuple[1], tuple[2]);
 }
 function distance2(a2, b2) {
-  return (a2[0] - b2[0]) ** 2 + (a2[1] - b2[1]) ** 2 + (a2[2] - b2[2]) ** 2;
+  return Math.sqrt((a2[0] - b2[0]) ** 2 + (a2[1] - b2[1]) ** 2 + (a2[2] - b2[2]) ** 2);
 }
 function add6(a2, b2) {
   return [a2[0] + b2[0], a2[1] + b2[1], a2[2] + b2[2]];
 }
-function fromCannon(v) {
-  if (v instanceof Vec3) {
-    return [v.x, v.y, v.z];
+function fromCannon(value) {
+  if (value instanceof Vec3) {
+    return [value.x, value.y, value.z];
   }
-  return [v.x, v.y, v.z, v.w];
+  return [value.x, value.y, value.z, value.w];
 }
 function rgbColour255(r, g, b2) {
   return [r / 255, g / 255, b2 / 255];
@@ -12273,7 +12267,7 @@ var Tuples = {
 };
 
 // src/core/cache.ts
-var import_loglevel3 = __toESM(require_loglevel(), 1);
+var import_loglevel2 = __toESM(require_loglevel(), 1);
 var PROG_DEFAULT = "phong";
 var PROG_BILLBOARD = "billboard";
 var ModelCache = class _ModelCache {
@@ -12296,7 +12290,7 @@ var ModelCache = class _ModelCache {
    */
   get(name, warn = true) {
     if (!this.cache.has(name) && warn) {
-      import_loglevel3.default.warn(`\u26A0\uFE0F Model '${name}' not found, please load it first`);
+      import_loglevel2.default.warn(`\u26A0\uFE0F Model '${name}' not found, please load it first`);
       return void 0;
     }
     return this.cache.get(name);
@@ -12305,7 +12299,7 @@ var ModelCache = class _ModelCache {
    * Add a model to the cache, using the model name as key
    */
   add(model) {
-    import_loglevel3.default.debug(`\u{1F9F0} Adding model '${model.name}' to cache`);
+    import_loglevel2.default.debug(`\u{1F9F0} Adding model '${model.name}' to cache`);
     this.cache.set(model.name, model);
   }
 };
@@ -12353,10 +12347,10 @@ var _TextureCache = class _TextureCache {
    */
   get(key) {
     if (!this.cache.has(key)) {
-      import_loglevel3.default.warn(`\u{1F4A5} Texture ${key} not found in cache`);
+      import_loglevel2.default.warn(`\u{1F4A5} Texture ${key} not found in cache`);
       return void 0;
     }
-    import_loglevel3.default.trace(`\u{1F44D} Returning texture '${key}' from cache, nice!`);
+    import_loglevel2.default.trace(`\u{1F44D} Returning texture '${key}' from cache, nice!`);
     return this.cache.get(key);
   }
   /**
@@ -12366,10 +12360,10 @@ var _TextureCache = class _TextureCache {
    */
   add(key, texture) {
     if (this.cache.has(key)) {
-      import_loglevel3.default.warn(`\u{1F914} Texture '${key}' already in cache, not adding again`);
+      import_loglevel2.default.warn(`\u{1F914} Texture '${key}' already in cache, not adding again`);
       return;
     }
-    import_loglevel3.default.debug(`\u{1F9F0} Adding texture '${key}' to cache`);
+    import_loglevel2.default.debug(`\u{1F9F0} Adding texture '${key}' to cache`);
     this.cache.set(key, texture);
   }
   /**
@@ -12380,7 +12374,7 @@ var _TextureCache = class _TextureCache {
    */
   getCreate(src, filter = true, flipY = false) {
     if (this.cache.has(src)) {
-      import_loglevel3.default.trace(`\u{1F44D} Returning texture '${src}' from cache, nice!`, flipY);
+      import_loglevel2.default.trace(`\u{1F44D} Returning texture '${src}' from cache, nice!`, flipY);
       return this.get(src);
     }
     const texture = createTexture(
@@ -12393,7 +12387,7 @@ var _TextureCache = class _TextureCache {
       },
       (err) => {
         if (err) {
-          import_loglevel3.default.error("\u{1F4A5} Error loading texture", err);
+          import_loglevel2.default.error("\u{1F4A5} Error loading texture", err);
         }
       }
     );
@@ -12425,7 +12419,7 @@ var _ProgramCache = class _ProgramCache {
    */
   static init(defaultProg) {
     if (_ProgramCache._instance) {
-      import_loglevel3.default.warn("\u{1F914} Program cache already initialised, not doing it again");
+      import_loglevel2.default.warn("\u{1F914} Program cache already initialised, not doing it again");
       return;
     }
     _ProgramCache._instance = new _ProgramCache();
@@ -12448,13 +12442,13 @@ var _ProgramCache = class _ProgramCache {
   get(name) {
     const prog = this.cache.get(name);
     if (!prog) {
-      import_loglevel3.default.warn(`\u26A0\uFE0F Program '${name}' not found, returning default`);
+      import_loglevel2.default.warn(`\u26A0\uFE0F Program '${name}' not found, returning default`);
       return this._default;
     }
     return prog;
   }
   add(name, program) {
-    import_loglevel3.default.debug(`\u{1F9F0} Adding program '${name}' to cache`);
+    import_loglevel2.default.debug(`\u{1F9F0} Adding program '${name}' to cache`);
     this.cache.set(name, program);
   }
   get default() {
@@ -12468,7 +12462,7 @@ _ProgramCache.PROG_SHADOWMAP = "shadowmap";
 var ProgramCache = _ProgramCache;
 
 // src/engine/camera.ts
-var import_loglevel4 = __toESM(require_loglevel(), 1);
+var import_loglevel3 = __toESM(require_loglevel(), 1);
 var CameraType = /* @__PURE__ */ ((CameraType2) => {
   CameraType2[CameraType2["PERSPECTIVE"] = 0] = "PERSPECTIVE";
   CameraType2[CameraType2["ORTHOGRAPHIC"] = 1] = "ORTHOGRAPHIC";
@@ -12633,7 +12627,7 @@ var Camera = class {
       this.touches[0] = touch;
     });
     this.fpHandlersAdded = true;
-    import_loglevel4.default.info("\u{1F3A5} Camera: first person mode & controls enabled");
+    import_loglevel3.default.info("\u{1F3A5} Camera: first person mode & controls enabled");
   }
   /**
    * Disable FP mode
@@ -12641,7 +12635,7 @@ var Camera = class {
   disableFPControls() {
     this.fpMode = false;
     document.exitPointerLock();
-    import_loglevel4.default.debug("\u{1F3A5} Camera: FPS mode disabled");
+    import_loglevel3.default.debug("\u{1F3A5} Camera: FPS mode disabled");
   }
   /**
    * Get FP mode state
@@ -12688,6 +12682,14 @@ var Camera = class {
           this.position[2] += dX;
           this.lookAt[0] -= dZ;
           this.lookAt[2] += dX;
+          break;
+        case "]":
+          this.position[1] += this.fpMoveSpeed * 0.75;
+          this.lookAt[1] += this.fpMoveSpeed * 0.75;
+          break;
+        case "[":
+          this.position[1] -= this.fpMoveSpeed * 0.75;
+          this.lookAt[1] -= this.fpMoveSpeed * 0.75;
           break;
       }
     }
@@ -12895,7 +12897,7 @@ var LightPoint = class {
 };
 
 // src/engine/envmap.ts
-var import_loglevel5 = __toESM(require_loglevel(), 1);
+var import_loglevel4 = __toESM(require_loglevel(), 1);
 
 // shaders/envmap/glsl.frag
 var glsl_default3 = "#version 300 es\n\n// ============================================================================\n// Environment map fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\nin vec3 v_texCoord;\n\nuniform samplerCube u_envMapTex;\n\nout vec4 outColour;\n\nvoid main() {\n  // Use the texture cube map as the colour\n  // Note: We don't need to do any lighting calculations here\n  outColour = texture(u_envMapTex, v_texCoord);\n}\n";
@@ -12946,7 +12948,7 @@ var EnvironmentMap = class {
     this.programInfo = createProgramInfo(gl, [glsl_default4, glsl_default3]);
     this.cube = primitives.createCubeBufferInfo(gl, 1);
     this.renderAsBackground = true;
-    import_loglevel5.default.info(`\u{1F3D4}\uFE0F EnvironmentMap created!`);
+    import_loglevel4.default.info(`\u{1F3D4}\uFE0F EnvironmentMap created!`);
     if (textureURLs.length !== 6) {
       throw new Error("\u{1F4A5} Cubemap requires 6 textures");
     }
@@ -13124,13 +13126,16 @@ var DynamicEnvironmentMap = class {
 };
 
 // src/engine/node.ts
-var import_loglevel6 = __toESM(require_loglevel(), 1);
+var import_loglevel5 = __toESM(require_loglevel(), 1);
+var EVENT_POSITION = "position";
 var Node = class {
   /** Create a default node, at origin with scale of [1,1,1] and no rotation */
   constructor() {
     this._children = [];
     this.id = uniqueId();
     this.metadata = {};
+    this.eventHandlers = /* @__PURE__ */ new Map();
+    this.eventHandlers.set(EVENT_POSITION, []);
     this.position = [0, 0, 0];
     this.scale = [1, 1, 1];
     this.quaternion = quat_exports.create();
@@ -13138,7 +13143,7 @@ var Node = class {
     this._receiveShadow = true;
     this._castShadow = true;
     this._physicsBody = void 0;
-    import_loglevel6.default.debug(`\u{1F4CD} Node created with id ${this.id}`);
+    import_loglevel5.default.debug(`\u{1F4CD} Node created with id ${this.id}`);
   }
   /** Rotate this instance around the X, Y and Z axis in radians */
   rotate(ax, ay, az) {
@@ -13266,11 +13271,31 @@ var Node = class {
   set physicsBody(body) {
     this._physicsBody = body;
   }
+  /**
+   * Updates the position & rotation of this node to match it's linked physics Body
+   * This is called automatically by the engine, but can be called manually if needed
+   */
   updateFromPhysicsBody() {
     if (!this._physicsBody)
       return;
     this.position = Tuples.fromCannon(this._physicsBody.position);
     this.setQuaternion(Tuples.fromCannon(this._physicsBody.quaternion));
+    for (const handler of this.eventHandlers.get(EVENT_POSITION) ?? []) {
+      handler({
+        position: this.position,
+        rotation: this.getQuaternion(),
+        scale: this.scale,
+        nodeId: this.id
+      });
+    }
+  }
+  /**
+   * Add an event handler to listen for node changes
+   * @param event NodeEvent type, one of 'position', 'rotation', 'scale'
+   * @param handler Function to call when event is triggered
+   */
+  addEventHandler(event, handler) {
+    this.eventHandlers.get(event)?.push(handler);
   }
 };
 function uniqueId() {
@@ -13645,7 +13670,7 @@ var PrimitiveCylinder = class extends Primitive {
 };
 
 // src/renderable/particles.ts
-var import_loglevel7 = __toESM(require_loglevel(), 1);
+var import_loglevel6 = __toESM(require_loglevel(), 1);
 
 // shaders/particles/update.frag
 var update_default = "#version 300 es\n\n// ============================================================================\n// Particle update fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Does nothing, just here to make the WebGL compiler happy!\nvoid main() {}\n";
@@ -13737,7 +13762,7 @@ var ParticleSystem = class {
     this.outputBuffInfo = createBufferInfoFromArrays(gl, quadVerts);
     this.outputVAO = createVertexArrayInfo(gl, this.progInfoRender, this.outputBuffInfo);
     this.texture = TextureCache.defaultWhite;
-    import_loglevel7.default.info("\u2728 Created particle system with", maxParticles, "particles");
+    import_loglevel6.default.info("\u2728 Created particle system with", maxParticles, "particles");
   }
   /**
    * Render the particle system and implement the renderable interface
@@ -13830,7 +13855,7 @@ var ParticleSystem = class {
 };
 
 // src/renderable/model.ts
-var import_loglevel8 = __toESM(require_loglevel(), 1);
+var import_loglevel7 = __toESM(require_loglevel(), 1);
 
 // src/parsers/mtl-parser.ts
 function parseMTL(mtlFile) {
@@ -14050,6 +14075,14 @@ var Model = class _Model {
     this.name = name;
     this.triangles = 0;
     this.programInfo = ProgramCache.instance.default;
+    this._boundingBox = [
+      Number.MAX_VALUE,
+      Number.MAX_VALUE,
+      Number.MAX_VALUE,
+      Number.MIN_VALUE,
+      Number.MIN_VALUE,
+      Number.MIN_VALUE
+    ];
   }
   /**
    * Render is used draw this model, this is called from the Instance that wraps
@@ -14109,7 +14142,7 @@ var Model = class _Model {
           model.materials[matName] = Material2.fromMtl(matRaw, path, filterTextures, flipTextureY);
         }
       } catch (err) {
-        import_loglevel8.default.warn(`\u{1F4A5} Unable to load material library ${objData.matLibNames[0]}`);
+        import_loglevel7.default.warn(`\u{1F4A5} Unable to load material library ${objData.matLibNames[0]}`);
       }
     }
     model.materials.__default = new Material2();
@@ -14119,10 +14152,28 @@ var Model = class _Model {
       throw new Error("\u{1F4A5} Unable to get WebGL context");
     }
     for (const g of objData.geometries) {
+      for (let i = 0; i < g.data.position.length; i += 3) {
+        const x = g.data.position[i];
+        const y = g.data.position[i + 1];
+        const z = g.data.position[i + 2];
+        if (x < model._boundingBox[0])
+          model._boundingBox[0] = x;
+        if (y < model._boundingBox[1])
+          model._boundingBox[1] = y;
+        if (z < model._boundingBox[2])
+          model._boundingBox[2] = z;
+        if (x > model._boundingBox[3])
+          model._boundingBox[3] = x;
+        if (y > model._boundingBox[4])
+          model._boundingBox[4] = y;
+        if (z > model._boundingBox[5])
+          model._boundingBox[5] = z;
+      }
+      import_loglevel7.default.info(`\u265F\uFE0F Model '${objFilename}' part '${g.material}'`);
       const bufferInfo = createBufferInfoFromArrays(gl, g.data);
       model.parts.push(new ModelPart(bufferInfo, g.material));
     }
-    import_loglevel8.default.debug(
+    import_loglevel7.default.debug(
       `\u265F\uFE0F Model '${objFilename}' loaded with ${model.parts.length} parts, ${Object.keys(model.materials).length} materials in ${((performance.now() - startTime) / 1e3).toFixed(2)}s`
     );
     model.triangles = objData.triangles;
@@ -14162,6 +14213,9 @@ var Model = class _Model {
    */
   getNamedMaterial(name) {
     return this.materials[name];
+  }
+  get boundingBox() {
+    return this._boundingBox;
   }
 };
 var ModelPart = class {
@@ -14283,7 +14337,7 @@ var Context = class _Context {
     this._camera = defaultCamera;
     this.activeCameraName = "default";
     this.hud = new HUD(gl.canvas);
-    import_loglevel9.default.info(`\u{1F451} GSOTS-3D context created, v${version}`);
+    import_loglevel8.default.info(`\u{1F451} GSOTS-3D context created, v${version}`);
   }
   // ==== Getters =============================================================
   /** Get the active camera */
@@ -14304,9 +14358,9 @@ var Context = class _Context {
    * @param antiAlias Enable anti-aliasing in the renderer, default is true
    */
   static async init(canvasSelector = "canvas", antiAlias = true) {
-    const gl = getGl(antiAlias, canvasSelector);
+    const gl = getGl(canvasSelector, antiAlias);
     if (!gl) {
-      import_loglevel9.default.error("\u{1F4A5} Failed to create WebGL context, this is extremely bad news");
+      import_loglevel8.default.error("\u{1F4A5} Failed to create WebGL context, this is extremely bad news");
       throw new Error("Failed to get WebGL context");
     }
     const ctx = new _Context(gl);
@@ -14316,7 +14370,7 @@ var Context = class _Context {
     ProgramCache.init(phongProgInfo);
     ProgramCache.instance.add(ProgramCache.PROG_PHONG, phongProgInfo);
     ProgramCache.instance.add(ProgramCache.PROG_BILLBOARD, createProgramInfo(gl, [glsl_default8, glsl_default7]));
-    import_loglevel9.default.info(`\u{1F3A8} Loaded all shaders & programs, GL is ready`);
+    import_loglevel8.default.info(`\u{1F3A8} Loaded all shaders & programs, GL is ready`);
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -14443,7 +14497,7 @@ var Context = class _Context {
    * Start the rendering loop, without calling this nothing will render
    */
   start() {
-    import_loglevel9.default.info("\u{1F680} Starting main GSOTS render loop!");
+    import_loglevel8.default.info("\u{1F680} Starting main GSOTS render loop!");
     this.hud.hideLoading();
     this.started = true;
     requestAnimationFrame(this.render);
@@ -14452,7 +14506,7 @@ var Context = class _Context {
    * Stop the rendering loop
    */
   stop() {
-    import_loglevel9.default.info("\u{1F6D1} Stopping main GSOTS render loop");
+    import_loglevel8.default.info("\u{1F6D1} Stopping main GSOTS render loop");
     this.started = false;
   }
   /**
@@ -14465,7 +14519,7 @@ var Context = class _Context {
       resizeCanvasToDisplaySize(canvas);
     this.gl.viewport(0, 0, canvas.width, canvas.height);
     this.camera.aspectRatio = canvas.width / canvas.height;
-    import_loglevel9.default.info(
+    import_loglevel8.default.info(
       `\u{1F4D0} RESIZE Internal: ${canvas.width} x ${canvas.height}, display: ${canvas.clientWidth} x ${canvas.clientHeight}`
     );
   }
@@ -14490,7 +14544,7 @@ var Context = class _Context {
   async loadModel(path, fileName, filterTextures = true, flipY = false, flipUV = true) {
     const modelName = fileName.split(".")[0];
     if (ModelCache.instance.get(modelName, false)) {
-      import_loglevel9.default.warn(`\u26A0\uFE0F Model '${modelName}' already loaded, skipping`);
+      import_loglevel8.default.warn(`\u26A0\uFE0F Model '${modelName}' already loaded, skipping`);
       return;
     }
     const model = await Model.parse(path, fileName, filterTextures, flipY, flipUV);
@@ -14520,6 +14574,9 @@ var Context = class _Context {
     this._camera = camera;
     this.camera.active = true;
     this.activeCameraName = name;
+  }
+  setLogLevel(level) {
+    import_loglevel8.default.setLevel(level);
   }
   // ==========================================================================
   // Methods to create new instances of renderable objects & things
@@ -14553,7 +14610,7 @@ var Context = class _Context {
     this.addInstance(instance, material);
     Stats.triangles += sphere.triangleCount;
     Stats.instances++;
-    import_loglevel9.default.debug(`\u{1F7E2} Created sphere instance, r:${radius}`);
+    import_loglevel8.default.debug(`\u{1F7E2} Created sphere instance, r:${radius}`);
     return instance;
   }
   /**
@@ -14572,7 +14629,7 @@ var Context = class _Context {
     this.addInstance(instance, material);
     Stats.triangles += plane.triangleCount;
     Stats.instances++;
-    import_loglevel9.default.debug(`\u{1F7E8} Created plane instance, w:${width} h:${height}`);
+    import_loglevel8.default.debug(`\u{1F7E8} Created plane instance, w:${width} h:${height}`);
     return instance;
   }
   /**
@@ -14585,7 +14642,7 @@ var Context = class _Context {
     this.addInstance(instance, material);
     Stats.triangles += cube.triangleCount;
     Stats.instances++;
-    import_loglevel9.default.debug(`\u{1F4E6} Created cube instance, size:${size}`);
+    import_loglevel8.default.debug(`\u{1F4E6} Created cube instance, size:${size}`);
     return instance;
   }
   /**
@@ -14598,7 +14655,7 @@ var Context = class _Context {
     this.addInstance(instance, material);
     Stats.triangles += cyl.triangleCount;
     Stats.instances++;
-    import_loglevel9.default.debug(`\u{1F6E2}\uFE0F Created cylinder instance, r:${r}`);
+    import_loglevel8.default.debug(`\u{1F6E2}\uFE0F Created cylinder instance, r:${r}`);
     return instance;
   }
   /**
@@ -14614,7 +14671,7 @@ var Context = class _Context {
     this.addInstance(instance, material);
     Stats.triangles += 2;
     Stats.instances++;
-    import_loglevel9.default.debug(`\u{1F6A7} Created billboard instance of type: ${type} size: ${size}`);
+    import_loglevel8.default.debug(`\u{1F6A7} Created billboard instance of type: ${type} size: ${size}`);
     return instance;
   }
   /**
@@ -14632,7 +14689,7 @@ var Context = class _Context {
     light.linear /= intensity;
     light.quad /= intensity;
     this.lights.push(light);
-    import_loglevel9.default.debug(`\u{1F506} Created point light, pos:${position} col:${colour} int:${intensity}`);
+    import_loglevel8.default.debug(`\u{1F506} Created point light, pos:${position} col:${colour} int:${intensity}`);
     return light;
   }
   /**
@@ -14689,43 +14746,64 @@ var Context = class _Context {
 };
 
 // src/engine/physics.ts
-function createSphereBody(inst, mass, radius, material) {
+function createSphereBody(inst, mass, material, offset = [0, 0, 0]) {
   if (inst.renderable === void 0) {
     throw new Error("Cannot create body for instance with no renderable");
   }
+  let radius = 1;
   if (inst.renderable instanceof PrimitiveSphere) {
     radius = inst.renderable.radius;
   }
   if (inst.renderable instanceof PrimitiveCube) {
     radius = inst.renderable.size / 2;
   }
+  if (inst.renderable instanceof Model) {
+    const boundBox = inst.renderable.boundingBox;
+    const x = (boundBox[3] - boundBox[0]) * inst.scale[0];
+    const y = (boundBox[4] - boundBox[1]) * inst.scale[1];
+    const z = (boundBox[5] - boundBox[2]) * inst.scale[2];
+    radius = Math.max(x, y, z) / 2;
+  }
   const body = new Body({
     mass,
     position: new Vec3(inst.position[0], inst.position[1], inst.position[2]),
-    shape: new Sphere(radius),
     material
   });
+  const offsetVec = new Vec3(offset[0], offset[1], offset[2]);
+  body.addShape(new Sphere(radius), offsetVec);
   inst.physicsBody = body;
   return body;
 }
-function createBoxBody(inst, mass, size, material) {
+function createBoxBody(inst, mass, material, offset = [0, 0, 0]) {
   if (inst.renderable === void 0) {
     throw new Error("Cannot create body for instance with no renderable");
   }
+  let sizeVec = new Vec3(0.5, 0.5, 0.5);
   if (inst.renderable instanceof PrimitiveSphere) {
-    size = inst.renderable.radius * 2;
+    const size = inst.renderable.radius * 2;
+    sizeVec = new Vec3(size, size, size);
   }
   if (inst.renderable instanceof PrimitiveCube) {
-    size = inst.renderable.size;
+    const size = inst.renderable.size;
+    sizeVec = new Vec3(size, size, size);
+  }
+  if (inst.renderable instanceof Model) {
+    const boundBox = inst.renderable.boundingBox;
+    sizeVec = new Vec3(
+      (boundBox[3] - boundBox[0]) * inst.scale[0] / 2,
+      (boundBox[4] - boundBox[1]) * inst.scale[1] / 2,
+      (boundBox[5] - boundBox[2]) * inst.scale[2] / 2
+    );
   }
   const quat = inst.getQuaternion();
   const body = new Body({
     mass,
-    position: new Vec3(inst.position[0], inst.position[1], inst.position[2]),
-    shape: new Box(new Vec3(size / 2, size / 2, size / 2)),
     material,
+    position: new Vec3(inst.position[0], inst.position[1], inst.position[2]),
     quaternion: new Quaternion(quat[0], quat[1], quat[2], quat[3])
   });
+  const offsetVec = new Vec3(offset[0], offset[1], offset[2]);
+  body.addShape(new Box(sizeVec), offsetVec);
   inst.physicsBody = body;
   return body;
 }
@@ -14780,9 +14858,7 @@ export {
   Stats,
   TextureCache,
   Tuples,
-  fromCannon,
-  getGl,
-  setLogLevel
+  getGl
 };
 /*! Bundled license information:
 

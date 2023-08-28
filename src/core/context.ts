@@ -134,7 +134,7 @@ export class Context {
    * @param antiAlias Enable anti-aliasing in the renderer, default is true
    */
   static async init(canvasSelector = 'canvas', antiAlias = true) {
-    const gl = getGl(antiAlias, canvasSelector)
+    const gl = getGl(canvasSelector, antiAlias)
 
     if (!gl) {
       log.error('💥 Failed to create WebGL context, this is extremely bad news')
@@ -426,7 +426,7 @@ export class Context {
    * @param filterTextures Apply texture filtering as materials are loaded
    * @param flipTextureY Flip the Y coordinate of the texture
    */
-  public async loadModel(path: string, fileName: string, filterTextures = true, flipY = false, flipUV = true) {
+  async loadModel(path: string, fileName: string, filterTextures = true, flipY = false, flipUV = true) {
     const modelName = fileName.split('.')[0]
 
     // Check if model is already loaded
@@ -446,11 +446,11 @@ export class Context {
    * @param name Name of the camera
    * @param camera Camera instance
    */
-  public addCamera(name: string, camera: Camera) {
+  addCamera(name: string, camera: Camera) {
     this.cameras.set(name, camera)
   }
 
-  public getCamera(name: string) {
+  getCamera(name: string) {
     return this.cameras.get(name)
   }
 
@@ -458,7 +458,7 @@ export class Context {
    * Set the active camera
    * @param name Name of the camera to set as active
    */
-  public setActiveCamera(name: string) {
+  setActiveCamera(name: string) {
     const camera = this.cameras.get(name)
     if (!camera) {
       throw new Error(`💥 Unable to set active camera to '${name}', camera not found`)
@@ -468,6 +468,10 @@ export class Context {
     this._camera = camera
     this.camera.active = true
     this.activeCameraName = name
+  }
+
+  setLogLevel(level: log.LogLevelNames) {
+    log.setLevel(level)
   }
 
   // ==========================================================================

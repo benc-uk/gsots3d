@@ -4,7 +4,7 @@
 newmtl Material
 Ns 60
 Ka 1.000000 1.000000 1.000000
-Kd 1 1 1
+Kd 1 0.9 1
 Ks 0.7 0.9 0.7
 map_Kd dice.png
 map_bump dice_normal.png

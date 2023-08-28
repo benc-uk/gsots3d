@@ -25,6 +25,7 @@ export class Model implements Renderable {
   private readonly parts = [] as ModelPart[]
   private readonly materials = {} as Record<string, Material>
   private triangles: number
+  private _boundingBox: number[]
 
   /** Name of the model, usually the filename without the extension */
   public readonly name: string
@@ -36,6 +37,14 @@ export class Model implements Renderable {
     this.name = name
     this.triangles = 0
     this.programInfo = ProgramCache.instance.default
+    this._boundingBox = [
+      Number.MAX_VALUE,
+      Number.MAX_VALUE,
+      Number.MAX_VALUE,
+      Number.MIN_VALUE,
+      Number.MIN_VALUE,
+      Number.MIN_VALUE,
+    ]
   }
 
   /**
@@ -139,6 +148,21 @@ export class Model implements Renderable {
     }
 
     for (const g of objData.geometries) {
+      // Calculate bounding box
+      for (let i = 0; i < g.data.position.length; i += 3) {
+        const x = g.data.position[i]
+        const y = g.data.position[i + 1]
+        const z = g.data.position[i + 2]
+        if (x < model._boundingBox[0]) model._boundingBox[0] = x
+        if (y < model._boundingBox[1]) model._boundingBox[1] = y
+        if (z < model._boundingBox[2]) model._boundingBox[2] = z
+        if (x > model._boundingBox[3]) model._boundingBox[3] = x
+        if (y > model._boundingBox[4]) model._boundingBox[4] = y
+        if (z > model._boundingBox[5]) model._boundingBox[5] = z
+      }
+
+      log.info(`♟️ Model '${objFilename}' part '${g.material}'`)
+
       // TODO: One day add tangent generation
       const bufferInfo = twgl.createBufferInfoFromArrays(gl, g.data)
       model.parts.push(new ModelPart(bufferInfo, g.material))
@@ -192,6 +216,10 @@ export class Model implements Renderable {
    */
   getNamedMaterial(name: string): Material {
     return this.materials[name]
+  }
+
+  public get boundingBox(): number[] {
+    return this._boundingBox
   }
 }
 

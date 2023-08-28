@@ -1,11 +1,11 @@
-import { Context, Material, setLogLevel, Physics, Tuples } from '../../dist-bundle/gsots3d.js'
+import { Context, Material, Physics } from '../../dist-bundle/gsots3d.js'
 import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.min.js'
 
 const ctx = await Context.init()
 ctx.camera.position = [0, 110, 150]
 ctx.camera.enableFPControls(0.5, -0.44, 0.002, 2.5)
 ctx.camera.far = 3000
-setLogLevel('info')
+ctx.setLogLevel('info')
 
 ctx.globalLight.setAsPosition(5, 10, 7)
 const amb = 0.2

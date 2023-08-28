@@ -261,7 +261,7 @@ export class DynamicEnvironmentMap {
 /**
  * Internal type for storing a dynamic envmap facing info
  */
-export type DynamicEnvMapFace = {
+type DynamicEnvMapFace = {
   face: number
   direction: XYZ
   buffer: twgl.FramebufferInfo
