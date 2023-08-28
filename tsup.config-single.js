@@ -21,7 +21,7 @@ export default defineConfig({
   clean: true,
 
   format: 'esm',
-  outDir: 'dist-bundle',
+  outDir: 'dist-single',
 
   // This is a trick to get TSUP to bundle the external dependencies
   noExternal: [/./],
