@@ -168,7 +168,7 @@ export class Context {
   }
 
   /**
-   * Main render loop, called every frame
+   * Main render loop, called every frame by the context when started
    * @param now Current time in milliseconds
    */
   private async render(now: number) {
