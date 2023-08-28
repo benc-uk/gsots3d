@@ -1,4 +1,4 @@
-import { Context, Material } from '../../dist-bundle/gsots3d.js'
+import { Context, Material } from '../../dist-single/gsots3d.js'
 
 const ctx = await Context.init()
 

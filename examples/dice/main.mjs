@@ -1,4 +1,4 @@
-import { Context, Physics } from '../../dist-bundle/gsots3d.js'
+import { Context, Physics } from '../../dist-single/gsots3d.js'
 import { isMobile } from '../screen.mjs'
 
 import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.min.js'

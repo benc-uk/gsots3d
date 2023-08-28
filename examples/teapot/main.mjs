@@ -1,4 +1,4 @@
-import { Context, Material, Camera } from '../../dist-bundle/gsots3d.js'
+import { Context, Material, Camera } from '../../dist-single/gsots3d.js'
 
 const ctx = await Context.init()
 window.addEventListener('resize', () => ctx.resize())

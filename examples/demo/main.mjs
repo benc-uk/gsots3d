@@ -1,4 +1,4 @@
-import { Context, Material, Colours } from '../../dist-bundle/gsots3d.js'
+import { Context, Material, Colours } from '../../dist-single/gsots3d.js'
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 

@@ -177,7 +177,7 @@ export class TextureCache {
           // There's not much we can do here, but log the error
           log.error('💥 Error loading texture', err)
         }
-      }
+      },
     )
 
     this.add(src, texture)

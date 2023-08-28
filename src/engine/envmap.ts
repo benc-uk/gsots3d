@@ -150,7 +150,7 @@ export class DynamicEnvironmentMap {
           gl,
           [{ attachment: this._texture, target: gl.TEXTURE_CUBE_MAP_POSITIVE_X }, { format: gl.DEPTH_COMPONENT16 }],
           size,
-          size
+          size,
         ),
       },
       {
@@ -160,7 +160,7 @@ export class DynamicEnvironmentMap {
           gl,
           [{ attachment: this._texture, target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X }, { format: gl.DEPTH_COMPONENT16 }],
           size,
-          size
+          size,
         ),
       },
       {
@@ -170,7 +170,7 @@ export class DynamicEnvironmentMap {
           gl,
           [{ attachment: this._texture, target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y }, { format: gl.DEPTH_COMPONENT16 }],
           size,
-          size
+          size,
         ),
       },
       {
@@ -180,7 +180,7 @@ export class DynamicEnvironmentMap {
           gl,
           [{ attachment: this._texture, target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y }, { format: gl.DEPTH_COMPONENT16 }],
           size,
-          size
+          size,
         ),
       },
       {
@@ -190,7 +190,7 @@ export class DynamicEnvironmentMap {
           gl,
           [{ attachment: this._texture, target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z }, { format: gl.DEPTH_COMPONENT16 }],
           size,
-          size
+          size,
         ),
       },
       {
@@ -200,7 +200,7 @@ export class DynamicEnvironmentMap {
           gl,
           [{ attachment: this._texture, target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z }, { format: gl.DEPTH_COMPONENT16 }],
           size,
-          size
+          size,
         ),
       },
     ]

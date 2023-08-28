@@ -17,6 +17,6 @@ export interface Renderable {
     gl: WebGL2RenderingContext,
     uniforms: UniformSet,
     materialOverride?: Material,
-    programOverride?: ProgramInfo
+    programOverride?: ProgramInfo,
   ): void
 }

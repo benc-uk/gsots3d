@@ -150,7 +150,7 @@ export class LightDirectional {
       gl,
       [{ attachment: this._shadowMapTex, attachmentPoint: gl.DEPTH_ATTACHMENT }],
       this._shadowOptions.mapSize,
-      this._shadowOptions.mapSize
+      this._shadowOptions.mapSize,
     )
   }
 
@@ -198,7 +198,7 @@ export class LightDirectional {
     const shadowMat = mat4.multiply(
       mat4.create(),
       shadowCam.projectionMatrix,
-      mat4.invert(mat4.create(), shadowCam.matrix)
+      mat4.invert(mat4.create(), shadowCam.matrix),
     )
 
     return shadowMat

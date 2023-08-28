@@ -1,4 +1,4 @@
-import { Colours, Context, Material } from '../../dist-bundle/gsots3d.js'
+import { Colours, Context, Material } from '../../dist-single/gsots3d.js'
 import { isMobile } from '../screen.mjs'
 
 const ctx = await Context.init()

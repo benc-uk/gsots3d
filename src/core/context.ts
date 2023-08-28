@@ -403,7 +403,7 @@ export class Context {
     this.camera.aspectRatio = canvas.width / canvas.height
 
     log.info(
-      `📐 RESIZE Internal: ${canvas.width} x ${canvas.height}, display: ${canvas.clientWidth} x ${canvas.clientHeight}`
+      `📐 RESIZE Internal: ${canvas.width} x ${canvas.height}, display: ${canvas.clientWidth} x ${canvas.clientHeight}`,
     )
   }
 

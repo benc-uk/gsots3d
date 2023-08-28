@@ -77,11 +77,11 @@ npm install @benc-uk/gsots3d
 
 #### Directly in browser
 
-A standalone ESM bundle is delivered via jsDelivr & GitHub, this can be used directly in a vanilla HTML+JS app to import the library, e.g.
+A standalone ESM single file bundle is delivered via jsDelivr & GitHub, this can be used directly in a vanilla HTML+JS app to import the library, e.g.
 
 ```js
 // Import from main, getting latest code
-import { Context } from 'https://cdn.jsdelivr.net/gh/benc-uk/gsots3d@main/dist-bundle/gsots3d.min.js'
+import { Context } from 'https://cdn.jsdelivr.net/gh/benc-uk/gsots3d@main/dist-single/gsots3d.min.js'
 ```
 
 If you want to reference a specific released version you can do so by changing `benc-uk/gsots3d@main` for example `benc-uk/gsots3d@0.0.4`

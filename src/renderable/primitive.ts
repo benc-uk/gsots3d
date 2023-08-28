@@ -39,7 +39,7 @@ export abstract class Primitive implements Renderable {
     gl: WebGL2RenderingContext,
     uniforms: UniformSet,
     materialOverride?: Material,
-    programOverride?: twgl.ProgramInfo
+    programOverride?: twgl.ProgramInfo,
   ) {
     if (!this.bufferInfo) return
 
@@ -144,7 +144,7 @@ export class PrimitivePlane extends Primitive {
     height: number,
     subdivisionsW: number,
     subdivisionsH: number,
-    tilingFactor: number
+    tilingFactor: number,
   ) {
     super()
 
@@ -180,7 +180,7 @@ export class PrimitiveCylinder extends Primitive {
     height: number,
     subdivisionsR: number,
     subdivisionsV: number,
-    caps: boolean
+    caps: boolean,
   ) {
     super()
 
@@ -192,7 +192,7 @@ export class PrimitiveCylinder extends Primitive {
       subdivisionsR,
       subdivisionsV,
       caps,
-      caps
+      caps,
     )
 
     this.triangles += this.bufferInfo.numElements / 3

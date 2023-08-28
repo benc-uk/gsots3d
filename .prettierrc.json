@@ -1,4 +1,5 @@
 {
+  "plugins": ["prettier-plugin-glsl"],
   "semi": false,
   "singleQuote": true,
   "printWidth": 120,

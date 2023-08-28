@@ -127,7 +127,7 @@ export class Camera {
         -this.orthoZoom,
         this.orthoZoom,
         this.near,
-        this.far
+        this.far,
       )
 
       return camProj

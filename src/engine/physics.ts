@@ -81,7 +81,7 @@ function createBoxBody(inst: Instance, mass: number, material?: CANNON.Material,
     sizeVec = new CANNON.Vec3(
       ((boundBox[3] - boundBox[0]) * inst.scale[0]) / 2,
       ((boundBox[4] - boundBox[1]) * inst.scale[1]) / 2,
-      ((boundBox[5] - boundBox[2]) * inst.scale[2]) / 2
+      ((boundBox[5] - boundBox[2]) * inst.scale[2]) / 2,
     )
   }
 

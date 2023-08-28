@@ -55,7 +55,7 @@ export class Model implements Renderable {
     gl: WebGL2RenderingContext,
     uniforms: UniformSet,
     materialOverride?: Material,
-    programOverride?: twgl.ProgramInfo
+    programOverride?: twgl.ProgramInfo,
   ): void {
     const programInfo = programOverride || this.programInfo
     gl.useProgram(programInfo.program)
@@ -171,7 +171,7 @@ export class Model implements Renderable {
     log.debug(
       `♟️ Model '${objFilename}' loaded with ${model.parts.length} parts, ${
         Object.keys(model.materials).length
-      } materials in ${((performance.now() - startTime) / 1000).toFixed(2)}s`
+      } materials in ${((performance.now() - startTime) / 1000).toFixed(2)}s`,
     )
 
     model.triangles = objData.triangles
