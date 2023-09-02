@@ -46,8 +46,8 @@ TAG=$(npm version $VERSION_TYPE --no-git-tag-version)
 echo "### 🎈 Releasing new version ${TAG}"
 echo "### 🔨 Building browser ESM bundle"
 
-npm run build-bundle
-git add dist-bundle package.json package-lock.json
+npm run build-single
+git add dist-single package.json package-lock.json
 git commit -m "📦 Releasing new version ${TAG}"
 
 git tag "$TAG" --force
