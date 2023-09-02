@@ -163,7 +163,7 @@ try {
 // Camera
 ctx.camera.position = [0, 25, 50]
 ctx.camera.lookAt = [0, 10, 0]
-ctx.camera.far = 500
+ctx.camera.far = 400
 ctx.camera.enableFPControls(0, -0.2, 0.002, moveSpeed)
 
 // Main light
@@ -242,8 +242,8 @@ ctx.setDynamicEnvmap([0, 15, 0], 256)
 
 // Shadows
 ctx.globalLight.enableShadows({
-  mapSize: 2048,
-  zoom: 100,
+  mapSize: 1024 * 4,
+  zoom: 80,
   polygonOffset: 1,
 })
 

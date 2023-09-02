@@ -3,7 +3,7 @@
 // Ben Coleman, 2023
 // ============================================================================
 
-import { mat4 } from 'gl-matrix'
+import { mat4, vec3 } from 'gl-matrix'
 import { XYZ } from './tuples.ts'
 import { getGl } from '../core/gl.ts'
 
@@ -138,6 +138,62 @@ export class Camera {
   }
 
   /**
+   * Get the corners of the view frustum for this camera in world space
+   * @param scaleFar Scale the far plane to bring the frustum closer, default: 1
+   */
+  frustumCornersWorld(scaleFar = 1) {
+    const far = this.far * scaleFar
+    const nearHeight = Math.tan((this.fov * (Math.PI / 180)) / 2) * this.near
+    const nearWidth = nearHeight * this.aspectRatio
+
+    const farHeight = Math.tan((this.fov * (Math.PI / 180)) / 2) * far
+    const farWidth = farHeight * this.aspectRatio
+
+    const nearTopLeft = vec3.fromValues(nearWidth, nearHeight, -this.near)
+    const nearTopRight = vec3.fromValues(-nearWidth, nearHeight, -this.near)
+    const nearBottomLeft = vec3.fromValues(nearWidth, -nearHeight, -this.near)
+    const nearBottomRight = vec3.fromValues(-nearWidth, -nearHeight, -this.near)
+
+    const farTopLeft = vec3.fromValues(farWidth, farHeight, -far)
+    const farTopRight = vec3.fromValues(-farWidth, farHeight, -far)
+    const farBottomLeft = vec3.fromValues(farWidth, -farHeight, -far)
+    const farBottomRight = vec3.fromValues(-farWidth, -farHeight, -far)
+
+    const nearTopLeftWorld = vec3.transformMat4(vec3.create(), nearTopLeft, this.matrix)
+    const nearTopRightWorld = vec3.transformMat4(vec3.create(), nearTopRight, this.matrix)
+    const nearBottomLeftWorld = vec3.transformMat4(vec3.create(), nearBottomLeft, this.matrix)
+    const nearBottomRightWorld = vec3.transformMat4(vec3.create(), nearBottomRight, this.matrix)
+
+    const farTopLeftWorld = vec3.transformMat4(vec3.create(), farTopLeft, this.matrix)
+    const farTopRightWorld = vec3.transformMat4(vec3.create(), farTopRight, this.matrix)
+    const farBottomLeftWorld = vec3.transformMat4(vec3.create(), farBottomLeft, this.matrix)
+    const farBottomRightWorld = vec3.transformMat4(vec3.create(), farBottomRight, this.matrix)
+
+    // calculate the center of the frustum
+    const center = vec3.create()
+    vec3.add(center, nearTopLeftWorld, nearTopRightWorld)
+    vec3.add(center, center, nearBottomLeftWorld)
+    vec3.add(center, center, nearBottomRightWorld)
+    vec3.add(center, center, farTopLeftWorld)
+    vec3.add(center, center, farTopRightWorld)
+    vec3.add(center, center, farBottomLeftWorld)
+    vec3.add(center, center, farBottomRightWorld)
+    vec3.scale(center, center, 1 / 8)
+
+    return {
+      nearTopLeftWorld,
+      nearTopRightWorld,
+      nearBottomLeftWorld,
+      nearBottomRightWorld,
+      farTopLeftWorld,
+      farTopRightWorld,
+      farBottomLeftWorld,
+      farBottomRightWorld,
+      center,
+    }
+  }
+
+  /**
    * Get the camera position as a string for debugging
    */
   toString() {
@@ -189,6 +245,13 @@ export class Camera {
       // Clamp up/down angle
       if (this.fpAngleX > this.maxAngleUp) this.fpAngleX = this.maxAngleUp
       if (this.fpAngleX < this.maxAngleDown) this.fpAngleX = this.maxAngleDown
+
+      // update the lookAt point
+      const dZ = -Math.cos(this.fpAngleY) * 1
+      const dX = -Math.sin(this.fpAngleY) * 1
+      const dY = Math.sin(this.fpAngleX) * 1
+
+      this.lookAt = [this.position[0] + dX, this.position[1] + dY, this.position[2] + dZ]
     })
 
     // Track keys pressed for movement

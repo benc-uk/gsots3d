@@ -1,19 +1,18 @@
-import { Context, Material, Camera } from '../../dist-single/gsots3d.js'
+import { Context, Material } from '../../dist-single/gsots3d.js'
 
 const ctx = await Context.init()
-window.addEventListener('resize', () => ctx.resize())
 ctx.debug = true
 
 ctx.camera.position = [0, 7, 20]
 ctx.camera.enableFPControls(0, -0.3)
-ctx.camera.far = 200
+ctx.camera.far = 1000
 
 ctx.globalLight.setAsPosition(18, 20, 25)
 ctx.globalLight.ambient = [0.1, 0.1, 0.1]
-
-const topCam = new Camera()
-topCam.position = [1, 30, 0]
-ctx.addCamera('top', topCam)
+ctx.globalLight.enableShadows({
+  zoom: 20,
+  mapSize: 2048,
+})
 
 const matBlue = Material.BLUE
 matBlue.specular = [1.0, 1.0, 1.0]
@@ -48,32 +47,32 @@ teapot.rotateY(-2.715)
 teapot3.rotateY(-0.615)
 
 // Add map
-ctx.setEnvmap(
-  true,
-  '../_textures/skybox-1/right.jpg',
-  '../_textures/skybox-1/left.jpg',
-  '../_textures/skybox-1/top.jpg',
-  '../_textures/skybox-1/bottom.jpg',
-  '../_textures/skybox-1/front.jpg',
-  '../_textures/skybox-1/back.jpg'
-)
+// ctx.setEnvmap(
+//   true,
+//   '../_textures/skybox-1/right.jpg',
+//   '../_textures/skybox-1/left.jpg',
+//   '../_textures/skybox-1/top.jpg',
+//   '../_textures/skybox-1/bottom.jpg',
+//   '../_textures/skybox-1/front.jpg',
+//   '../_textures/skybox-1/back.jpg',
+// )
+
+const s1 = ctx.createSphereInstance(Material.RED, 15, 32, 32)
+const s2 = ctx.createSphereInstance(Material.RED, 15, 32, 32)
+const s3 = ctx.createSphereInstance(Material.RED, 15, 32, 32)
+const s4 = ctx.createSphereInstance(Material.RED, 15, 32, 32)
+const s5 = ctx.createSphereInstance(Material.WHITE, 15, 32, 32)
 
 ctx.update = () => {
   teapot.rotateY(0.015)
   teapot2.rotateY(-0.015)
   teapot3.rotateY(0.01)
+  const corners = ctx.camera.getFrustumCornersWorld()
+  s1.position = corners.farBottomLeftWorld
+  s2.position = corners.farBottomRightWorld
+  s3.position = corners.farTopLeftWorld
+  s4.position = corners.farTopRightWorld
+  s5.position = corners.farCenter
 }
-
-window.addEventListener('keydown', (e) => {
-  if (e.key === '1') {
-    ctx.setActiveCamera('top')
-  } else if (e.key === '2') {
-    ctx.setActiveCamera('default')
-  }
-
-  if (e.key === '3') {
-    ctx.removeSkybox()
-  }
-})
 
 ctx.start()

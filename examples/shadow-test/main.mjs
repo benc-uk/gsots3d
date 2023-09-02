@@ -4,18 +4,19 @@ window.addEventListener('resize', () => ctx.resize())
 
 const ctx = await Context.init()
 
-const lightPos = [15, 20, 8]
+const lightPos = [1.1, 20.1, 0.1]
 ctx.camera.position = [0, 80, 100]
 ctx.camera.enableFPControls(0, -0.35, 0.002, 3)
-ctx.camera.far = 1800
+ctx.camera.far = 19600
 ctx.gamma = 1.0
 
 ctx.globalLight.setAsPosition(lightPos[0], lightPos[1], lightPos[2])
 const amb = 0.1
 ctx.globalLight.ambient = [amb, amb, amb]
 ctx.globalLight.enableShadows({
-  mapSize: 1024,
-  zoom: 50,
+  mapSize: 2048,
+  zoom: 400,
+  distance: 500,
 })
 
 const floorMat = Material.createBasicTexture('../_textures/wood-floor.png')
@@ -57,10 +58,27 @@ window.addEventListener('keydown', (e) => {
     lightPos[2] += 1
     ctx.globalLight.setAsPosition(lightPos[0], lightPos[1], lightPos[2])
   }
+
+  if (e.key === '9') {
+    ctx.setActiveCamera('default')
+  }
+  if (e.key === '0') {
+    ctx.setActiveCamera('__shadow')
+  }
 })
 
 ctx.update = () => {
   crate2.rotateYDeg(0.5)
 }
+
+ctx.setEnvmap(
+  true,
+  '../_textures/skybox-1/right.jpg',
+  '../_textures/skybox-1/left.jpg',
+  '../_textures/skybox-1/top.jpg',
+  '../_textures/skybox-1/bottom.jpg',
+  '../_textures/skybox-1/front.jpg',
+  '../_textures/skybox-1/back.jpg',
+)
 
 ctx.start()

@@ -9,8 +9,12 @@ ctx.debug = true
 
 ctx.camera.position = [50, 80, 60]
 ctx.camera.enableFPControls(0.8, -0.49, 0.0015, 1.8)
-ctx.camera.far = 2000
+ctx.camera.far = 400
 ctx.camera.fov = 43
+
+// window.addEventListener('resize', () => {
+//   ctx.resize()
+// })
 
 ctx.globalLight.setAsPosition(6, 9, 3)
 const amb = 0.2
@@ -19,7 +23,6 @@ ctx.globalLight.enableShadows({
   zoom: 150,
   mapSize: 2048,
   polygonOffset: 0.2,
-  distance: 2000,
 })
 
 // Load models
@@ -43,7 +46,7 @@ world.addContactMaterial(
   new CANNON.ContactMaterial(tableMaterial, diceMat, {
     friction: 0.7,
     restitution: 0.3,
-  })
+  }),
 )
 
 const tableBody = Physics.createBoxBody(table, 0, tableMaterial, [0, 0, 17.8])
@@ -61,7 +64,7 @@ ctx.physicsTimeStep = isMobile() ? 1 / 120 : 1 / 60
 
 const note = document.createElement('div')
 note.innerHTML = 'Press space to drop a die!'
-note.style.fontSize = '2vw'
+note.style.fontSize = '1.5vw'
 note.style.textShadow = '3px 3px 2px rgba(0,0,0,0.8)'
 note.style.position = 'absolute'
 note.style.top = '0'

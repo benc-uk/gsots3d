@@ -179,10 +179,6 @@ export class Context {
     // Move camera before any rendering
     this.camera.update()
 
-    // Link global camera shadow offset to the camera position
-    // This means that the shadow map will be centred around the camera
-    this.globalLight.shadowViewOffset = this.camera.position
-
     // -----------------------------------------------------------------------
     // RENDER CORE - Render into the dynamic environment map(s) if any
     // -----------------------------------------------------------------------
@@ -205,8 +201,12 @@ export class Context {
       // Bind the shadow map framebuffer and render the scene from the light's POV
       // Using the special shadow map program as an override for the whole rendering pass
       twgl.bindFramebufferInfo(this.gl, this.globalLight.shadowMapFrameBufffer)
-      const shadowCam = this.globalLight.getShadowCamera()
-      if (shadowCam) this.renderWithCamera(shadowCam, this.globalLight.shadowMapProgram)
+      const shadowCam = this.globalLight.getShadowCamera(this.camera)
+
+      if (shadowCam) {
+        this.addCamera('__shadow', shadowCam)
+        this.renderWithCamera(shadowCam, this.globalLight.shadowMapProgram)
+      }
 
       // Switch back to back face culling
       this.gl.cullFace(this.gl.BACK)
@@ -280,7 +280,7 @@ export class Context {
       u_reflectionMap: reflectMap,
 
       u_shadowMap: this.globalLight.shadowMapTexture,
-      u_shadowMatrix: this.globalLight.shadowMatrix ?? mat4.create(),
+      u_shadowMatrix: this.globalLight.getShadowMatrix(this.camera) ?? mat4.create(),
       // u_shadowScatter: this.globalLight.shadowMapOptions?.scatter ?? 0.2,
     } as UniformSet
 
@@ -459,6 +459,8 @@ export class Context {
    * @param name Name of the camera to set as active
    */
   setActiveCamera(name: string) {
+    if (name == this.activeCameraName) return
+
     const camera = this.cameras.get(name)
     if (!camera) {
       throw new Error(`💥 Unable to set active camera to '${name}', camera not found`)

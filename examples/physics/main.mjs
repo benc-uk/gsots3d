@@ -30,12 +30,12 @@ metalMat.specular = [0.5, 0.5, 0.9]
 metalMat.reflectivity = 0.9
 const crateMat = Material.createBasicTexture('../_textures/crate.png')
 
-const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.8, 0) })
+const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -8, 0) })
 
 const groundMaterial = new CANNON.Material()
 const sphereMat = new CANNON.Material()
 
-world.addBody(Physics.createBoxBody(floor, 0, -1, groundMaterial))
+world.addBody(Physics.createBoxBody(floor, 0, groundMaterial))
 
 const contactMat = new CANNON.ContactMaterial(groundMaterial, sphereMat, {
   friction: 0.15,
@@ -60,9 +60,10 @@ ctx.setEnvmap(
   '../_textures/skybox-2/posy.png',
   '../_textures/skybox-2/negy.png',
   '../_textures/skybox-2/posz.png',
-  '../_textures/skybox-2/negz.png'
+  '../_textures/skybox-2/negz.png',
 )
 
+// Reflection probe
 ctx.setDynamicEnvmap([0, 25, 0], 512, 200)
 ctx.start()
 
@@ -81,8 +82,16 @@ ctx.hud.addHUDItem(note)
 function addBall() {
   const sphere = ctx.createSphereInstance(metalMat, 7, 32, 32)
   sphere.position = [-150, 125, Math.random() * 300 - 150]
-  const sphereBody = Physics.createSphereBody(sphere, 5, -1, sphereMat)
+  const sphereBody = Physics.createSphereBody(sphere, 0.1, sphereMat)
   world.addBody(sphereBody)
+
+  // Remove ball when it falls and drops below -200
+  sphere.addEventHandler('position', (event) => {
+    if (event.position[1] < -200) {
+      world.removeBody(sphereBody)
+      ctx.removeInstance(sphere)
+    }
+  })
 }
 
 function addCrate() {
@@ -90,6 +99,6 @@ function addCrate() {
   const x = Math.random() * 300 - 150
   crate.position = [x, 1 - x / 8 + 5, Math.random() * 300 - 150]
   crate.rotateYDeg(Math.random() * 360)
-  const crateBody = Physics.createBoxBody(crate, 0, -1, floorMat)
+  const crateBody = Physics.createBoxBody(crate, 0, floorMat)
   world.addBody(crateBody)
 }

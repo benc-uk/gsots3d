@@ -12533,6 +12533,53 @@ var Camera = class {
     }
   }
   /**
+   * Get the corners of the view frustum for this camera in world space
+   * @param scaleFar Scale the far plane to bring the frustum closer, default: 1
+   */
+  frustumCornersWorld(scaleFar = 1) {
+    const far = this.far * scaleFar;
+    const nearHeight = Math.tan(this.fov * (Math.PI / 180) / 2) * this.near;
+    const nearWidth = nearHeight * this.aspectRatio;
+    const farHeight = Math.tan(this.fov * (Math.PI / 180) / 2) * far;
+    const farWidth = farHeight * this.aspectRatio;
+    const nearTopLeft = vec3_exports.fromValues(nearWidth, nearHeight, -this.near);
+    const nearTopRight = vec3_exports.fromValues(-nearWidth, nearHeight, -this.near);
+    const nearBottomLeft = vec3_exports.fromValues(nearWidth, -nearHeight, -this.near);
+    const nearBottomRight = vec3_exports.fromValues(-nearWidth, -nearHeight, -this.near);
+    const farTopLeft = vec3_exports.fromValues(farWidth, farHeight, -far);
+    const farTopRight = vec3_exports.fromValues(-farWidth, farHeight, -far);
+    const farBottomLeft = vec3_exports.fromValues(farWidth, -farHeight, -far);
+    const farBottomRight = vec3_exports.fromValues(-farWidth, -farHeight, -far);
+    const nearTopLeftWorld = vec3_exports.transformMat4(vec3_exports.create(), nearTopLeft, this.matrix);
+    const nearTopRightWorld = vec3_exports.transformMat4(vec3_exports.create(), nearTopRight, this.matrix);
+    const nearBottomLeftWorld = vec3_exports.transformMat4(vec3_exports.create(), nearBottomLeft, this.matrix);
+    const nearBottomRightWorld = vec3_exports.transformMat4(vec3_exports.create(), nearBottomRight, this.matrix);
+    const farTopLeftWorld = vec3_exports.transformMat4(vec3_exports.create(), farTopLeft, this.matrix);
+    const farTopRightWorld = vec3_exports.transformMat4(vec3_exports.create(), farTopRight, this.matrix);
+    const farBottomLeftWorld = vec3_exports.transformMat4(vec3_exports.create(), farBottomLeft, this.matrix);
+    const farBottomRightWorld = vec3_exports.transformMat4(vec3_exports.create(), farBottomRight, this.matrix);
+    const center = vec3_exports.create();
+    vec3_exports.add(center, nearTopLeftWorld, nearTopRightWorld);
+    vec3_exports.add(center, center, nearBottomLeftWorld);
+    vec3_exports.add(center, center, nearBottomRightWorld);
+    vec3_exports.add(center, center, farTopLeftWorld);
+    vec3_exports.add(center, center, farTopRightWorld);
+    vec3_exports.add(center, center, farBottomLeftWorld);
+    vec3_exports.add(center, center, farBottomRightWorld);
+    vec3_exports.scale(center, center, 1 / 8);
+    return {
+      nearTopLeftWorld,
+      nearTopRightWorld,
+      nearBottomLeftWorld,
+      nearBottomRightWorld,
+      farTopLeftWorld,
+      farTopRightWorld,
+      farBottomLeftWorld,
+      farBottomRightWorld,
+      center
+    };
+  }
+  /**
    * Get the camera position as a string for debugging
    */
   toString() {
@@ -12578,6 +12625,10 @@ var Camera = class {
         this.fpAngleX = this.maxAngleUp;
       if (this.fpAngleX < this.maxAngleDown)
         this.fpAngleX = this.maxAngleDown;
+      const dZ = -Math.cos(this.fpAngleY) * 1;
+      const dX = -Math.sin(this.fpAngleY) * 1;
+      const dY = Math.sin(this.fpAngleX) * 1;
+      this.lookAt = [this.position[0] + dX, this.position[1] + dY, this.position[2] + dZ];
     });
     window.addEventListener("keydown", (e) => {
       if (!this.fpMode || !this.active)
@@ -12710,7 +12761,6 @@ var LightDirectional = class {
     this.colour = Colours.WHITE;
     this.ambient = Colours.BLACK;
     this.enabled = true;
-    this.shadowViewOffset = [0, 0, 0];
     const gl = getGl();
     if (!gl) {
       throw new Error("\u{1F4A5} LightDirectional: Cannot create shadow map shader, no GL context");
@@ -12792,35 +12842,36 @@ var LightDirectional = class {
   }
   /**
    * Get a virtual camera that can be used to render a shadow map for this light
-   * @param zoomLevel - Zoom level of the camera, default: 30
-   * @param aspectRatio - Aspect ratio of the camera, default: 1
+   * @param viewCam - The main camera used to view the scene, needed to get a good shadow view
    */
-  getShadowCamera() {
+  getShadowCamera(viewCam) {
     if (!this._shadowOptions) {
       return void 0;
     }
-    const moveDist = this._shadowOptions.distance * 0.9;
-    const cam = new Camera(1 /* ORTHOGRAPHIC */, 4 / 3);
+    const corners = viewCam.frustumCornersWorld(this._shadowOptions.zoom / viewCam.far);
+    const viewFrustumCenter = corners.center;
+    const cam = new Camera(1 /* ORTHOGRAPHIC */, 1);
     cam.usedForShadowMap = true;
-    cam.orthoZoom = this._shadowOptions.zoom;
-    cam.lookAt = this.shadowViewOffset;
     cam.position = [
-      -this.direction[0] * moveDist + this.shadowViewOffset[0],
-      -this.direction[1] * moveDist + this.shadowViewOffset[1],
-      -this.direction[2] * moveDist + this.shadowViewOffset[2]
+      viewFrustumCenter[0] + -this.direction[0] * this._shadowOptions.distance,
+      viewFrustumCenter[1] + -this.direction[1] * this._shadowOptions.distance,
+      viewFrustumCenter[2] + -this.direction[2] * this._shadowOptions.distance
     ];
+    cam.lookAt = viewFrustumCenter;
     cam.far = this._shadowOptions.distance * 2;
+    cam.orthoZoom = this._shadowOptions.zoom;
     return cam;
   }
   /**
    * Get the forward view matrix for the virtual camera used to render the shadow map.
    * Returns undefined if shadows are not enabled
+   * @param viewCam - The main camera used to view the scene, needed to get a good shadow view
    */
-  get shadowMatrix() {
+  getShadowMatrix(viewCam) {
     if (!this._shadowOptions) {
       return void 0;
     }
-    const shadowCam = this.getShadowCamera();
+    const shadowCam = this.getShadowCamera(viewCam);
     if (!shadowCam) {
       return void 0;
     }
@@ -14379,7 +14430,7 @@ var Context = class _Context {
     return ctx;
   }
   /**
-   * Main render loop, called every frame
+   * Main render loop, called every frame by the context when started
    * @param now Current time in milliseconds
    */
   async render(now) {
@@ -14387,7 +14438,6 @@ var Context = class _Context {
       return;
     Stats.updateTime(now);
     this.camera.update();
-    this.globalLight.shadowViewOffset = this.camera.position;
     if (this.dynamicEnvMap) {
       this.dynamicEnvMap.update(this.gl, this);
     }
@@ -14397,9 +14447,11 @@ var Context = class _Context {
       const shadowOpt = this.globalLight.shadowMapOptions;
       this.gl.polygonOffset(shadowOpt?.polygonOffset ?? 0, 1);
       bindFramebufferInfo(this.gl, this.globalLight.shadowMapFrameBufffer);
-      const shadowCam = this.globalLight.getShadowCamera();
-      if (shadowCam)
+      const shadowCam = this.globalLight.getShadowCamera(this.camera);
+      if (shadowCam) {
+        this.addCamera("__shadow", shadowCam);
         this.renderWithCamera(shadowCam, this.globalLight.shadowMapProgram);
+      }
       this.gl.cullFace(this.gl.BACK);
       this.gl.disable(this.gl.POLYGON_OFFSET_FILL);
     }
@@ -14444,7 +14496,7 @@ var Context = class _Context {
       u_camPos: camera.position,
       u_reflectionMap: reflectMap,
       u_shadowMap: this.globalLight.shadowMapTexture,
-      u_shadowMatrix: this.globalLight.shadowMatrix ?? mat4_exports.create()
+      u_shadowMatrix: this.globalLight.getShadowMatrix(this.camera) ?? mat4_exports.create()
       // u_shadowScatter: this.globalLight.shadowMapOptions?.scatter ?? 0.2,
     };
     if (this._envmap) {
@@ -14566,6 +14618,8 @@ var Context = class _Context {
    * @param name Name of the camera to set as active
    */
   setActiveCamera(name) {
+    if (name == this.activeCameraName)
+      return;
     const camera = this.cameras.get(name);
     if (!camera) {
       throw new Error(`\u{1F4A5} Unable to set active camera to '${name}', camera not found`);
@@ -14781,11 +14835,11 @@ function createBoxBody(inst, mass, material, offset = [0, 0, 0]) {
   let sizeVec = new Vec3(0.5, 0.5, 0.5);
   if (inst.renderable instanceof PrimitiveSphere) {
     const size = inst.renderable.radius * 2;
-    sizeVec = new Vec3(size, size, size);
+    sizeVec = new Vec3(size / 2, size / 2, size / 2);
   }
   if (inst.renderable instanceof PrimitiveCube) {
     const size = inst.renderable.size;
-    sizeVec = new Vec3(size, size, size);
+    sizeVec = new Vec3(size / 2, size / 2, size / 2);
   }
   if (inst.renderable instanceof Model) {
     const boundBox = inst.renderable.boundingBox;

@@ -43,7 +43,6 @@ export class LightDirectional {
   private _shadowMapFB?: twgl.FramebufferInfo
   private _shadowMapTex?: WebGLTexture
   private _shadowOptions?: ShadowOptions
-  public shadowViewOffset: XYZ
 
   /** Colour of the light, used for both diffuse and specular. Default: [0, 0, 0] */
   public colour: RGB
@@ -60,7 +59,6 @@ export class LightDirectional {
     this.colour = Colours.WHITE
     this.ambient = Colours.BLACK
     this.enabled = true
-    this.shadowViewOffset = [0, 0, 0]
 
     const gl = getGl()
     if (!gl) {
@@ -156,27 +154,29 @@ export class LightDirectional {
 
   /**
    * Get a virtual camera that can be used to render a shadow map for this light
-   * @param zoomLevel - Zoom level of the camera, default: 30
-   * @param aspectRatio - Aspect ratio of the camera, default: 1
+   * @param viewCam - The main camera used to view the scene, needed to get a good shadow view
    */
-  getShadowCamera() {
+  getShadowCamera(viewCam: Camera) {
     if (!this._shadowOptions) {
       return undefined
     }
 
-    const moveDist = this._shadowOptions.distance * 0.9
+    // Get view frustum corners & center to calculate a good shadow map view
+    const corners = viewCam.frustumCornersWorld(this._shadowOptions.zoom / viewCam.far)
+    const viewFrustumCenter = corners.center as XYZ
 
-    const cam = new Camera(CameraType.ORTHOGRAPHIC, 4 / 3)
+    // Create a virtual camera to render the shadow map
+    const cam = new Camera(CameraType.ORTHOGRAPHIC, 1)
     cam.usedForShadowMap = true
-    cam.orthoZoom = this._shadowOptions.zoom
-    cam.lookAt = this.shadowViewOffset
     cam.position = [
-      -this.direction[0] * moveDist + this.shadowViewOffset[0],
-      -this.direction[1] * moveDist + this.shadowViewOffset[1],
-      -this.direction[2] * moveDist + this.shadowViewOffset[2],
+      viewFrustumCenter[0] + -this.direction[0] * this._shadowOptions.distance,
+      viewFrustumCenter[1] + -this.direction[1] * this._shadowOptions.distance,
+      viewFrustumCenter[2] + -this.direction[2] * this._shadowOptions.distance,
     ]
 
+    cam.lookAt = viewFrustumCenter
     cam.far = this._shadowOptions.distance * 2
+    cam.orthoZoom = this._shadowOptions.zoom
 
     return cam
   }
@@ -184,13 +184,14 @@ export class LightDirectional {
   /**
    * Get the forward view matrix for the virtual camera used to render the shadow map.
    * Returns undefined if shadows are not enabled
+   * @param viewCam - The main camera used to view the scene, needed to get a good shadow view
    */
-  get shadowMatrix() {
+  getShadowMatrix(viewCam: Camera) {
     if (!this._shadowOptions) {
       return undefined
     }
 
-    const shadowCam = this.getShadowCamera()
+    const shadowCam = this.getShadowCamera(viewCam)
     if (!shadowCam) {
       return undefined
     }
