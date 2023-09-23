@@ -44,22 +44,22 @@
     "examples": "vite --port 3000 ./examples/"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^6.2.1",
-    "@typescript-eslint/parser": "^6.2.1",
+    "@typescript-eslint/eslint-plugin": "^6.7.2",
+    "@typescript-eslint/parser": "^6.7.2",
     "esbuild-plugin-glsl": "^1.2.1",
-    "eslint": "^8.46.0",
+    "eslint": "^8.50.0",
     "prettier": "^3.0.3",
     "prettier-plugin-glsl": "^0.1.2",
     "run-when-changed": "^2.1.0",
     "tsup": "^7.2.0",
-    "typedoc": "^0.24.8",
-    "typescript": "^5.1.6",
-    "vite": "^4.4.8"
+    "typedoc": "^0.25.1",
+    "typescript": "^5.2.2",
+    "vite": "^4.4.9"
   },
   "dependencies": {
     "cannon-es": "^0.20.0",
     "gl-matrix": "^3.4.3",
     "loglevel": "^1.8.1",
-    "twgl.js": "^5.5.1"
+    "twgl.js": "^5.5.3"
   }
 }
