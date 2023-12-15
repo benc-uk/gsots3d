@@ -14,10 +14,9 @@ ctx.globalLight.enableShadows({
   mapSize: 2048,
 })
 
-const matBlue = Material.BLUE
-matBlue.specular = [1.0, 1.0, 1.0]
-matBlue.shininess = 100
-matBlue.diffuse = [0.1, 0.26, 0.9]
+const matBlue = Material.BLACK
+matBlue.shininess = 200
+matBlue.reflectivity = 1.1
 
 await ctx.loadModel('../_objects', 'teapot.obj')
 
@@ -46,33 +45,21 @@ teapot3.material = matGreen
 teapot.rotateY(-2.715)
 teapot3.rotateY(-0.615)
 
-// Add map
-// ctx.setEnvmap(
-//   true,
-//   '../_textures/skybox-1/right.jpg',
-//   '../_textures/skybox-1/left.jpg',
-//   '../_textures/skybox-1/top.jpg',
-//   '../_textures/skybox-1/bottom.jpg',
-//   '../_textures/skybox-1/front.jpg',
-//   '../_textures/skybox-1/back.jpg',
-// )
-
-const s1 = ctx.createSphereInstance(Material.RED, 15, 32, 32)
-const s2 = ctx.createSphereInstance(Material.RED, 15, 32, 32)
-const s3 = ctx.createSphereInstance(Material.RED, 15, 32, 32)
-const s4 = ctx.createSphereInstance(Material.RED, 15, 32, 32)
-const s5 = ctx.createSphereInstance(Material.WHITE, 15, 32, 32)
+// Add a skybox as environment
+ctx.setEnvmap(
+  true,
+  '../_textures/skybox-1/right.jpg',
+  '../_textures/skybox-1/left.jpg',
+  '../_textures/skybox-1/top.jpg',
+  '../_textures/skybox-1/bottom.jpg',
+  '../_textures/skybox-1/front.jpg',
+  '../_textures/skybox-1/back.jpg',
+)
 
 ctx.update = () => {
   teapot.rotateY(0.015)
   teapot2.rotateY(-0.015)
   teapot3.rotateY(0.01)
-  const corners = ctx.camera.getFrustumCornersWorld()
-  s1.position = corners.farBottomLeftWorld
-  s2.position = corners.farBottomRightWorld
-  s3.position = corners.farTopLeftWorld
-  s4.position = corners.farTopRightWorld
-  s5.position = corners.farCenter
 }
 
 ctx.start()

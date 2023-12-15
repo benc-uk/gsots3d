@@ -69,7 +69,7 @@ export class Material {
   public normalTex?: WebGLTexture
 
   /**
-   * Create a new material with default diffuse white colour
+   * Create a new default material with diffuse white colour, all all default properties
    */
   constructor() {
     this.ambient = [1, 1, 1]
@@ -81,13 +81,14 @@ export class Material {
     this.opacity = 1.0
     this.reflectivity = 0.0
 
-    // 1 pixel white texture allows for solid colour & flat materials
+    // 1 pixel white texture is used for solid colour & flat materials
+    // A trick to avoid having multiple shaders for textured & non-textured materials
     this.diffuseTex = TextureCache.defaultWhite
     this.specularTex = TextureCache.defaultWhite
   }
 
   /**
-   * Create a new material from a raw MTL material
+   * Create a new material from a raw MTL material. Users are not expected to call this directly as it is used internally by the OBJ parser
    * @param rawMtl Raw MTL material
    * @param basePath Base path for locating & loading textures in MTL file
    * @param filter Apply texture filtering to textures, default: true
@@ -125,7 +126,7 @@ export class Material {
   }
 
   /**
-   * Create a basic Material with a solid diffuse colour
+   * Create a basic Material with a solid/flat diffuse colour
    */
   static createSolidColour(r: number, g: number, b: number) {
     const m = new Material()
@@ -165,27 +166,34 @@ export class Material {
     this.normalTex = TextureCache.instance.getCreate(url, filter, flipY)
   }
 
-  /** Create a simple RED Material */
+  /** Create a simple diffuse red Material */
   static get RED() {
     const m = Material.createSolidColour(1.0, 0.0, 0.0)
     return m
   }
 
-  /** Create a simple GREEN Material */
+  /** Create a simple diffuse green Material */
   static get GREEN() {
     return Material.createSolidColour(0.0, 1.0, 0.0)
   }
 
-  /** Create a simple BLUE Material */
+  /** Create a simple diffuse blue Material */
   static get BLUE() {
     const m = Material.createSolidColour(0.0, 0.0, 1.0)
 
     return m
   }
 
-  /** Create a simple BLUE Material */
+  /** Create a simple diffuse white Material */
   static get WHITE() {
     const m = Material.createSolidColour(1.0, 1.0, 1.0)
+
+    return m
+  }
+
+  /** Create a simple diffuse black Material */
+  static get BLACK() {
+    const m = Material.createSolidColour(0.0, 0.0, 0.0)
 
     return m
   }

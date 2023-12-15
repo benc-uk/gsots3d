@@ -13461,7 +13461,7 @@ var Billboard = class {
 // src/engine/material.ts
 var Material2 = class _Material {
   /**
-   * Create a new material with default diffuse white colour
+   * Create a new default material with diffuse white colour, all all default properties
    */
   constructor() {
     this.ambient = [1, 1, 1];
@@ -13475,7 +13475,7 @@ var Material2 = class _Material {
     this.specularTex = TextureCache.defaultWhite;
   }
   /**
-   * Create a new material from a raw MTL material
+   * Create a new material from a raw MTL material. Users are not expected to call this directly as it is used internally by the OBJ parser
    * @param rawMtl Raw MTL material
    * @param basePath Base path for locating & loading textures in MTL file
    * @param filter Apply texture filtering to textures, default: true
@@ -13504,7 +13504,7 @@ var Material2 = class _Material {
     return m;
   }
   /**
-   * Create a basic Material with a solid diffuse colour
+   * Create a basic Material with a solid/flat diffuse colour
    */
   static createSolidColour(r, g, b2) {
     const m = new _Material();
@@ -13537,23 +13537,28 @@ var Material2 = class _Material {
   addNormalTexture(url, filter = true, flipY = false) {
     this.normalTex = TextureCache.instance.getCreate(url, filter, flipY);
   }
-  /** Create a simple RED Material */
+  /** Create a simple diffuse red Material */
   static get RED() {
     const m = _Material.createSolidColour(1, 0, 0);
     return m;
   }
-  /** Create a simple GREEN Material */
+  /** Create a simple diffuse green Material */
   static get GREEN() {
     return _Material.createSolidColour(0, 1, 0);
   }
-  /** Create a simple BLUE Material */
+  /** Create a simple diffuse blue Material */
   static get BLUE() {
     const m = _Material.createSolidColour(0, 0, 1);
     return m;
   }
-  /** Create a simple BLUE Material */
+  /** Create a simple diffuse white Material */
   static get WHITE() {
     const m = _Material.createSolidColour(1, 1, 1);
+    return m;
+  }
+  /** Create a simple diffuse black Material */
+  static get BLACK() {
+    const m = _Material.createSolidColour(0, 0, 0);
     return m;
   }
   /**
