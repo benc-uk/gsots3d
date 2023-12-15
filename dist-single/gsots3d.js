@@ -2352,7 +2352,7 @@ var primitives = /* @__PURE__ */ Object.freeze({
 function isWebGL2(gl) {
   return !!gl.texStorage2D;
 }
-var glEnumToString = function() {
+var glEnumToString = /* @__PURE__ */ function() {
   const haveEnumsForType = {};
   const enums = {};
   function addEnums(gl) {
@@ -2378,7 +2378,7 @@ var defaults$1 = {
   crossOrigin: void 0
 };
 var isArrayBuffer2 = isArrayBuffer$1;
-var getShared2DContext = function() {
+var getShared2DContext = /* @__PURE__ */ function() {
   let s_ctx;
   return function getShared2DContext2() {
     s_ctx = s_ctx || (typeof document !== "undefined" && document.createElement ? document.createElement("canvas").getContext("2d") : null);
@@ -3932,7 +3932,7 @@ function addSetterToUniformTree(fullPath, setter, node, uniformSetters) {
       const child = node[accessor] || (isArray ? [] : {});
       node[accessor] = child;
       node = child;
-      uniformSetters[path] = uniformSetters[path] || function(node2) {
+      uniformSetters[path] = uniformSetters[path] || /* @__PURE__ */ function(node2) {
         return function(value) {
           setUniformTree(node2, value);
         };
