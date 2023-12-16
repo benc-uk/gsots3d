@@ -3685,13 +3685,13 @@ attrTypeMap[FLOAT_MAT2] = { size: 4, setter: matAttribSetter, count: 2 };
 attrTypeMap[FLOAT_MAT3] = { size: 9, setter: matAttribSetter, count: 3 };
 attrTypeMap[FLOAT_MAT4] = { size: 16, setter: matAttribSetter, count: 4 };
 var errorRE = /ERROR:\s*\d+:(\d+)/gi;
-function addLineNumbersWithError(src, log9 = "", lineOffset = 0) {
-  const matches = [...log9.matchAll(errorRE)];
+function addLineNumbersWithError(src, log10 = "", lineOffset = 0) {
+  const matches = [...log10.matchAll(errorRE)];
   const lineNoToErrorMap = new Map(matches.map((m, ndx) => {
     const lineNo = parseInt(m[1]);
     const next = matches[ndx + 1];
-    const end = next ? next.index : log9.length;
-    const msg = log9.substring(m.index, end);
+    const end = next ? next.index : log10.length;
+    const msg = log10.substring(m.index, end);
     return [lineNo - 1, msg];
   }));
   return src.split("\n").map((line, lineNo) => {
@@ -12405,8 +12405,7 @@ _TextureCache.initialized = false;
 var TextureCache = _TextureCache;
 var _ProgramCache = class _ProgramCache {
   /**
-   * Create a new program cache, needs a default program to be set
-   * @param defaultProg The default program that can be used by most things
+   * Create a new program cache, can't be used until init() is called
    */
   constructor() {
     this.cache = /* @__PURE__ */ new Map();
@@ -14332,8 +14331,8 @@ var HUD = class {
   addHUDItem(item) {
     this.hud.appendChild(item);
   }
-  render(debug = false, camera) {
-    if (debug) {
+  render(debug2 = false, camera) {
+    if (debug2) {
       this.debugDiv.innerHTML = `
         <b>GSOTS-3D v${version}</b><br><br>
         <b>Camera: </b>${camera.toString()}<br>
@@ -14348,6 +14347,104 @@ var HUD = class {
   }
   hideLoading() {
     this.loadingDiv.style.display = "none";
+  }
+};
+
+// src/engine/post-effects.ts
+var log8 = __toESM(require_loglevel(), 1);
+var PostEffects = class _PostEffects {
+  constructor(gl, shaderCode) {
+    this._frameBuff = createFramebufferInfo(gl, void 0, gl.canvas.width, gl.canvas.height);
+    this.buffInfo = createBufferInfoFromArrays(gl, {
+      position: {
+        numComponents: 2,
+        data: [-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]
+      },
+      texcoord: {
+        numComponents: 2,
+        data: [0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]
+      }
+    });
+    this.uniforms = {
+      image: this._frameBuff.attachments[0],
+      width: gl.canvas.width,
+      height: gl.canvas.height,
+      time: Stats.totalTime
+    };
+    console.log(this.uniforms);
+    const vertShader = `#version 300 es
+    precision highp float;
+    in vec4 position;
+    in vec2 texcoord;
+    out vec2 pos;
+    void main() {
+      pos = texcoord;
+      gl_Position = position;
+    }`;
+    const fragShader = `#version 300 es
+    precision highp float;
+    in vec2 pos;
+    uniform sampler2D image;
+    uniform float width;
+    uniform float height;
+    uniform float time;
+    out vec4 pixel;
+
+    ${shaderCode}
+    `;
+    log8.debug(`\u{1F97D} PostEffects creating shader program
+${fragShader}`);
+    this.progInfo = createProgramInfo(gl, [vertShader, fragShader]);
+  }
+  /**
+   * Render the post effects to the screen, called last in the render loop
+   * @param gl WebGL2RenderingContext
+   */
+  renderToScreen(gl) {
+    gl.useProgram(this.progInfo.program);
+    this.uniforms.time = Stats.totalTime;
+    setUniforms(this.progInfo, this.uniforms);
+    setBuffersAndAttributes(gl, this.progInfo, this.buffInfo);
+    bindFramebufferInfo(gl, null);
+    drawBufferInfo(gl, this.buffInfo);
+  }
+  /**
+   * Get the framebuffer that this post effects is rendering to
+   * Used to update the image that the post effects will update
+   */
+  get frameBuffer() {
+    return this._frameBuff;
+  }
+  /**
+   * Create a simple scanlines effect with noise and flickering
+   * Taken from https://www.shadertoy.com/view/3dBSRD
+   */
+  static scanlines(gl, density, opacity, noise, flicker) {
+    const shader = `
+    float density = ${density.toFixed(3)};
+    float opacityScanline = ${opacity.toFixed(3)};
+    float opacityNoise = ${noise.toFixed(3)};
+    float flickering = ${flicker.toFixed(3)};
+    
+    float random (vec2 st) {
+      return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+    } 
+  
+    void main() {
+      vec3 col = texture(image, pos).rgb;
+      
+      float count = height * density;
+      vec2 sl = vec2(sin(pos.y * count), cos(pos.y * count));
+      vec3 scanlines = vec3(sl.x, sl.y, sl.x);
+  
+      col += col * scanlines * opacityScanline;
+      col += col * vec3(random(pos * time)) * opacityNoise;
+      col += col * sin(110.0 * time) * flickering;
+  
+      pixel = vec4(col, 1.0);
+    }`;
+    const effect = new _PostEffects(gl, shader);
+    return effect;
   }
 };
 
@@ -14460,8 +14557,14 @@ var Context = class _Context {
       this.gl.cullFace(this.gl.BACK);
       this.gl.disable(this.gl.POLYGON_OFFSET_FILL);
     }
-    bindFramebufferInfo(this.gl, null);
-    this.renderWithCamera(this.camera);
+    if (this.postEffects) {
+      bindFramebufferInfo(this.gl, this.postEffects.frameBuffer);
+      this.renderWithCamera(this.camera);
+      this.postEffects.renderToScreen(this.gl);
+    } else {
+      bindFramebufferInfo(this.gl, null);
+      this.renderWithCamera(this.camera);
+    }
     this.hud.render(this.debug, this.camera);
     this.update(Stats.deltaTime, now);
     if (this.physicsWorld) {
@@ -14801,6 +14904,24 @@ var Context = class _Context {
     }
     this.instances.delete(instance.id);
     this.instancesTrans.delete(instance.id);
+  }
+  /**
+   * Use a custom shader for post effects, user must provide their own shader
+   */
+  setEffectCustomShader(shaderCode) {
+    this.postEffects = new PostEffects(this.gl, shaderCode);
+    import_loglevel8.default.info(`\u{1F308} Post effects shader added`);
+  }
+  /**
+   * Use bulit-in scanlines post effect shader
+   * @param density - Density of the scanlines, default 1.5
+   * @param opacity - Opacity of the scanlines, default 0.5
+   * @param noise - Noise level, default 0.2
+   * @param flicker - Flicker ammount, default 0.015
+   */
+  setEffectScanlines(density = 1.5, opacity = 0.5, noise = 0.2, flicker = 0.015) {
+    this.postEffects = PostEffects.scanlines(this.gl, density, opacity, noise, flicker);
+    import_loglevel8.default.info(`\u{1F308} Post effects shader added`);
   }
 };
 

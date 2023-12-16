@@ -1,3 +1,8 @@
+// ===== physics.ts ===============================================================================
+// Helper functions for adding physics to instances using CANNON.js
+// Ben Coleman, 2023
+// =============================================================================================
+
 import * as CANNON from 'cannon-es'
 import { Instance } from '../renderable/instance.ts'
 import { PrimitiveCube, PrimitiveSphere } from '../renderable/primitive.ts'

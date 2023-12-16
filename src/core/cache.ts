@@ -207,8 +207,7 @@ export class ProgramCache {
   public static PROG_SHADOWMAP = 'shadowmap'
 
   /**
-   * Create a new program cache, needs a default program to be set
-   * @param defaultProg The default program that can be used by most things
+   * Create a new program cache, can't be used until init() is called
    */
   private constructor() {
     this.cache = new Map<string, ProgramInfo>()

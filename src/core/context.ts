@@ -23,6 +23,7 @@ import { ParticleSystem } from '../renderable/particles.ts'
 import { Model } from '../renderable/model.ts'
 import { HUD } from './hud.ts'
 import { Stats } from './stats.ts'
+import { PostEffects } from '../engine/post-effects.ts'
 
 // Import shaders, tsup will inline these as text strings
 import fragShaderPhong from '../../shaders/phong/glsl.frag'
@@ -60,6 +61,9 @@ export class Context {
 
   /** Show extra debug details on the canvas */
   public debug: boolean
+
+  /** Optional post effects filter to apply to the output image */
+  private postEffects?: PostEffects
 
   /**
    * The pre-render update function, called every frame.
@@ -214,10 +218,19 @@ export class Context {
     }
 
     // -------------------------------------------------------------------------------------
-    // RENDER CORE - Render the scene from active camera into the main framebuffer
+    // RENDER CORE - FINAL: Render the scene from active camera into the main framebuffer
     // -------------------------------------------------------------------------------------
-    twgl.bindFramebufferInfo(this.gl, null)
-    this.renderWithCamera(this.camera)
+    if (this.postEffects) {
+      // Render the main camera view into the post effects framebuffer
+      twgl.bindFramebufferInfo(this.gl, this.postEffects.frameBuffer)
+      this.renderWithCamera(this.camera)
+
+      // Then render the post effects to the screen
+      this.postEffects.renderToScreen(this.gl)
+    } else {
+      twgl.bindFramebufferInfo(this.gl, null)
+      this.renderWithCamera(this.camera)
+    }
 
     // **** FINAL POST RENDER STEPS ****
 
@@ -681,5 +694,26 @@ export class Context {
 
     this.instances.delete(instance.id)
     this.instancesTrans.delete(instance.id)
+  }
+
+  /**
+   * Use a custom shader for post effects, user must provide their own shader
+   */
+  setEffectCustomShader(shaderCode: string) {
+    this.postEffects = new PostEffects(this.gl, shaderCode)
+    log.info(`🌈 Post effects shader added`)
+  }
+
+  /**
+   * Use bulit-in scanlines post effect shader
+   * @param density - Density of the scanlines, default 1.5
+   * @param opacity - Opacity of the scanlines, default 0.5
+   * @param noise - Noise level, default 0.2
+   * @param flicker - Flicker ammount, default 0.015
+   */
+  setEffectScanlines(density = 1.5, opacity = 0.5, noise = 0.2, flicker = 0.015) {
+    this.postEffects = PostEffects.scanlines(this.gl, density, opacity, noise, flicker)
+
+    log.info(`🌈 Post effects shader added`)
   }
 }
