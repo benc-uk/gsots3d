@@ -14607,6 +14607,7 @@ var Context = class _Context {
     this._camera = defaultCamera;
     this.activeCameraName = "default";
     this.hud = new HUD(gl.canvas);
+    this.setLogLevel("info");
     import_loglevel8.default.info(`\u{1F451} GSOTS-3D context created, v${version}`);
   }
   // ==== Getters =============================================================

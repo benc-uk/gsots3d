@@ -129,6 +129,8 @@ export class Context {
 
     this.hud = new HUD(<HTMLCanvasElement>gl.canvas)
 
+    this.setLogLevel('info')
+
     log.info(`👑 GSOTS-3D context created, v${version}`)
   }
 
