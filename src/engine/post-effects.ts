@@ -6,10 +6,12 @@
 import * as log from 'loglevel'
 import * as twgl from 'twgl.js'
 import { UniformSet } from '../core/gl.ts'
-import { Stats } from '../index.ts'
+import { TextureCache } from '../core/cache.ts'
+import { Stats } from '../core/stats.ts'
+import { RGB } from './tuples.ts'
 
 /**
- * PostEffects class, used to render full screen effects and post processing
+ * PostEffects class, used to render full screen effects via post processing
  * This is a wrapper around a shader program that renders from a framebuffer to the screen
  */
 export class PostEffects {
@@ -39,9 +41,9 @@ export class PostEffects {
       width: gl.canvas.width,
       height: gl.canvas.height,
       time: Stats.totalTime,
+      delta: Stats.deltaTime,
+      randTex: TextureCache.defaultRand,
     }
-
-    console.log(this.uniforms)
 
     // Note. We don't follow the naming convention from the other shaders here
     // to allow the user to write their own shaders and keep them simple
@@ -62,7 +64,30 @@ export class PostEffects {
     uniform float width;
     uniform float height;
     uniform float time;
+    uniform float frame;
+    uniform float delta;
+    uniform sampler2D randTex;
     out vec4 pixel;
+    
+    vec4 randRGBA(float offset) {
+      vec2 uv = vec2(pos.x + offset, pos.y + offset + 0.1);
+      return texture(randTex, vec2(uv)).rgba;
+    }
+    
+    float randPhase(vec2 co, float speed)
+    {
+      float a = 12.9898;
+      float b = 78.233;
+      float c = 43758.5453;
+      float dt = dot(co.xy, vec2(a,b));
+      float sn = mod(dt, 3.14159);
+
+      return fract((sin(sn) * c) + time * speed);
+    }
+
+    float randF(vec2 st) {
+      return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+    } 
 
     ${shaderCode}
     `
@@ -79,6 +104,9 @@ export class PostEffects {
     gl.useProgram(this.progInfo.program)
 
     this.uniforms.time = Stats.totalTime
+    this.uniforms.delta = Stats.deltaTime
+    this.uniforms.frame = Stats.frameCount
+
     twgl.setUniforms(this.progInfo, this.uniforms)
     twgl.setBuffersAndAttributes(gl, this.progInfo, this.buffInfo)
 
@@ -104,10 +132,6 @@ export class PostEffects {
     float opacityScanline = ${opacity.toFixed(3)};
     float opacityNoise = ${noise.toFixed(3)};
     float flickering = ${flicker.toFixed(3)};
-    
-    float random (vec2 st) {
-      return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
-    } 
   
     void main() {
       vec3 col = texture(image, pos).rgb;
@@ -117,10 +141,91 @@ export class PostEffects {
       vec3 scanlines = vec3(sl.x, sl.y, sl.x);
   
       col += col * scanlines * opacityScanline;
-      col += col * vec3(random(pos * time)) * opacityNoise;
+      col += col * vec3(randF(pos * time)) * opacityNoise;
       col += col * sin(110.0 * time) * flickering;
   
       pixel = vec4(col, 1.0);
+    }`
+
+    const effect = new PostEffects(gl, shader)
+    return effect
+  }
+
+  static glitch(gl: WebGL2RenderingContext, amount: number) {
+    const shader = `
+    float amount = ${amount.toFixed(3)};
+    
+    void main() {
+      vec3 col = texture(image, pos).rgb;
+
+      float offset = randF(vec2(time, pos.y)) * amount;
+
+      col.r = texture(image, vec2(pos.x + offset, pos.y)).r;
+      col.g = texture(image, vec2(pos.x - offset, pos.y)).g;
+      col.b = texture(image, vec2(pos.x + offset, pos.y)).b;
+
+      pixel = vec4(col, 1.0);
+    }`
+
+    const effect = new PostEffects(gl, shader)
+    return effect
+  }
+
+  static monochrome(gl: WebGL2RenderingContext, amount: number) {
+    const shader = `
+    float amount = ${amount.toFixed(3)};
+    
+    void main() {
+      vec3 col = texture(image, pos).rgb;
+
+      float mono = (col.r + col.g + col.b) / 3.0;
+      col = mix(col, vec3(mono), amount);
+
+      pixel = vec4(col, 1.0);
+    }`
+
+    const effect = new PostEffects(gl, shader)
+    return effect
+  }
+
+  static noise(gl: WebGL2RenderingContext, amount: number, speed: number) {
+    const shader = `
+    float amount = ${amount.toFixed(3)};
+    float speed = ${speed.toFixed(3)};
+    
+    void main() {
+      vec3 col = texture(image, pos).rgb;
+    
+      col.r += randPhase(pos, speed) * amount;
+      col.g += randPhase(pos - 0.1, speed) * amount;
+      col.b += randPhase(pos + 0.1, speed) * amount;
+    
+      //col += rand(8.0 * time).rgb * amount;
+
+      pixel = vec4(col, 1.0);
+    }`
+
+    const effect = new PostEffects(gl, shader)
+    return effect
+  }
+
+  static contrast(gl: WebGL2RenderingContext, threshold: number, colourDark: RGB, colourBright: RGB) {
+    const shader = `
+    float threshold = ${threshold.toFixed(3)};
+    vec3 bright = vec3(${colourBright[0].toFixed(3)}, ${colourBright[1].toFixed(3)}, ${colourBright[2].toFixed(3)});
+    vec3 dark = vec3(${colourDark[0].toFixed(3)}, ${colourDark[1].toFixed(3)}, ${colourDark[2].toFixed(3)});
+
+    void main() {
+      vec3 col = texture(image, pos).rgb;
+
+      float brightness = (col.r + col.g + col.b) / 3.0;
+      brightness = clamp(brightness, 0.0, 1.0);
+
+      if (brightness > threshold) {
+        pixel = vec4(bright, 1.0);
+      } else {
+        pixel = vec4(dark, 1.0);
+      }
     }`
 
     const effect = new PostEffects(gl, shader)

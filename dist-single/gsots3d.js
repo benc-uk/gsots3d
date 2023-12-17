@@ -12311,7 +12311,7 @@ var _TextureCache = class _TextureCache {
     this.defaultRand = {};
   }
   // Create a new texture cache
-  static init(gl) {
+  static init(gl, randSize = 512) {
     this._instance = new _TextureCache();
     this._instance.gl = gl;
     const white1pixel = createTexture(gl, {
@@ -12319,22 +12319,25 @@ var _TextureCache = class _TextureCache {
       mag: gl.NEAREST,
       src: [255, 255, 255, 255]
     });
-    const randArray = new Uint8Array(512 * 512 * 4);
-    for (let i = 0; i < 512 * 512 * 4; i++) {
+    const randArray = new Uint8Array(randSize * randSize * 4);
+    for (let i = 0; i < randSize * randSize * 4; i++) {
       randArray[i] = Math.floor(Math.random() * 255);
     }
     const randomRGB = createTexture(gl, {
       min: gl.NEAREST,
       mag: gl.NEAREST,
       src: randArray,
-      width: 512,
-      height: 512,
+      width: randSize,
+      height: randSize,
       wrap: gl.REPEAT
     });
     this._instance.defaultWhite = white1pixel;
     this._instance.defaultRand = randomRGB;
     _TextureCache.initialized = true;
   }
+  /**
+   * Return the singleton instance of the texture cache
+   */
   static get instance() {
     if (!_TextureCache.initialized) {
       throw new Error("TextureCache not initialized, call TextureCache.init() first");
@@ -12394,9 +12397,15 @@ var _TextureCache = class _TextureCache {
     this.add(src, texture);
     return texture;
   }
+  /**
+   * Return the default white 1x1 texture
+   */
   static get defaultWhite() {
     return this.instance.defaultWhite;
   }
+  /**
+   * Return the default random RGB texture
+   */
   static get defaultRand() {
     return this.instance.defaultRand;
   }
@@ -14319,6 +14328,9 @@ var HUD = class {
     parent.appendChild(this.hud);
     this.updateWithCanvas();
   }
+  /**
+   * Update the HUD position and size to match the canvas
+   */
   updateWithCanvas() {
     const canvasStyles = window.getComputedStyle(this.canvas, null);
     this.hud.style.position = canvasStyles.getPropertyValue("position");
@@ -14328,9 +14340,16 @@ var HUD = class {
     this.hud.style.height = canvasStyles.getPropertyValue("height");
     this.hud.style.transform = canvasStyles.getPropertyValue("transform");
   }
+  /**
+   * Add a HTML element to the HUD
+   * @param item HTML element to add
+   */
   addHUDItem(item) {
     this.hud.appendChild(item);
   }
+  /**
+   * Render the HUD, called once per frame
+   */
   render(debug2 = false, camera) {
     if (debug2) {
       this.debugDiv.innerHTML = `
@@ -14345,6 +14364,9 @@ var HUD = class {
       this.debugDiv.innerHTML = "";
     }
   }
+  /**
+   * Hide the loading message, this is called by the engine
+   */
   hideLoading() {
     this.loadingDiv.style.display = "none";
   }
@@ -14369,9 +14391,10 @@ var PostEffects = class _PostEffects {
       image: this._frameBuff.attachments[0],
       width: gl.canvas.width,
       height: gl.canvas.height,
-      time: Stats.totalTime
+      time: Stats.totalTime,
+      delta: Stats.deltaTime,
+      randTex: TextureCache.defaultRand
     };
-    console.log(this.uniforms);
     const vertShader = `#version 300 es
     precision highp float;
     in vec4 position;
@@ -14388,7 +14411,30 @@ var PostEffects = class _PostEffects {
     uniform float width;
     uniform float height;
     uniform float time;
+    uniform float frame;
+    uniform float delta;
+    uniform sampler2D randTex;
     out vec4 pixel;
+    
+    vec4 randRGBA(float offset) {
+      vec2 uv = vec2(pos.x + offset, pos.y + offset + 0.1);
+      return texture(randTex, vec2(uv)).rgba;
+    }
+    
+    float randPhase(vec2 co, float speed)
+    {
+      float a = 12.9898;
+      float b = 78.233;
+      float c = 43758.5453;
+      float dt = dot(co.xy, vec2(a,b));
+      float sn = mod(dt, 3.14159);
+
+      return fract((sin(sn) * c) + time * speed);
+    }
+
+    float randF(vec2 st) {
+      return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+    } 
 
     ${shaderCode}
     `;
@@ -14403,6 +14449,8 @@ ${fragShader}`);
   renderToScreen(gl) {
     gl.useProgram(this.progInfo.program);
     this.uniforms.time = Stats.totalTime;
+    this.uniforms.delta = Stats.deltaTime;
+    this.uniforms.frame = Stats.frameCount;
     setUniforms(this.progInfo, this.uniforms);
     setBuffersAndAttributes(gl, this.progInfo, this.buffInfo);
     bindFramebufferInfo(gl, null);
@@ -14425,10 +14473,6 @@ ${fragShader}`);
     float opacityScanline = ${opacity.toFixed(3)};
     float opacityNoise = ${noise.toFixed(3)};
     float flickering = ${flicker.toFixed(3)};
-    
-    float random (vec2 st) {
-      return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
-    } 
   
     void main() {
       vec3 col = texture(image, pos).rgb;
@@ -14438,10 +14482,83 @@ ${fragShader}`);
       vec3 scanlines = vec3(sl.x, sl.y, sl.x);
   
       col += col * scanlines * opacityScanline;
-      col += col * vec3(random(pos * time)) * opacityNoise;
+      col += col * vec3(randF(pos * time)) * opacityNoise;
       col += col * sin(110.0 * time) * flickering;
   
       pixel = vec4(col, 1.0);
+    }`;
+    const effect = new _PostEffects(gl, shader);
+    return effect;
+  }
+  static glitch(gl, amount) {
+    const shader = `
+    float amount = ${amount.toFixed(3)};
+    
+    void main() {
+      vec3 col = texture(image, pos).rgb;
+
+      float offset = randF(vec2(time, pos.y)) * amount;
+
+      col.r = texture(image, vec2(pos.x + offset, pos.y)).r;
+      col.g = texture(image, vec2(pos.x - offset, pos.y)).g;
+      col.b = texture(image, vec2(pos.x + offset, pos.y)).b;
+
+      pixel = vec4(col, 1.0);
+    }`;
+    const effect = new _PostEffects(gl, shader);
+    return effect;
+  }
+  static monochrome(gl, amount) {
+    const shader = `
+    float amount = ${amount.toFixed(3)};
+    
+    void main() {
+      vec3 col = texture(image, pos).rgb;
+
+      float mono = (col.r + col.g + col.b) / 3.0;
+      col = mix(col, vec3(mono), amount);
+
+      pixel = vec4(col, 1.0);
+    }`;
+    const effect = new _PostEffects(gl, shader);
+    return effect;
+  }
+  static noise(gl, amount, speed) {
+    const shader = `
+    float amount = ${amount.toFixed(3)};
+    float speed = ${speed.toFixed(3)};
+    
+    void main() {
+      vec3 col = texture(image, pos).rgb;
+    
+      col.r += randPhase(pos, speed) * amount;
+      col.g += randPhase(pos - 0.1, speed) * amount;
+      col.b += randPhase(pos + 0.1, speed) * amount;
+    
+      //col += rand(8.0 * time).rgb * amount;
+
+      pixel = vec4(col, 1.0);
+    }`;
+    const effect = new _PostEffects(gl, shader);
+    return effect;
+  }
+  static contrast(gl, threshold, colourDark, colourBright) {
+    const shader = `
+    float threshold = ${threshold.toFixed(3)};
+    vec3 bright = vec3(${colourBright[0].toFixed(3)}, ${colourBright[1].toFixed(3)}, ${colourBright[2].toFixed(3)});
+    vec3 dark = vec3(${colourDark[0].toFixed(3)}, ${colourDark[1].toFixed(3)}, ${colourDark[2].toFixed(3)});
+
+    void main() {
+      vec3 col = texture(image, pos).rgb;
+
+      float brightness = (col.r + col.g + col.b) / 3.0;
+      brightness = clamp(brightness, 0.0, 1.0);
+
+      if (brightness > threshold) {
+        pixel = vec4(bright, 1.0);
+      } else {
+        pixel = vec4(dark, 1.0);
+      }
     }`;
     const effect = new _PostEffects(gl, shader);
     return effect;
@@ -14605,7 +14722,6 @@ var Context = class _Context {
       u_reflectionMap: reflectMap,
       u_shadowMap: this.globalLight.shadowMapTexture,
       u_shadowMatrix: this.globalLight.getShadowMatrix(this.camera) ?? mat4_exports.create()
-      // u_shadowScatter: this.globalLight.shadowMapOptions?.scatter ?? 0.2,
     };
     if (this._envmap) {
       this._envmap.render(uniforms.u_view, uniforms.u_proj, camera);
@@ -14670,8 +14786,15 @@ var Context = class _Context {
     this.started = false;
   }
   /**
-   * Resize the canvas to match the size of the HTML element that contains it
-   * @param viewportOnly - Only resize the viewport, not the canvas
+   * Set the log level for the library
+   * @param level - Log level to set, default is 'info'
+   */
+  setLogLevel(level) {
+    import_loglevel8.default.setLevel(level);
+  }
+  /**
+   * Resize the canvas & viewport to match the size of the HTML element that contains it
+   * @param viewportOnly - Only resize the GL viewport, not the canvas, default false
    */
   resize(viewportOnly = false) {
     const canvas = this.gl.canvas;
@@ -14711,18 +14834,22 @@ var Context = class _Context {
     ModelCache.instance.add(model);
   }
   /**
-   * Add a new camera to the scene
+   * Add or replace a named camera to the scene
    * @param name Name of the camera
    * @param camera Camera instance
    */
   addCamera(name, camera) {
     this.cameras.set(name, camera);
   }
+  /**
+   * Get a camera by name
+   * @param name Name of the camera
+   */
   getCamera(name) {
     return this.cameras.get(name);
   }
   /**
-   * Set the active camera
+   * Set the active camera, rendering will switch to this camera's view
    * @param name Name of the camera to set as active
    */
   setActiveCamera(name) {
@@ -14736,9 +14863,7 @@ var Context = class _Context {
     this._camera = camera;
     this.camera.active = true;
     this.activeCameraName = name;
-  }
-  setLogLevel(level) {
-    import_loglevel8.default.setLevel(level);
+    import_loglevel8.default.info(`\u{1F4F7} Active camera switched to '${name}'`);
   }
   // ==========================================================================
   // Methods to create new instances of renderable objects & things
@@ -14908,7 +15033,7 @@ var Context = class _Context {
   /**
    * Use a custom shader for post effects, user must provide their own shader
    */
-  setEffectCustomShader(shaderCode) {
+  setEffectCustom(shaderCode) {
     this.postEffects = new PostEffects(this.gl, shaderCode);
     import_loglevel8.default.info(`\u{1F308} Post effects shader added`);
   }
@@ -14921,7 +15046,38 @@ var Context = class _Context {
    */
   setEffectScanlines(density = 1.5, opacity = 0.5, noise = 0.2, flicker = 0.015) {
     this.postEffects = PostEffects.scanlines(this.gl, density, opacity, noise, flicker);
-    import_loglevel8.default.info(`\u{1F308} Post effects shader added`);
+    import_loglevel8.default.info(`\u{1F308} Post effects scanline shader added`);
+  }
+  /**
+   * Use bulit-in glitch post effect shader
+   * @param amount - Amount of glitch, default 0.01
+   */
+  setEffectGlitch(amount = 0.01) {
+    this.postEffects = PostEffects.glitch(this.gl, amount);
+    import_loglevel8.default.info(`\u{1F308} Post effects glitch shader added`);
+  }
+  /**
+   * Use bulit-in noise post effect shader
+   * @param amount - Amount of noise, default 0.1
+   * @param speed - Speed of noise pattern, default 5.0
+   */
+  setEffectNoise(amount = 0.1, speed = 5) {
+    this.postEffects = PostEffects.noise(this.gl, amount, speed);
+    import_loglevel8.default.info(`\u{1F308} Post effects noise shader added`);
+  }
+  setEffectMonochrome(amount = 1) {
+    this.postEffects = PostEffects.monochrome(this.gl, amount);
+    import_loglevel8.default.info(`\u{1F308} Post effects monochrome shader added`);
+  }
+  setEffectContrast(threshold = 0.2, darkColour = [0, 0, 0], lightColour = [1, 1, 1]) {
+    this.postEffects = PostEffects.contrast(this.gl, threshold, darkColour, lightColour);
+    import_loglevel8.default.info(`\u{1F308} Post effects monochrome shader added`);
+  }
+  /**
+   * Remove any post effects shader
+   */
+  removeEffect() {
+    this.postEffects = void 0;
   }
 };
 

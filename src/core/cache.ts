@@ -78,11 +78,9 @@ export class TextureCache {
   }
 
   // Create a new texture cache
-  static init(gl: WebGL2RenderingContext) {
+  static init(gl: WebGL2RenderingContext, randSize = 512) {
     this._instance = new TextureCache()
     this._instance.gl = gl
-
-    // Add default textures
 
     // 1 pixel white texture used as base for materials
     const white1pixel = createTexture(gl, {
@@ -91,17 +89,17 @@ export class TextureCache {
       src: [255, 255, 255, 255],
     })
 
-    // 256 by 256 random RGB texture, used for random numbers
-    const randArray = new Uint8Array(512 * 512 * 4)
-    for (let i = 0; i < 512 * 512 * 4; i++) {
+    // Random RGB texture, used for pseudo random number generation
+    const randArray = new Uint8Array(randSize * randSize * 4)
+    for (let i = 0; i < randSize * randSize * 4; i++) {
       randArray[i] = Math.floor(Math.random() * 255)
     }
     const randomRGB = createTexture(gl, {
       min: gl.NEAREST,
       mag: gl.NEAREST,
       src: randArray,
-      width: 512,
-      height: 512,
+      width: randSize,
+      height: randSize,
       wrap: gl.REPEAT,
     })
 
@@ -111,6 +109,9 @@ export class TextureCache {
     TextureCache.initialized = true
   }
 
+  /**
+   * Return the singleton instance of the texture cache
+   */
   static get instance() {
     if (!TextureCache.initialized) {
       throw new Error('TextureCache not initialized, call TextureCache.init() first')
@@ -184,10 +185,16 @@ export class TextureCache {
     return texture
   }
 
+  /**
+   * Return the default white 1x1 texture
+   */
   static get defaultWhite() {
     return this.instance.defaultWhite
   }
 
+  /**
+   * Return the default random RGB texture
+   */
   static get defaultRand() {
     return this.instance.defaultRand
   }

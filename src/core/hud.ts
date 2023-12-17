@@ -52,6 +52,9 @@ export class HUD {
     this.updateWithCanvas()
   }
 
+  /**
+   * Update the HUD position and size to match the canvas
+   */
   private updateWithCanvas() {
     const canvasStyles = window.getComputedStyle(this.canvas, null)
     this.hud.style.position = canvasStyles.getPropertyValue('position')
@@ -62,10 +65,17 @@ export class HUD {
     this.hud.style.transform = canvasStyles.getPropertyValue('transform')
   }
 
+  /**
+   * Add a HTML element to the HUD
+   * @param item HTML element to add
+   */
   addHUDItem(item: HTMLElement) {
     this.hud.appendChild(item)
   }
 
+  /**
+   * Render the HUD, called once per frame
+   */
   render(debug = false, camera: Camera) {
     // Draw the debug HUD
     if (debug) {
@@ -82,6 +92,9 @@ export class HUD {
     }
   }
 
+  /**
+   * Hide the loading message, this is called by the engine
+   */
   hideLoading() {
     this.loadingDiv.style.display = 'none'
   }

@@ -294,7 +294,6 @@ export class Context {
 
       u_shadowMap: this.globalLight.shadowMapTexture,
       u_shadowMatrix: this.globalLight.getShadowMatrix(this.camera) ?? mat4.create(),
-      // u_shadowScatter: this.globalLight.shadowMapOptions?.scatter ?? 0.2,
     } as UniformSet
 
     // ------------------------------------------------------------------------------
@@ -404,8 +403,16 @@ export class Context {
   }
 
   /**
-   * Resize the canvas to match the size of the HTML element that contains it
-   * @param viewportOnly - Only resize the viewport, not the canvas
+   * Set the log level for the library
+   * @param level - Log level to set, default is 'info'
+   */
+  setLogLevel(level: log.LogLevelNames) {
+    log.setLevel(level)
+  }
+
+  /**
+   * Resize the canvas & viewport to match the size of the HTML element that contains it
+   * @param viewportOnly - Only resize the GL viewport, not the canvas, default false
    */
   resize(viewportOnly = false) {
     const canvas = <HTMLCanvasElement>this.gl.canvas
@@ -455,7 +462,7 @@ export class Context {
   }
 
   /**
-   * Add a new camera to the scene
+   * Add or replace a named camera to the scene
    * @param name Name of the camera
    * @param camera Camera instance
    */
@@ -463,12 +470,16 @@ export class Context {
     this.cameras.set(name, camera)
   }
 
+  /**
+   * Get a camera by name
+   * @param name Name of the camera
+   */
   getCamera(name: string) {
     return this.cameras.get(name)
   }
 
   /**
-   * Set the active camera
+   * Set the active camera, rendering will switch to this camera's view
    * @param name Name of the camera to set as active
    */
   setActiveCamera(name: string) {
@@ -483,10 +494,8 @@ export class Context {
     this._camera = camera
     this.camera.active = true
     this.activeCameraName = name
-  }
 
-  setLogLevel(level: log.LogLevelNames) {
-    log.setLevel(level)
+    log.info(`📷 Active camera switched to '${name}'`)
   }
 
   // ==========================================================================
@@ -699,7 +708,7 @@ export class Context {
   /**
    * Use a custom shader for post effects, user must provide their own shader
    */
-  setEffectCustomShader(shaderCode: string) {
+  setEffectCustom(shaderCode: string) {
     this.postEffects = new PostEffects(this.gl, shaderCode)
     log.info(`🌈 Post effects shader added`)
   }
@@ -714,6 +723,46 @@ export class Context {
   setEffectScanlines(density = 1.5, opacity = 0.5, noise = 0.2, flicker = 0.015) {
     this.postEffects = PostEffects.scanlines(this.gl, density, opacity, noise, flicker)
 
-    log.info(`🌈 Post effects shader added`)
+    log.info(`🌈 Post effects scanline shader added`)
+  }
+
+  /**
+   * Use bulit-in glitch post effect shader
+   * @param amount - Amount of glitch, default 0.01
+   */
+  setEffectGlitch(amount = 0.01) {
+    this.postEffects = PostEffects.glitch(this.gl, amount)
+
+    log.info(`🌈 Post effects glitch shader added`)
+  }
+
+  /**
+   * Use bulit-in noise post effect shader
+   * @param amount - Amount of noise, default 0.1
+   * @param speed - Speed of noise pattern, default 5.0
+   */
+  setEffectNoise(amount = 0.1, speed = 5.0) {
+    this.postEffects = PostEffects.noise(this.gl, amount, speed)
+
+    log.info(`🌈 Post effects noise shader added`)
+  }
+
+  setEffectMonochrome(amount = 1.0) {
+    this.postEffects = PostEffects.monochrome(this.gl, amount)
+
+    log.info(`🌈 Post effects monochrome shader added`)
+  }
+
+  setEffectContrast(threshold = 0.2, darkColour: RGB = [0, 0, 0], lightColour: RGB = [1, 1, 1]) {
+    this.postEffects = PostEffects.contrast(this.gl, threshold, darkColour, lightColour)
+
+    log.info(`🌈 Post effects monochrome shader added`)
+  }
+
+  /**
+   * Remove any post effects shader
+   */
+  removeEffect() {
+    this.postEffects = undefined
   }
 }
