@@ -749,12 +749,24 @@ export class Context {
     log.info(`🌈 Post effects noise shader added`)
   }
 
-  setEffectMonochrome(amount = 1.0) {
-    this.postEffects = PostEffects.monochrome(this.gl, amount)
+  /**
+   * Use bulit-in duotone post effect shader for monotone images
+   * @param colour1 - First colour, default [0.15, 0.09, 0.309]
+   * @param colour2 - Second colour, default [0.96, 0.39, 0.407]
+   * @param contrast - Contrast, default 1.5
+   */
+  setEffectDuotone(colour1: RGB = [0.15, 0.09, 0.309], colour2: RGB = [0.96, 0.39, 0.407], contrast = 1.5) {
+    this.postEffects = PostEffects.duotone(this.gl, colour1, colour2, contrast)
 
     log.info(`🌈 Post effects monochrome shader added`)
   }
 
+  /**
+   * Use bulit-in contrast post effect shader, which reduces the image to two solid colours
+   * @param threshold
+   * @param darkColour
+   * @param lightColour
+   */
   setEffectContrast(threshold = 0.2, darkColour: RGB = [0, 0, 0], lightColour: RGB = [1, 1, 1]) {
     this.postEffects = PostEffects.contrast(this.gl, threshold, darkColour, lightColour)
 

@@ -76,7 +76,7 @@ function createBoxBody(inst: Instance, mass: number, material?: CANNON.Material,
 
   if (inst.renderable instanceof PrimitiveCube) {
     const size = (inst.renderable as PrimitiveCube).size
-    sizeVec = new CANNON.Vec3(size / 2, size / 2, size / 2)
+    sizeVec = new CANNON.Vec3((size / 2) * inst.scale[0], (size / 2) * inst.scale[1], (size / 2) * inst.scale[2])
   }
 
   if (inst.renderable instanceof Model) {

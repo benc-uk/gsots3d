@@ -14466,6 +14466,11 @@ ${fragShader}`);
   /**
    * Create a simple scanlines effect with noise and flickering
    * Taken from https://www.shadertoy.com/view/3dBSRD
+   * @param gl WebGL2RenderingContext
+   * @param density Density of scanlines, 0.0 - 1.0
+   * @param opacity Opacity of scanlines, 0.0 - 1.0
+   * @param noise Amount of noise, 0.0 - 1.0
+   * @param flicker Amount of flickering, 0.0 - 1.0
    */
   static scanlines(gl, density, opacity, noise, flicker) {
     const shader = `
@@ -14487,9 +14492,13 @@ ${fragShader}`);
   
       pixel = vec4(col, 1.0);
     }`;
-    const effect = new _PostEffects(gl, shader);
-    return effect;
+    return new _PostEffects(gl, shader);
   }
+  /**
+   * Create a glitch effect with horizontal lines
+   * @param gl WebGL2RenderingContext
+   * @param amount Amount of glitch, 0.0 - 1.0
+   */
   static glitch(gl, amount) {
     const shader = `
     float amount = ${amount.toFixed(3)};
@@ -14505,24 +14514,38 @@ ${fragShader}`);
 
       pixel = vec4(col, 1.0);
     }`;
-    const effect = new _PostEffects(gl, shader);
-    return effect;
+    return new _PostEffects(gl, shader);
   }
-  static monochrome(gl, amount) {
-    const shader = `
-    float amount = ${amount.toFixed(3)};
-    
+  /**
+   * Create duotone effect with two colours and contrast
+   * @param gl WebGL2RenderingContext
+   */
+  static duotone(gl, colour1, colour2, contrast) {
+    const shader = `    
+    vec3 col1 = vec3(${colour1[0].toFixed(3)}, ${colour1[1].toFixed(3)}, ${colour1[2].toFixed(3)});
+    vec3 col2 = vec3(${colour2[0].toFixed(3)}, ${colour2[1].toFixed(3)}, ${colour2[2].toFixed(3)});
+    float contrast = ${contrast.toFixed(3)};
+
     void main() {
       vec3 col = texture(image, pos).rgb;
 
-      float mono = (col.r + col.g + col.b) / 3.0;
-      col = mix(col, vec3(mono), amount);
+      vec3 lumFactor = vec3(0.2126, 0.7152, 0.0722);
+      vec3 desat = vec3(dot(col, lumFactor));
 
-      pixel = vec4(col, 1.0);
+      // increase contrast
+      desat = pow(desat, vec3(contrast));
+      desat *= contrast;
+      
+      pixel = vec4(mix(col1, col2, desat), 1.0);
     }`;
-    const effect = new _PostEffects(gl, shader);
-    return effect;
+    return new _PostEffects(gl, shader);
   }
+  /**
+   * Create a noise effect
+   * @param gl WebGL2RenderingContext
+   * @param amount Amount of noise, 0.0 - 1.0
+   * @param speed Speed of noise change
+   */
   static noise(gl, amount, speed) {
     const shader = `
     float amount = ${amount.toFixed(3)};
@@ -14539,9 +14562,15 @@ ${fragShader}`);
 
       pixel = vec4(col, 1.0);
     }`;
-    const effect = new _PostEffects(gl, shader);
-    return effect;
+    return new _PostEffects(gl, shader);
   }
+  /**
+   * Create a two colour contrast threshold effect
+   * @param gl WebGL2RenderingContext
+   * @param threshold Threshold value, 0.0 - 1.0
+   * @param colourDark Dark colour
+   * @param colourBright Bright colour
+   */
   static contrast(gl, threshold, colourDark, colourBright) {
     const shader = `
     float threshold = ${threshold.toFixed(3)};
@@ -14560,8 +14589,7 @@ ${fragShader}`);
         pixel = vec4(dark, 1.0);
       }
     }`;
-    const effect = new _PostEffects(gl, shader);
-    return effect;
+    return new _PostEffects(gl, shader);
   }
 };
 
@@ -15066,10 +15094,22 @@ var Context = class _Context {
     this.postEffects = PostEffects.noise(this.gl, amount, speed);
     import_loglevel8.default.info(`\u{1F308} Post effects noise shader added`);
   }
-  setEffectMonochrome(amount = 1) {
-    this.postEffects = PostEffects.monochrome(this.gl, amount);
+  /**
+   * Use bulit-in duotone post effect shader for monotone images
+   * @param colour1 - First colour, default [0.15, 0.09, 0.309]
+   * @param colour2 - Second colour, default [0.96, 0.39, 0.407]
+   * @param contrast - Contrast, default 1.5
+   */
+  setEffectDuotone(colour1 = [0.15, 0.09, 0.309], colour2 = [0.96, 0.39, 0.407], contrast = 1.5) {
+    this.postEffects = PostEffects.duotone(this.gl, colour1, colour2, contrast);
     import_loglevel8.default.info(`\u{1F308} Post effects monochrome shader added`);
   }
+  /**
+   * Use bulit-in contrast post effect shader, which reduces the image to two solid colours
+   * @param threshold
+   * @param darkColour
+   * @param lightColour
+   */
   setEffectContrast(threshold = 0.2, darkColour = [0, 0, 0], lightColour = [1, 1, 1]) {
     this.postEffects = PostEffects.contrast(this.gl, threshold, darkColour, lightColour);
     import_loglevel8.default.info(`\u{1F308} Post effects monochrome shader added`);
@@ -15122,7 +15162,7 @@ function createBoxBody(inst, mass, material, offset = [0, 0, 0]) {
   }
   if (inst.renderable instanceof PrimitiveCube) {
     const size = inst.renderable.size;
-    sizeVec = new Vec3(size / 2, size / 2, size / 2);
+    sizeVec = new Vec3(size / 2 * inst.scale[0], size / 2 * inst.scale[1], size / 2 * inst.scale[2]);
   }
   if (inst.renderable instanceof Model) {
     const boundBox = inst.renderable.boundingBox;

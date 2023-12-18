@@ -20,8 +20,9 @@ ctx.globalLight.enableShadows({
 const floorMat = Material.createBasicTexture('../_textures/brickwall.jpg')
 floorMat.specular = [0.6, 0.6, 0.6]
 floorMat.addNormalTexture('../_textures/brickwall_normal.jpg')
-const floor = ctx.createCubeInstance(floorMat, 400, 6)
-floor.position = [0, -200, 0]
+const floor = ctx.createCubeInstance(floorMat, 400, 5)
+floor.position = [0, -20, 0]
+floor.scale = [1, 0.1, 1]
 floor.rotate(0, 0, -0.1)
 floor.receiveShadow = true
 
@@ -81,7 +82,7 @@ ctx.hud.addHUDItem(note)
 
 function addBall() {
   const sphere = ctx.createSphereInstance(metalMat, 7, 32, 32)
-  sphere.position = [-150, 125, Math.random() * 300 - 150]
+  sphere.position = [-150, Math.random() * 50 + 80, Math.random() * 380 - 190]
   const sphereBody = Physics.createSphereBody(sphere, 0.1, sphereMat)
   world.addBody(sphereBody)
 
@@ -95,9 +96,10 @@ function addBall() {
 }
 
 function addCrate() {
-  const crate = ctx.createCubeInstance(crateMat, 20)
-  const x = Math.random() * 300 - 150
-  crate.position = [x, 1 - x / 8 + 5, Math.random() * 300 - 150]
+  const crate = ctx.createCubeInstance(crateMat, 18)
+  const x = Math.random() * 380 - 190
+  const z = Math.random() * 380 - 190
+  crate.position = [x, 1 - x / 8.5 + 5, z]
   crate.rotateYDeg(Math.random() * 360)
   const crateBody = Physics.createBoxBody(crate, 0, floorMat)
   world.addBody(crateBody)

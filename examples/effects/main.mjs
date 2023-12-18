@@ -78,7 +78,7 @@ ctx.hud.addHUDItem(note)
 window.addEventListener('keydown', (e) => {
   if (e.key === ' ') {
     effectNum++
-    if (effectNum > 5) effectNum = 0
+    if (effectNum > 6) effectNum = 0
 
     switchEffect(effectNum)
   }
@@ -93,7 +93,7 @@ ctx.start()
 function switchEffect(effectNum) {
   switch (effectNum) {
     case 0:
-      customEdgeEffect()
+      customEdgeEffect(6.0, 2.0)
       note.innerHTML = 'Effect: Custom'
       break
     case 1:
@@ -101,8 +101,8 @@ function switchEffect(effectNum) {
       note.innerHTML = 'Effect: Glitch'
       break
     case 2:
-      ctx.setEffectMonochrome()
-      note.innerHTML = 'Effect: Grayscale'
+      ctx.setEffectDuotone()
+      note.innerHTML = 'Effect: DuoTone'
       break
     case 3:
       ctx.setEffectScanlines()
@@ -116,13 +116,18 @@ function switchEffect(effectNum) {
       ctx.setEffectContrast()
       note.innerHTML = 'Effect: Contrast'
       break
+    case 6:
+      ctx.removeEffect()
+      note.innerHTML = 'Effect: None'
+      break
   }
 }
 
-function customEdgeEffect() {
+function customEdgeEffect(speed = 4.0, scale = 2.0) {
   // This shader is a Sobel filter with a rainbow effect
   ctx.setEffectCustom(`
-    float speed = 3.0;
+    float speed = ${speed.toFixed(2)};
+    float scale = ${scale.toFixed(2)};
   
     vec3 rainbow(float t) {
       return vec3(
@@ -134,7 +139,7 @@ function customEdgeEffect() {
   
     void main() {
       // Sobel filter
-      vec2 texel = vec2(1.0 / width, 1.0  /height) * 2.0;
+      vec2 texel = vec2(1.0 / width, 1.0  /height) * scale;
   
       float gx = 0.0;
       float gy = 0.0;
