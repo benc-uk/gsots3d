@@ -15090,7 +15090,7 @@ var Context = class _Context {
    * @param amount - Amount of noise, default 0.1
    * @param speed - Speed of noise pattern, default 5.0
    */
-  setEffectNoise(amount = 0.1, speed = 5) {
+  setEffectNoise(amount = 0.2, speed = 5) {
     this.postEffects = PostEffects.noise(this.gl, amount, speed);
     import_loglevel8.default.info(`\u{1F308} Post effects noise shader added`);
   }

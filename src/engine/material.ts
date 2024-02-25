@@ -127,6 +127,9 @@ export class Material {
 
   /**
    * Create a basic Material with a solid/flat diffuse colour
+   * @param r Red component, 0.0 to 1.0
+   * @param g Green component, 0.0 to 1.0
+   * @param b Blue component, 0.0 to 1.0
    */
   static createSolidColour(r: number, g: number, b: number) {
     const m = new Material()
@@ -136,12 +139,21 @@ export class Material {
   }
 
   /**
-   * Create a new Material with a texture map loaded from a URL
+   * Create a new Material with a texture map loaded from a URL/filepath or Buffer
+   * @param src URL or filename path of texture image, or ArrayBufferView holding texture
+   * @param filter Enable texture filtering and mipmaps (default true)
+   * @param flipY Flip the texture vertically (default false)
    */
-  static createBasicTexture(url: string, filter = true, flipY = false) {
+  static createBasicTexture(src: string | ArrayBufferView, filter = true, flipY = false) {
     const m = new Material()
 
-    m.diffuseTex = TextureCache.instance.getCreate(url, filter, flipY)
+    if (typeof src === 'string') {
+      m.diffuseTex = TextureCache.instance.getCreate(src, filter, flipY)
+    } else {
+      // Invent a unique key for this texture
+      const key = `arraybuffer_${TextureCache.size}`
+      m.diffuseTex = TextureCache.instance.getCreate(src, filter, flipY, key)
+    }
 
     return m
   }
@@ -199,7 +211,9 @@ export class Material {
   }
 
   /**
-   * Applies the material to the given program as a uniform struct
+   * Adds this material to a program, as a set of uniforms
+   * @param programInfo ProgramInfo object to update with uniforms
+   * @param uniformSuffix Optional suffix to add to uniform names
    */
   apply(programInfo: twgl.ProgramInfo, uniformSuffix = '') {
     const uni = {
@@ -211,6 +225,7 @@ export class Material {
 
   /**
    * Return the base set of uniforms for this material
+   * @returns UniformSet object with all material properties
    */
   get uniforms(): UniformSet {
     return {

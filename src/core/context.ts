@@ -708,7 +708,17 @@ export class Context {
   }
 
   /**
+   * Remove all instances from the scene
+   */
+  removeAllInstances() {
+    this.instances.clear()
+    this.instancesTrans.clear()
+    this.instancesParticles.clear()
+  }
+
+  /**
    * Use a custom shader for post effects, user must provide their own shader
+   * @param shaderCode - GLSL shader code for the post effect
    */
   setEffectCustom(shaderCode: string) {
     this.postEffects = new PostEffects(this.gl, shaderCode)
@@ -743,7 +753,7 @@ export class Context {
    * @param amount - Amount of noise, default 0.1
    * @param speed - Speed of noise pattern, default 5.0
    */
-  setEffectNoise(amount = 0.1, speed = 5.0) {
+  setEffectNoise(amount = 0.2, speed = 5.0) {
     this.postEffects = PostEffects.noise(this.gl, amount, speed)
 
     log.info(`🌈 Post effects noise shader added`)
