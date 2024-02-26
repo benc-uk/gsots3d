@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint-check
 
-    # only run on main branch
+    # TEMPORARY DISABLED only run on main branch
     #if: github.ref == 'refs/heads/main'
 
     steps:
@@ -70,7 +70,7 @@ jobs:
           npm run build
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add dist-bundle
+          git add dist-single
           git commit -m "Automated build of dist-bundle $(date -u)"
 
       - name: Push dist-bundle back to GitHub
