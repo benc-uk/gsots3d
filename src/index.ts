@@ -1,6 +1,6 @@
 // ===== index.ts =============================================================
 // Export everything we want to expose to the outside world
-// Ben Coleman, 2023
+// Ben Coleman, 2024
 // ============================================================================
 
 export * from './core/gl.ts'
