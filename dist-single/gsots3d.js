@@ -54,6 +54,8 @@ var require_loglevel = __commonJS({
         "warn",
         "error"
       ];
+      var _loggersByName = {};
+      var defaultLogger = null;
       function bindMethod(obj, methodName) {
         var method = obj[methodName];
         if (typeof method.bind === "function") {
@@ -95,28 +97,33 @@ var require_loglevel = __commonJS({
           return noop2;
         }
       }
-      function replaceLoggingMethods(level, loggerName) {
+      function replaceLoggingMethods() {
+        var level = this.getLevel();
         for (var i = 0; i < logMethods.length; i++) {
           var methodName = logMethods[i];
-          this[methodName] = i < level ? noop2 : this.methodFactory(methodName, level, loggerName);
+          this[methodName] = i < level ? noop2 : this.methodFactory(methodName, level, this.name);
         }
         this.log = this.debug;
+        if (typeof console === undefinedType && level < this.levels.SILENT) {
+          return "No console available for logging";
+        }
       }
-      function enableLoggingWhenConsoleArrives(methodName, level, loggerName) {
+      function enableLoggingWhenConsoleArrives(methodName) {
         return function() {
           if (typeof console !== undefinedType) {
-            replaceLoggingMethods.call(this, level, loggerName);
+            replaceLoggingMethods.call(this);
             this[methodName].apply(this, arguments);
           }
         };
       }
-      function defaultMethodFactory(methodName, level, loggerName) {
+      function defaultMethodFactory(methodName, _level, _loggerName) {
         return realMethod(methodName) || enableLoggingWhenConsoleArrives.apply(this, arguments);
       }
-      function Logger(name, defaultLevel, factory) {
+      function Logger(name, factory) {
         var self = this;
-        var currentLevel;
-        defaultLevel = defaultLevel == null ? "WARN" : defaultLevel;
+        var inheritedLevel;
+        var defaultLevel;
+        var userLevel;
         var storageKey = "loglevel";
         if (typeof name === "string") {
           storageKey += ":" + name;
@@ -148,11 +155,12 @@ var require_loglevel = __commonJS({
           if (typeof storedLevel === undefinedType) {
             try {
               var cookie = window.document.cookie;
-              var location2 = cookie.indexOf(
-                encodeURIComponent(storageKey) + "="
-              );
+              var cookieName = encodeURIComponent(storageKey);
+              var location2 = cookie.indexOf(cookieName + "=");
               if (location2 !== -1) {
-                storedLevel = /^([^;]+)/.exec(cookie.slice(location2))[1];
+                storedLevel = /^([^;]+)/.exec(
+                  cookie.slice(location2 + cookieName.length + 1)
+                )[1];
               }
             } catch (ignore) {
             }
@@ -167,12 +175,22 @@ var require_loglevel = __commonJS({
             return;
           try {
             window.localStorage.removeItem(storageKey);
-            return;
           } catch (ignore) {
           }
           try {
             window.document.cookie = encodeURIComponent(storageKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
           } catch (ignore) {
+          }
+        }
+        function normalizeLevel(input) {
+          var level = input;
+          if (typeof level === "string" && self.levels[level.toUpperCase()] !== void 0) {
+            level = self.levels[level.toUpperCase()];
+          }
+          if (typeof level === "number" && level >= 0 && level <= self.levels.SILENT) {
+            return level;
+          } else {
+            throw new TypeError("log.setLevel() called with invalid level: " + input);
           }
         }
         self.name = name;
@@ -186,34 +204,31 @@ var require_loglevel = __commonJS({
         };
         self.methodFactory = factory || defaultMethodFactory;
         self.getLevel = function() {
-          return currentLevel;
+          if (userLevel != null) {
+            return userLevel;
+          } else if (defaultLevel != null) {
+            return defaultLevel;
+          } else {
+            return inheritedLevel;
+          }
         };
         self.setLevel = function(level, persist) {
-          if (typeof level === "string" && self.levels[level.toUpperCase()] !== void 0) {
-            level = self.levels[level.toUpperCase()];
+          userLevel = normalizeLevel(level);
+          if (persist !== false) {
+            persistLevelIfPossible(userLevel);
           }
-          if (typeof level === "number" && level >= 0 && level <= self.levels.SILENT) {
-            currentLevel = level;
-            if (persist !== false) {
-              persistLevelIfPossible(level);
-            }
-            replaceLoggingMethods.call(self, level, name);
-            if (typeof console === undefinedType && level < self.levels.SILENT) {
-              return "No console available for logging";
-            }
-          } else {
-            throw "log.setLevel() called with invalid level: " + level;
-          }
+          return replaceLoggingMethods.call(self);
         };
         self.setDefaultLevel = function(level) {
-          defaultLevel = level;
+          defaultLevel = normalizeLevel(level);
           if (!getPersistedLevel()) {
             self.setLevel(level, false);
           }
         };
         self.resetLevel = function() {
-          self.setLevel(defaultLevel, false);
+          userLevel = null;
           clearPersistedLevel();
+          replaceLoggingMethods.call(self);
         };
         self.enableAll = function(persist) {
           self.setLevel(self.levels.TRACE, persist);
@@ -221,14 +236,27 @@ var require_loglevel = __commonJS({
         self.disableAll = function(persist) {
           self.setLevel(self.levels.SILENT, persist);
         };
+        self.rebuild = function() {
+          if (defaultLogger !== self) {
+            inheritedLevel = normalizeLevel(defaultLogger.getLevel());
+          }
+          replaceLoggingMethods.call(self);
+          if (defaultLogger === self) {
+            for (var childName in _loggersByName) {
+              _loggersByName[childName].rebuild();
+            }
+          }
+        };
+        inheritedLevel = normalizeLevel(
+          defaultLogger ? defaultLogger.getLevel() : "WARN"
+        );
         var initialLevel = getPersistedLevel();
-        if (initialLevel == null) {
-          initialLevel = defaultLevel;
+        if (initialLevel != null) {
+          userLevel = normalizeLevel(initialLevel);
         }
-        self.setLevel(initialLevel, false);
+        replaceLoggingMethods.call(self);
       }
-      var defaultLogger = new Logger();
-      var _loggersByName = {};
+      defaultLogger = new Logger();
       defaultLogger.getLogger = function getLogger(name) {
         if (typeof name !== "symbol" && typeof name !== "string" || name === "") {
           throw new TypeError("You must supply a name when creating a logger.");
@@ -237,7 +265,6 @@ var require_loglevel = __commonJS({
         if (!logger) {
           logger = _loggersByName[name] = new Logger(
             name,
-            defaultLogger.getLevel(),
             defaultLogger.methodFactory
           );
         }
@@ -6612,7 +6639,7 @@ var setAxes = function() {
 }();
 
 // package.json
-var version = "0.0.5-alpha.5";
+var version = "0.0.5-fbdace4.0";
 
 // node_modules/cannon-es/dist/cannon-es.js
 var Mat3 = class _Mat3 {
@@ -12340,7 +12367,7 @@ var _TextureCache = class _TextureCache {
    */
   static get instance() {
     if (!_TextureCache.initialized) {
-      throw new Error("TextureCache not initialized, call TextureCache.init() first");
+      throw new Error("\u{1F4A5} TextureCache not initialized, call TextureCache.init() first");
     }
     return this._instance;
   }
@@ -12371,14 +12398,23 @@ var _TextureCache = class _TextureCache {
   }
   /**
    * Create or return a texture from the cache by name
-   * @param src URL or filename path of texture image
+   * @param src URL or filename path of texture image, or ArrayBufferView holding texture
    * @param filter Enable texture filtering and mipmaps (default true)
    * @param flipY Flip the texture vertically (default true)
    */
-  getCreate(src, filter = true, flipY = false) {
-    if (this.cache.has(src)) {
-      import_loglevel2.default.trace(`\u{1F44D} Returning texture '${src}' from cache, nice!`, flipY);
-      return this.get(src);
+  getCreate(src, filter = true, flipY = false, textureKey = "") {
+    let key = "";
+    if (typeof src === "string") {
+      key = src;
+    } else {
+      if (textureKey === "") {
+        throw new Error("\u{1F4A5} ArrayBuffer textures need a unique key");
+      }
+      key = textureKey;
+    }
+    if (this.cache.has(key)) {
+      import_loglevel2.default.trace(`\u{1F44D} Returning texture '${key}' from cache, nice!`, flipY);
+      return this.get(key);
     }
     const texture = createTexture(
       this.gl,
@@ -12394,7 +12430,7 @@ var _TextureCache = class _TextureCache {
         }
       }
     );
-    this.add(src, texture);
+    this.add(key, texture);
     return texture;
   }
   /**
@@ -12408,6 +12444,18 @@ var _TextureCache = class _TextureCache {
    */
   static get defaultRand() {
     return this.instance.defaultRand;
+  }
+  /**
+   * Return the number of textures in the cache
+   */
+  static get size() {
+    return this.instance.cache.size;
+  }
+  /**
+   * Clear the texture cache
+   */
+  static clear() {
+    this.instance.cache.clear();
   }
 };
 _TextureCache.initialized = false;
@@ -13513,6 +13561,9 @@ var Material2 = class _Material {
   }
   /**
    * Create a basic Material with a solid/flat diffuse colour
+   * @param r Red component, 0.0 to 1.0
+   * @param g Green component, 0.0 to 1.0
+   * @param b Blue component, 0.0 to 1.0
    */
   static createSolidColour(r, g, b2) {
     const m = new _Material();
@@ -13520,11 +13571,19 @@ var Material2 = class _Material {
     return m;
   }
   /**
-   * Create a new Material with a texture map loaded from a URL
+   * Create a new Material with a texture map loaded from a URL/filepath or Buffer
+   * @param src URL or filename path of texture image, or ArrayBufferView holding texture
+   * @param filter Enable texture filtering and mipmaps (default true)
+   * @param flipY Flip the texture vertically (default false)
    */
-  static createBasicTexture(url, filter = true, flipY = false) {
+  static createBasicTexture(src, filter = true, flipY = false) {
     const m = new _Material();
-    m.diffuseTex = TextureCache.instance.getCreate(url, filter, flipY);
+    if (typeof src === "string") {
+      m.diffuseTex = TextureCache.instance.getCreate(src, filter, flipY);
+    } else {
+      const key = `arraybuffer_${TextureCache.size}`;
+      m.diffuseTex = TextureCache.instance.getCreate(src, filter, flipY, key);
+    }
     return m;
   }
   /**
@@ -13570,7 +13629,9 @@ var Material2 = class _Material {
     return m;
   }
   /**
-   * Applies the material to the given program as a uniform struct
+   * Adds this material to a program, as a set of uniforms
+   * @param programInfo ProgramInfo object to update with uniforms
+   * @param uniformSuffix Optional suffix to add to uniform names
    */
   apply(programInfo, uniformSuffix = "") {
     const uni = {
@@ -13580,6 +13641,7 @@ var Material2 = class _Material {
   }
   /**
    * Return the base set of uniforms for this material
+   * @returns UniformSet object with all material properties
    */
   get uniforms() {
     return {
@@ -15060,7 +15122,16 @@ var Context = class _Context {
     this.instancesTrans.delete(instance.id);
   }
   /**
+   * Remove all instances from the scene
+   */
+  removeAllInstances() {
+    this.instances.clear();
+    this.instancesTrans.clear();
+    this.instancesParticles.clear();
+  }
+  /**
    * Use a custom shader for post effects, user must provide their own shader
+   * @param shaderCode - GLSL shader code for the post effect
    */
   setEffectCustom(shaderCode) {
     this.postEffects = new PostEffects(this.gl, shaderCode);
@@ -15090,7 +15161,7 @@ var Context = class _Context {
    * @param amount - Amount of noise, default 0.1
    * @param speed - Speed of noise pattern, default 5.0
    */
-  setEffectNoise(amount = 0.1, speed = 5) {
+  setEffectNoise(amount = 0.2, speed = 5) {
     this.postEffects = PostEffects.noise(this.gl, amount, speed);
     import_loglevel8.default.info(`\u{1F308} Post effects noise shader added`);
   }

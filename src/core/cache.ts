@@ -114,7 +114,7 @@ export class TextureCache {
    */
   static get instance() {
     if (!TextureCache.initialized) {
-      throw new Error('TextureCache not initialized, call TextureCache.init() first')
+      throw new Error('💥 TextureCache not initialized, call TextureCache.init() first')
     }
 
     return this._instance
@@ -152,15 +152,27 @@ export class TextureCache {
 
   /**
    * Create or return a texture from the cache by name
-   * @param src URL or filename path of texture image
+   * @param src URL or filename path of texture image, or ArrayBufferView holding texture
    * @param filter Enable texture filtering and mipmaps (default true)
    * @param flipY Flip the texture vertically (default true)
    */
-  getCreate(src: string, filter = true, flipY = false) {
+  getCreate(src: string | ArrayBufferView, filter = true, flipY = false, textureKey = '') {
+    let key = ''
+
+    if (typeof src === 'string') {
+      key = src
+    } else {
+      if (textureKey === '') {
+        throw new Error('💥 ArrayBuffer textures need a unique key')
+      }
+
+      key = textureKey
+    }
+
     // Check if texture already exists, if so return it
-    if (this.cache.has(src)) {
-      log.trace(`👍 Returning texture '${src}' from cache, nice!`, flipY)
-      return this.get(src)
+    if (this.cache.has(key)) {
+      log.trace(`👍 Returning texture '${key}' from cache, nice!`, flipY)
+      return this.get(key)
     }
 
     // Create texture and add to cache
@@ -181,7 +193,7 @@ export class TextureCache {
       },
     )
 
-    this.add(src, texture)
+    this.add(key, texture)
     return texture
   }
 
@@ -197,6 +209,20 @@ export class TextureCache {
    */
   static get defaultRand() {
     return this.instance.defaultRand
+  }
+
+  /**
+   * Return the number of textures in the cache
+   */
+  static get size() {
+    return this.instance.cache.size
+  }
+
+  /**
+   * Clear the texture cache
+   */
+  static clear() {
+    this.instance.cache.clear()
   }
 }
 

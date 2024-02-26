@@ -12,7 +12,6 @@ on:
 
 permissions:
   contents: write
-  packages: write
 
 jobs:
   lint-check:
@@ -39,8 +38,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint-check
 
-    # only run on main branch
-    if: github.ref == 'DISABLE THIS JOB FOR NOW'
+    # Only run on main branch
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - uses: actions/checkout@v3
@@ -52,7 +51,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: x.18
-          registry-url: 'https://npm.pkg.github.com'
           cache: 'npm'
 
       - name: NPM install & version
@@ -67,11 +65,11 @@ jobs:
         env:
           NODE_ENV: production
         run: |
-          npm run build-bundle
+          npm run build-single
           npm run build
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add dist-bundle
+          git add dist-single
           git commit -m "Automated build of dist-bundle $(date -u)"
 
       - name: Push dist-bundle back to GitHub
