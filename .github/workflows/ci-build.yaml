@@ -66,7 +66,7 @@ jobs:
         env:
           NODE_ENV: production
         run: |
-          npm run build-bundle
+          npm run build-single
           npm run build
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
