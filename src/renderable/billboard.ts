@@ -28,7 +28,6 @@ export class Billboard implements Renderable {
   protected bufferInfo: twgl.BufferInfo
   private programInfo: twgl.ProgramInfo
   public material: Material
-  public tex: WebGLTexture | undefined
   public type: BillboardType = BillboardType.CYLINDRICAL
 
   /** Creates a square billboard */

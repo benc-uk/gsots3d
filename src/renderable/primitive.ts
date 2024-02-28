@@ -18,7 +18,6 @@ export abstract class Primitive implements Renderable {
   protected bufferInfo: twgl.BufferInfo | undefined
   private programInfo: twgl.ProgramInfo
   public material: Material
-  public tex: WebGLTexture | undefined
   protected triangles: number
 
   constructor() {

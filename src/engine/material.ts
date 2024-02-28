@@ -69,6 +69,12 @@ export class Material {
   public normalTex?: WebGLTexture
 
   /**
+   * Don't apply any lighting or shading to this material
+   * @default false
+   */
+  public unshaded: boolean
+
+  /**
    * Create a new default material with diffuse white colour, all all default properties
    */
   constructor() {
@@ -80,6 +86,8 @@ export class Material {
     this.shininess = 20
     this.opacity = 1.0
     this.reflectivity = 0.0
+
+    this.unshaded = false
 
     // 1 pixel white texture is used for solid colour & flat materials
     // A trick to avoid having multiple shaders for textured & non-textured materials
@@ -180,8 +188,7 @@ export class Material {
 
   /** Create a simple diffuse red Material */
   static get RED() {
-    const m = Material.createSolidColour(1.0, 0.0, 0.0)
-    return m
+    return Material.createSolidColour(1.0, 0.0, 0.0)
   }
 
   /** Create a simple diffuse green Material */
@@ -191,23 +198,32 @@ export class Material {
 
   /** Create a simple diffuse blue Material */
   static get BLUE() {
-    const m = Material.createSolidColour(0.0, 0.0, 1.0)
-
-    return m
+    return Material.createSolidColour(0.0, 0.0, 1.0)
   }
 
   /** Create a simple diffuse white Material */
   static get WHITE() {
-    const m = Material.createSolidColour(1.0, 1.0, 1.0)
-
-    return m
+    return Material.createSolidColour(1.0, 1.0, 1.0)
   }
 
   /** Create a simple diffuse black Material */
   static get BLACK() {
-    const m = Material.createSolidColour(0.0, 0.0, 0.0)
+    return Material.createSolidColour(0.0, 0.0, 0.0)
+  }
 
-    return m
+  /** Create a simple diffuse yellow Material */
+  static get YELLOW() {
+    return Material.createSolidColour(1.0, 1.0, 0.0)
+  }
+
+  /** Create a simple diffuse magenta Material */
+  static get MAGENTA() {
+    return Material.createSolidColour(1.0, 0.0, 1.0)
+  }
+
+  /** Create a simple diffuse cyan Material */
+  static get CYAN() {
+    return Material.createSolidColour(0.0, 1.0, 1.0)
   }
 
   /**
@@ -240,6 +256,7 @@ export class Material {
       specularTex: this.specularTex ? this.specularTex : null,
       normalTex: this.normalTex ? this.normalTex : null,
       hasNormalTex: this.normalTex ? true : false,
+      unshaded: this.unshaded,
     } as UniformSet
   }
 

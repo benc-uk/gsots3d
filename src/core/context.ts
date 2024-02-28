@@ -24,6 +24,7 @@ import { Model } from '../renderable/model.ts'
 import { HUD } from './hud.ts'
 import { Stats } from './stats.ts'
 import { PostEffects } from '../engine/post-effects.ts'
+import { RenderableBuilder } from '../renderable/builder.ts'
 
 // Import shaders, tsup will inline these as text strings
 import fragShaderPhong from '../../shaders/phong/glsl.frag'
@@ -86,6 +87,9 @@ export class Context {
 
   /** Set the fixed time step for physics stepping, only used when physicsWorld is set */
   public physicsTimeStep: number
+
+  /** Backface culling */
+  public disableCulling = false
 
   // ==== Getters =============================================================
 
@@ -336,7 +340,8 @@ export class Context {
     // ------------------------------------------------
     // RENDER CORE - Draw all standard opaque instances
     // ------------------------------------------------
-    this.gl.enable(this.gl.CULL_FACE)
+    if (this.disableCulling) this.gl.disable(this.gl.CULL_FACE)
+    else this.gl.enable(this.gl.CULL_FACE)
     this.gl.enable(this.gl.BLEND)
     this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA)
 
@@ -788,5 +793,23 @@ export class Context {
    */
   removeEffect() {
     this.postEffects = undefined
+  }
+
+  /**
+   *
+   */
+  createCustomInstance(builder: RenderableBuilder, material: Material) {
+    const renderable = builder.build(this.gl)
+
+    renderable.material = material
+    const instance = new Instance(renderable)
+
+    this.addInstance(instance, material)
+    Stats.triangles += renderable.triangleCount
+    Stats.instances++
+
+    log.debug(`🗿 Created a custom renderable instance`)
+
+    return instance
   }
 }
