@@ -6,17 +6,21 @@ ctx.start()
 // Create a pyramid using RenderableBuilder
 const builder = new RenderableBuilder()
 
+const brick = Material.createBasicTexture('../_textures/brickwall.jpg', true)
+const crate = Material.createBasicTexture('../_textures/crate.png', true)
+const base = builder.newPart('pyramid-base', crate)
+const sides = builder.newPart('pyramid-side', brick)
+
 // Base on x z plane, anti-clockwise, reversed
-builder.addQuad([-1, 0, -1], [1, 0, -1], [1, 0, 1], [-1, 0, 1], [0, 0], [1, 0], [1, 1], [0, 1])
+base.addQuad([-1, 0, -1], [1, 0, -1], [1, 0, 1], [-1, 0, 1], [0, 0], [1, 0], [1, 1], [0, 1])
 
 // Four triangles as sides
-builder.addTriangle([-1, 0, 1], [1, 0, 1], [0, 2, 0], [0, 0], [1, 0], [0.5, 1])
-builder.addTriangle([1, 0, 1], [1, 0, -1], [0, 2, 0], [0, 0], [1, 0], [0.5, 1])
-builder.addTriangle([1, 0, -1], [-1, 0, -1], [0, 2, 0], [0, 0], [1, 0], [0.5, 1])
-builder.addTriangle([-1, 0, -1], [-1, 0, 1], [0, 2, 0], [0, 0], [1, 0], [0.5, 1])
+sides.addTriangle([-1, 0, 1], [1, 0, 1], [0, 2, 0], [0, 0], [1, 0], [0.5, 1])
+sides.addTriangle([1, 0, 1], [1, 0, -1], [0, 2, 0], [0, 0], [1, 0], [0.5, 1])
+sides.addTriangle([1, 0, -1], [-1, 0, -1], [0, 2, 0], [0, 0], [1, 0], [0.5, 1])
+sides.addTriangle([-1, 0, -1], [-1, 0, 1], [0, 2, 0], [0, 0], [1, 0], [0.5, 1])
 
-const m = Material.createBasicTexture('../_textures/brickwall.jpg', true)
-const pyramid = ctx.createCustomInstance(builder, m)
+const pyramid = ctx.createCustomInstance(builder)
 
 ctx.camera.position = [0, 0, 6]
 ctx.globalLight.setAsPosition(20, 70, 500)

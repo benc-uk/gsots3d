@@ -42,7 +42,7 @@ const MAX_LIGHTS = 16
 export class Context {
   private gl: WebGL2RenderingContext
   private started: boolean
-  private instances: Map<string, Instance>
+  private instances: Map<string, Instance> // Keyed on instance id
   private instancesTrans: Map<string, Instance>
   private instancesParticles: Map<string, Instance>
   private cameras: Map<string, Camera>
@@ -798,13 +798,11 @@ export class Context {
   /**
    *
    */
-  createCustomInstance(builder: RenderableBuilder, material: Material) {
-    const renderable = builder.build(this.gl)
-
-    renderable.material = material
+  createCustomInstance(builder: RenderableBuilder) {
+    const renderable = builder.buildAllParts(this.gl)
     const instance = new Instance(renderable)
 
-    this.addInstance(instance, material)
+    this.instances.set(instance.id, instance)
     Stats.triangles += renderable.triangleCount
     Stats.instances++
 

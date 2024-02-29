@@ -6639,7 +6639,7 @@ var setAxes = function() {
 }();
 
 // package.json
-var version = "0.0.5-alpha.6";
+var version = "0.0.5-alpha.7";
 
 // node_modules/cannon-es/dist/cannon-es.js
 var Mat3 = class _Mat3 {
@@ -15209,11 +15209,10 @@ var Context = class _Context {
   /**
    *
    */
-  createCustomInstance(builder, material) {
-    const renderable = builder.build(this.gl);
-    renderable.material = material;
+  createCustomInstance(builder) {
+    const renderable = builder.buildAllParts(this.gl);
     const instance = new Instance(renderable);
-    this.addInstance(instance, material);
+    this.instances.set(instance.id, instance);
     Stats.triangles += renderable.triangleCount;
     Stats.instances++;
     import_loglevel8.default.debug(`\u{1F5FF} Created a custom renderable instance`);
@@ -15307,6 +15306,39 @@ var Physics = {
 // src/renderable/builder.ts
 var RenderableBuilder = class {
   constructor() {
+    this.builderParts = /* @__PURE__ */ new Map();
+    this.materials = /* @__PURE__ */ new Map();
+  }
+  /**
+   * Create and add a 'part' each part should have a unique name, and material to apply to that part
+   * Vertex mesh data is then added to the part
+   * @param name Name of this part, just a string can be anything
+   * @param material Material to attach and apply to all surfaces in this part
+   */
+  newPart(name, material) {
+    if (this.builderParts.has(name)) {
+      throw new Error("Builder part name exists!");
+    }
+    const builderPart = new BuilderPart();
+    this.builderParts.set(name, builderPart);
+    this.materials.set(name, material);
+    return builderPart;
+  }
+  /**
+   * Called after all parts are ready, to generate a CustomRenderable
+   * @param gl A WebGL2RenderingContext
+   */
+  buildAllParts(gl) {
+    const buffers = /* @__PURE__ */ new Map();
+    for (const [name, builderPart] of this.builderParts) {
+      buffers.set(name, builderPart.build(gl));
+    }
+    console.log(buffers);
+    return new CustomRenderable(buffers, this.materials);
+  }
+};
+var BuilderPart = class {
+  constructor() {
     this.vertexData = [];
     this.vertexCount = 0;
     this.indexData = [];
@@ -15327,7 +15359,7 @@ var RenderableBuilder = class {
     this.normalData.push(n[0], n[1], n[2]);
   }
   /**
-   * Add a triangle to the renderable
+   * Add a triangle to the renderable part
    * Each triangle must be defined by 3 vertices and will get a normal calculated
    * Each triangle will get a unique normal, so no smooth shading
    * @param v1 Vertex one of the triangle
@@ -15352,7 +15384,7 @@ var RenderableBuilder = class {
     this.texcoordData.push(...tc1, ...tc2, ...tc3);
   }
   /*
-   * Add a two triangle quad to the renderable
+   * Add a two triangle quad to the renderable part
    * Each quad must be defined by 4 vertices and will get a normal calculated
    * Each quad will get a unique normal, so no smooth shading
    * @param v1 Vertex one of the quad
@@ -15375,7 +15407,7 @@ var RenderableBuilder = class {
   /**
    * Build the renderable from the data added
    * @param gl A WebGL2 rendering context
-   * @returns A new CustomRenderable instance
+   * @returns BufferInfo used by twgl
    */
   build(gl) {
     let bufferInfo;
@@ -15395,34 +15427,42 @@ var RenderableBuilder = class {
         texcoord: this.texcoordData
       });
     }
-    return new CustomRenderable(bufferInfo, ProgramCache.instance.default, new Material2(), this.triangleCount);
+    return bufferInfo;
   }
 };
 var CustomRenderable = class {
-  constructor(bufferInfo, programInfo, material, triCount) {
+  constructor(bufferInfos, materials) {
     this.programInfo = ProgramCache.instance.default;
     this._triangleCount = 0;
-    this.bufferInfo = bufferInfo;
-    this.programInfo = programInfo;
-    this.material = material;
-    this._triangleCount = triCount;
+    this.modelParts = new Array();
+    this.materials = materials;
+    for (const [name, bi] of bufferInfos) {
+      const p = new ModelPart(bi, name);
+      this.modelParts.push(p);
+    }
   }
+  /**
+   * Render is used draw this custom renderable, this is called from the Instance that wraps
+   * this renderable.
+   */
   render(gl, uniforms, materialOverride, programOverride) {
-    if (!this.bufferInfo)
-      return;
-    if (!this.material)
-      return;
     const programInfo = programOverride || this.programInfo;
     gl.useProgram(programInfo.program);
-    if (materialOverride === void 0) {
-      this.material.apply(programInfo);
-    } else {
-      materialOverride.apply(programInfo);
+    for (const part of this.modelParts) {
+      const bufferInfo = part.bufferInfo;
+      if (materialOverride === void 0) {
+        const material = this.materials.get(part.materialName);
+        if (!material)
+          continue;
+        material.apply(programInfo);
+      } else {
+        materialOverride.apply(programInfo);
+      }
+      setBuffersAndAttributes(gl, programInfo, bufferInfo);
+      setUniforms(programInfo, uniforms);
+      drawBufferInfo(gl, bufferInfo);
+      Stats.drawCallsPerFrame++;
     }
-    setBuffersAndAttributes(gl, programInfo, this.bufferInfo);
-    setUniforms(programInfo, uniforms);
-    drawBufferInfo(gl, this.bufferInfo);
-    Stats.drawCallsPerFrame++;
   }
   get triangleCount() {
     return this._triangleCount;
@@ -15431,10 +15471,12 @@ var CustomRenderable = class {
 export {
   Billboard,
   BillboardType,
+  BuilderPart,
   Camera,
   CameraType,
   Colours,
   Context,
+  CustomRenderable,
   DynamicEnvironmentMap,
   EnvironmentMap,
   HUD,
