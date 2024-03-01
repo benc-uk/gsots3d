@@ -75,6 +75,12 @@ export class Material {
   public unshaded: boolean
 
   /**
+   * Transparency threshold, pixels with alpha below this value will be discarded
+   * @default 0.0
+   */
+  public alphaCutoff: number
+
+  /**
    * Create a new default material with diffuse white colour, all all default properties
    */
   constructor() {
@@ -88,6 +94,7 @@ export class Material {
     this.reflectivity = 0.0
 
     this.unshaded = false
+    this.alphaCutoff = 0.0
 
     // 1 pixel white texture is used for solid colour & flat materials
     // A trick to avoid having multiple shaders for textured & non-textured materials
@@ -257,6 +264,7 @@ export class Material {
       normalTex: this.normalTex ? this.normalTex : null,
       hasNormalTex: this.normalTex ? true : false,
       unshaded: this.unshaded,
+      alphaCutoff: this.alphaCutoff,
     } as UniformSet
   }
 
@@ -275,6 +283,8 @@ export class Material {
     m.diffuseTex = this.diffuseTex
     m.specularTex = this.specularTex
     m.normalTex = this.normalTex
+    m.unshaded = this.unshaded
+    m.alphaCutoff = this.alphaCutoff
 
     return m
   }

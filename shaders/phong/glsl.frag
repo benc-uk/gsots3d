@@ -56,6 +56,7 @@ struct Material {
   sampler2D normalTex;
   bool hasNormalTex;
   bool unshaded;
+  float alphaCutoff;
 };
 
 // Inputs from vertex shader
@@ -168,6 +169,12 @@ void main() {
   // Flip texture coords if needed
   texCoord = u_flipTextureY ? vec2(v_texCoord.x, 1.0 - v_texCoord.y) : v_texCoord;
   texCoord = u_flipTextureX ? vec2(1.0 - texCoord.x, texCoord.y) : texCoord;
+
+  // So parts of textures can be transparent
+  vec4 texel = texture(u_mat.diffuseTex, texCoord);
+  if (texel.a < u_mat.alphaCutoff) {
+    discard;
+  }
 
   vec3 N = normalize(v_normal);
 

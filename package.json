@@ -1,6 +1,6 @@
 {
   "name": "gsots3d",
-  "version": "0.0.5-alpha.10",
+  "version": "0.0.5-alpha.11",
   "description": "Getting S**t On The Screen in 3D. A library for doing 3D graphics in the browser.",
   "author": "Ben Coleman",
   "license": "MIT",
@@ -36,6 +36,7 @@
     "lint-fix": "eslint --ext .ts src --fix && prettier --write src && prettier --write shaders",
     "check": "tsc",
     "build": "tsc && tsup",
+    "build:all": "npm run build && npm run build-single && npm run docs",
     "watch": "tsc && npm run build && run-when-changed --watch 'src/**' --watch 'shaders/**' --exec 'npm run build'",
     "build-single": "tsc && tsup --config tsup.config-single.js",
     "watch-single": "tsc && npm run build-single && run-when-changed --watch 'src/**' --watch 'shaders/**' --exec 'npm run build-single'",
