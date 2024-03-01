@@ -27,28 +27,28 @@ import { ModelPart } from './model.ts'
  * const renderable = builder.build(gl)
  */
 export class RenderableBuilder {
-  private builderParts: Map<string, BuilderPart>
+  public readonly parts: Map<string, BuilderPart>
   private materials: Map<string, Material>
 
   constructor() {
-    this.builderParts = new Map<string, BuilderPart>()
+    this.parts = new Map<string, BuilderPart>()
     this.materials = new Map<string, Material>()
   }
 
   /**
-   * Create and add a 'part' each part should have a unique name, and material to apply to that part
-   * Vertex mesh data is then added to the part
+   * Create and add a 'part', each part should have a unique name, and material to apply to it
+   * Vertex mesh data is then added to the part, with addQuad and addTriangle
    * @param name Name of this part, just a string can be anything
    * @param material Material to attach and apply to all surfaces in this part
    */
   newPart(name: string, material: Material): BuilderPart {
-    if (this.builderParts.has(name)) {
+    if (this.parts.has(name)) {
       throw new Error('Builder part name exists!')
     }
 
     const builderPart = new BuilderPart()
 
-    this.builderParts.set(name, builderPart)
+    this.parts.set(name, builderPart)
     this.materials.set(name, material)
 
     return builderPart
@@ -58,14 +58,14 @@ export class RenderableBuilder {
    * Called after all parts are ready, to generate a CustomRenderable
    * @param gl A WebGL2RenderingContext
    */
-  buildAllParts(gl: WebGL2RenderingContext): CustomRenderable {
+  build(gl: WebGL2RenderingContext): CustomRenderable {
     const buffers = new Map<string, twgl.BufferInfo>()
 
-    for (const [name, builderPart] of this.builderParts) {
-      buffers.set(name, builderPart.build(gl))
+    for (const [name, builderPart] of this.parts) {
+      const partBuffers = builderPart.build(gl)
+      if (!partBuffers) continue
+      buffers.set(name, partBuffers)
     }
-
-    console.log(buffers)
 
     return new CustomRenderable(buffers, this.materials)
   }
@@ -158,17 +158,17 @@ export class BuilderPart {
    * @param gl A WebGL2 rendering context
    * @returns BufferInfo used by twgl
    */
-  build(gl: WebGL2RenderingContext): twgl.BufferInfo {
+  build(gl: WebGL2RenderingContext): twgl.BufferInfo | null {
     let bufferInfo: twgl.BufferInfo
     if (this._customArrayData) {
       bufferInfo = twgl.createBufferInfoFromArrays(gl, this._customArrayData)
     } else {
       if (this.vertexData.length === 0) {
-        throw new Error('No vertices added to renderable')
+        return null
       }
 
       if (this.indexData.length === 0) {
-        throw new Error('No indices added to renderable')
+        return null
       }
 
       // This is where the magic happens

@@ -667,6 +667,8 @@ export class Context {
     this.instancesParticles.set(instance.id, instance)
     Stats.instances++
 
+    log.debug(`✨ Created particle system`)
+
     return { instance, particleSystem }
   }
 
@@ -796,10 +798,11 @@ export class Context {
   }
 
   /**
-   *
+   * Build a instance of a custom renderable from a builder and add it to the scene
+   * @param builder Builder with
    */
   createCustomInstance(builder: RenderableBuilder) {
-    const renderable = builder.buildAllParts(this.gl)
+    const renderable = builder.build(this.gl)
     const instance = new Instance(renderable)
 
     this.instances.set(instance.id, instance)

@@ -7,7 +7,7 @@ ctx.start()
 const builder = new RenderableBuilder()
 
 const brick = Material.createBasicTexture('../_textures/brickwall.jpg', true)
-const crate = Material.createBasicTexture('../_textures/crate.png', true)
+const crate = Material.createBasicTexture('../_textures/STARG2.png', true)
 const base = builder.newPart('pyramid-base', crate)
 const sides = builder.newPart('pyramid-side', brick)
 

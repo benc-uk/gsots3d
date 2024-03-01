@@ -6639,7 +6639,7 @@ var setAxes = function() {
 }();
 
 // package.json
-var version = "0.0.5-alpha.7";
+var version = "0.0.5-alpha.9";
 
 // node_modules/cannon-es/dist/cannon-es.js
 var Mat3 = class _Mat3 {
@@ -15097,6 +15097,7 @@ var Context = class _Context {
     instance.castShadow = false;
     this.instancesParticles.set(instance.id, instance);
     Stats.instances++;
+    import_loglevel8.default.debug(`\u2728 Created particle system`);
     return { instance, particleSystem };
   }
   /**
@@ -15207,10 +15208,11 @@ var Context = class _Context {
     this.postEffects = void 0;
   }
   /**
-   *
+   * Build a instance of a custom renderable from a builder and add it to the scene
+   * @param builder Builder with
    */
   createCustomInstance(builder) {
-    const renderable = builder.buildAllParts(this.gl);
+    const renderable = builder.build(this.gl);
     const instance = new Instance(renderable);
     this.instances.set(instance.id, instance);
     Stats.triangles += renderable.triangleCount;
@@ -15306,21 +15308,21 @@ var Physics = {
 // src/renderable/builder.ts
 var RenderableBuilder = class {
   constructor() {
-    this.builderParts = /* @__PURE__ */ new Map();
+    this.parts = /* @__PURE__ */ new Map();
     this.materials = /* @__PURE__ */ new Map();
   }
   /**
-   * Create and add a 'part' each part should have a unique name, and material to apply to that part
-   * Vertex mesh data is then added to the part
+   * Create and add a 'part', each part should have a unique name, and material to apply to it
+   * Vertex mesh data is then added to the part, with addQuad and addTriangle
    * @param name Name of this part, just a string can be anything
    * @param material Material to attach and apply to all surfaces in this part
    */
   newPart(name, material) {
-    if (this.builderParts.has(name)) {
+    if (this.parts.has(name)) {
       throw new Error("Builder part name exists!");
     }
     const builderPart = new BuilderPart();
-    this.builderParts.set(name, builderPart);
+    this.parts.set(name, builderPart);
     this.materials.set(name, material);
     return builderPart;
   }
@@ -15328,12 +15330,14 @@ var RenderableBuilder = class {
    * Called after all parts are ready, to generate a CustomRenderable
    * @param gl A WebGL2RenderingContext
    */
-  buildAllParts(gl) {
+  build(gl) {
     const buffers = /* @__PURE__ */ new Map();
-    for (const [name, builderPart] of this.builderParts) {
-      buffers.set(name, builderPart.build(gl));
+    for (const [name, builderPart] of this.parts) {
+      const partBuffers = builderPart.build(gl);
+      if (!partBuffers)
+        continue;
+      buffers.set(name, partBuffers);
     }
-    console.log(buffers);
     return new CustomRenderable(buffers, this.materials);
   }
 };
@@ -15415,10 +15419,10 @@ var BuilderPart = class {
       bufferInfo = createBufferInfoFromArrays(gl, this._customArrayData);
     } else {
       if (this.vertexData.length === 0) {
-        throw new Error("No vertices added to renderable");
+        return null;
       }
       if (this.indexData.length === 0) {
-        throw new Error("No indices added to renderable");
+        return null;
       }
       bufferInfo = createBufferInfoFromArrays(gl, {
         position: this.vertexData,
