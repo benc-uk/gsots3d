@@ -42,7 +42,8 @@
     "watch-single": "tsc && npm run build-single && run-when-changed --watch 'src/**' --watch 'shaders/**' --exec 'npm run build-single'",
     "clean": "rm -rf dist docs dist-single",
     "docs": "typedoc --out docs --gitRevision main ./src/",
-    "examples": "vite --port 3000 --host 0.0.0.0 ./examples/"
+    "examples": "vite --port 3000 --host 0.0.0.0 ./examples/",
+    "prepare": "npm run build"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.2",
