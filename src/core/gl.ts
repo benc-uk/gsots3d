@@ -9,6 +9,9 @@ import log from 'loglevel'
 /** A map of uniforms that can be used when WebGL rendering, typically applied with twlg.setUniforms() */
 export type UniformSet = { [key: string]: number | number[] | mat4 | WebGLTexture | null }
 
+/** This type https://twgljs.org/docs/module-twgl.html#.TextureOptions without exposing twgl types directly */
+export type TextureOptions = { [key: string]: number | string | boolean | number[] }
+
 // Memoized global WebGL2 context
 let glContext: WebGL2RenderingContext | undefined
 

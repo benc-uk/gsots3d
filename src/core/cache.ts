@@ -5,7 +5,7 @@
 
 import log from 'loglevel'
 import { Model } from '../renderable/model.ts'
-import { ProgramInfo, createTexture } from 'twgl.js'
+import { ProgramInfo, TextureOptions, createTexture } from 'twgl.js'
 
 /** @ignore */
 export const PROG_DEFAULT = 'phong'
@@ -155,8 +155,16 @@ export class TextureCache {
    * @param src URL or filename path of texture image, or ArrayBufferView holding texture
    * @param filter Enable texture filtering and mipmaps (default true)
    * @param flipY Flip the texture vertically (default true)
+   * @param textureKey Unique key, only used for ArrayBuffer textures
+   * @param extraOptions Extra options to pass to twgl.createTexture, see https://twgljs.org/docs/module-twgl.html#.TextureOptions
    */
-  getCreate(src: string | ArrayBufferView, filter = true, flipY = false, textureKey = '') {
+  getCreate(
+    src: string | ArrayBufferView,
+    filter = true,
+    flipY = false,
+    textureKey = '',
+    extraOptions: TextureOptions = {},
+  ) {
     let key = ''
 
     if (typeof src === 'string') {
@@ -180,6 +188,7 @@ export class TextureCache {
     const texture = createTexture(
       this.gl,
       {
+        ...extraOptions,
         min: filter ? this.gl.LINEAR_MIPMAP_LINEAR : this.gl.NEAREST,
         mag: filter ? this.gl.LINEAR : this.gl.NEAREST,
         src,

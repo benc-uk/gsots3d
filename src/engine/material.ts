@@ -6,7 +6,7 @@
 import * as twgl from 'twgl.js'
 import { RGB } from './tuples.ts'
 import { MtlMaterial } from '../parsers/mtl-parser.ts'
-import { UniformSet } from '../core/gl.ts'
+import { UniformSet, TextureOptions } from '../core/gl.ts'
 import { TextureCache } from '../core/cache.ts'
 
 export class Material {
@@ -158,16 +158,22 @@ export class Material {
    * @param src URL or filename path of texture image, or ArrayBufferView holding texture
    * @param filter Enable texture filtering and mipmaps (default true)
    * @param flipY Flip the texture vertically (default false)
+   * @param extraOptions Extra options to pass to twgl.createTexture, see https://twgljs.org/docs/module-twgl.html#.TextureOptions
    */
-  static createBasicTexture(src: string | ArrayBufferView, filter = true, flipY = false) {
+  static createBasicTexture(
+    src: string | ArrayBufferView,
+    filter = true,
+    flipY = false,
+    extraOptions: TextureOptions = {},
+  ) {
     const m = new Material()
 
     if (typeof src === 'string') {
-      m.diffuseTex = TextureCache.instance.getCreate(src, filter, flipY)
+      m.diffuseTex = TextureCache.instance.getCreate(src, filter, flipY, '', extraOptions)
     } else {
       // Invent a unique key for this texture
       const key = `arraybuffer_${TextureCache.size}`
-      m.diffuseTex = TextureCache.instance.getCreate(src, filter, flipY, key)
+      m.diffuseTex = TextureCache.instance.getCreate(src, filter, flipY, key, extraOptions)
     }
 
     return m

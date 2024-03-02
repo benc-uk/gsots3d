@@ -6639,7 +6639,7 @@ var setAxes = function() {
 }();
 
 // package.json
-var version = "0.0.5-alpha.10";
+var version = "0.0.5-alpha.12";
 
 // node_modules/cannon-es/dist/cannon-es.js
 var Mat3 = class _Mat3 {
@@ -12401,8 +12401,10 @@ var _TextureCache = class _TextureCache {
    * @param src URL or filename path of texture image, or ArrayBufferView holding texture
    * @param filter Enable texture filtering and mipmaps (default true)
    * @param flipY Flip the texture vertically (default true)
+   * @param textureKey Unique key, only used for ArrayBuffer textures
+   * @param extraOptions Extra options to pass to twgl.createTexture, see https://twgljs.org/docs/module-twgl.html#.TextureOptions
    */
-  getCreate(src, filter = true, flipY = false, textureKey = "") {
+  getCreate(src, filter = true, flipY = false, textureKey = "", extraOptions = {}) {
     let key = "";
     if (typeof src === "string") {
       key = src;
@@ -12419,6 +12421,7 @@ var _TextureCache = class _TextureCache {
     const texture = createTexture(
       this.gl,
       {
+        ...extraOptions,
         min: filter ? this.gl.LINEAR_MIPMAP_LINEAR : this.gl.NEAREST,
         mag: filter ? this.gl.LINEAR : this.gl.NEAREST,
         src,
@@ -13577,14 +13580,15 @@ var Material2 = class _Material {
    * @param src URL or filename path of texture image, or ArrayBufferView holding texture
    * @param filter Enable texture filtering and mipmaps (default true)
    * @param flipY Flip the texture vertically (default false)
+   * @param extraOptions Extra options to pass to twgl.createTexture, see https://twgljs.org/docs/module-twgl.html#.TextureOptions
    */
-  static createBasicTexture(src, filter = true, flipY = false) {
+  static createBasicTexture(src, filter = true, flipY = false, extraOptions = {}) {
     const m = new _Material();
     if (typeof src === "string") {
-      m.diffuseTex = TextureCache.instance.getCreate(src, filter, flipY);
+      m.diffuseTex = TextureCache.instance.getCreate(src, filter, flipY, "", extraOptions);
     } else {
       const key = `arraybuffer_${TextureCache.size}`;
-      m.diffuseTex = TextureCache.instance.getCreate(src, filter, flipY, key);
+      m.diffuseTex = TextureCache.instance.getCreate(src, filter, flipY, key, extraOptions);
     }
     return m;
   }
