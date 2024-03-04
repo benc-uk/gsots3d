@@ -266,6 +266,9 @@ export class LightPoint {
   /** Is this light enabled? Default: true */
   public enabled: boolean
 
+  /** Metadata is a key/value store for any extra data you want to store on a node */
+  public metadata: Record<string, string | number | boolean>
+
   /**
    * Create a default point light, positioned at the world origin
    * @param position - Position of the light in world space
@@ -284,6 +287,8 @@ export class LightPoint {
     // No ambient contribution by default, this can get messy otherwise
     this.ambient = Colours.BLACK
     this.enabled = true
+
+    this.metadata = {}
   }
 
   /**

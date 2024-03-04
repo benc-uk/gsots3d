@@ -9,7 +9,7 @@ precision highp float;
 
 // ===== Constants ============================================================
 
-const int MAX_LIGHTS = 16;
+const int MAX_LIGHTS = 24;
 const int MAX_SHADOWS = 8;
 const float MAX_SHAD_A = 0.125;
 

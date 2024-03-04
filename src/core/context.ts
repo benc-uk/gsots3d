@@ -33,7 +33,7 @@ import fragShaderBill from '../../shaders/billboard/glsl.frag'
 import vertShaderBill from '../../shaders/billboard/glsl.vert'
 
 /** @ignore Total max dynamic lights */
-const MAX_LIGHTS = 16
+const MAX_LIGHTS = 24
 
 /**
  * The main rendering context. This is the effectively main entry point for the library.
