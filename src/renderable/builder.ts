@@ -1,34 +1,31 @@
 // ===== builder.ts =========================================================
-// Instance builder for creating custom renderable instances
+// Model builder for creating custom models and multi-part geometry
 // Ben Coleman, 2024
 // ============================================================================
 
 import * as twgl from 'twgl.js'
 import { vec3 } from 'gl-matrix'
 
-import { Renderable } from './types.ts'
-import { ProgramCache } from '../core/cache.ts'
-import { Stats } from '../core/stats.ts'
-import { UniformSet } from '../core/gl.ts'
 import { Material } from '../engine/material.ts'
 import { XYZ } from '../engine/tuples.ts'
-import { ModelPart } from './model.ts'
 
 // TODO: No support for smooth shading, with shared vertices and normals
 
 /**
- * A builder for creating multi-part custom renderable instances from triangle meshes
+ * A builder for creating multi-part models from triangle meshes
+ * Use in conjunction Model.parseFromBuilder
  *
  * Example usage:
  * ```typescript
- * const builder = new RenderableBuilder()
+ * const builder = new ModelBuilder()
  * const part = builder.newPart('foo' Material.RED)
  * builder.addTriangle([1, -1, 1], [1, 1, 1], [-1, 1, 1])
- * const renderable = builder.build(gl)
+ * Model.parseFromBuilder(builder, 'myModel')
+ * ```
  */
-export class RenderableBuilder {
+export class ModelBuilder {
   public readonly parts: Map<string, BuilderPart>
-  private materials: Map<string, Material>
+  public readonly materials: Map<string, Material>
 
   constructor() {
     this.parts = new Map<string, BuilderPart>()
@@ -53,22 +50,6 @@ export class RenderableBuilder {
 
     return builderPart
   }
-
-  /**
-   * Called after all parts are ready, to generate a CustomRenderable
-   * @param gl A WebGL2RenderingContext
-   */
-  build(gl: WebGL2RenderingContext): CustomRenderable {
-    const buffers = new Map<string, twgl.BufferInfo>()
-
-    for (const [name, builderPart] of this.parts) {
-      const partBuffers = builderPart.build(gl)
-      if (!partBuffers) continue
-      buffers.set(name, partBuffers)
-    }
-
-    return new CustomRenderable(buffers, this.materials)
-  }
 }
 
 /**
@@ -82,7 +63,11 @@ export class BuilderPart {
   private normalData: number[] = []
   private texcoordData: number[] = []
 
-  private triangleCount: number = 0
+  private _triCount: number = 0
+  public get triangleCount(): number {
+    return this._triCount
+  }
+
   private _customArrayData: twgl.Arrays | undefined
 
   private addVertex(x: number, y: number, z: number): number {
@@ -108,7 +93,7 @@ export class BuilderPart {
    * @param v3 Vertex three of the triangle
    */
   addTriangle(v1: XYZ, v2: XYZ, v3: XYZ, tc1 = [0, 0], tc2 = [0, 0], tc3 = [0, 0]) {
-    this.triangleCount++
+    this._triCount++
     this.addVertex(v1[0], v1[1], v1[2])
     this.addIndex()
     this.addVertex(v2[0], v2[1], v2[2])
@@ -181,64 +166,5 @@ export class BuilderPart {
     }
 
     return bufferInfo
-  }
-}
-
-/**
- * A custom renderable instance, created from a RenderableBuilder
- */
-export class CustomRenderable implements Renderable {
-  private programInfo: twgl.ProgramInfo = ProgramCache.instance.default
-  private _triangleCount: number = 0
-  private modelParts: ModelPart[]
-
-  // List of materials mapped by name
-  public readonly materials: Map<string, Material>
-
-  constructor(bufferInfos: Map<string, twgl.BufferInfo>, materials: Map<string, Material>) {
-    this.modelParts = new Array<ModelPart>()
-    this.materials = materials
-
-    for (const [name, bi] of bufferInfos) {
-      const p = new ModelPart(bi, name)
-      this.modelParts.push(p)
-    }
-  }
-
-  /**
-   * Render is used draw this custom renderable, this is called from the Instance that wraps
-   * this renderable.
-   */
-  render(
-    gl: WebGL2RenderingContext,
-    uniforms: UniformSet,
-    materialOverride?: Material,
-    programOverride?: twgl.ProgramInfo,
-  ) {
-    const programInfo = programOverride || this.programInfo
-    gl.useProgram(programInfo.program)
-
-    // Render all parts
-    for (const part of this.modelParts) {
-      const bufferInfo = part.bufferInfo
-
-      if (materialOverride === undefined) {
-        const material = this.materials.get(part.materialName)
-        if (!material) continue
-        material.apply(programInfo)
-      } else {
-        materialOverride.apply(programInfo)
-      }
-
-      twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo)
-      twgl.setUniforms(programInfo, uniforms)
-
-      twgl.drawBufferInfo(gl, bufferInfo)
-      Stats.drawCallsPerFrame++
-    }
-  }
-
-  get triangleCount(): number {
-    return this._triangleCount
   }
 }

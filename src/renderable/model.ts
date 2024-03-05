@@ -15,6 +15,7 @@ import { getGl, UniformSet } from '../core/gl.ts'
 import { Renderable } from './types.ts'
 import { Stats } from '../core/stats.ts'
 import { ProgramCache } from '../core/cache.ts'
+import { ModelBuilder } from './builder.ts'
 
 /**
  * Holds a 3D model, as a list of parts, each with a material
@@ -24,7 +25,7 @@ export class Model implements Renderable {
   private programInfo: twgl.ProgramInfo
   private readonly parts = [] as ModelPart[]
   private readonly materials = {} as Record<string, Material>
-  private triangles: number
+  private triCount: number
   private _boundingBox: number[]
 
   /** Name of the model, usually the filename without the extension */
@@ -35,7 +36,7 @@ export class Model implements Renderable {
    */
   private constructor(name: string) {
     this.name = name
-    this.triangles = 0
+    this.triCount = 0
     this.programInfo = ProgramCache.instance.default
     this._boundingBox = [
       Number.MAX_VALUE,
@@ -88,7 +89,7 @@ export class Model implements Renderable {
 
   /** Simple getter for the number of triangles in the model */
   get triangleCount(): number {
-    return this.triangles
+    return this.triCount
   }
 
   /**
@@ -174,7 +175,39 @@ export class Model implements Renderable {
       } materials in ${((performance.now() - startTime) / 1000).toFixed(2)}s`,
     )
 
-    model.triangles = objData.triangles
+    model.triCount = objData.triangles
+    return model
+  }
+
+  /**
+   * Parse a custom model from a ModelBuilder, this is used to build models in code
+   * @param {ModelBuilder} builder - The ModelBuilder to parse
+   * @param {string} name - The name of the model
+   */
+  static parseFromBuilder(builder: ModelBuilder, name: string) {
+    const model = new Model(name)
+
+    const gl = getGl()
+    if (!gl) {
+      throw new Error('💥 Unable to get WebGL context')
+    }
+
+    // Fall back default material
+    model.materials.__default = new Material()
+    model.materials.__default.diffuse = [0.1, 0.6, 0.9]
+
+    for (const [partName, builderPart] of builder.parts) {
+      // Build the buffers for this part
+      const partBuffers = builderPart.build(gl)
+      if (!partBuffers) continue
+
+      model.triCount += builderPart.triangleCount
+      model.parts.push(new ModelPart(partBuffers, partName))
+      model.materials[partName] = builder.materials.get(partName) ?? model.materials.__default
+    }
+
+    log.debug(`♟️ Model '${name}' built with ${model.parts.length} parts & ${model.triCount} triangles`)
+
     return model
   }
 

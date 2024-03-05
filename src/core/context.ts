@@ -24,7 +24,7 @@ import { Model } from '../renderable/model.ts'
 import { HUD } from './hud.ts'
 import { Stats } from './stats.ts'
 import { PostEffects } from '../engine/post-effects.ts'
-import { RenderableBuilder } from '../renderable/builder.ts'
+import { ModelBuilder } from '../renderable/builder.ts'
 
 // Import shaders, tsup will inline these as text strings
 import fragShaderPhong from '../../shaders/phong/glsl.frag'
@@ -798,19 +798,15 @@ export class Context {
   }
 
   /**
-   * Build a instance of a custom renderable from a builder and add it to the scene
-   * @param builder Builder with
+   * Create and build a custom model from a ModelBuilder and cache it for use
+   * @param builder Builder with geometry and materials added
+   * @param name Name of the model
    */
-  createCustomInstance(builder: RenderableBuilder) {
-    const renderable = builder.build(this.gl)
-    const instance = new Instance(renderable)
+  buildCustomModel(builder: ModelBuilder, name: string) {
+    const model = Model.parseFromBuilder(builder, name)
 
-    this.instances.set(instance.id, instance)
-    Stats.triangles += renderable.triangleCount
-    Stats.instances++
+    log.info(`🔨 Custom model built and added to cache`)
 
-    log.debug(`🗿 Created a custom renderable instance`)
-
-    return instance
+    ModelCache.instance.add(model)
   }
 }
