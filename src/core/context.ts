@@ -805,7 +805,7 @@ export class Context {
   buildCustomModel(builder: ModelBuilder, name: string) {
     const model = Model.parseFromBuilder(builder, name)
 
-    log.info(`🔨 Custom model built and added to cache`)
+    log.debug(`🔨 Custom model built and added to cache`)
 
     ModelCache.instance.add(model)
   }
