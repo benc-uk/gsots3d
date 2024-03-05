@@ -28,6 +28,9 @@ export class Instance extends Node {
    *  This is only useful on simple models that probably consist of one surface */
   public material?: Material
 
+  /** Override just some material properties, warning advanced feature! */
+  public uniformOverrides?: UniformSet
+
   /**
    * Create a new instace of a renderable thing
    * @param {Renderable} renderable - Renderable to use for this instance
@@ -83,6 +86,7 @@ export class Instance extends Node {
     uniforms.u_flipTextureX = this.flipTextureX
     uniforms.u_flipTextureY = this.flipTextureY
     uniforms.u_receiveShadow = this.receiveShadow
+    if (this.uniformOverrides) uniforms = { ...uniforms, ...this.uniformOverrides }
 
     // Render the renderable thing wrapped by this instance
     this.renderable.render(gl, uniforms, this.material, programOverride)

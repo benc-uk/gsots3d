@@ -58,6 +58,7 @@ export class Camera {
   private fpHandlersAdded: boolean
   private fpTurnSpeed: number
   private fpMoveSpeed: number
+  private fpFly: boolean
 
   // Used to clamp first person up/down angle
   private maxAngleUp: number = Math.PI / 2 - 0.01
@@ -91,6 +92,7 @@ export class Camera {
     this.fpTurnSpeed = 0.001
     this.fpMoveSpeed = 1.0
     this.fpHandlersAdded = false
+    this.fpFly = false
 
     this.keysDown = new Set()
   }
@@ -210,12 +212,13 @@ export class Camera {
    * @param turnSpeed Speed of looking in radians, default 0.001
    * @param moveSpeed Speed of moving in units, default 1.0
    */
-  enableFPControls(angleY = 0, angleX = 0, turnSpeed = 0.001, moveSpeed = 1.0) {
+  enableFPControls(angleY = 0, angleX = 0, turnSpeed = 0.001, moveSpeed = 1.0, fly = false) {
     this.fpMode = true
     this.fpAngleY = angleY
     this.fpAngleX = angleX
     this.fpTurnSpeed = turnSpeed
     this.fpMoveSpeed = moveSpeed
+    this.fpFly = fly
 
     if (this.fpHandlersAdded) return // Prevent multiple event listeners being added
 
@@ -341,6 +344,7 @@ export class Camera {
 
     // Use fpAngleY to calculate the direction we are facing
     const dZ = -Math.cos(this.fpAngleY) * this.fpMoveSpeed
+    const dY = Math.sin(this.fpAngleX) * this.fpMoveSpeed
     const dX = -Math.sin(this.fpAngleY) * this.fpMoveSpeed
 
     // Use keysDown to move the camera
@@ -349,6 +353,7 @@ export class Camera {
         case 'ArrowUp':
         case 'w':
           this.position[0] += dX
+          if (this.fpFly) this.position[1] += dY
           this.position[2] += dZ
           this.lookAt[0] += dX
           this.lookAt[2] += dZ
@@ -357,6 +362,7 @@ export class Camera {
         case 'ArrowDown':
         case 's':
           this.position[0] -= dX
+          if (this.fpFly) this.position[1] -= dY
           this.position[2] -= dZ
           this.lookAt[0] -= dX
           this.lookAt[2] -= dZ

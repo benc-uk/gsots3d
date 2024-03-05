@@ -320,6 +320,9 @@ export class Context {
     if (this.lights.length > MAX_LIGHTS) {
       // Sort lights by distance to camera so we can use the closest ones
       this.lights.sort((lightA, lightB) => {
+        // Handle lights that are disabled
+        if (!lightA.enabled) return 1
+        if (!lightB.enabled) return -1
         const ad = vec3.distance(lightA.position, this.camera.position)
         const bd = vec3.distance(lightB.position, this.camera.position)
         return ad - bd
