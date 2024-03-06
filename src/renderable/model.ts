@@ -201,6 +201,15 @@ export class Model implements Renderable {
       const partBuffers = builderPart.build(gl)
       if (!partBuffers) continue
 
+      // Update bounding box
+      const bb = builderPart.boundingBox
+      if (bb[0] < model._boundingBox[0]) model._boundingBox[0] = bb[0]
+      if (bb[1] < model._boundingBox[1]) model._boundingBox[1] = bb[1]
+      if (bb[2] < model._boundingBox[2]) model._boundingBox[2] = bb[2]
+      if (bb[3] > model._boundingBox[3]) model._boundingBox[3] = bb[3]
+      if (bb[4] > model._boundingBox[4]) model._boundingBox[4] = bb[4]
+      if (bb[5] > model._boundingBox[5]) model._boundingBox[5] = bb[5]
+
       model.triCount += builderPart.triangleCount
       model.parts.push(new ModelPart(partBuffers, partName))
       model.materials[partName] = builder.materials.get(partName) ?? model.materials.__default

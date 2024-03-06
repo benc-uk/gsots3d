@@ -62,13 +62,30 @@ export class BuilderPart {
   private indexCount: number = 0
   private normalData: number[] = []
   private texcoordData: number[] = []
+  private _boundingBox: number[]
+
+  public get boundingBox(): number[] {
+    return this._boundingBox
+  }
 
   private _triCount: number = 0
+
   public get triangleCount(): number {
     return this._triCount
   }
 
   private _customArrayData: twgl.Arrays | undefined
+
+  constructor() {
+    this._boundingBox = [
+      Number.MAX_VALUE,
+      Number.MAX_VALUE,
+      Number.MAX_VALUE,
+      Number.MIN_VALUE,
+      Number.MIN_VALUE,
+      Number.MIN_VALUE,
+    ]
+  }
 
   private addVertex(x: number, y: number, z: number): number {
     this.vertexData.push(x, y, z)
@@ -112,6 +129,16 @@ export class BuilderPart {
     this.addNormal([n[0], n[1], n[2]])
 
     this.texcoordData.push(...tc1, ...tc2, ...tc3)
+
+    // Update bounding box
+    for (const v of [v1, v2, v3]) {
+      if (v[0] < this._boundingBox[0]) this._boundingBox[0] = v[0]
+      if (v[1] < this._boundingBox[1]) this._boundingBox[1] = v[1]
+      if (v[2] < this._boundingBox[2]) this._boundingBox[2] = v[2]
+      if (v[0] > this._boundingBox[3]) this._boundingBox[3] = v[0]
+      if (v[1] > this._boundingBox[4]) this._boundingBox[4] = v[1]
+      if (v[2] > this._boundingBox[5]) this._boundingBox[5] = v[2]
+    }
   }
 
   /*
