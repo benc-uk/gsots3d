@@ -140,6 +140,16 @@ export class Camera {
   }
 
   /**
+   * Get the center of the camera view frustum
+   * @param scale how much to scale the frustum towards the far plane, default: 1
+   * @returns Point in world space
+   */
+  getFrustumCenter(scaleFar = 1) {
+    const f = this.frustumCornersWorld(scaleFar)
+    return [f.center[0], f.center[1], f.center[2]] as XYZ
+  }
+
+  /**
    * Get the corners of the view frustum for this camera in world space
    * @param scaleFar Scale the far plane to bring the frustum closer, default: 1
    */
