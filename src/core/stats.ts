@@ -5,6 +5,7 @@
 
 export const Stats = {
   drawCallsPerFrame: 0,
+  _drawCallsPerFramePrev: 0,
   instances: 0,
   triangles: 0,
 
@@ -15,6 +16,7 @@ export const Stats = {
   fpsBucket: [] as number[],
 
   resetPerFrame() {
+    Stats._drawCallsPerFramePrev = Stats.drawCallsPerFrame
     Stats.drawCallsPerFrame = 0
   },
 
@@ -36,5 +38,9 @@ export const Stats = {
 
   get totalTimeRound() {
     return Math.round(Stats.totalTime)
+  },
+
+  get drawCalls() {
+    return Stats._drawCallsPerFramePrev
   },
 }

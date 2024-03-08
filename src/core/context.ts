@@ -724,6 +724,7 @@ export class Context {
     this.instances.clear()
     this.instancesTrans.clear()
     this.instancesParticles.clear()
+    Stats.triangles = 0
   }
 
   /**
