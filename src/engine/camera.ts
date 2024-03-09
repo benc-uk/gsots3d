@@ -57,7 +57,7 @@ export class Camera {
   private fpMode: boolean
   private fpHandlersAdded: boolean
   private fpTurnSpeed: number
-  private fpMoveSpeed: number
+  public fpMoveSpeed: number
   private fpFly: boolean
 
   // Used to clamp first person up/down angle
