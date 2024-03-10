@@ -52,8 +52,12 @@ export class ModelBuilder {
   }
 }
 
+type extraAttributes = {
+  [key: string]: { numComponents: number; data: number[] }
+}
+
 /**
- * Class to manage parts or sections
+ * Class to manage parts or sections to be built into a model
  */
 export class BuilderPart {
   private vertexData: number[] = []
@@ -63,6 +67,12 @@ export class BuilderPart {
   private normalData: number[] = []
   private texcoordData: number[] = []
   private _boundingBox: number[]
+
+  /**
+   * This is an *extremely* advanced feature, and allows you to add custom attributes to the part
+   * You will need to understand how to use twgl.js to use this feature at the createBufferInfoFromArrays function
+   */
+  public extraAttributes?: extraAttributes
 
   public get boundingBox(): number[] {
     return this._boundingBox
@@ -108,6 +118,9 @@ export class BuilderPart {
    * @param v1 Vertex one of the triangle
    * @param v2 Vertex two of the triangle
    * @param v3 Vertex three of the triangle
+   * @param tc1 Texture coordinate for vertex 1
+   * @param tc2 Texture coordinate for vertex 2
+   * @param tc3 Texture coordinate for vertex 3
    */
   addTriangle(v1: XYZ, v2: XYZ, v3: XYZ, tc1 = [0, 0], tc2 = [0, 0], tc3 = [0, 0]) {
     this._triCount++
@@ -145,10 +158,10 @@ export class BuilderPart {
    * Add a two triangle quad to the renderable part
    * Each quad must be defined by 4 vertices and will get a normal calculated
    * Each quad will get a unique normal, so no smooth shading
-   * @param v1 Vertex one of the quad
-   * @param v2 Vertex two of the quad
-   * @param v3 Vertex three of the quad
-   * @param v4 Vertex four of the quad
+   * @param v1 Vertex 1 of the quad
+   * @param v2 Vertex 2 of the quad
+   * @param v3 Vertex 3 of the quad
+   * @param v4 Vertex 4 of the quad
    */
   addQuad(v1: XYZ, v2: XYZ, v3: XYZ, v4: XYZ, tc1 = [0, 0], tc2 = [0, 0], tc3 = [0, 0], tc4 = [0, 0]) {
     // Anti-clockwise winding order
@@ -166,7 +179,7 @@ export class BuilderPart {
   }
 
   /**
-   * Build the renderable from the data added
+   * Build the part from the data added and turn into a twgl.BufferInfo
    * @param gl A WebGL2 rendering context
    * @returns BufferInfo used by twgl
    */
@@ -189,6 +202,7 @@ export class BuilderPart {
         indices: this.indexData,
         normal: this.normalData,
         texcoord: this.texcoordData,
+        ...this.extraAttributes,
       })
     }
 

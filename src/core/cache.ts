@@ -5,7 +5,9 @@
 
 import log from 'loglevel'
 import { Model } from '../renderable/model.ts'
-import { ProgramInfo, TextureOptions, createTexture } from 'twgl.js'
+import { ProgramInfo, TextureOptions, createTexture, createProgramInfo } from 'twgl.js'
+import { getGl } from './gl.ts'
+import { fetchShaders } from './files.ts'
 
 /** @ignore */
 export const PROG_DEFAULT = 'phong'
@@ -271,6 +273,30 @@ export class ProgramCache {
     ProgramCache._instance = new ProgramCache()
     ProgramCache._instance._default = defaultProg
     ProgramCache.initialized = true
+  }
+
+  /**
+   * Compile a custom shader and add it to the cache
+   * @param name Assign a name to the shader
+   * @param vert URL path to vertex shader
+   * @param frag URL path to fragment shader
+   */
+  async compileShader(name: string, vert: string, frag: string) {
+    const gl = getGl()
+    if (!gl) {
+      throw new Error('💥 WebGL context not found')
+    }
+
+    const { vertex: vsText, fragment: fsText } = await fetchShaders(vert, frag)
+    const progInfo = createProgramInfo(gl, [vsText, fsText])
+
+    console.log('🧰 Adding custom shader to cache', name, progInfo)
+
+    this.add(name, progInfo)
+  }
+
+  setDefaultProgram(name: string) {
+    this._default = this.cache.get(name) || this._default
   }
 
   /**

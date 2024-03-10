@@ -10,6 +10,7 @@ import { Material } from '../engine/material.ts'
 import { XYZ } from '../engine/tuples.ts'
 import { ProgramInfo } from 'twgl.js'
 import { Node } from '../engine/node.ts'
+import { ProgramCache } from '../index.ts'
 
 /**
  * An instance of thing in the world to be rendered, with position, rotation, scale etc
@@ -30,6 +31,10 @@ export class Instance extends Node {
 
   /** Override just some material properties, warning advanced feature! */
   public uniformOverrides?: UniformSet
+
+  /** Advanced feature, set this to plugin a custom shader program
+   * Use ProgramCache.compileShader to create a named program */
+  public customProgramName?: string
 
   /**
    * Create a new instace of a renderable thing
@@ -63,8 +68,12 @@ export class Instance extends Node {
 
     // HACK: As programOverride is CURRENTLY only used for shadow map rendering
     // We need a better way to to know if we are rendering a shadow map!!
-    if (programOverride && !this.castShadow) {
+    if (!this.customProgramName && programOverride && !this.castShadow) {
       return
+    }
+
+    if (this.customProgramName) {
+      programOverride = ProgramCache.instance.get(this.customProgramName)
     }
 
     const world = this.modelMatrix
