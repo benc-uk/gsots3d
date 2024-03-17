@@ -4,7 +4,6 @@
 // ============================================================================
 
 import * as twgl from 'twgl.js'
-import log from 'loglevel'
 
 import updateFS from '../../shaders/particles/update.frag'
 import updateVS from '../../shaders/particles/update.vert'
@@ -182,8 +181,6 @@ export class ParticleSystem implements Renderable {
 
     // Create texture for particle
     this.texture = TextureCache.defaultWhite
-
-    log.info('✨ Created particle system with', maxParticles, 'particles')
   }
 
   /**

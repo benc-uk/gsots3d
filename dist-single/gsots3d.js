@@ -6639,7 +6639,7 @@ var setAxes = function() {
 }();
 
 // package.json
-var version = "0.0.5-alpha.12";
+var version = "0.0.5-alpha.14";
 
 // node_modules/cannon-es/dist/cannon-es.js
 var Mat3 = class _Mat3 {
@@ -12295,6 +12295,28 @@ var Tuples = {
 
 // src/core/cache.ts
 var import_loglevel2 = __toESM(require_loglevel(), 1);
+
+// src/core/files.ts
+async function fetchFile(filePath) {
+  const resp = await fetch(filePath);
+  if (!resp.ok) {
+    throw new Error(`\u{1F4A5} File fetch failed: ${resp.statusText}`);
+  }
+  const text = await resp.text();
+  return text;
+}
+async function fetchShaders(vertPath, fragPath) {
+  const vsResp = await fetch(vertPath);
+  const fsResp = await fetch(fragPath);
+  if (!vsResp.ok || !fsResp.ok) {
+    throw new Error(`\u{1F4A5} Fetch failed - vertex: ${vsResp.statusText}, fragment: ${fsResp.statusText}`);
+  }
+  const vsText = await vsResp.text();
+  const fsText = await fsResp.text();
+  return { vertex: vsText, fragment: fsText };
+}
+
+// src/core/cache.ts
 var PROG_DEFAULT = "phong";
 var PROG_BILLBOARD = "billboard";
 var ModelCache = class _ModelCache {
@@ -12486,6 +12508,25 @@ var _ProgramCache = class _ProgramCache {
     _ProgramCache.initialized = true;
   }
   /**
+   * Compile a custom shader and add it to the cache
+   * @param name Assign a name to the shader
+   * @param vert URL path to vertex shader
+   * @param frag URL path to fragment shader
+   */
+  async compileShader(name, vert, frag) {
+    const gl = getGl();
+    if (!gl) {
+      throw new Error("\u{1F4A5} WebGL context not found");
+    }
+    const { vertex: vsText, fragment: fsText } = await fetchShaders(vert, frag);
+    const progInfo = createProgramInfo(gl, [vsText, fsText]);
+    console.log("\u{1F9F0} Adding custom shader to cache", name, progInfo);
+    this.add(name, progInfo);
+  }
+  setDefaultProgram(name) {
+    this._default = this.cache.get(name) || this._default;
+  }
+  /**
    * Return the singleton instance of the program cache
    */
   static get instance() {
@@ -12554,6 +12595,7 @@ var Camera = class {
     this.fpTurnSpeed = 1e-3;
     this.fpMoveSpeed = 1;
     this.fpHandlersAdded = false;
+    this.fpFly = false;
     this.keysDown = /* @__PURE__ */ new Set();
   }
   /**
@@ -12590,6 +12632,15 @@ var Camera = class {
       const camProj = mat4_exports.perspective(mat4_exports.create(), this.fov * (Math.PI / 180), this.aspectRatio, this.near, this.far);
       return camProj;
     }
+  }
+  /**
+   * Get the center of the camera view frustum
+   * @param scale how much to scale the frustum towards the far plane, default: 1
+   * @returns Point in world space
+   */
+  getFrustumCenter(scaleFar = 1) {
+    const f = this.frustumCornersWorld(scaleFar);
+    return [f.center[0], f.center[1], f.center[2]];
   }
   /**
    * Get the corners of the view frustum for this camera in world space
@@ -12654,12 +12705,13 @@ var Camera = class {
    * @param turnSpeed Speed of looking in radians, default 0.001
    * @param moveSpeed Speed of moving in units, default 1.0
    */
-  enableFPControls(angleY = 0, angleX = 0, turnSpeed = 1e-3, moveSpeed = 1) {
+  enableFPControls(angleY = 0, angleX = 0, turnSpeed = 1e-3, moveSpeed = 1, fly = false) {
     this.fpMode = true;
     this.fpAngleY = angleY;
     this.fpAngleX = angleX;
     this.fpTurnSpeed = turnSpeed;
     this.fpMoveSpeed = moveSpeed;
+    this.fpFly = fly;
     if (this.fpHandlersAdded)
       return;
     const gl = getGl();
@@ -12762,12 +12814,15 @@ var Camera = class {
     if (this.keysDown.size === 0)
       return;
     const dZ = -Math.cos(this.fpAngleY) * this.fpMoveSpeed;
+    const dY = Math.sin(this.fpAngleX) * this.fpMoveSpeed;
     const dX = -Math.sin(this.fpAngleY) * this.fpMoveSpeed;
     for (const key of this.keysDown.values()) {
       switch (key) {
         case "ArrowUp":
         case "w":
           this.position[0] += dX;
+          if (this.fpFly)
+            this.position[1] += dY;
           this.position[2] += dZ;
           this.lookAt[0] += dX;
           this.lookAt[2] += dZ;
@@ -12775,6 +12830,8 @@ var Camera = class {
         case "ArrowDown":
         case "s":
           this.position[0] -= dX;
+          if (this.fpFly)
+            this.position[1] -= dY;
           this.position[2] -= dZ;
           this.lookAt[0] -= dX;
           this.lookAt[2] -= dZ;
@@ -13019,6 +13076,7 @@ var glsl_default4 = "#version 300 es\n\n// =====================================
 // src/core/stats.ts
 var Stats = {
   drawCallsPerFrame: 0,
+  _drawCallsPerFramePrev: 0,
   instances: 0,
   triangles: 0,
   prevTime: 0,
@@ -13027,6 +13085,7 @@ var Stats = {
   frameCount: 0,
   fpsBucket: [],
   resetPerFrame() {
+    Stats._drawCallsPerFramePrev = Stats.drawCallsPerFrame;
     Stats.drawCallsPerFrame = 0;
   },
   updateTime(now) {
@@ -13044,6 +13103,9 @@ var Stats = {
   },
   get totalTimeRound() {
     return Math.round(Stats.totalTime);
+  },
+  get drawCalls() {
+    return Stats._drawCallsPerFramePrev;
   }
 };
 
@@ -13418,7 +13480,7 @@ function uniqueId() {
 // src/renderable/instance.ts
 var Instance = class extends Node {
   /**
-   * Create a new instace of a renderable thing
+   * Create a new instance of a renderable thing
    * @param {Renderable} renderable - Renderable to use for this instance
    */
   constructor(renderable) {
@@ -13450,8 +13512,11 @@ var Instance = class extends Node {
       return;
     if (!gl)
       return;
-    if (programOverride && !this.castShadow) {
+    if (!this.customProgramName && programOverride && !this.castShadow) {
       return;
+    }
+    if (this.customProgramName) {
+      programOverride = ProgramCache.instance.get(this.customProgramName);
     }
     const world = this.modelMatrix;
     uniforms.u_world = world;
@@ -13462,6 +13527,8 @@ var Instance = class extends Node {
     uniforms.u_flipTextureX = this.flipTextureX;
     uniforms.u_flipTextureY = this.flipTextureY;
     uniforms.u_receiveShadow = this.receiveShadow;
+    if (this.uniformOverrides)
+      uniforms = { ...uniforms, ...this.uniformOverrides };
     this.renderable.render(gl, uniforms, this.material, programOverride);
   }
 };
@@ -14199,16 +14266,6 @@ function parseOBJ(objFile, flipUV) {
   };
 }
 
-// src/core/files.ts
-async function fetchFile(filePath) {
-  const resp = await fetch(filePath);
-  if (!resp.ok) {
-    throw new Error(`\u{1F4A5} File fetch failed: ${resp.statusText}`);
-  }
-  const text = await resp.text();
-  return text;
-}
-
 // src/renderable/model.ts
 var Model = class _Model {
   /**
@@ -14341,6 +14398,19 @@ var Model = class _Model {
       const partBuffers = builderPart.build(gl);
       if (!partBuffers)
         continue;
+      const bb = builderPart.boundingBox;
+      if (bb[0] < model._boundingBox[0])
+        model._boundingBox[0] = bb[0];
+      if (bb[1] < model._boundingBox[1])
+        model._boundingBox[1] = bb[1];
+      if (bb[2] < model._boundingBox[2])
+        model._boundingBox[2] = bb[2];
+      if (bb[3] > model._boundingBox[3])
+        model._boundingBox[3] = bb[3];
+      if (bb[4] > model._boundingBox[4])
+        model._boundingBox[4] = bb[4];
+      if (bb[5] > model._boundingBox[5])
+        model._boundingBox[5] = bb[5];
       model.triCount += builderPart.triangleCount;
       model.parts.push(new ModelPart(partBuffers, partName));
       model.materials[partName] = builder.materials.get(partName) ?? model.materials.__default;
@@ -14865,6 +14935,10 @@ var Context = class _Context {
     uniforms.u_lightDirGlobal = this.globalLight.uniforms;
     if (this.lights.length > MAX_LIGHTS) {
       this.lights.sort((lightA, lightB) => {
+        if (!lightA.enabled)
+          return 1;
+        if (!lightB.enabled)
+          return -1;
         const ad = vec3_exports.distance(lightA.position, this.camera.position);
         const bd = vec3_exports.distance(lightB.position, this.camera.position);
         return ad - bd;
@@ -15177,6 +15251,7 @@ var Context = class _Context {
     this.instances.clear();
     this.instancesTrans.clear();
     this.instancesParticles.clear();
+    Stats.triangles = 0;
   }
   /**
    * Use a custom shader for post effects, user must provide their own shader
@@ -15247,7 +15322,7 @@ var Context = class _Context {
    */
   buildCustomModel(builder, name) {
     const model = Model.parseFromBuilder(builder, name);
-    import_loglevel8.default.info(`\u{1F528} Custom model built and added to cache`);
+    import_loglevel8.default.debug(`\u{1F528} Custom model built and added to cache`);
     ModelCache.instance.add(model);
   }
 };
@@ -15366,6 +15441,17 @@ var BuilderPart = class {
     this.normalData = [];
     this.texcoordData = [];
     this._triCount = 0;
+    this._boundingBox = [
+      Number.MAX_VALUE,
+      Number.MAX_VALUE,
+      Number.MAX_VALUE,
+      Number.MIN_VALUE,
+      Number.MIN_VALUE,
+      Number.MIN_VALUE
+    ];
+  }
+  get boundingBox() {
+    return this._boundingBox;
   }
   get triangleCount() {
     return this._triCount;
@@ -15388,6 +15474,9 @@ var BuilderPart = class {
    * @param v1 Vertex one of the triangle
    * @param v2 Vertex two of the triangle
    * @param v3 Vertex three of the triangle
+   * @param tc1 Texture coordinate for vertex 1
+   * @param tc2 Texture coordinate for vertex 2
+   * @param tc3 Texture coordinate for vertex 3
    */
   addTriangle(v12, v22, v3, tc1 = [0, 0], tc2 = [0, 0], tc3 = [0, 0]) {
     this._triCount++;
@@ -15405,15 +15494,29 @@ var BuilderPart = class {
     this.addNormal([n[0], n[1], n[2]]);
     this.addNormal([n[0], n[1], n[2]]);
     this.texcoordData.push(...tc1, ...tc2, ...tc3);
+    for (const v4 of [v12, v22, v3]) {
+      if (v4[0] < this._boundingBox[0])
+        this._boundingBox[0] = v4[0];
+      if (v4[1] < this._boundingBox[1])
+        this._boundingBox[1] = v4[1];
+      if (v4[2] < this._boundingBox[2])
+        this._boundingBox[2] = v4[2];
+      if (v4[0] > this._boundingBox[3])
+        this._boundingBox[3] = v4[0];
+      if (v4[1] > this._boundingBox[4])
+        this._boundingBox[4] = v4[1];
+      if (v4[2] > this._boundingBox[5])
+        this._boundingBox[5] = v4[2];
+    }
   }
   /*
    * Add a two triangle quad to the renderable part
    * Each quad must be defined by 4 vertices and will get a normal calculated
    * Each quad will get a unique normal, so no smooth shading
-   * @param v1 Vertex one of the quad
-   * @param v2 Vertex two of the quad
-   * @param v3 Vertex three of the quad
-   * @param v4 Vertex four of the quad
+   * @param v1 Vertex 1 of the quad
+   * @param v2 Vertex 2 of the quad
+   * @param v3 Vertex 3 of the quad
+   * @param v4 Vertex 4 of the quad
    */
   addQuad(v12, v22, v3, v4, tc1 = [0, 0], tc2 = [0, 0], tc3 = [0, 0], tc4 = [0, 0]) {
     this.addTriangle(v12, v22, v3, tc1, tc2, tc3);
@@ -15428,7 +15531,7 @@ var BuilderPart = class {
     this._customArrayData = array;
   }
   /**
-   * Build the renderable from the data added
+   * Build the part from the data added and turn into a twgl.BufferInfo
    * @param gl A WebGL2 rendering context
    * @returns BufferInfo used by twgl
    */
@@ -15447,7 +15550,8 @@ var BuilderPart = class {
         position: this.vertexData,
         indices: this.indexData,
         normal: this.normalData,
-        texcoord: this.texcoordData
+        texcoord: this.texcoordData,
+        ...this.extraAttributes
       });
     }
     return bufferInfo;
@@ -15491,7 +15595,7 @@ export {
 /*! Bundled license information:
 
 twgl.js/dist/5.x/twgl-full.module.js:
-  (* @license twgl.js 5.5.3 Copyright (c) 2015, Gregg Tavares All Rights Reserved.
+  (* @license twgl.js 5.5.4 Copyright (c) 2015, Gregg Tavares All Rights Reserved.
   Available via the MIT license.
   see: http://github.com/greggman/twgl.js for details *)
 */

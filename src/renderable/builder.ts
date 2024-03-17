@@ -57,7 +57,7 @@ type extraAttributes = {
 }
 
 /**
- * Class to manage parts or sections to be built into a model
+ * Manage parts or sections to be built into a model, must have at least one part
  */
 export class BuilderPart {
   private vertexData: number[] = []
@@ -136,7 +136,6 @@ export class BuilderPart {
     const v = vec3.subtract(vec3.create(), v3, v1)
     const n = vec3.cross(vec3.create(), u, v)
     vec3.normalize(n, n)
-
     this.addNormal([n[0], n[1], n[2]])
     this.addNormal([n[0], n[1], n[2]])
     this.addNormal([n[0], n[1], n[2]])

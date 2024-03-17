@@ -29,15 +29,17 @@ export class Instance extends Node {
    *  This is only useful on simple models that probably consist of one surface */
   public material?: Material
 
-  /** Override just some material properties, warning advanced feature! */
+  /** Inject additional uniforms to the shader for this instance.
+   * Prefix with `u_mat.` e.g. `u_mat.diffuse` to change material properties for a single instance.
+   * Warning an advanced feature! */
   public uniformOverrides?: UniformSet
 
-  /** Advanced feature, set this to plugin a custom shader program
+  /** Very advanced feature, set this to plugin a custom shader program
    * Use ProgramCache.compileShader to create a named program */
   public customProgramName?: string
 
   /**
-   * Create a new instace of a renderable thing
+   * Create a new instance of a renderable thing
    * @param {Renderable} renderable - Renderable to use for this instance
    */
   constructor(renderable: Renderable) {

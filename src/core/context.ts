@@ -74,7 +74,7 @@ export class Context {
   public update: (delta: number, now?: number) => void = () => {}
 
   /** A HUD you can use to render HTML elements over the canvas */
-  public readonly hud: HUD
+  public readonly hud?: HUD
 
   /** Gamma correction value, default 1.0 */
   public gamma: number
@@ -109,7 +109,7 @@ export class Context {
   }
 
   /** Constructor is private, use init() to create a new context */
-  private constructor(gl: WebGL2RenderingContext) {
+  private constructor(gl: WebGL2RenderingContext, noHud = false) {
     this.gl = gl
     this.started = false
     this.debug = false
@@ -131,7 +131,7 @@ export class Context {
     this._camera = defaultCamera
     this.activeCameraName = 'default'
 
-    this.hud = new HUD(<HTMLCanvasElement>gl.canvas)
+    if (!noHud) this.hud = new HUD(<HTMLCanvasElement>gl.canvas)
 
     this.setLogLevel('info')
 
@@ -143,7 +143,7 @@ export class Context {
    * @param canvasSelector CSS selector for canvas element, default is 'canvas'
    * @param antiAlias Enable anti-aliasing in the renderer, default is true
    */
-  static async init(canvasSelector = 'canvas', antiAlias = true) {
+  static async init(canvasSelector = 'canvas', antiAlias = true, noHud = false) {
     const gl = getGl(canvasSelector, antiAlias)
 
     if (!gl) {
@@ -152,7 +152,7 @@ export class Context {
     }
 
     // Create the context around the WebGL2 context
-    const ctx = new Context(gl)
+    const ctx = new Context(gl, noHud)
 
     const canvas = <HTMLCanvasElement>gl.canvas
     ctx.camera.aspectRatio = canvas.clientWidth / canvas.clientHeight
@@ -240,7 +240,7 @@ export class Context {
 
     // **** FINAL POST RENDER STEPS ****
 
-    this.hud.render(this.debug, this.camera)
+    this.hud?.render(this.debug, this.camera)
 
     // Call the external update function
     this.update(Stats.deltaTime, now)
@@ -395,9 +395,11 @@ export class Context {
    * Start the rendering loop, without calling this nothing will render
    */
   start() {
+    if (this.started) return
+
     log.info('🚀 Starting main GSOTS render loop!')
 
-    this.hud.hideLoading()
+    this.hud?.hideLoading()
     this.started = true
     // Restart the render loop
     requestAnimationFrame(this.render)
@@ -670,7 +672,7 @@ export class Context {
     this.instancesParticles.set(instance.id, instance)
     Stats.instances++
 
-    log.debug(`✨ Created particle system`)
+    log.debug(`✨ Created particle system with ${maxParticles} particles, size:${baseSize}`)
 
     return { instance, particleSystem }
   }
