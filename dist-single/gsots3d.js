@@ -318,7 +318,7 @@ function getGl(selector = "canvas", aa = true) {
 }
 
 // src/core/context.ts
-var import_loglevel8 = __toESM(require_loglevel(), 1);
+var import_loglevel7 = __toESM(require_loglevel(), 1);
 
 // node_modules/twgl.js/dist/5.x/twgl-full.module.js
 var VecType = Float32Array;
@@ -3712,13 +3712,13 @@ attrTypeMap[FLOAT_MAT2] = { size: 4, setter: matAttribSetter, count: 2 };
 attrTypeMap[FLOAT_MAT3] = { size: 9, setter: matAttribSetter, count: 3 };
 attrTypeMap[FLOAT_MAT4] = { size: 16, setter: matAttribSetter, count: 4 };
 var errorRE = /ERROR:\s*\d+:(\d+)/gi;
-function addLineNumbersWithError(src, log10 = "", lineOffset = 0) {
-  const matches = [...log10.matchAll(errorRE)];
+function addLineNumbersWithError(src, log9 = "", lineOffset = 0) {
+  const matches = [...log9.matchAll(errorRE)];
   const lineNoToErrorMap = new Map(matches.map((m, ndx) => {
     const lineNo = parseInt(m[1]);
     const next = matches[ndx + 1];
-    const end = next ? next.index : log10.length;
-    const msg = log10.substring(m.index, end);
+    const end = next ? next.index : log9.length;
+    const msg = log9.substring(m.index, end);
     return [lineNo - 1, msg];
   }));
   return src.split("\n").map((line, lineNo) => {
@@ -13881,9 +13881,6 @@ var PrimitiveCylinder = class extends Primitive {
   }
 };
 
-// src/renderable/particles.ts
-var import_loglevel6 = __toESM(require_loglevel(), 1);
-
 // shaders/particles/update.frag
 var update_default = "#version 300 es\n\n// ============================================================================\n// Particle update fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Does nothing, just here to make the WebGL compiler happy!\nvoid main() {}\n";
 
@@ -13974,7 +13971,6 @@ var ParticleSystem = class {
     this.outputBuffInfo = createBufferInfoFromArrays(gl, quadVerts);
     this.outputVAO = createVertexArrayInfo(gl, this.progInfoRender, this.outputBuffInfo);
     this.texture = TextureCache.defaultWhite;
-    import_loglevel6.default.info("\u2728 Created particle system with", maxParticles, "particles");
   }
   /**
    * Render the particle system and implement the renderable interface
@@ -14067,7 +14063,7 @@ var ParticleSystem = class {
 };
 
 // src/renderable/model.ts
-var import_loglevel7 = __toESM(require_loglevel(), 1);
+var import_loglevel6 = __toESM(require_loglevel(), 1);
 
 // src/parsers/mtl-parser.ts
 function parseMTL(mtlFile) {
@@ -14344,7 +14340,7 @@ var Model = class _Model {
           model.materials[matName] = Material2.fromMtl(matRaw, path, filterTextures, flipTextureY);
         }
       } catch (err) {
-        import_loglevel7.default.warn(`\u{1F4A5} Unable to load material library ${objData.matLibNames[0]}`);
+        import_loglevel6.default.warn(`\u{1F4A5} Unable to load material library ${objData.matLibNames[0]}`);
       }
     }
     model.materials.__default = new Material2();
@@ -14371,11 +14367,11 @@ var Model = class _Model {
         if (z > model._boundingBox[5])
           model._boundingBox[5] = z;
       }
-      import_loglevel7.default.info(`\u265F\uFE0F Model '${objFilename}' part '${g.material}'`);
+      import_loglevel6.default.info(`\u265F\uFE0F Model '${objFilename}' part '${g.material}'`);
       const bufferInfo = createBufferInfoFromArrays(gl, g.data);
       model.parts.push(new ModelPart(bufferInfo, g.material));
     }
-    import_loglevel7.default.debug(
+    import_loglevel6.default.debug(
       `\u265F\uFE0F Model '${objFilename}' loaded with ${model.parts.length} parts, ${Object.keys(model.materials).length} materials in ${((performance.now() - startTime) / 1e3).toFixed(2)}s`
     );
     model.triCount = objData.triangles;
@@ -14415,7 +14411,7 @@ var Model = class _Model {
       model.parts.push(new ModelPart(partBuffers, partName));
       model.materials[partName] = builder.materials.get(partName) ?? model.materials.__default;
     }
-    import_loglevel7.default.debug(`\u265F\uFE0F Model '${name}' built with ${model.parts.length} parts & ${model.triCount} triangles`);
+    import_loglevel6.default.debug(`\u265F\uFE0F Model '${name}' built with ${model.parts.length} parts & ${model.triCount} triangles`);
     return model;
   }
   /**
@@ -14548,7 +14544,7 @@ var HUD = class {
 };
 
 // src/engine/post-effects.ts
-var log8 = __toESM(require_loglevel(), 1);
+var log7 = __toESM(require_loglevel(), 1);
 var PostEffects = class _PostEffects {
   constructor(gl, shaderCode) {
     this._frameBuff = createFramebufferInfo(gl, void 0, gl.canvas.width, gl.canvas.height);
@@ -14613,7 +14609,7 @@ var PostEffects = class _PostEffects {
 
     ${shaderCode}
     `;
-    log8.debug(`\u{1F97D} PostEffects creating shader program
+    log7.debug(`\u{1F97D} PostEffects creating shader program
 ${fragShader}`);
     this.progInfo = createProgramInfo(gl, [vertShader, fragShader]);
   }
@@ -14784,7 +14780,7 @@ var glsl_default8 = "#version 300 es\n\n// =====================================
 var MAX_LIGHTS = 24;
 var Context = class _Context {
   /** Constructor is private, use init() to create a new context */
-  constructor(gl) {
+  constructor(gl, noHud = false) {
     /**
      * The pre-render update function, called every frame.
      * Hook in your custom logic and processing here
@@ -14811,9 +14807,10 @@ var Context = class _Context {
     this.cameras.set("default", defaultCamera);
     this._camera = defaultCamera;
     this.activeCameraName = "default";
-    this.hud = new HUD(gl.canvas);
+    if (!noHud)
+      this.hud = new HUD(gl.canvas);
     this.setLogLevel("info");
-    import_loglevel8.default.info(`\u{1F451} GSOTS-3D context created, v${version}`);
+    import_loglevel7.default.info(`\u{1F451} GSOTS-3D context created, v${version}`);
   }
   // ==== Getters =============================================================
   /** Get the active camera */
@@ -14833,20 +14830,20 @@ var Context = class _Context {
    * @param canvasSelector CSS selector for canvas element, default is 'canvas'
    * @param antiAlias Enable anti-aliasing in the renderer, default is true
    */
-  static async init(canvasSelector = "canvas", antiAlias = true) {
+  static async init(canvasSelector = "canvas", antiAlias = true, noHud = false) {
     const gl = getGl(canvasSelector, antiAlias);
     if (!gl) {
-      import_loglevel8.default.error("\u{1F4A5} Failed to create WebGL context, this is extremely bad news");
+      import_loglevel7.default.error("\u{1F4A5} Failed to create WebGL context, this is extremely bad news");
       throw new Error("Failed to get WebGL context");
     }
-    const ctx = new _Context(gl);
+    const ctx = new _Context(gl, noHud);
     const canvas = gl.canvas;
     ctx.camera.aspectRatio = canvas.clientWidth / canvas.clientHeight;
     const phongProgInfo = createProgramInfo(gl, [glsl_default6, glsl_default5]);
     ProgramCache.init(phongProgInfo);
     ProgramCache.instance.add(ProgramCache.PROG_PHONG, phongProgInfo);
     ProgramCache.instance.add(ProgramCache.PROG_BILLBOARD, createProgramInfo(gl, [glsl_default8, glsl_default7]));
-    import_loglevel8.default.info(`\u{1F3A8} Loaded all shaders & programs, GL is ready`);
+    import_loglevel7.default.info(`\u{1F3A8} Loaded all shaders & programs, GL is ready`);
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -14888,7 +14885,7 @@ var Context = class _Context {
       bindFramebufferInfo(this.gl, null);
       this.renderWithCamera(this.camera);
     }
-    this.hud.render(this.debug, this.camera);
+    this.hud?.render(this.debug, this.camera);
     this.update(Stats.deltaTime, now);
     if (this.physicsWorld) {
       this.physicsWorld.step(this.physicsTimeStep, Stats.prevTime);
@@ -14986,8 +14983,10 @@ var Context = class _Context {
    * Start the rendering loop, without calling this nothing will render
    */
   start() {
-    import_loglevel8.default.info("\u{1F680} Starting main GSOTS render loop!");
-    this.hud.hideLoading();
+    if (this.started)
+      return;
+    import_loglevel7.default.info("\u{1F680} Starting main GSOTS render loop!");
+    this.hud?.hideLoading();
     this.started = true;
     requestAnimationFrame(this.render);
   }
@@ -14995,7 +14994,7 @@ var Context = class _Context {
    * Stop the rendering loop
    */
   stop() {
-    import_loglevel8.default.info("\u{1F6D1} Stopping main GSOTS render loop");
+    import_loglevel7.default.info("\u{1F6D1} Stopping main GSOTS render loop");
     this.started = false;
   }
   /**
@@ -15003,7 +15002,7 @@ var Context = class _Context {
    * @param level - Log level to set, default is 'info'
    */
   setLogLevel(level) {
-    import_loglevel8.default.setLevel(level);
+    import_loglevel7.default.setLevel(level);
   }
   /**
    * Resize the canvas & viewport to match the size of the HTML element that contains it
@@ -15015,7 +15014,7 @@ var Context = class _Context {
       resizeCanvasToDisplaySize(canvas);
     this.gl.viewport(0, 0, canvas.width, canvas.height);
     this.camera.aspectRatio = canvas.width / canvas.height;
-    import_loglevel8.default.info(
+    import_loglevel7.default.info(
       `\u{1F4D0} RESIZE Internal: ${canvas.width} x ${canvas.height}, display: ${canvas.clientWidth} x ${canvas.clientHeight}`
     );
   }
@@ -15040,7 +15039,7 @@ var Context = class _Context {
   async loadModel(path, fileName, filterTextures = true, flipY = false, flipUV = true) {
     const modelName = fileName.split(".")[0];
     if (ModelCache.instance.get(modelName, false)) {
-      import_loglevel8.default.warn(`\u26A0\uFE0F Model '${modelName}' already loaded, skipping`);
+      import_loglevel7.default.warn(`\u26A0\uFE0F Model '${modelName}' already loaded, skipping`);
       return;
     }
     const model = await Model.parse(path, fileName, filterTextures, flipY, flipUV);
@@ -15076,7 +15075,7 @@ var Context = class _Context {
     this._camera = camera;
     this.camera.active = true;
     this.activeCameraName = name;
-    import_loglevel8.default.info(`\u{1F4F7} Active camera switched to '${name}'`);
+    import_loglevel7.default.info(`\u{1F4F7} Active camera switched to '${name}'`);
   }
   // ==========================================================================
   // Methods to create new instances of renderable objects & things
@@ -15110,7 +15109,7 @@ var Context = class _Context {
     this.addInstance(instance, material);
     Stats.triangles += sphere.triangleCount;
     Stats.instances++;
-    import_loglevel8.default.debug(`\u{1F7E2} Created sphere instance, r:${radius}`);
+    import_loglevel7.default.debug(`\u{1F7E2} Created sphere instance, r:${radius}`);
     return instance;
   }
   /**
@@ -15129,7 +15128,7 @@ var Context = class _Context {
     this.addInstance(instance, material);
     Stats.triangles += plane.triangleCount;
     Stats.instances++;
-    import_loglevel8.default.debug(`\u{1F7E8} Created plane instance, w:${width} h:${height}`);
+    import_loglevel7.default.debug(`\u{1F7E8} Created plane instance, w:${width} h:${height}`);
     return instance;
   }
   /**
@@ -15142,7 +15141,7 @@ var Context = class _Context {
     this.addInstance(instance, material);
     Stats.triangles += cube.triangleCount;
     Stats.instances++;
-    import_loglevel8.default.debug(`\u{1F4E6} Created cube instance, size:${size}`);
+    import_loglevel7.default.debug(`\u{1F4E6} Created cube instance, size:${size}`);
     return instance;
   }
   /**
@@ -15155,7 +15154,7 @@ var Context = class _Context {
     this.addInstance(instance, material);
     Stats.triangles += cyl.triangleCount;
     Stats.instances++;
-    import_loglevel8.default.debug(`\u{1F6E2}\uFE0F Created cylinder instance, r:${r}`);
+    import_loglevel7.default.debug(`\u{1F6E2}\uFE0F Created cylinder instance, r:${r}`);
     return instance;
   }
   /**
@@ -15171,7 +15170,7 @@ var Context = class _Context {
     this.addInstance(instance, material);
     Stats.triangles += 2;
     Stats.instances++;
-    import_loglevel8.default.debug(`\u{1F6A7} Created billboard instance of type: ${type} size: ${size}`);
+    import_loglevel7.default.debug(`\u{1F6A7} Created billboard instance of type: ${type} size: ${size}`);
     return instance;
   }
   /**
@@ -15189,7 +15188,7 @@ var Context = class _Context {
     light.linear /= intensity;
     light.quad /= intensity;
     this.lights.push(light);
-    import_loglevel8.default.debug(`\u{1F506} Created point light, pos:${position} col:${colour} int:${intensity}`);
+    import_loglevel7.default.debug(`\u{1F506} Created point light, pos:${position} col:${colour} int:${intensity}`);
     return light;
   }
   /**
@@ -15204,7 +15203,7 @@ var Context = class _Context {
     instance.castShadow = false;
     this.instancesParticles.set(instance.id, instance);
     Stats.instances++;
-    import_loglevel8.default.debug(`\u2728 Created particle system`);
+    import_loglevel7.default.debug(`\u2728 Created particle system with ${maxParticles} particles, size:${baseSize}`);
     return { instance, particleSystem };
   }
   /**
@@ -15259,7 +15258,7 @@ var Context = class _Context {
    */
   setEffectCustom(shaderCode) {
     this.postEffects = new PostEffects(this.gl, shaderCode);
-    import_loglevel8.default.info(`\u{1F308} Post effects shader added`);
+    import_loglevel7.default.info(`\u{1F308} Post effects shader added`);
   }
   /**
    * Use bulit-in scanlines post effect shader
@@ -15270,7 +15269,7 @@ var Context = class _Context {
    */
   setEffectScanlines(density = 1.5, opacity = 0.5, noise = 0.2, flicker = 0.015) {
     this.postEffects = PostEffects.scanlines(this.gl, density, opacity, noise, flicker);
-    import_loglevel8.default.info(`\u{1F308} Post effects scanline shader added`);
+    import_loglevel7.default.info(`\u{1F308} Post effects scanline shader added`);
   }
   /**
    * Use bulit-in glitch post effect shader
@@ -15278,7 +15277,7 @@ var Context = class _Context {
    */
   setEffectGlitch(amount = 0.01) {
     this.postEffects = PostEffects.glitch(this.gl, amount);
-    import_loglevel8.default.info(`\u{1F308} Post effects glitch shader added`);
+    import_loglevel7.default.info(`\u{1F308} Post effects glitch shader added`);
   }
   /**
    * Use bulit-in noise post effect shader
@@ -15287,7 +15286,7 @@ var Context = class _Context {
    */
   setEffectNoise(amount = 0.2, speed = 5) {
     this.postEffects = PostEffects.noise(this.gl, amount, speed);
-    import_loglevel8.default.info(`\u{1F308} Post effects noise shader added`);
+    import_loglevel7.default.info(`\u{1F308} Post effects noise shader added`);
   }
   /**
    * Use bulit-in duotone post effect shader for monotone images
@@ -15297,7 +15296,7 @@ var Context = class _Context {
    */
   setEffectDuotone(colour1 = [0.15, 0.09, 0.309], colour2 = [0.96, 0.39, 0.407], contrast = 1.5) {
     this.postEffects = PostEffects.duotone(this.gl, colour1, colour2, contrast);
-    import_loglevel8.default.info(`\u{1F308} Post effects monochrome shader added`);
+    import_loglevel7.default.info(`\u{1F308} Post effects monochrome shader added`);
   }
   /**
    * Use bulit-in contrast post effect shader, which reduces the image to two solid colours
@@ -15307,7 +15306,7 @@ var Context = class _Context {
    */
   setEffectContrast(threshold = 0.2, darkColour = [0, 0, 0], lightColour = [1, 1, 1]) {
     this.postEffects = PostEffects.contrast(this.gl, threshold, darkColour, lightColour);
-    import_loglevel8.default.info(`\u{1F308} Post effects monochrome shader added`);
+    import_loglevel7.default.info(`\u{1F308} Post effects monochrome shader added`);
   }
   /**
    * Remove any post effects shader
@@ -15322,7 +15321,7 @@ var Context = class _Context {
    */
   buildCustomModel(builder, name) {
     const model = Model.parseFromBuilder(builder, name);
-    import_loglevel8.default.debug(`\u{1F528} Custom model built and added to cache`);
+    import_loglevel7.default.debug(`\u{1F528} Custom model built and added to cache`);
     ModelCache.instance.add(model);
   }
 };
