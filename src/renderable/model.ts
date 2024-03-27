@@ -212,7 +212,7 @@ export class Model implements Renderable {
 
       model.triCount += builderPart.triangleCount
       model.parts.push(new ModelPart(partBuffers, partName))
-      model.materials[partName] = builder.materials.get(partName) ?? model.materials.__default
+      model.materials[partName] = builder.parts.get(partName)?.material ?? model.materials.__default
     }
 
     log.debug(`♟️ Model '${name}' built with ${model.parts.length} parts & ${model.triCount} triangles`)

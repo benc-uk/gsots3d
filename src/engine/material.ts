@@ -6,7 +6,7 @@
 import * as twgl from 'twgl.js'
 import { RGB } from './tuples.ts'
 import { MtlMaterial } from '../parsers/mtl-parser.ts'
-import { UniformSet, TextureOptions } from '../core/gl.ts'
+import { UniformSet, TextureOptions, getGl } from '../core/gl.ts'
 import { TextureCache } from '../core/cache.ts'
 
 export class Material {
@@ -69,16 +69,12 @@ export class Material {
   public normalTex?: WebGLTexture
 
   /**
-   * Don't apply any lighting or shading to this material
-   * @default false
-   */
-  public unshaded: boolean
-
-  /**
    * Transparency threshold, pixels with alpha below this value will be discarded
    * @default 0.0
    */
   public alphaCutoff: number
+
+  public additiveBlend = false
 
   /**
    * Create a new default material with diffuse white colour, all all default properties
@@ -93,7 +89,6 @@ export class Material {
     this.opacity = 1.0
     this.reflectivity = 0.0
 
-    this.unshaded = false
     this.alphaCutoff = 0.0
 
     // 1 pixel white texture is used for solid colour & flat materials
@@ -250,6 +245,15 @@ export class Material {
     }
 
     twgl.setUniforms(programInfo, uni)
+
+    const gl = getGl()
+
+    if (gl) {
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+      if (this.additiveBlend) {
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
+      }
+    }
   }
 
   /**
@@ -269,7 +273,6 @@ export class Material {
       specularTex: this.specularTex ? this.specularTex : null,
       normalTex: this.normalTex ? this.normalTex : null,
       hasNormalTex: this.normalTex ? true : false,
-      unshaded: this.unshaded,
       alphaCutoff: this.alphaCutoff,
     } as UniformSet
   }
@@ -289,8 +292,8 @@ export class Material {
     m.diffuseTex = this.diffuseTex
     m.specularTex = this.specularTex
     m.normalTex = this.normalTex
-    m.unshaded = this.unshaded
     m.alphaCutoff = this.alphaCutoff
+    m.additiveBlend = this.additiveBlend
 
     return m
   }

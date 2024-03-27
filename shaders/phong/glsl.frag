@@ -55,7 +55,6 @@ struct Material {
   sampler2D specularTex;
   sampler2D normalTex;
   bool hasNormalTex;
-  bool unshaded;
   float alphaCutoff;
 };
 
@@ -195,18 +194,13 @@ void main() {
   }
 
   vec4 outColorPart;
-  if (u_mat.unshaded) {
-    // Skip lighting/shading and just use the texture if unshaded
-    vec3 diffuseTexCol = vec3(texture(u_mat.diffuseTex, texCoord)) * u_mat.diffuse;
-    outColorPart = vec4(diffuseTexCol, 1.0);
-  } else {
-    // Handle the main directional light, only one of these
-    outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, N, V);
 
-    // Add positional lights
-    for (int i = 0; i < u_lightsPosCount; i++) {
-      outColorPart += shadePosLight(u_lightsPos[i], u_mat, N, V);
-    }
+  // Handle the main directional light, only one of these
+  outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, N, V);
+
+  // Add positional lights
+  for (int i = 0; i < u_lightsPosCount; i++) {
+    outColorPart += shadePosLight(u_lightsPos[i], u_mat, N, V);
   }
 
   // Add emissive component

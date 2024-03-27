@@ -25,11 +25,11 @@ import { XYZ } from '../engine/tuples.ts'
  */
 export class ModelBuilder {
   public readonly parts: Map<string, BuilderPart>
-  public readonly materials: Map<string, Material>
+  // public readonly materials: Map<string, Material>
 
   constructor() {
     this.parts = new Map<string, BuilderPart>()
-    this.materials = new Map<string, Material>()
+    // this.materials = new Map<string, Material>()
   }
 
   /**
@@ -43,10 +43,10 @@ export class ModelBuilder {
       throw new Error('Builder part name exists!')
     }
 
-    const builderPart = new BuilderPart()
+    const builderPart = new BuilderPart(name, material)
 
     this.parts.set(name, builderPart)
-    this.materials.set(name, material)
+    // this.materials.set(name, material)
 
     return builderPart
   }
@@ -68,6 +68,9 @@ export class BuilderPart {
   private texcoordData: number[] = []
   private _boundingBox: number[]
 
+  public material: Material
+  public readonly name: string
+
   /**
    * This is an *extremely* advanced feature, and allows you to add custom attributes to the part
    * You will need to understand how to use twgl.js to use this feature at the createBufferInfoFromArrays function
@@ -86,7 +89,10 @@ export class BuilderPart {
 
   private _customArrayData: twgl.Arrays | undefined
 
-  constructor() {
+  constructor(name: string, mat: Material) {
+    this.name = name
+    this.material = mat
+
     this._boundingBox = [
       Number.MAX_VALUE,
       Number.MAX_VALUE,

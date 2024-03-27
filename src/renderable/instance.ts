@@ -78,6 +78,12 @@ export class Instance extends Node {
       programOverride = ProgramCache.instance.get(this.customProgramName)
     }
 
+    if (this.metadata.additiveBlend) {
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
+    } else {
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    }
+
     const world = this.modelMatrix
 
     // Populate u_world - used for normals & shading
