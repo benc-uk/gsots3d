@@ -16,7 +16,7 @@ Feature Set:
 - **📍 Nodes**: Hierarchical node system for instances and grouping.
 - **📦 Primitives**: Sphere, cube, plane.
 - **🎆 Particles**: GPU based particle system.
-- **💧 Transparency**: Transparent materials & primitives 
+- **💧 Transparency**: Transparent materials & primitives
 - **🌑 Shadows**: Realtime shadows from directional light sources.
 - **💖 Reflection**: Both dynamic and static environment mapping.
 - **⚖️ Physics**: Helpers to integrate with with [cannon-es](https://pmndrs.github.io/cannon-es/) physics engine.
@@ -36,7 +36,6 @@ Feature Set:
 ![Particle system](https://user-images.githubusercontent.com/14982936/260514449-0e9dac87-9bdf-4712-aa9a-8fa952158459.png)
 
 ![screenshot of treasure chest](https://user-images.githubusercontent.com/14982936/253808708-32c89ca7-ad08-4c26-9de1-2964aa32a0a2.png)
-
 
 ## 💬 Hello World - Example
 
@@ -68,11 +67,10 @@ The hello world equivalent in GSOTS is putting a simple object on the screen, Th
 
 #### Import as package
 
-The NPM package is published on [GitHub Packages](https://github.com/benc-uk/gsots3d/pkgs/npm/gsots3d), to install the package, simply run:
+The NPM package is published on [NPMJS.com](https://www.npmjs.com/package/gsots3d, to install the package, simply run:
 
 ```bash
-echo "@benc-uk:registry=https://npm.pkg.github.com" >> .npmrc
-npm install @benc-uk/gsots3d
+npm install benc-uk/gsots3d
 ```
 
 #### Directly in browser
@@ -90,7 +88,7 @@ If you want to reference a specific released version you can do so by changing `
 
 OBJ files can be parsed and loaded, MTL files will be loaded and materials parsed when referenced from the OBJ, and and OBJ can consist of multiple materials. When parsing the OBJ the UV texture coordinates are flipped in the Y direction, this makes them consistent with the rest of the rendering internally.
 
-Normal maps will be parsed from any MTL (or can added to a *Material* with `addNormalTexture()`) using the unofficial `map_bump` keyword. 
+Normal maps will be parsed from any MTL (or can added to a _Material_ with `addNormalTexture()`) using the unofficial `map_bump` keyword.
 
 Normal maps must be in OpenGL format, i.e. Y+ or "green at top", see this [reference image](https://doc.babylonjs.com/img/how_to/Materials/normal_maps1.jpg)
 
@@ -102,7 +100,7 @@ Due to the vast inconsistencies in OBJ & MTL exporting from the thousands of sof
   - Works OK with primitives, you can override a OBJ model material with a transparent one, but results might not be great.
 - Billboards: Shading on spherical billboards might not be correct
 - OBJ & MTL: The parsers are far from comprehensive and may not handle all features
-- Due to the performance overhead only a single dynamic environment map is supported 
+- Due to the performance overhead only a single dynamic environment map is supported
 - Shadow mapping follows the active camera by default in a not very good way
 - Particle system: The emitter source is limited to a cuboid shape
 
