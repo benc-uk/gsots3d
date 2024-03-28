@@ -25,11 +25,9 @@ import { XYZ } from '../engine/tuples.ts'
  */
 export class ModelBuilder {
   public readonly parts: Map<string, BuilderPart>
-  // public readonly materials: Map<string, Material>
 
   constructor() {
     this.parts = new Map<string, BuilderPart>()
-    // this.materials = new Map<string, Material>()
   }
 
   /**
@@ -46,7 +44,6 @@ export class ModelBuilder {
     const builderPart = new BuilderPart(name, material)
 
     this.parts.set(name, builderPart)
-    // this.materials.set(name, material)
 
     return builderPart
   }
@@ -121,9 +118,9 @@ export class BuilderPart {
    * Add a triangle to the renderable part
    * Each triangle must be defined by 3 vertices and will get a normal calculated
    * Each triangle will get a unique normal, so no smooth shading
-   * @param v1 Vertex one of the triangle
-   * @param v2 Vertex two of the triangle
-   * @param v3 Vertex three of the triangle
+   * @param v1 Vertex 1 of the triangle
+   * @param v2 Vertex 2 of the triangle
+   * @param v3 Vertex 3 of the triangle
    * @param tc1 Texture coordinate for vertex 1
    * @param tc2 Texture coordinate for vertex 2
    * @param tc3 Texture coordinate for vertex 3
@@ -159,7 +156,7 @@ export class BuilderPart {
     }
   }
 
-  /*
+  /**
    * Add a two triangle quad to the renderable part
    * Each quad must be defined by 4 vertices and will get a normal calculated
    * Each quad will get a unique normal, so no smooth shading
@@ -167,6 +164,10 @@ export class BuilderPart {
    * @param v2 Vertex 2 of the quad
    * @param v3 Vertex 3 of the quad
    * @param v4 Vertex 4 of the quad
+   * @param tc1 UV texture coordinate for vertex 1
+   * @param tc2 UV texture coordinate for vertex 2
+   * @param tc3 UV texture coordinate for vertex 3
+   * @param tc4 UV texture coordinate for vertex 4
    */
   addQuad(v1: XYZ, v2: XYZ, v3: XYZ, v4: XYZ, tc1 = [0, 0], tc2 = [0, 0], tc3 = [0, 0], tc4 = [0, 0]) {
     // Anti-clockwise winding order

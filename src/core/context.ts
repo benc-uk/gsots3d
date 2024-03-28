@@ -91,6 +91,12 @@ export class Context {
   /** Backface culling */
   public disableCulling = false
 
+  /**
+   * Blend mode for non-opaque instances
+   * 'NORMAL' is the default, 'ADDITIVE' is useful for particles and glowing effects
+   */
+  public blendMode: 'NORMAL' | 'ADDITIVE' = 'NORMAL'
+
   // ==== Getters =============================================================
 
   /** Get the active camera */
@@ -370,7 +376,12 @@ export class Context {
     })
 
     this.gl.disable(this.gl.CULL_FACE)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA)
+    // Secret undocumented feature, allows you to set blend mode on a per instance basis
+    if (this.blendMode === 'ADDITIVE') {
+      this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE)
+    }
+
     for (const instance of instancesTransArray) {
       instance.render(this.gl, uniforms, programOverride)
 
@@ -518,14 +529,19 @@ export class Context {
    * Create a new model instance, which should have been previously loaded into the cache
    * @param modelName - Name of the model previously loaded into the cache, don't include the file extension
    */
-  createModelInstance(modelName: string) {
+  createModelInstance(modelName: string, transparent = false) {
     const model = ModelCache.instance.get(modelName)
     if (!model) {
       throw new Error(`💥 Unable to create model instance for ${modelName}`)
     }
 
     const instance = new Instance(model)
-    this.instances.set(instance.id, instance)
+    if (!transparent) {
+      this.instances.set(instance.id, instance)
+    } else {
+      this.instancesTrans.set(instance.id, instance)
+    }
+
     Stats.triangles += model.triangleCount
     Stats.instances++
 

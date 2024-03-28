@@ -6,7 +6,7 @@
 import * as twgl from 'twgl.js'
 import { RGB } from './tuples.ts'
 import { MtlMaterial } from '../parsers/mtl-parser.ts'
-import { UniformSet, TextureOptions, getGl } from '../core/gl.ts'
+import { UniformSet, TextureOptions } from '../core/gl.ts'
 import { TextureCache } from '../core/cache.ts'
 
 export class Material {
@@ -245,15 +245,6 @@ export class Material {
     }
 
     twgl.setUniforms(programInfo, uni)
-
-    const gl = getGl()
-
-    if (gl) {
-      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-      if (this.additiveBlend) {
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
-      }
-    }
   }
 
   /**
