@@ -38,8 +38,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint-check
 
-    # Only run on main branch
-    ## sif: github.ref == 'refs/heads/main'
+    # Only run on main branch, i.e. when merging PR or pushing to main (v naughty!)
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - uses: actions/checkout@v3
@@ -54,6 +54,7 @@ jobs:
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
 
+      # Prepare a prerelease version based on the commit SHA
       - name: NPM install & version
         env:
           NODE_ENV: production
@@ -62,7 +63,7 @@ jobs:
           npm version prerelease --preid=${GITHUB_SHA:0:7} --no-git-tag-version
           git status
 
-      - name: Build all bundles
+      - name: Build both bundles
         env:
           NODE_ENV: production
         run: |
