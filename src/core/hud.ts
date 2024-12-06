@@ -1,5 +1,5 @@
 // ===== hud.ts =========================================================
-// A HTML based HUD for the game, this is a simple div for now
+// A HTML based HUD for the game, this is a simple div wrapper for now
 // Ben Coleman, 2023
 // ======================================================================
 
