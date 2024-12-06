@@ -34,12 +34,13 @@ jobs:
           npm run lint
           npm run check
 
+  # Build step is disabled as Githhub NPM support is kinda crappy compared to npmjs.org
   build:
     runs-on: ubuntu-latest
     needs: lint-check
 
     # Only run on main branch
-    if: github.ref == 'DISABLED FOR NOW refs/heads/main'
+    if: github.ref == '!!!DISABLED_FOR_NOW!!! refs/heads/main'
 
     steps:
       - uses: actions/checkout@v3
