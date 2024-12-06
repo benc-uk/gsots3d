@@ -24,7 +24,7 @@ import { ModelBuilder } from './builder.ts'
 export class Model implements Renderable {
   private programInfo: twgl.ProgramInfo
   private readonly parts = [] as ModelPart[]
-  private readonly materials = {} as Record<string, Material>
+  private readonly materials = {} as Record<string, Material> // prettier-ignore
   private triCount: number
   private _boundingBox: number[]
 
@@ -111,7 +111,7 @@ export class Model implements Renderable {
     let objFile: string
     try {
       objFile = await fetchFile(`${path}/${objFilename}`)
-    } catch (err) {
+    } catch (_err) {
       throw new Error(`💥 Unable to load file '${path}/${objFilename}'`)
     }
 
@@ -132,7 +132,7 @@ export class Model implements Renderable {
         for (const [matName, matRaw] of materialsRawList) {
           model.materials[matName] = Material.fromMtl(matRaw, path, filterTextures, flipTextureY)
         }
-      } catch (err) {
+      } catch (_err) {
         log.warn(`💥 Unable to load material library ${objData.matLibNames[0]}`)
       }
     }

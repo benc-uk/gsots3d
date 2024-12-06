@@ -70,7 +70,6 @@ export class Context {
    * The pre-render update function, called every frame.
    * Hook in your custom logic and processing here
    */
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   public update: (delta: number, now?: number) => void = () => {}
 
   /** A HUD you can use to render HTML elements over the canvas */
@@ -355,7 +354,6 @@ export class Context {
     this.gl.enable(this.gl.BLEND)
     this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA)
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [_id, instance] of this.instances) {
       instance.render(this.gl, uniforms, programOverride)
 
@@ -395,7 +393,6 @@ export class Context {
     // ------------------------------------------------
     this.gl.depthMask(false)
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [_id, instance] of this.instancesParticles) {
       instance.render(this.gl, uniforms, programOverride)
     }
