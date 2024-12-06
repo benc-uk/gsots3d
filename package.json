@@ -6,9 +6,6 @@
   "license": "MIT",
   "homepage": "https://code.benco.io/gsots3d/docs",
   "type": "module",
-  "publishConfig": {
-    "@benc-uk:registry": "https://npm.pkg.github.com"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/benc-uk/gsots3d.git"

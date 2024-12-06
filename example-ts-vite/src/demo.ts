@@ -1,7 +1,7 @@
 import './style.css'
 
 import { initResizer, isMobile } from './screen.ts'
-import { Context, Material, Colours, Instance } from '@benc-uk/gsots3d'
+import { Context, Material, Colours, Instance } from 'gsots3d'
 
 // Init the app a bit like React :)
 const appDiv = document.querySelector<HTMLDivElement>('#app')

@@ -69,10 +69,10 @@ The hello world equivalent in GSOTS is putting a simple object on the screen, Th
 
 #### Import as package
 
-The NPM package is published on [NPMJS.com](https://www.npmjs.com/package/gsots3d, to install the package, simply run:
+The NPM package is published on [NPMJS.com](https://www.npmjs.com/package/gsots3d), to install the package, simply run:
 
 ```bash
-npm install benc-uk/gsots3d
+npm install gsots3d
 ```
 
 #### Directly in browser
