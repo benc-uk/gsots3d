@@ -27,12 +27,12 @@ const moveSpeed = isMobile ? 0.5 : 1.0
 
 // Load models
 try {
-  await ctx.loadModel('../_objects', 'table.obj')
-  await ctx.loadModel('../_objects/chest', 'chest.obj')
-  await ctx.loadModel('../_objects/door', 'door.obj')
-  await ctx.loadModel('../_objects', 'icosahedron.obj')
-  await ctx.loadModel('../_objects', 'teapot.obj')
-  await ctx.loadModel('../_objects', 'wine.obj')
+  await ctx.loadModel('models', 'table.obj')
+  await ctx.loadModel('models/chest', 'chest.obj')
+  await ctx.loadModel('models/door', 'door.obj')
+  await ctx.loadModel('models', 'icosahedron.obj')
+  await ctx.loadModel('models', 'teapot.obj')
+  await ctx.loadModel('models', 'wine.obj')
 } catch (e) {
   console.error(e)
 }
@@ -86,12 +86,12 @@ try {
   const cylinder = ctx.createCylinderInstance(matBlueGlass, 3, 12, 16, 8)
   cylinder.position = [10, 20, -20]
 
-  const floorMat = Material.createBasicTexture('../_textures/wood-floor.png')
+  const floorMat = Material.createBasicTexture('textures/wood-floor.png')
   ctx.createPlaneInstance(floorMat, 260, 260, 1, 1, 8)
   floorMat.diffuse = [0.7, 0.7, 1]
 
-  const wallMat = Material.createBasicTexture('../_textures/brickwall.jpg')
-  wallMat.addNormalTexture('../_textures/brickwall_normal.jpg')
+  const wallMat = Material.createBasicTexture('textures/brickwall.jpg')
+  wallMat.addNormalTexture('textures/brickwall_normal.jpg')
   wallMat.specular = [0.2, 0.2, 0.2]
   wallMat.reflectivity = 0.0
 
@@ -117,21 +117,21 @@ try {
   wall4.rotateYDeg(90)
   wall4.castShadow = false
 
-  const impMat = Material.createBasicTexture('../_textures/doom-imp.png')
+  const impMat = Material.createBasicTexture('textures/doom-imp.png')
   impMat.alphaCutoff = 0.5 // Important to make sprite transparency work
   const doomImp = ctx.createBillboardInstance(impMat, 30)
   doomImp.scale = [0.8, 0.8, 0.8]
   doomImp.position = [-6, 0, -5]
 
-  const mellonTx = Material.createBasicTexture('../_textures/mellon.jpg')
+  const mellonTx = Material.createBasicTexture('textures/mellon.jpg')
   const mellon = ctx.createSphereInstance(mellonTx, 4, 24, 12)
   mellonTx.diffuse = [0.7, 1.4, 0.7]
   mellonTx.specular = [1.0, 1.0, 1.0]
   mellonTx.shininess = 25
   mellon.position = [22, 21.5, -19]
 
-  const crateMat = Material.createBasicTexture('../_textures/crate.png')
-  crateMat.addSpecularTexture('../_textures/crate-specular.png')
+  const crateMat = Material.createBasicTexture('textures/crate.png')
+  crateMat.addSpecularTexture('textures/crate-specular.png')
   crateMat.shininess = 40
   crateMat.specular = [2.0, 2.0, 2.0]
   const cube = ctx.createCubeInstance(crateMat, 13)
@@ -164,8 +164,8 @@ try {
   bottle.rotateXDeg(-90)
   bottle.scale = [0.6, 0.6, 0.6]
 
-  const scifi = Material.createBasicTexture('../_textures/sci-fi.png')
-  scifi.addNormalTexture('../_textures/sci-fi_normal.png')
+  const scifi = Material.createBasicTexture('textures/sci-fi.png')
+  scifi.addNormalTexture('textures/sci-fi_normal.png')
   scifi.diffuse = [0.5, 0.5, 0.8]
   scifi.specular = [2, 2, 2]
   scifi.shininess = 30
