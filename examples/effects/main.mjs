@@ -68,7 +68,6 @@ floor.scale = [40, 1, 40]
 
 // Setup UX and start
 const note = document.createElement('div')
-note.innerHTML = 'B'
 note.style.width = '100%'
 note.style.textAlign = 'center'
 note.style.fontSize = '2vw'
@@ -94,31 +93,31 @@ function switchEffect(effectNum) {
   switch (effectNum) {
     case 0:
       customEdgeEffect(6.0, 2.0)
-      note.innerHTML = 'Effect: Custom'
+      note.innerHTML = 'Effect: Custom<br>Press space to change'
       break
     case 1:
       ctx.setEffectGlitch()
-      note.innerHTML = 'Effect: Glitch'
+      note.innerHTML = 'Effect: Glitch<br>Press space to change'
       break
     case 2:
       ctx.setEffectDuotone()
-      note.innerHTML = 'Effect: DuoTone'
+      note.innerHTML = 'Effect: DuoTone<br>Press space to change'
       break
     case 3:
       ctx.setEffectScanlines()
-      note.innerHTML = 'Effect: Scanlines'
+      note.innerHTML = 'Effect: Scanlines<br>Press space to change'
       break
     case 4:
       ctx.setEffectNoise()
-      note.innerHTML = 'Effect: Noise'
+      note.innerHTML = 'Effect: Noise<br>Press space to change'
       break
     case 5:
       ctx.setEffectContrast()
-      note.innerHTML = 'Effect: Contrast'
+      note.innerHTML = 'Effect: Contrast<br>Press space to change'
       break
     case 6:
       ctx.removeEffect()
-      note.innerHTML = 'Effect: None'
+      note.innerHTML = 'Effect: None<br>Press space to change'
       break
   }
 }
