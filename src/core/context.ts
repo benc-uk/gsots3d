@@ -8,7 +8,7 @@ import * as CANNON from 'cannon-es'
 import * as twgl from 'twgl.js'
 import { mat4, vec3 } from 'gl-matrix'
 
-import { version } from '../../package.json'
+import * as packageJson from '../../package.json' assert { type: 'json' }
 import { getGl, UniformSet } from './gl.ts'
 import { RGB, XYZ, Tuples } from '../engine/tuples.ts'
 import { ModelCache, ProgramCache, TextureCache } from './cache.ts'
@@ -42,10 +42,10 @@ const MAX_LIGHTS = 24
 export class Context {
   private gl: WebGL2RenderingContext
   private started: boolean
-  private instances: Map<string, Instance> // Keyed on instance id
-  private instancesTrans: Map<string, Instance>
-  private instancesParticles: Map<string, Instance>
-  private cameras: Map<string, Camera>
+  private instances: Map<string, Instance> // prettier-ignore
+  private instancesTrans: Map<string, Instance> // prettier-ignore
+  private instancesParticles: Map<string, Instance> // prettier-ignore
+  private cameras: Map<string, Camera> // prettier-ignore
   private activeCameraName: string
   private _envmap?: EnvironmentMap
   private dynamicEnvMap?: DynamicEnvironmentMap
@@ -97,6 +97,8 @@ export class Context {
    */
   public blendMode: 'NORMAL' | 'ADDITIVE' = 'NORMAL'
 
+  public version: string = '0.0.0'
+
   // ==== Getters =============================================================
 
   /** Get the active camera */
@@ -140,8 +142,7 @@ export class Context {
     if (!noHud) this.hud = new HUD(<HTMLCanvasElement>gl.canvas)
 
     this.setLogLevel('info')
-
-    log.info(`👑 GSOTS-3D context created, v${version}`)
+    log.info(`👑 GSOTS-3D context created, v${packageJson.default.version}`)
   }
 
   /**

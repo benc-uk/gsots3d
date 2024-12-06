@@ -12,6 +12,6 @@
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
   // icons for this theme
   "material-icon-theme.files.associations": {
-    "*.mtl": "proto",
+    "*.mtl": "proto"
   }
 }

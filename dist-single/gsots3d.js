@@ -78,8 +78,7 @@ var require_loglevel = __commonJS({
             Function.prototype.apply.apply(console.log, [console, arguments]);
           }
         }
-        if (console.trace)
-          console.trace();
+        if (console.trace) console.trace();
       }
       function realMethod(methodName) {
         if (methodName === "debug") {
@@ -132,8 +131,7 @@ var require_loglevel = __commonJS({
         }
         function persistLevelIfPossible(levelNum) {
           var levelName = (logMethods[levelNum] || "silent").toUpperCase();
-          if (typeof window === undefinedType || !storageKey)
-            return;
+          if (typeof window === undefinedType || !storageKey) return;
           try {
             window.localStorage[storageKey] = levelName;
             return;
@@ -146,8 +144,7 @@ var require_loglevel = __commonJS({
         }
         function getPersistedLevel() {
           var storedLevel;
-          if (typeof window === undefinedType || !storageKey)
-            return;
+          if (typeof window === undefinedType || !storageKey) return;
           try {
             storedLevel = window.localStorage[storageKey];
           } catch (ignore) {
@@ -171,8 +168,7 @@ var require_loglevel = __commonJS({
           return storedLevel;
         }
         function clearPersistedLevel() {
-          if (typeof window === undefinedType || !storageKey)
-            return;
+          if (typeof window === undefinedType || !storageKey) return;
           try {
             window.localStorage.removeItem(storageKey);
           } catch (ignore) {
@@ -762,20 +758,13 @@ function createAttribsFromArrays(gl, arrays) {
   return attribs;
 }
 function getBytesPerValueForGLType(gl, type) {
-  if (type === BYTE$1)
-    return 1;
-  if (type === UNSIGNED_BYTE$2)
-    return 1;
-  if (type === SHORT$1)
-    return 2;
-  if (type === UNSIGNED_SHORT$2)
-    return 2;
-  if (type === INT$2)
-    return 4;
-  if (type === UNSIGNED_INT$2)
-    return 4;
-  if (type === FLOAT$2)
-    return 4;
+  if (type === BYTE$1) return 1;
+  if (type === UNSIGNED_BYTE$2) return 1;
+  if (type === SHORT$1) return 2;
+  if (type === UNSIGNED_SHORT$2) return 2;
+  if (type === INT$2) return 4;
+  if (type === UNSIGNED_INT$2) return 4;
+  if (type === FLOAT$2) return 4;
   return 0;
 }
 var positionKeys = ["position", "positions", "a_position"];
@@ -4503,14 +4492,13 @@ var EPSILON = 1e-6;
 var ARRAY_TYPE = typeof Float32Array !== "undefined" ? Float32Array : Array;
 var RANDOM = Math.random;
 var degree = Math.PI / 180;
-if (!Math.hypot)
-  Math.hypot = function() {
-    var y = 0, i = arguments.length;
-    while (i--) {
-      y += arguments[i] * arguments[i];
-    }
-    return Math.sqrt(y);
-  };
+if (!Math.hypot) Math.hypot = function() {
+  var y = 0, i = arguments.length;
+  while (i--) {
+    y += arguments[i] * arguments[i];
+  }
+  return Math.sqrt(y);
+};
 
 // node_modules/gl-matrix/esm/mat3.js
 function create() {
@@ -6532,10 +6520,8 @@ function fromMat3(out, m) {
     out[2] = (m[1] - m[3]) * fRoot;
   } else {
     var i = 0;
-    if (m[4] > m[0])
-      i = 1;
-    if (m[8] > m[i * 3 + i])
-      i = 2;
+    if (m[4] > m[0]) i = 1;
+    if (m[8] > m[i * 3 + i]) i = 2;
     var j = (i + 1) % 3;
     var k = (i + 2) % 3;
     fRoot = Math.sqrt(m[i * 3 + i] - m[j * 3 + j] - m[k * 3 + k] + 1);
@@ -6591,8 +6577,7 @@ var rotationTo = function() {
     var dot4 = dot(a2, b2);
     if (dot4 < -0.999999) {
       cross(tmpvec3, xUnitVec3, a2);
-      if (len(tmpvec3) < 1e-6)
-        cross(tmpvec3, yUnitVec3, a2);
+      if (len(tmpvec3) < 1e-6) cross(tmpvec3, yUnitVec3, a2);
       normalize(tmpvec3, tmpvec3);
       setAxisAngle(out, tmpvec3, Math.PI);
       return out;
@@ -6639,7 +6624,73 @@ var setAxes = function() {
 }();
 
 // package.json
-var version = "0.0.5-alpha.14";
+var package_default = {
+  name: "gsots3d",
+  version: "0.0.6-alpha.1",
+  description: "Getting S**t On The Screen in 3D. A library for doing 3D graphics in the browser.",
+  author: "Ben Coleman",
+  license: "MIT",
+  homepage: "https://code.benco.io/gsots3d/docs",
+  type: "module",
+  publishConfig: {
+    "@benc-uk:registry": "https://npm.pkg.github.com"
+  },
+  repository: {
+    type: "git",
+    url: "https://github.com/benc-uk/gsots3d.git"
+  },
+  exports: {
+    ".": "./dist/index.js",
+    "./parsers": "./dist/parsers/index.js"
+  },
+  browser: {
+    ".": "./dist-single/gsots3d.js"
+  },
+  files: [
+    "dist/",
+    "readme.md"
+  ],
+  keywords: [
+    "webgl",
+    "graphics",
+    "3d",
+    "twgl",
+    "typescript"
+  ],
+  scripts: {
+    lint: "eslint --ext .ts src && prettier --check src && prettier --check shaders",
+    "lint-fix": "eslint --ext .ts src --fix && prettier --write src && prettier --write shaders",
+    check: "tsc",
+    build: "tsc && tsup",
+    "build:all": "npm run build && npm run build-single && npm run docs",
+    watch: "tsc && npm run build && run-when-changed --watch 'src/**' --watch 'shaders/**' --exec 'npm run build'",
+    "build-single": "tsc && tsup --config tsup.config-single.js",
+    "watch-single": "tsc && npm run build-single && run-when-changed --watch 'src/**' --watch 'shaders/**' --exec 'npm run build-single'",
+    clean: "rm -rf dist docs dist-single",
+    docs: "typedoc --out docs --gitRevision main ./src/",
+    examples: "vite --port 3000 --host 0.0.0.0 ./examples/",
+    prepare: "npm run build"
+  },
+  devDependencies: {
+    "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "@typescript-eslint/parser": "^8.17.0",
+    "esbuild-plugin-glsl": "^1.2.2",
+    eslint: "^9.16.0",
+    prettier: "^3.4.2",
+    "prettier-plugin-glsl": "^0.2.0",
+    "run-when-changed": "^2.1.0",
+    tsup: "^8.3.5",
+    typedoc: "^0.27.3",
+    typescript: "^5.7.2",
+    vite: "^6.0.3"
+  },
+  dependencies: {
+    "cannon-es": "^0.20.0",
+    "gl-matrix": "^3.4.3",
+    loglevel: "^1.9.2",
+    "twgl.js": "^5.5.4"
+  }
+};
 
 // node_modules/cannon-es/dist/cannon-es.js
 var Mat3 = class _Mat3 {
@@ -9360,8 +9411,7 @@ var Body = class _Body extends EventTarget {
    */
   updateInertiaWorld(force) {
     const I = this.invInertia;
-    if (I.x === I.y && I.y === I.z && !force)
-      ;
+    if (I.x === I.y && I.y === I.z && !force) ;
     else {
       const m1 = uiw_m1;
       const m2 = uiw_m2;
@@ -12639,8 +12689,8 @@ var Camera = class {
    * @returns Point in world space
    */
   getFrustumCenter(scaleFar = 1) {
-    const f = this.frustumCornersWorld(scaleFar);
-    return [f.center[0], f.center[1], f.center[2]];
+    const frustum2 = this.frustumCornersWorld(scaleFar);
+    return [frustum2.center[0], frustum2.center[1], frustum2.center[2]];
   }
   /**
    * Get the corners of the view frustum for this camera in world space
@@ -12712,12 +12762,10 @@ var Camera = class {
     this.fpTurnSpeed = turnSpeed;
     this.fpMoveSpeed = moveSpeed;
     this.fpFly = fly;
-    if (this.fpHandlersAdded)
-      return;
+    if (this.fpHandlersAdded) return;
     const gl = getGl();
     gl?.canvas.addEventListener("click", async () => {
-      if (!this.fpMode || !this.active)
-        return;
+      if (!this.fpMode || !this.active) return;
       if (document.pointerLockElement) {
         document.exitPointerLock();
       } else {
@@ -12728,32 +12776,26 @@ var Camera = class {
       if (!document.pointerLockElement) {
         return;
       }
-      if (!this.fpMode || !this.active)
-        return;
+      if (!this.fpMode || !this.active) return;
       this.fpAngleY += e.movementX * -this.fpTurnSpeed;
       this.fpAngleX += e.movementY * -this.fpTurnSpeed;
-      if (this.fpAngleX > this.maxAngleUp)
-        this.fpAngleX = this.maxAngleUp;
-      if (this.fpAngleX < this.maxAngleDown)
-        this.fpAngleX = this.maxAngleDown;
+      if (this.fpAngleX > this.maxAngleUp) this.fpAngleX = this.maxAngleUp;
+      if (this.fpAngleX < this.maxAngleDown) this.fpAngleX = this.maxAngleDown;
       const dZ = -Math.cos(this.fpAngleY) * 1;
       const dX = -Math.sin(this.fpAngleY) * 1;
       const dY = Math.sin(this.fpAngleX) * 1;
       this.lookAt = [this.position[0] + dX, this.position[1] + dY, this.position[2] + dZ];
     });
     window.addEventListener("keydown", (e) => {
-      if (!this.fpMode || !this.active)
-        return;
+      if (!this.fpMode || !this.active) return;
       this.keysDown.add(e.key);
     });
     window.addEventListener("keyup", (e) => {
-      if (!this.fpMode || !this.active)
-        return;
+      if (!this.fpMode || !this.active) return;
       this.keysDown.delete(e.key);
     });
     window.addEventListener("touchstart", (e) => {
-      if (!this.fpMode || !this.active)
-        return;
+      if (!this.fpMode || !this.active) return;
       if (e.touches[0].clientX > window.innerWidth / 2) {
         this.touches[0] = e.touches[0];
       }
@@ -12767,25 +12809,20 @@ var Camera = class {
       }
     });
     window.addEventListener("touchend", () => {
-      if (!this.fpMode || !this.active)
-        return;
+      if (!this.fpMode || !this.active) return;
       this.touches = [];
       this.keysDown.clear();
     });
     window.addEventListener("touchmove", (e) => {
-      if (!this.fpMode || !this.active)
-        return;
-      if (this.touches.length === 0)
-        return;
+      if (!this.fpMode || !this.active) return;
+      if (this.touches.length === 0) return;
       const touch = e.touches[0];
       const dx = touch.clientX - this.touches[0].clientX;
       const dy = touch.clientY - this.touches[0].clientY;
       this.fpAngleY += dx * -this.fpTurnSpeed * touch.force * 4;
       this.fpAngleX += dy * -this.fpTurnSpeed * touch.force * 4;
-      if (this.fpAngleX > this.maxAngleUp)
-        this.fpAngleX = this.maxAngleUp;
-      if (this.fpAngleX < this.maxAngleDown)
-        this.fpAngleX = this.maxAngleDown;
+      if (this.fpAngleX > this.maxAngleUp) this.fpAngleX = this.maxAngleUp;
+      if (this.fpAngleX < this.maxAngleDown) this.fpAngleX = this.maxAngleDown;
       this.touches[0] = touch;
     });
     this.fpHandlersAdded = true;
@@ -12809,10 +12846,8 @@ var Camera = class {
    * Called every frame to update the camera, currently only used for movement in FP mode
    */
   update() {
-    if (!this.fpMode || !this.active)
-      return;
-    if (this.keysDown.size === 0)
-      return;
+    if (!this.fpMode || !this.active) return;
+    if (this.keysDown.size === 0) return;
     const dZ = -Math.cos(this.fpAngleY) * this.fpMoveSpeed;
     const dY = Math.sin(this.fpAngleX) * this.fpMoveSpeed;
     const dX = -Math.sin(this.fpAngleY) * this.fpMoveSpeed;
@@ -12821,8 +12856,7 @@ var Camera = class {
         case "ArrowUp":
         case "w":
           this.position[0] += dX;
-          if (this.fpFly)
-            this.position[1] += dY;
+          if (this.fpFly) this.position[1] += dY;
           this.position[2] += dZ;
           this.lookAt[0] += dX;
           this.lookAt[2] += dZ;
@@ -12830,8 +12864,7 @@ var Camera = class {
         case "ArrowDown":
         case "s":
           this.position[0] -= dX;
-          if (this.fpFly)
-            this.position[1] -= dY;
+          if (this.fpFly) this.position[1] -= dY;
           this.position[2] -= dZ;
           this.lookAt[0] -= dX;
           this.lookAt[2] -= dZ;
@@ -13149,8 +13182,7 @@ var EnvironmentMap = class {
    * @param camera Camera
    */
   render(viewMatrix, projMatrix, camera) {
-    if (!this.renderAsBackground)
-      return;
+    if (!this.renderAsBackground) return;
     this.gl.useProgram(this.programInfo.program);
     this.gl.disable(this.gl.DEPTH_TEST);
     const uniforms = {
@@ -13449,8 +13481,7 @@ var Node = class {
    * This is called automatically by the engine, but can be called manually if needed
    */
   updateFromPhysicsBody() {
-    if (!this._physicsBody)
-      return;
+    if (!this._physicsBody) return;
     this.position = Tuples.fromCannon(this._physicsBody.position);
     this.setQuaternion(Tuples.fromCannon(this._physicsBody.quaternion));
     for (const handler of this.eventHandlers.get(EVENT_POSITION) ?? []) {
@@ -13496,8 +13527,7 @@ var Instance = class extends Node {
       this.position = x;
       return;
     }
-    if (y === void 0 || z === void 0)
-      throw new Error("setPosition requires either an array or 3 numbers");
+    if (y === void 0 || z === void 0) throw new Error("setPosition requires either an array or 3 numbers");
     this.position = [x, y, z];
   }
   /**
@@ -13506,12 +13536,9 @@ var Instance = class extends Node {
    * @param {UniformSet} uniforms - Map of uniforms to pass to shader
    */
   render(gl, uniforms, programOverride) {
-    if (!this.enabled)
-      return;
-    if (!this.renderable)
-      return;
-    if (!gl)
-      return;
+    if (!this.enabled) return;
+    if (!this.renderable) return;
+    if (!gl) return;
     if (!this.customProgramName && programOverride && !this.castShadow) {
       return;
     }
@@ -13527,8 +13554,7 @@ var Instance = class extends Node {
     uniforms.u_flipTextureX = this.flipTextureX;
     uniforms.u_flipTextureY = this.flipTextureY;
     uniforms.u_receiveShadow = this.receiveShadow;
-    if (this.uniformOverrides)
-      uniforms = { ...uniforms, ...this.uniformOverrides };
+    if (this.uniformOverrides) uniforms = { ...uniforms, ...this.uniformOverrides };
     this.renderable.render(gl, uniforms, this.material, programOverride);
   }
 };
@@ -13591,6 +13617,7 @@ var Material2 = class _Material {
    * Create a new default material with diffuse white colour, all all default properties
    */
   constructor() {
+    this.additiveBlend = false;
     this.ambient = [1, 1, 1];
     this.diffuse = [1, 1, 1];
     this.specular = [0, 0, 0];
@@ -13598,7 +13625,6 @@ var Material2 = class _Material {
     this.shininess = 20;
     this.opacity = 1;
     this.reflectivity = 0;
-    this.unshaded = false;
     this.alphaCutoff = 0;
     this.diffuseTex = TextureCache.defaultWhite;
     this.specularTex = TextureCache.defaultWhite;
@@ -13738,7 +13764,6 @@ var Material2 = class _Material {
       specularTex: this.specularTex ? this.specularTex : null,
       normalTex: this.normalTex ? this.normalTex : null,
       hasNormalTex: this.normalTex ? true : false,
-      unshaded: this.unshaded,
       alphaCutoff: this.alphaCutoff
     };
   }
@@ -13757,8 +13782,8 @@ var Material2 = class _Material {
     m.diffuseTex = this.diffuseTex;
     m.specularTex = this.specularTex;
     m.normalTex = this.normalTex;
-    m.unshaded = this.unshaded;
     m.alphaCutoff = this.alphaCutoff;
+    m.additiveBlend = this.additiveBlend;
     return m;
   }
 };
@@ -13778,8 +13803,7 @@ var Primitive = class {
    * this renderable.
    */
   render(gl, uniforms, materialOverride, programOverride) {
-    if (!this.bufferInfo)
-      return;
+    if (!this.bufferInfo) return;
     const programInfo = programOverride || this.programInfo;
     gl.useProgram(programInfo.program);
     if (materialOverride === void 0) {
@@ -14354,18 +14378,12 @@ var Model = class _Model {
         const x = g.data.position[i];
         const y = g.data.position[i + 1];
         const z = g.data.position[i + 2];
-        if (x < model._boundingBox[0])
-          model._boundingBox[0] = x;
-        if (y < model._boundingBox[1])
-          model._boundingBox[1] = y;
-        if (z < model._boundingBox[2])
-          model._boundingBox[2] = z;
-        if (x > model._boundingBox[3])
-          model._boundingBox[3] = x;
-        if (y > model._boundingBox[4])
-          model._boundingBox[4] = y;
-        if (z > model._boundingBox[5])
-          model._boundingBox[5] = z;
+        if (x < model._boundingBox[0]) model._boundingBox[0] = x;
+        if (y < model._boundingBox[1]) model._boundingBox[1] = y;
+        if (z < model._boundingBox[2]) model._boundingBox[2] = z;
+        if (x > model._boundingBox[3]) model._boundingBox[3] = x;
+        if (y > model._boundingBox[4]) model._boundingBox[4] = y;
+        if (z > model._boundingBox[5]) model._boundingBox[5] = z;
       }
       import_loglevel6.default.info(`\u265F\uFE0F Model '${objFilename}' part '${g.material}'`);
       const bufferInfo = createBufferInfoFromArrays(gl, g.data);
@@ -14392,24 +14410,17 @@ var Model = class _Model {
     model.materials.__default.diffuse = [0.1, 0.6, 0.9];
     for (const [partName, builderPart] of builder.parts) {
       const partBuffers = builderPart.build(gl);
-      if (!partBuffers)
-        continue;
+      if (!partBuffers) continue;
       const bb = builderPart.boundingBox;
-      if (bb[0] < model._boundingBox[0])
-        model._boundingBox[0] = bb[0];
-      if (bb[1] < model._boundingBox[1])
-        model._boundingBox[1] = bb[1];
-      if (bb[2] < model._boundingBox[2])
-        model._boundingBox[2] = bb[2];
-      if (bb[3] > model._boundingBox[3])
-        model._boundingBox[3] = bb[3];
-      if (bb[4] > model._boundingBox[4])
-        model._boundingBox[4] = bb[4];
-      if (bb[5] > model._boundingBox[5])
-        model._boundingBox[5] = bb[5];
+      if (bb[0] < model._boundingBox[0]) model._boundingBox[0] = bb[0];
+      if (bb[1] < model._boundingBox[1]) model._boundingBox[1] = bb[1];
+      if (bb[2] < model._boundingBox[2]) model._boundingBox[2] = bb[2];
+      if (bb[3] > model._boundingBox[3]) model._boundingBox[3] = bb[3];
+      if (bb[4] > model._boundingBox[4]) model._boundingBox[4] = bb[4];
+      if (bb[5] > model._boundingBox[5]) model._boundingBox[5] = bb[5];
       model.triCount += builderPart.triangleCount;
       model.parts.push(new ModelPart(partBuffers, partName));
-      model.materials[partName] = builder.materials.get(partName) ?? model.materials.__default;
+      model.materials[partName] = builder.parts.get(partName)?.material ?? model.materials.__default;
     }
     import_loglevel6.default.debug(`\u265F\uFE0F Model '${name}' built with ${model.parts.length} parts & ${model.triCount} triangles`);
     return model;
@@ -14469,8 +14480,7 @@ var HUD = class {
   constructor(canvas) {
     this.debug = false;
     const parent = canvas.parentElement;
-    if (!parent)
-      throw new Error("\u{1F4A5} Canvas must have a parent element");
+    if (!parent) throw new Error("\u{1F4A5} Canvas must have a parent element");
     this.canvas = canvas;
     this.hud = document.createElement("div");
     this.hud.classList.add("gsots3d-hud");
@@ -14487,7 +14497,7 @@ var HUD = class {
     this.addHUDItem(this.debugDiv);
     this.loadingDiv = document.createElement("div");
     this.loadingDiv.classList.add("gsots3d-loading");
-    this.loadingDiv.innerHTML = `\u{1F4BE} Loading...<br><br><div style='font-size:1.5vw'>GSOTS-3D v${version}</div>`;
+    this.loadingDiv.innerHTML = `\u{1F4BE} Loading...<br><br><div style='font-size:1.5vw'>GSOTS-3D v${package_default.version}</div>`;
     this.loadingDiv.style.font = "normal 3vw sans-serif";
     this.loadingDiv.style.color = "#ccc";
     this.loadingDiv.style.position = "absolute";
@@ -14524,7 +14534,7 @@ var HUD = class {
   render(debug2 = false, camera) {
     if (debug2) {
       this.debugDiv.innerHTML = `
-        <b>GSOTS-3D v${version}</b><br><br>
+        <b>GSOTS-3D v${package_default.version}</b><br><br>
         <b>Camera: </b>${camera.toString()}<br>
         <b>Instances: </b>${Stats.instances}<br>
         <b>Draw calls: </b>${Stats.drawCallsPerFrame}<br>
@@ -14765,7 +14775,7 @@ ${fragShader}`);
 };
 
 // shaders/phong/glsl.frag
-var glsl_default5 = "#version 300 es\n\n// ============================================================================\n// Phong fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// ===== Constants ============================================================\n\nconst int MAX_LIGHTS = 24;\nconst int MAX_SHADOWS = 8;\nconst float MAX_SHAD_A = 0.125;\n\n// Got this from http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#poisson-sampling\nvec3 poissonDisk[8] = vec3[](\n  vec3(-0.94201624, -0.39906216, -0.4684316),\n  vec3(0.94558609, -0.76890725, -0.34478877),\n  vec3(-0.094184101, -0.9293887, -0.3048823),\n  vec3(0.34495938, 0.2938776, -0.001735733),\n  vec3(-0.91588581, 0.45771432, -0.087759815),\n  vec3(-0.81544232, -0.87912464, -0.03352997),\n  vec3(-0.38277543, 0.27676845, -0.9485365),\n  vec3(-0.58723171, -0.73007023, -0.22162315)\n);\n\n// ===== Structs ==============================================================\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n  bool enabled;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  float reflectivity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n  sampler2D normalTex;\n  bool hasNormalTex;\n  bool unshaded;\n  float alphaCutoff;\n};\n\n// Inputs from vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\nin vec4 v_shadowCoord;\n\n// Some global uniforms\nuniform vec3 u_camPos;\nuniform float u_gamma;\nuniform bool u_flipTextureX;\nuniform bool u_flipTextureY;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n// Reflection map isn't part of the material struct for complex reasons\nuniform samplerCube u_reflectionMap;\n// Shadows\nuniform highp sampler2DShadow u_shadowMap;\n// uniform float u_shadowScatter;  // REMOVED FOR NOW\nuniform bool u_receiveShadow;\n\n// Global texture coords shared between functions\nvec2 texCoord;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\n// ===== Helper functions =====================================================\n\n// Simple mixer\nvec4 mix4(vec4 a, vec4 b, float mix) {\n  return a * (1.0 - mix) + b * mix;\n}\n\n// Function to help with get values from the shadow map\nfloat shadowMapSample(highp sampler2DShadow map, vec3 coord) {\n  // As WebGL 2 does not support GL_CLAMP_TO_BORDER or GL_TEXTURE_BORDER_COLOR, we need to do this :(\n  if (coord.x < 0.0 || coord.x > 1.0 || coord.y < 0.0 || coord.y > 1.0) {\n    return 1.0;\n  }\n\n  return texture(map, coord);\n}\n\n// Shade a fragment using a directional light source\nvec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(-light.direction);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // Shadow map lookup\n  vec3 projCoords = v_shadowCoord.xyz / v_shadowCoord.w * 0.5 + 0.5;\n\n  // REMOVED FOR NOW - PCF for shadows using 8 samples of a poisson disk\n  // float shadow = u_receiveShadow ? 0.0 : 1.0;\n  // float scatter = u_shadowScatter / 100.0;\n  // for (int i = u_receiveShadow ? 0 : MAX_SHADOWS; i < MAX_SHADOWS; i++) {\n  //   vec3 offset = poissonDisk[i] * scatter;\n  //   shadow += shadowMapSample(u_shadowMap, projCoords + offset) * MAX_SHAD_A;\n  // }\n\n  float shadow = u_receiveShadow ? shadowMapSample(u_shadowMap, projCoords) : 1.0;\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * shadow;\n  vec3 specular = light.colour * spec * specularCol * shadow;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n// Shade a fragment using a positional light source\nvec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(light.position - v_position.xyz);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // Light attenuation, see: https://learnopengl.com/Lighting/Light-casters\n  float dist = length(light.position - v_position.xyz);\n  float attenuation = 1.0 / (light.constant + light.linear * dist + light.quad * (dist * dist));\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol * attenuation;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * attenuation;\n  vec3 specular = light.colour * spec * specularCol * attenuation;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n// ===== Main shader ==========================================================\n\nvoid main() {\n  vec3 V = normalize(u_camPos - v_position.xyz);\n\n  // Flip texture coords if needed\n  texCoord = u_flipTextureY ? vec2(v_texCoord.x, 1.0 - v_texCoord.y) : v_texCoord;\n  texCoord = u_flipTextureX ? vec2(1.0 - texCoord.x, texCoord.y) : texCoord;\n\n  // So parts of textures can be transparent\n  vec4 texel = texture(u_mat.diffuseTex, texCoord);\n  if (texel.a < u_mat.alphaCutoff) {\n    discard;\n  }\n\n  vec3 N = normalize(v_normal);\n\n  // Normal mapping, this is expensive so only do it if we have a normal map\n  if (u_mat.hasNormalTex) {\n    vec3 normMap = texture(u_mat.normalTex, texCoord).xyz * 2.0 - 1.0;\n\n    vec3 Q1 = dFdx(v_position.xyz);\n    vec3 Q2 = dFdy(v_position.xyz);\n    vec2 st1 = dFdx(texCoord);\n    vec2 st2 = dFdy(texCoord);\n\n    vec3 T = -normalize(Q1 * st2.t - Q2 * st1.t);\n    vec3 B = normalize(cross(N, T));\n    mat3 TBN = mat3(T, B, N);\n\n    N = normalize(TBN * normMap);\n  }\n\n  vec4 outColorPart;\n  if (u_mat.unshaded) {\n    // Skip lighting/shading and just use the texture if unshaded\n    vec3 diffuseTexCol = vec3(texture(u_mat.diffuseTex, texCoord)) * u_mat.diffuse;\n    outColorPart = vec4(diffuseTexCol, 1.0);\n  } else {\n    // Handle the main directional light, only one of these\n    outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, N, V);\n\n    // Add positional lights\n    for (int i = 0; i < u_lightsPosCount; i++) {\n      outColorPart += shadePosLight(u_lightsPos[i], u_mat, N, V);\n    }\n  }\n\n  // Add emissive component\n  float emissiveAlpha = u_mat.emissive.r + u_mat.emissive.g + u_mat.emissive.b > 0.0 ? 1.0 : 0.0;\n  outColorPart += vec4(u_mat.emissive, emissiveAlpha);\n\n  // Get reflection vector and sample reflection texture\n  vec3 R = reflect(-V, N);\n  vec4 reflectCol = vec4(texture(u_reflectionMap, R).rgb, 1.0);\n\n  // Add reflection component, not sure if this is correct, looks ok\n  outColorPart = mix4(outColorPart, reflectCol, u_mat.reflectivity);\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  outColorPart.rgb = pow(outColorPart.rgb, vec3(1.0 / u_gamma));\n\n  outColour = outColorPart;\n}\n";
+var glsl_default5 = "#version 300 es\n\n// ============================================================================\n// Phong fragment shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// ===== Constants ============================================================\n\nconst int MAX_LIGHTS = 24;\nconst int MAX_SHADOWS = 8;\nconst float MAX_SHAD_A = 0.125;\n\n// Got this from http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#poisson-sampling\nvec3 poissonDisk[8] = vec3[](\n  vec3(-0.94201624, -0.39906216, -0.4684316),\n  vec3(0.94558609, -0.76890725, -0.34478877),\n  vec3(-0.094184101, -0.9293887, -0.3048823),\n  vec3(0.34495938, 0.2938776, -0.001735733),\n  vec3(-0.91588581, 0.45771432, -0.087759815),\n  vec3(-0.81544232, -0.87912464, -0.03352997),\n  vec3(-0.38277543, 0.27676845, -0.9485365),\n  vec3(-0.58723171, -0.73007023, -0.22162315)\n);\n\n// ===== Structs ==============================================================\n\nstruct LightDir {\n  vec3 direction;\n  vec3 colour;\n  vec3 ambient;\n};\n\nstruct LightPos {\n  vec3 position;\n  vec3 colour;\n  vec3 ambient;\n  float constant;\n  float linear;\n  float quad;\n  bool enabled;\n};\n\nstruct Material {\n  vec3 ambient;\n  vec3 diffuse;\n  vec3 specular;\n  vec3 emissive;\n  float shininess;\n  float opacity;\n  float reflectivity;\n  sampler2D diffuseTex;\n  sampler2D specularTex;\n  sampler2D normalTex;\n  bool hasNormalTex;\n  float alphaCutoff;\n};\n\n// Inputs from vertex shader\nin vec3 v_normal;\nin vec2 v_texCoord;\nin vec4 v_position;\nin vec4 v_shadowCoord;\n\n// Some global uniforms\nuniform vec3 u_camPos;\nuniform float u_gamma;\nuniform bool u_flipTextureX;\nuniform bool u_flipTextureY;\n\n// Main lights and material uniforms\nuniform Material u_mat;\nuniform LightDir u_lightDirGlobal;\nuniform LightPos u_lightsPos[MAX_LIGHTS];\nuniform int u_lightsPosCount;\n// Reflection map isn't part of the material struct for complex reasons\nuniform samplerCube u_reflectionMap;\n// Shadows\nuniform highp sampler2DShadow u_shadowMap;\n// uniform float u_shadowScatter;  // REMOVED FOR NOW\nuniform bool u_receiveShadow;\n\n// Global texture coords shared between functions\nvec2 texCoord;\n\n// Output colour of this pixel/fragment\nout vec4 outColour;\n\n// ===== Helper functions =====================================================\n\n// Simple mixer\nvec4 mix4(vec4 a, vec4 b, float mix) {\n  return a * (1.0 - mix) + b * mix;\n}\n\n// Function to help with get values from the shadow map\nfloat shadowMapSample(highp sampler2DShadow map, vec3 coord) {\n  // As WebGL 2 does not support GL_CLAMP_TO_BORDER or GL_TEXTURE_BORDER_COLOR, we need to do this :(\n  if (coord.x < 0.0 || coord.x > 1.0 || coord.y < 0.0 || coord.y > 1.0) {\n    return 1.0;\n  }\n\n  return texture(map, coord);\n}\n\n// Shade a fragment using a directional light source\nvec4 shadeDirLight(LightDir light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(-light.direction);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // Shadow map lookup\n  vec3 projCoords = v_shadowCoord.xyz / v_shadowCoord.w * 0.5 + 0.5;\n\n  // REMOVED FOR NOW - PCF for shadows using 8 samples of a poisson disk\n  // float shadow = u_receiveShadow ? 0.0 : 1.0;\n  // float scatter = u_shadowScatter / 100.0;\n  // for (int i = u_receiveShadow ? 0 : MAX_SHADOWS; i < MAX_SHADOWS; i++) {\n  //   vec3 offset = poissonDisk[i] * scatter;\n  //   shadow += shadowMapSample(u_shadowMap, projCoords + offset) * MAX_SHAD_A;\n  // }\n\n  float shadow = u_receiveShadow ? shadowMapSample(u_shadowMap, projCoords) : 1.0;\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * shadow;\n  vec3 specular = light.colour * spec * specularCol * shadow;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n// Shade a fragment using a positional light source\nvec4 shadePosLight(LightPos light, Material mat, vec3 N, vec3 V) {\n  vec3 L = normalize(light.position - v_position.xyz);\n  vec3 H = normalize(L + V);\n\n  vec3 diffuseCol = vec3(texture(mat.diffuseTex, texCoord)) * mat.diffuse;\n  vec3 specularCol = vec3(texture(mat.specularTex, texCoord)) * mat.specular;\n\n  float diff = dot(N, L);\n  float spec = diff > 0.0 ? pow(max(dot(N, H), 0.0), mat.shininess) : 0.0;\n\n  // Light attenuation, see: https://learnopengl.com/Lighting/Light-casters\n  float dist = length(light.position - v_position.xyz);\n  float attenuation = 1.0 / (light.constant + light.linear * dist + light.quad * (dist * dist));\n\n  vec3 ambient = light.ambient * mat.ambient * diffuseCol * attenuation;\n  vec3 diffuse = light.colour * max(diff, 0.0) * diffuseCol * attenuation;\n  vec3 specular = light.colour * spec * specularCol * attenuation;\n\n  // Return a vec4 to support transparency, note specular is not affected by opacity\n  return vec4(ambient + diffuse, mat.opacity / float(u_lightsPosCount + 1)) + vec4(specular, spec);\n}\n\n// ===== Main shader ==========================================================\n\nvoid main() {\n  vec3 V = normalize(u_camPos - v_position.xyz);\n\n  // Flip texture coords if needed\n  texCoord = u_flipTextureY ? vec2(v_texCoord.x, 1.0 - v_texCoord.y) : v_texCoord;\n  texCoord = u_flipTextureX ? vec2(1.0 - texCoord.x, texCoord.y) : texCoord;\n\n  // So parts of textures can be transparent\n  vec4 texel = texture(u_mat.diffuseTex, texCoord);\n  if (texel.a < u_mat.alphaCutoff) {\n    discard;\n  }\n\n  vec3 N = normalize(v_normal);\n\n  // Normal mapping, this is expensive so only do it if we have a normal map\n  if (u_mat.hasNormalTex) {\n    vec3 normMap = texture(u_mat.normalTex, texCoord).xyz * 2.0 - 1.0;\n\n    vec3 Q1 = dFdx(v_position.xyz);\n    vec3 Q2 = dFdy(v_position.xyz);\n    vec2 st1 = dFdx(texCoord);\n    vec2 st2 = dFdy(texCoord);\n\n    vec3 T = -normalize(Q1 * st2.t - Q2 * st1.t);\n    vec3 B = normalize(cross(N, T));\n    mat3 TBN = mat3(T, B, N);\n\n    N = normalize(TBN * normMap);\n  }\n\n  vec4 outColorPart;\n\n  // Handle the main directional light, only one of these\n  outColorPart = shadeDirLight(u_lightDirGlobal, u_mat, N, V);\n\n  // Add positional lights\n  for (int i = 0; i < u_lightsPosCount; i++) {\n    outColorPart += shadePosLight(u_lightsPos[i], u_mat, N, V);\n  }\n\n  // Add emissive component\n  float emissiveAlpha = u_mat.emissive.r + u_mat.emissive.g + u_mat.emissive.b > 0.0 ? 1.0 : 0.0;\n  outColorPart += vec4(u_mat.emissive, emissiveAlpha);\n\n  // Get reflection vector and sample reflection texture\n  vec3 R = reflect(-V, N);\n  vec4 reflectCol = vec4(texture(u_reflectionMap, R).rgb, 1.0);\n\n  // Add reflection component, not sure if this is correct, looks ok\n  outColorPart = mix4(outColorPart, reflectCol, u_mat.reflectivity);\n\n  // Gamma correction, as GL_FRAMEBUFFER_SRGB is not supported on WebGL\n  outColorPart.rgb = pow(outColorPart.rgb, vec3(1.0 / u_gamma));\n\n  outColour = outColorPart;\n}\n";
 
 // shaders/phong/glsl.vert
 var glsl_default6 = "#version 300 es\n\n// ============================================================================\n// Phong vertex shader\n// Ben Coleman, 2023\n// ============================================================================\n\nprecision highp float;\n\n// Input attributes from buffers\nin vec4 position;\nin vec3 normal;\nin vec2 texcoord;\n\nuniform mat4 u_worldViewProjection;\nuniform mat4 u_worldInverseTranspose;\nuniform mat4 u_world;\nuniform mat4 u_shadowMatrix;\n\n// Output varying's to pass to fragment shader\nout vec2 v_texCoord;\nout vec3 v_normal;\nout vec4 v_position;\nout vec4 v_shadowCoord;\n\nvoid main() {\n  v_texCoord = texcoord;\n  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;\n  v_position = u_world * position;\n  v_shadowCoord = u_shadowMatrix * v_position;\n\n  gl_Position = u_worldViewProjection * position;\n}\n";
@@ -14790,6 +14800,12 @@ var Context = class _Context {
     };
     /** Backface culling */
     this.disableCulling = false;
+    /**
+     * Blend mode for non-opaque instances
+     * 'NORMAL' is the default, 'ADDITIVE' is useful for particles and glowing effects
+     */
+    this.blendMode = "NORMAL";
+    this.version = "0.0.0";
     this.gl = gl;
     this.started = false;
     this.debug = false;
@@ -14807,10 +14823,9 @@ var Context = class _Context {
     this.cameras.set("default", defaultCamera);
     this._camera = defaultCamera;
     this.activeCameraName = "default";
-    if (!noHud)
-      this.hud = new HUD(gl.canvas);
+    if (!noHud) this.hud = new HUD(gl.canvas);
     this.setLogLevel("info");
-    import_loglevel7.default.info(`\u{1F451} GSOTS-3D context created, v${version}`);
+    import_loglevel7.default.info(`\u{1F451} GSOTS-3D context created, v${package_default.version}`);
   }
   // ==== Getters =============================================================
   /** Get the active camera */
@@ -14856,8 +14871,7 @@ var Context = class _Context {
    * @param now Current time in milliseconds
    */
   async render(now) {
-    if (!this.gl)
-      return;
+    if (!this.gl) return;
     Stats.updateTime(now);
     this.camera.update();
     if (this.dynamicEnvMap) {
@@ -14893,8 +14907,7 @@ var Context = class _Context {
     Stats.resetPerFrame();
     Stats.frameCount++;
     this.renderPass = 0;
-    if (this.started)
-      requestAnimationFrame(this.render);
+    if (this.started) requestAnimationFrame(this.render);
   }
   /**
    * Render the scene from the given camera, used internally for rendering both the main view,
@@ -14902,8 +14915,7 @@ var Context = class _Context {
    * @param camera
    */
   renderWithCamera(camera, programOverride) {
-    if (!this.gl)
-      return;
+    if (!this.gl) return;
     this.renderPass++;
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
     const camMatrix = camera.matrix;
@@ -14932,10 +14944,8 @@ var Context = class _Context {
     uniforms.u_lightDirGlobal = this.globalLight.uniforms;
     if (this.lights.length > MAX_LIGHTS) {
       this.lights.sort((lightA, lightB) => {
-        if (!lightA.enabled)
-          return 1;
-        if (!lightB.enabled)
-          return -1;
+        if (!lightA.enabled) return 1;
+        if (!lightB.enabled) return -1;
         const ad = vec3_exports.distance(lightA.position, this.camera.position);
         const bd = vec3_exports.distance(lightB.position, this.camera.position);
         return ad - bd;
@@ -14943,23 +14953,18 @@ var Context = class _Context {
     }
     let lightCount = 0;
     for (const light of this.lights) {
-      if (lightCount >= MAX_LIGHTS)
-        break;
-      if (!light.enabled)
-        continue;
+      if (lightCount >= MAX_LIGHTS) break;
+      if (!light.enabled) continue;
       uniforms[`u_lightsPos[${lightCount++}]`] = light.uniforms;
     }
     uniforms.u_lightsPosCount = lightCount;
-    if (this.disableCulling)
-      this.gl.disable(this.gl.CULL_FACE);
-    else
-      this.gl.enable(this.gl.CULL_FACE);
+    if (this.disableCulling) this.gl.disable(this.gl.CULL_FACE);
+    else this.gl.enable(this.gl.CULL_FACE);
     this.gl.enable(this.gl.BLEND);
     this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
     for (const [_id, instance] of this.instances) {
       instance.render(this.gl, uniforms, programOverride);
-      if (this.renderPass == 1)
-        instance.updateFromPhysicsBody();
+      if (this.renderPass == 1) instance.updateFromPhysicsBody();
     }
     const instancesTransArray = Array.from(this.instancesTrans.values());
     instancesTransArray.sort((a2, b2) => {
@@ -14968,10 +14973,13 @@ var Context = class _Context {
       return bd - ad;
     });
     this.gl.disable(this.gl.CULL_FACE);
+    this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+    if (this.blendMode === "ADDITIVE") {
+      this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE);
+    }
     for (const instance of instancesTransArray) {
       instance.render(this.gl, uniforms, programOverride);
-      if (this.renderPass == 1)
-        instance.updateFromPhysicsBody();
+      if (this.renderPass == 1) instance.updateFromPhysicsBody();
     }
     this.gl.depthMask(false);
     for (const [_id, instance] of this.instancesParticles) {
@@ -14983,8 +14991,7 @@ var Context = class _Context {
    * Start the rendering loop, without calling this nothing will render
    */
   start() {
-    if (this.started)
-      return;
+    if (this.started) return;
     import_loglevel7.default.info("\u{1F680} Starting main GSOTS render loop!");
     this.hud?.hideLoading();
     this.started = true;
@@ -15010,8 +15017,7 @@ var Context = class _Context {
    */
   resize(viewportOnly = false) {
     const canvas = this.gl.canvas;
-    if (!viewportOnly)
-      resizeCanvasToDisplaySize(canvas);
+    if (!viewportOnly) resizeCanvasToDisplaySize(canvas);
     this.gl.viewport(0, 0, canvas.width, canvas.height);
     this.camera.aspectRatio = canvas.width / canvas.height;
     import_loglevel7.default.info(
@@ -15065,8 +15071,7 @@ var Context = class _Context {
    * @param name Name of the camera to set as active
    */
   setActiveCamera(name) {
-    if (name == this.activeCameraName)
-      return;
+    if (name == this.activeCameraName) return;
     const camera = this.cameras.get(name);
     if (!camera) {
       throw new Error(`\u{1F4A5} Unable to set active camera to '${name}', camera not found`);
@@ -15084,13 +15089,17 @@ var Context = class _Context {
    * Create a new model instance, which should have been previously loaded into the cache
    * @param modelName - Name of the model previously loaded into the cache, don't include the file extension
    */
-  createModelInstance(modelName) {
+  createModelInstance(modelName, transparent = false) {
     const model = ModelCache.instance.get(modelName);
     if (!model) {
       throw new Error(`\u{1F4A5} Unable to create model instance for ${modelName}`);
     }
     const instance = new Instance(model);
-    this.instances.set(instance.id, instance);
+    if (!transparent) {
+      this.instances.set(instance.id, instance);
+    } else {
+      this.instancesTrans.set(instance.id, instance);
+    }
     Stats.triangles += model.triangleCount;
     Stats.instances++;
     return instance;
@@ -15234,8 +15243,7 @@ var Context = class _Context {
    * @param instance - Instance to remove
    */
   removeInstance(instance) {
-    if (!instance)
-      return;
+    if (!instance) return;
     if (instance.renderable instanceof ParticleSystem) {
       this.instancesParticles.delete(instance.id);
       return;
@@ -15413,7 +15421,6 @@ var Physics = {
 var ModelBuilder = class {
   constructor() {
     this.parts = /* @__PURE__ */ new Map();
-    this.materials = /* @__PURE__ */ new Map();
   }
   /**
    * Create and add a 'part', each part should have a unique name, and material to apply to it
@@ -15425,14 +15432,13 @@ var ModelBuilder = class {
     if (this.parts.has(name)) {
       throw new Error("Builder part name exists!");
     }
-    const builderPart = new BuilderPart();
+    const builderPart = new BuilderPart(name, material);
     this.parts.set(name, builderPart);
-    this.materials.set(name, material);
     return builderPart;
   }
 };
 var BuilderPart = class {
-  constructor() {
+  constructor(name, mat) {
     this.vertexData = [];
     this.vertexCount = 0;
     this.indexData = [];
@@ -15440,6 +15446,8 @@ var BuilderPart = class {
     this.normalData = [];
     this.texcoordData = [];
     this._triCount = 0;
+    this.name = name;
+    this.material = mat;
     this._boundingBox = [
       Number.MAX_VALUE,
       Number.MAX_VALUE,
@@ -15470,9 +15478,9 @@ var BuilderPart = class {
    * Add a triangle to the renderable part
    * Each triangle must be defined by 3 vertices and will get a normal calculated
    * Each triangle will get a unique normal, so no smooth shading
-   * @param v1 Vertex one of the triangle
-   * @param v2 Vertex two of the triangle
-   * @param v3 Vertex three of the triangle
+   * @param v1 Vertex 1 of the triangle
+   * @param v2 Vertex 2 of the triangle
+   * @param v3 Vertex 3 of the triangle
    * @param tc1 Texture coordinate for vertex 1
    * @param tc2 Texture coordinate for vertex 2
    * @param tc3 Texture coordinate for vertex 3
@@ -15494,21 +15502,15 @@ var BuilderPart = class {
     this.addNormal([n[0], n[1], n[2]]);
     this.texcoordData.push(...tc1, ...tc2, ...tc3);
     for (const v4 of [v12, v22, v3]) {
-      if (v4[0] < this._boundingBox[0])
-        this._boundingBox[0] = v4[0];
-      if (v4[1] < this._boundingBox[1])
-        this._boundingBox[1] = v4[1];
-      if (v4[2] < this._boundingBox[2])
-        this._boundingBox[2] = v4[2];
-      if (v4[0] > this._boundingBox[3])
-        this._boundingBox[3] = v4[0];
-      if (v4[1] > this._boundingBox[4])
-        this._boundingBox[4] = v4[1];
-      if (v4[2] > this._boundingBox[5])
-        this._boundingBox[5] = v4[2];
+      if (v4[0] < this._boundingBox[0]) this._boundingBox[0] = v4[0];
+      if (v4[1] < this._boundingBox[1]) this._boundingBox[1] = v4[1];
+      if (v4[2] < this._boundingBox[2]) this._boundingBox[2] = v4[2];
+      if (v4[0] > this._boundingBox[3]) this._boundingBox[3] = v4[0];
+      if (v4[1] > this._boundingBox[4]) this._boundingBox[4] = v4[1];
+      if (v4[2] > this._boundingBox[5]) this._boundingBox[5] = v4[2];
     }
   }
-  /*
+  /**
    * Add a two triangle quad to the renderable part
    * Each quad must be defined by 4 vertices and will get a normal calculated
    * Each quad will get a unique normal, so no smooth shading
@@ -15516,6 +15518,10 @@ var BuilderPart = class {
    * @param v2 Vertex 2 of the quad
    * @param v3 Vertex 3 of the quad
    * @param v4 Vertex 4 of the quad
+   * @param tc1 UV texture coordinate for vertex 1
+   * @param tc2 UV texture coordinate for vertex 2
+   * @param tc3 UV texture coordinate for vertex 3
+   * @param tc4 UV texture coordinate for vertex 4
    */
   addQuad(v12, v22, v3, v4, tc1 = [0, 0], tc2 = [0, 0], tc3 = [0, 0], tc4 = [0, 0]) {
     this.addTriangle(v12, v22, v3, tc1, tc2, tc3);

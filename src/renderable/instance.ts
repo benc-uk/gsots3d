@@ -4,13 +4,14 @@
 // ============================================================================
 
 import { mat4 } from 'gl-matrix'
+import { ProgramInfo } from 'twgl.js'
+
 import { UniformSet } from '../core/gl.ts'
 import { Renderable } from './types.ts'
 import { Material } from '../engine/material.ts'
 import { XYZ } from '../engine/tuples.ts'
-import { ProgramInfo } from 'twgl.js'
 import { Node } from '../engine/node.ts'
-import { ProgramCache } from '../index.ts'
+import { ProgramCache } from '../core/cache.ts'
 
 /**
  * An instance of thing in the world to be rendered, with position, rotation, scale etc

@@ -145,8 +145,8 @@ export class Camera {
    * @returns Point in world space
    */
   getFrustumCenter(scaleFar = 1) {
-    const f = this.frustumCornersWorld(scaleFar)
-    return [f.center[0], f.center[1], f.center[2]] as XYZ
+    const frustum = this.frustumCornersWorld(scaleFar)
+    return [frustum.center[0], frustum.center[1], frustum.center[2]] as XYZ
   }
 
   /**
