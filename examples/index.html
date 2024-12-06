@@ -1,42 +1,173 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GSOTS-3D Examples</title>
-    <link rel="stylesheet" href="./style.css" />
-    <link rel="shortcut icon" href="https://code.benco.io/gsots3d/icon.png" type="image/png" />
-  </head>
-  <body>
-    <main>
-      <h1>🥽 GSOTS-3D &mdash; Examples & Samples</h1>
 
-      These are some examples & samples in order to see GSOTS-3D in action and demonstrate features & usage. Some of the
-      scenes are interactive, so you can move around them.
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GSOTS-3D Examples</title>
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="shortcut icon" href="https://code.benco.io/gsots3d/icon.png" type="image/png" />
+</head>
 
-      <p>
-        On desktop, click into the scene and use the mouse to look around, and the WASD or arrow keys to move around.<br />On
-        mobile, you can touch the right side of the screen to look around, and the left side to move forward & back.
-      </p>
+<body>
+  <main>
+    <h1>🥽 GSOTS-3D &mdash; Examples & Samples</h1>
 
-      <p>
-        All examples are written as vanilla JavaScript (using the ESM bundle), so you can view the source code and see
-        what is going on 🙂
-      </p>
+    These are some examples & samples in order to see GSOTS-3D in action and demonstrate various features and how to use
+    them.
+    Some of the scenes are interactive, so you can move around them.
 
-      <ul>
-        <li><a href="hello-world/">Hello World</a> - Minimal GOSTS example, a single sphere</li>
-        <li><a href="demo/">Demo scene</a> - Room with various objects for no reason</li>
-        <li><a href="demo-2/">Demo scene 2</a> - Showcasing dynamic reflections & normal mapping</li>
-        <li><a href="physics/">Physics demo</a> - Using cannon-es for physics</li>
-        <li><a href="dice/">Dice with physics</a> - Dice falling onto a table with real time physics</li>
-        <li><a href="particles/">Particle system</a> - Showcases some particle system features</li>
-        <li><a href="teapot/">Utah teapots</a> - Who can resist this classic 3D model</li>
-        <li><a href="effects/">Post processing</a> - Showing full screen post processing effects</li>
-        <li><a href="shadow-test/">Shadow test</a> - Simple test scene for debugging shadows</li>
-        <li><a href="earth/">Planet Earth</a> - Very simple demo with the earth spinning in space</li>
-        <li><a href="builder/">Custom Builder</a> - How to use the builder</li>
-      </ul>
-    </main>
-  </body>
+    <p>
+      On desktop, click into the scene and use the mouse to look around, the WASD or arrow keys will move the camera
+      around.<br />On
+      mobile, you can touch the right side of the screen to look around, and the left side to move forward & back.
+    </p>
+
+    <p>
+      All examples are written as vanilla ES6 JavaScript (using the ESM bundle of GSOTS), so you can view the source
+      code and see
+      what is going on. Code for all examples is always in a single <code>main.js</code>, and the HTML file uses the
+      same simple
+      skeleton.
+    </p>
+
+    <div class="card-container">
+      <div class="card">
+        <a href="hello-world/">
+          <h2>Hello World</h2>
+          <img src="_screens/1.png">
+          <p>Minimal 10 lines of code GSOTS example, a single sphere</p>
+        </a>
+      </div>
+      <div class="card">
+        <a href="demo/">
+          <h2>Demo Scene 1</h2>
+          <img src="_screens/2.png">
+          <p>Room with various objects for no reason than to showcase library features</p>
+        </a>
+      </div>
+      <div class="card">
+        <a href="demo-2/">
+          <h2>Demo Scene 2</h2>
+          <img src="_screens/3.png">
+          <p>Showcasing dynamic reflections & normal mapping</p>
+        </a>
+      </div>
+      <div class="card">
+        <a href="physics/">
+          <h2>Physics demo</h2>
+          <img src="_screens/4.png">
+          <p>Using cannon-es for physics</p>
+        </a>
+      </div>
+      <div class="card">
+        <a href="dice/">
+          <h2>Dice Physics</h2>
+          <img src="_screens/5.png">
+          <p>Dice falling onto a table with real time physics</p>
+        </a>
+      </div>
+      <div class="card">
+        <a href="particles/">
+          <h2>Particle system</h2>
+          <img src="_screens/6.png">
+          <p>Showcases some particle system features</p>
+        </a>
+      </div>
+      <div class="card">
+        <a href="teapot/">
+          <h2>Utah teapots</h2>
+          <img src="_screens/7.png">
+          <p>Who can resist this classic 3D model</p>
+        </a>
+      </div>
+      <div class="card">
+        <a href="effects/">
+          <h2>Full Screen Effects</h2>
+          <img src="_screens/8.png">
+          <p>Showing full screen post processing effects</p>
+        </a>
+      </div>
+      <div class="card">
+        <a href="shadow-test/">
+          <h2>Shadow test</h2>
+          <img src="_screens/9.png">
+          <p>Simple test scene for debugging shadows</p>
+        </a>
+      </div>
+      <div class="card">
+        <a href="earth/">
+          <h2>Planet Earth</h2>
+          <img src="_screens/10.png">
+          <p>Very simple demo with the earth spinning in space</p>
+        </a>
+      </div>
+      <div class="card">
+        <a href="builder/">
+          <h2>Model Builder</h2>
+          <img src="_screens/11.png">
+          <p>See source for how to use the custom model builder</p>
+        </a>
+      </div>
+      <div class="card">
+        <a href="">
+          <h2>Noise TBA</h2>
+          <img src="_screens/tba.png">
+          <p>Coming soon</p>
+        </a>
+      </div>
+    </div>
+
+    <style>
+      .card-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+
+      .card {
+        flex: 1 1 calc(33.333% - 16px);
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 16px;
+        text-align: center;
+      }
+
+      .card a {
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .card h2 {
+        margin: 0 0 8px;
+      }
+
+      .card p {
+        margin: 0;
+      }
+
+      .card img {
+        width: 100%;
+        background-color: black;
+        border-radius: 8px;
+      }
+    </style>
+    <!-- <ul>
+      <li><a href="hello-world/">Hello World</a> - Minimal 10 lines of code GSOTS example, a single sphere</li>
+      <li><a href="demo/">Demo scene 1</a> - Room with various objects for no reason than to showcase library features
+      </li>
+      <li><a href="demo-2/">Demo scene 2</a> - Showcasing dynamic reflections & normal mapping</li>
+      <li><a href="physics/">Physics demo</a> - Using cannon-es for physics</li>
+      <li><a href="dice/">Dice Physics</a> - Dice falling onto a table with real time physics</li>
+      <li><a href="particles/">Particle system</a> - Showcases some particle system features</li>
+      <li><a href="teapot/">Utah teapots</a> - Who can resist this classic 3D model</li>
+      <li><a href="effects/">Full Screen Effects</a> - Showing full screen post processing effects</li>
+      <li><a href="shadow-test/">Shadow test</a> - Simple test scene for debugging shadows</li>
+      <li><a href="earth/">Planet Earth</a> - Very simple demo with the earth spinning in space</li>
+      <li><a href="builder/">Model Builder</a> - See source for how to use the custom model builder</li>
+    </ul> -->
+  </main>
+</body>
+
 </html>

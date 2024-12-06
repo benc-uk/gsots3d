@@ -54,7 +54,7 @@ type extraAttributes = {
 }
 
 /**
- * Manage parts or sections to be built into a model, must have at least one part
+ * Manage parts or sections to be built into a model
  */
 export class BuilderPart {
   private vertexData: number[] = []

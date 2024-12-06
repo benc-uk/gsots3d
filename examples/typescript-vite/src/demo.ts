@@ -118,6 +118,7 @@ try {
   wall4.castShadow = false
 
   const impMat = Material.createBasicTexture('../_textures/doom-imp.png')
+  impMat.alphaCutoff = 0.5 // Important to make sprite transparency work
   const doomImp = ctx.createBillboardInstance(impMat, 30)
   doomImp.scale = [0.8, 0.8, 0.8]
   doomImp.position = [-6, 0, -5]
@@ -253,7 +254,7 @@ ctx.update = (delta) => {
 }
 
 // Dynamic reflections, big performance hit
-ctx.setDynamicEnvmap([0, 15, 0], 256)
+ctx.setDynamicEnvmap([0, 15, 0], 128, 64)
 
 // Shadows
 ctx.globalLight.enableShadows({

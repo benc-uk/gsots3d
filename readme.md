@@ -25,7 +25,9 @@ Feature Set:
 
 ## 🕹️ Demos & Samples
 
-### [Live Demos](https://code.benco.io/gsots3d/examples/) - These work in your browser!
+### [Live Demo & Example Gallery](https://code.benco.io/gsots3d/examples/)
+
+This is a gallery of examples which will run live in the browser. [Try it out!](<(https://code.benco.io/gsots3d/examples/)>)
 
 ## 🖼️ Screenshots
 
