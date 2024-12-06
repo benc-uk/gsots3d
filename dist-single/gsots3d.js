@@ -6626,15 +6626,12 @@ var setAxes = function() {
 // package.json
 var package_default = {
   name: "gsots3d",
-  version: "0.0.6-alpha.1",
+  version: "0.0.6-16eb206.0",
   description: "Getting S**t On The Screen in 3D. A library for doing 3D graphics in the browser.",
   author: "Ben Coleman",
   license: "MIT",
   homepage: "https://code.benco.io/gsots3d/docs",
   type: "module",
-  publishConfig: {
-    "@benc-uk:registry": "https://npm.pkg.github.com"
-  },
   repository: {
     type: "git",
     url: "https://github.com/benc-uk/gsots3d.git"
